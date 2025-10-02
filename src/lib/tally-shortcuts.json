@@ -1,0 +1,129 @@
+
+[
+  {
+    "name": "Sales Invoice",
+    "category": "Voucher",
+    "shortcut": "F8",
+    "description": "Create a new sales invoice.",
+    "icon": "Receipt"
+  },
+  {
+    "name": "Purchase Invoice",
+    "category": "Voucher",
+    "shortcut": "F9",
+    "description": "Create a new purchase bill.",
+    "icon": "ShoppingCart"
+  },
+  {
+    "name": "Receipt Voucher",
+    "category": "Voucher",
+    "shortcut": "F6",
+    "description": "Record cash or bank receipts.",
+    "icon": "Wallet"
+  },
+  {
+    "name": "Payment Voucher",
+    "category": "Voucher",
+    "shortcut": "F5",
+    "description": "Record cash or bank payments.",
+    "icon": "IndianRupee"
+  },
+  {
+    "name": "Journal Voucher",
+    "category": "Voucher",
+    "shortcut": "F7",
+    "description": "Record non-cash adjustments.",
+    "icon": "BookCopy"
+  },
+  {
+    "name": "Contra Voucher",
+    "category": "Voucher",
+    "shortcut": "F4",
+    "description": "Record transfers between cash and bank accounts.",
+    "icon": "ArrowRightLeft"
+  },
+  {
+    "name": "Create Master",
+    "category": "Master",
+    "shortcut": "Alt + C",
+    "description": "Create a new master (Ledger, Stock Item) on the fly from a voucher screen.",
+    "icon": "Wand2"
+  },
+  {
+    "name": "Create Ledger",
+    "category": "Master",
+    "shortcut": "A -> L -> C",
+    "description": "Go to Accounts Info > Ledgers > Create to make a new ledger.",
+    "icon": "BookUser"
+  },
+  {
+    "name": "Create Stock Item",
+    "category": "Master",
+    "shortcut": "I -> I -> C",
+    "description": "Go to Inventory Info > Stock Items > Create to add a new stock item.",
+    "icon": "Warehouse"
+  },
+  {
+    "name": "Alter Master",
+    "category": "Master",
+    "shortcut": "Ctrl + Enter",
+    "description": "Alter a master item directly from a voucher screen.",
+    "icon": "Edit"
+  },
+  {
+    "name": "Balance Sheet",
+    "category": "Report",
+    "shortcut": "B",
+    "description": "View the company's Balance Sheet.",
+    "icon": "Landmark"
+  },
+  {
+    "name": "Profit & Loss Account",
+    "category": "Report",
+    "shortcut": "P",
+    "description": "View the company's Profit & Loss statement.",
+    "icon": "TrendingUp"
+  },
+  {
+    "name": "Trial Balance",
+    "category": "Report",
+    "shortcut": "D -> T",
+    "description": "Go to Display > Trial Balance to view the trial balance.",
+    "icon": "Scale"
+  },
+  {
+    "name": "Day Book",
+    "category": "Report",
+    "shortcut": "D -> D",
+    "description": "Go to Display > Day Book to see all vouchers for a day.",
+    "icon": "BookOpen"
+  },
+  {
+    "name": "Stock Summary",
+    "category": "Report",
+    "shortcut": "S",
+    "description": "View the stock summary report.",
+    "icon": "BarChart3"
+  },
+  {
+    "name": "Change Period",
+    "category": "Voucher",
+    "shortcut": "F2",
+    "description": "Change the date of a voucher.",
+    "icon": "Calendar"
+  },
+  {
+    "name": "Company Features",
+    "category": "Master",
+    "shortcut": "F11",
+    "description": "Access the company features screen (e.g., Accounting, Inventory, Statutory).",
+    "icon": "Settings2"
+  },
+  {
+    "name": "Configure",
+    "category": "Master",
+    "shortcut": "F12",
+    "description": "Access configuration options for the current screen.",
+    "icon": "SlidersHorizontal"
+  }
+]

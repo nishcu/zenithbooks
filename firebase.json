@@ -1,0 +1,10 @@
+
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "apphosting": {
+    "source": ".",
+    "predeploy": "npm run build"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "GSTEase - Your GST & Accounting Partner",
+  "short_name": "GSTEase",
+  "description": "The All-in-One GST and Accounting Software",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4B0082",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/gstease192/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/gstease512/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
