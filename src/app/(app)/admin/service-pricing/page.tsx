@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from '@/components/ui/separator';
 import { servicePricing as initialServices } from '@/lib/on-demand-pricing';
 import { saveServicePricingAction } from './actions';
+import { getServicePricing, onPricingUpdate } from '@/lib/pricing-service';
 
 type Service = {
     id: string;
@@ -40,6 +41,23 @@ export default function ServicePricingPage() {
   const [services, setServices] = useState(initialServices);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch initial pricing data
+    getServicePricing().then(pricing => {
+        setServices(pricing);
+        setIsLoading(false);
+    });
+
+    // Subscribe to real-time updates
+    const unsubscribe = onPricingUpdate(pricing => {
+        setServices(pricing);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   const handlePriceChange = (category: ServiceCategories, id: string, newPrice: number) => {
       setServices(prev => ({
@@ -120,7 +138,7 @@ export default function ServicePricingPage() {
                     <TableCell className="text-right">
                         <Input 
                         type="number" 
-                        value={service.price} 
+                        value={service.price}
                         onChange={(e) => handlePriceChange(category, service.id, parseInt(e.target.value) || 0)}
                         className="w-32 ml-auto text-right"
                         />
@@ -132,6 +150,15 @@ export default function ServicePricingPage() {
         </div>
       </div>
     );
+  }
+
+  if (isLoading) {
+      return (
+          <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-4 text-lg">Loading Pricing Data...</p>
+          </div>
+      );
   }
 
   return (
@@ -166,10 +193,10 @@ export default function ServicePricingPage() {
         <CardContent className="space-y-6">
             {renderServiceCategory("Management Reports", "reports")}
             {renderServiceCategory("CA Certificates", "ca_certs")}
-            {renderServiceCategory("Notice Handling &amp; Resolution", "notice_handling")}
+            {renderServiceCategory("Notice Handling & Resolution", "notice_handling")}
             <Separator />
             {renderServiceCategory("Registration Deeds", "registration_deeds")}
-            {renderServiceCategory("Founder &amp; Startup Docs", "founder_startup")}
+            {renderServiceCategory("Founder & Startup Docs", "founder_startup")}
             {renderServiceCategory("General Agreements", "agreements")}
             <Separator />
             {renderServiceCategory("HR Documents", "hr_documents")}

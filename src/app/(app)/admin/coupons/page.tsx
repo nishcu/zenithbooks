@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,7 +35,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { servicePricing } from "@/lib/on-demand-pricing";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -95,7 +95,6 @@ const initialCoupons: Coupon[] = [
   },
 ];
 
-const allServices = Object.values(servicePricing).flat();
 const subscriptionPlans = [
     { id: "business", label: "Business Plan Subscription" },
     { id: "professional", label: "Professional Plan Subscription" },
@@ -105,6 +104,15 @@ export default function CouponsPage() {
   const [coupons, setCoupons] = useState(initialCoupons);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [pricing, setPricing] = useState<ServicePricing | null>(null);
+
+  useEffect(() => {
+      getServicePricing().then(setPricing);
+      const unsubscribe = onPricingUpdate(setPricing);
+      return () => unsubscribe();
+  }, []);
+
+  const allServices = pricing ? Object.values(pricing).flat() : [];
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponSchema),

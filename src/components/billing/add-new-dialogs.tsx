@@ -18,13 +18,14 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { allAccounts } from "@/lib/accounts";
 
 type Party = {
   id: string;
@@ -36,6 +37,7 @@ type Party = {
   city?: string;
   state?: string;
   pincode?: string;
+  accountCode?: string;
 };
 
 type Item = {
@@ -70,15 +72,72 @@ const itemSchema = z.object({
     stockGroupId: z.string().optional(),
 });
 
+const getNextAvailableCode = async (userId: string, type: string): Promise<string> => {
+    const accountCodeRanges: Record<string, { start: number, end: number }> = {
+        "Current Asset": { start: 1300, end: 1499 },
+    };
+
+    const range = accountCodeRanges[type];
+    if (!range) return "";
+
+    const userAccountsRef = collection(db, "user_accounts");
+    const userAccountsQuery = query(userAccountsRef, where("userId", "==", userId));
+    const userAccountsSnapshot = await getDocs(userAccountsQuery);
+    const userAccounts = userAccountsSnapshot.docs.map(doc => doc.data());
+
+    const combinedAccounts = [...allAccounts, ...userAccounts];
+    const existingCodes = combinedAccounts
+        .filter(acc => acc.type === type && acc.code)
+        .map(acc => parseInt(acc.code));
+
+    for (let i = range.start; i <= range.end; i++) {
+        if (!existingCodes.includes(i)) {
+            return String(i).padStart(4, '0');
+        }
+    }
+    return ""; // No available code in range
+};
+
+
+export const assignAccountCode = async (party: Party, userId: string) => {
+    if (party.accountCode) {
+        return; // Already has an account code
+    }
+
+    const nextCode = await getNextAvailableCode(userId, "Current Asset");
+    if (!nextCode) {
+        throw new Error("No available account code in range.");
+    }
+
+    const batch = writeBatch(db);
+
+    // 1. Create new account in user_accounts
+    const newAccountRef = doc(collection(db, "user_accounts"));
+    batch.set(newAccountRef, {
+        code: nextCode,
+        name: party.name,
+        type: "Current Asset",
+        userId: userId,
+    });
+
+    // 2. Update the party with the new account code
+    const partyDocRef = doc(db, "customers", party.id);
+    batch.update(partyDocRef, { accountCode: nextCode });
+
+    await batch.commit();
+    return nextCode;
+};
+
+
 export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean, onOpenChange: (open: boolean) => void, type: 'Customer' | 'Vendor', party?: Party | null }) {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
-    
+
     const form = useForm<z.infer<typeof partySchema>>({
         resolver: zodResolver(partySchema),
         defaultValues: { name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' },
     });
-    
+
     useEffect(() => {
       if (party && open) {
         form.reset(party);
@@ -101,10 +160,31 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 toast({ title: `${type} Updated`, description: `${values.name} has been updated.` });
             } else {
                 // Add new party
-                await addDoc(collection(db, collectionName), { ...values, userId: user.uid });
-                toast({ title: `${type} Added`, description: `${values.name} has been saved.` });
+                const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
+                if (!nextCode) {
+                    toast({ variant: "destructive", title: "Error", description: "Could not generate an account code." });
+                    return;
+                }
+                const batch = writeBatch(db);
+
+                // 1. Create new account in user_accounts
+                const newAccountRef = doc(collection(db, "user_accounts"));
+                batch.set(newAccountRef, {
+                    code: nextCode,
+                    name: values.name,
+                    type: "Current Asset",
+                    userId: user.uid,
+                });
+
+                // 2. Add new party with the account code
+                const newPartyRef = doc(collection(db, collectionName));
+                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode });
+                
+                await batch.commit();
+
+                toast({ title: `${type} Added`, description: `${values.name} has been saved with account code ${nextCode}.` });
             }
-            
+
             onOpenChange(false);
         } catch (e) {
             console.error("Error saving document: ", e);
@@ -153,12 +233,12 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: boolean, onOpenChange: (open: boolean) => void, item?: Item | null, stockGroups?: {id: string, name: string}[] }) {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
-    
+
     const form = useForm<z.infer<typeof itemSchema>>({
         resolver: zodResolver(itemSchema),
         defaultValues: { name: "", description: "", hsn: "", stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" },
     });
-    
+
     useEffect(() => {
       if (item && open) {
         form.reset(item);
@@ -187,7 +267,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
            toast({ variant: "destructive", title: "Error", description: "Could not save the item." });
        }
     };
-    
+
     const dialogTitle = item ? "Edit Item" : "Add New Item";
     const dialogDescription = item ? `Update the details for ${item.name}` : "Add a new product or service to your master list.";
 

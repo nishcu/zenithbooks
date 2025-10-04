@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { createContext, useState, ReactNode, useContext } from 'react';
+import React, { createContext, useState, ReactNode, useContext, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -51,7 +50,13 @@ export const AccountingProvider = ({ children }: { children: ReactNode }) => {
     const journalVouchersQuery = user ? query(journalVouchersRef, where("userId", "==", user.uid), orderBy("date", "desc")) : null;
     const [journalVouchersSnapshot, loading, error] = useCollection(journalVouchersQuery);
 
-    const journalVouchers: JournalVoucher[] = journalVouchersSnapshot?.docs.map(doc => ({ ...doc.data() } as JournalVoucher)) || [];
+    useEffect(() => {
+        if (error) {
+            console.error("IMPORTANT: Firestore query failed. This is likely due to a missing index. Please check for an error message below that contains a URL to create the index.", error);
+        }
+    }, [error]);
+
+    const journalVouchers: JournalVoucher[] = journalVouchersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher)) || [];
 
     const addJournalVoucher = async (voucher: Omit<JournalVoucher, 'userId'>) => {
         if (!user) throw new Error("User not authenticated");

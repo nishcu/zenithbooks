@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -31,6 +31,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   PlusCircle,
   Trash2,
@@ -73,6 +79,7 @@ import Link from "next/link";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
+import { getServicePricing, ServicePricing } from "@/lib/pricing-service";
 
 const initialAssets: FixedAsset[] = [
   { id: 1, name: "Plant & Machinery", cost: 1000000, depreciationRate: 15, additionYear: 0 },
@@ -85,6 +92,7 @@ export default function CmaReportGeneratorPage() {
   const [numProjectedYears, setNumProjectedYears] = useState(5);
   const [revenueGrowth, setRevenueGrowth] = useState<number[]>([15, 18, 20, 22, 25]);
   const [expenseChange, setExpenseChange] = useState<number[]>([10, 12, 14, 15, 18]);
+  const [pricing, setPricing] = useState<ServicePricing | null>(null);
 
   const [loanAssumptions, setLoanAssumptions] = useState<LoanAssumptions>({
     type: "term-loan",
@@ -100,6 +108,10 @@ export default function CmaReportGeneratorPage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   const reportPrintRef = useRef(null);
+
+  useEffect(() => {
+    getServicePricing().then(setPricing);
+  }, []);
   
   const handleGenerateReport = () => {
     setIsGenerating(true);
@@ -217,6 +229,7 @@ export default function CmaReportGeneratorPage() {
     XLSX.writeFile(wb, `CMA_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   }
 
+  const cmaReportPrice = pricing?.reports.find(r => r.id === 'cma_report')?.price;
 
   return (
     <div className="space-y-8">
@@ -417,9 +430,9 @@ export default function CmaReportGeneratorPage() {
                     </Button>
                 </CardContent>
                  <CardFooter className="flex justify-center">
-                    <Button size="lg" onClick={handleGenerateReport} disabled={isGenerating}>
+                    <Button size="lg" onClick={handleGenerateReport} disabled={isGenerating || !cmaReportPrice}>
                         {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : null}
-                        Generate Report - ₹5000
+                        Generate Report {cmaReportPrice ? `- ₹${cmaReportPrice}` : ''}
                     </Button>
                 </CardFooter>
             </Card>
@@ -434,14 +447,49 @@ export default function CmaReportGeneratorPage() {
                 </CardHeader>
                 <CardContent ref={reportPrintRef}>
                     {generatedReport && (
-                        <Accordion type="multiple" defaultValue={["operating-statement", "balance-sheet"]} className="w-full">
-                           <OperatingStatement key="operating-statement" report={generatedReport}/>
-                           <BalanceSheetAnalysis key="balance-sheet" report={generatedReport}/>
-                           <CashFlowStatement key="cash-flow" report={generatedReport}/>
-                           <RatioAnalysis key="ratio-analysis" report={generatedReport}/>
-                           <FundFlowStatement key="fund-flow" report={generatedReport}/>
-                           <MpbfAssessment key="mpbf" report={generatedReport}/>
-                           <LoanRepaymentSchedule key="repayment-schedule" report={generatedReport}/>
+                        <Accordion type="multiple" defaultValue={["operating-statement", "balance-sheet-analysis"]} className="w-full">
+                           <AccordionItem value="operating-statement">
+                               <AccordionTrigger>Operating Statement</AccordionTrigger>
+                               <AccordionContent>
+                                   <OperatingStatement report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="balance-sheet-analysis">
+                               <AccordionTrigger>Analysis of Balance Sheet</AccordionTrigger>
+                               <AccordionContent>
+                                   <BalanceSheetAnalysis report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="cash-flow-statement">
+                               <AccordionTrigger>Cash Flow Statement</AccordionTrigger>
+                               <AccordionContent>
+                                   <CashFlowStatement report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="ratio-analysis">
+                               <AccordionTrigger>Ratio Analysis</AccordionTrigger>
+                               <AccordionContent>
+                                   <RatioAnalysis report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="fund-flow-statement">
+                               <AccordionTrigger>Fund Flow Statement</AccordionTrigger>
+                               <AccordionContent>
+                                   <FundFlowStatement report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="mpbf-assessment">
+                               <AccordionTrigger>MPBF Assessment</AccordionTrigger>
+                               <AccordionContent>
+                                   <MpbfAssessment report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
+                           <AccordionItem value="repayment-schedule">
+                               <AccordionTrigger>Loan Repayment Schedule</AccordionTrigger>
+                               <AccordionContent>
+                                   <LoanRepaymentSchedule report={generatedReport}/>
+                               </AccordionContent>
+                           </AccordionItem>
                         </Accordion>
                     )}
                 </CardContent>
@@ -465,7 +513,7 @@ export default function CmaReportGeneratorPage() {
                  <Card className="mt-8">
                     <CardHeader>
                         <CardTitle>Professional Certification</CardTitle>
-                        <CardDescription>As a professional (e.g., CA), you can request certification for this report.</CardDescription>
+                        <CardDescription>As a professional (e.g., a CA), you can request certification for this report.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">

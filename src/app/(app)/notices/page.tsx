@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,7 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MailWarning, Upload, UserCheck, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { servicePricing } from "@/lib/on-demand-pricing";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,13 @@ type NoticeFormData = z.infer<typeof noticeSchema>;
 export default function NoticesPage() {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
+    const [pricing, setPricing] = useState<ServicePricing | null>(null);
+
+    useEffect(() => {
+        getServicePricing().then(setPricing);
+        const unsubscribe = onPricingUpdate(setPricing);
+        return () => unsubscribe();
+    }, []);
 
     const form = useForm<NoticeFormData>({
         resolver: zodResolver(noticeSchema),
@@ -59,7 +66,8 @@ export default function NoticesPage() {
         },
     });
     
-    const selectedService = servicePricing.notice_handling.find(s => s.id === form.watch("noticeType"));
+    const noticeHandlingServices = pricing ? pricing.notice_handling : [];
+    const selectedService = noticeHandlingServices.find(s => s.id === form.watch("noticeType"));
     const servicePrice = selectedService ? selectedService.price : 0;
 
     const handleSubmit = async (values: NoticeFormData) => {
@@ -89,7 +97,7 @@ export default function NoticesPage() {
             form.reset();
         } catch (error) {
             console.error("Error submitting notice request: ", error);
-            toast({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."});
+            toast({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."} );
         }
     }
 
@@ -117,7 +125,7 @@ export default function NoticesPage() {
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        {servicePricing.notice_handling.map(service => (
+                                        {noticeHandlingServices.map(service => (
                                             <SelectItem key={service.id} value={service.id}>{service.name}</SelectItem>
                                         ))}
                                     </SelectContent>

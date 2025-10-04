@@ -1,60 +1,86 @@
 
+import { getServicePricing, onPricingUpdate } from './pricing-service';
 
-export const servicePricing = {
-  reports: [
-    { id: "CMA_REPORT", name: "CMA Report Generation", price: 5000 },
-  ],
-  ca_certs: [
-    { id: "NW_CERT", name: "Net Worth Certificate", price: 2500 },
-    { id: "TURNOVER_CERT", name: "Turnover Certificate", price: 2500 },
-    { id: "VISA_CERT", name: "Visa/Immigration Financials", price: 6000 },
-    { id: "CAPITAL_CONT_CERT", name: "Capital Contribution Certificate", price: 3000 },
-    { id: "FR_CERT", name: "Form 15CB (Foreign Remittance)", price: 4000 },
-    { id: "GEN_ATTEST", name: "General Attestation", price: 2000 },
-  ],
-  registration_deeds: [
-      { id: "PARTNERSHIP_DEED", name: "Partnership Deed Drafting", price: 3000 },
-      { id: "LLP_AGREEMENT", name: "LLP Agreement Drafting", price: 5000 },
-      { id: "TRUST_DEED", name: "Trust Deed", price: 4500 },
-      { id: "SOCIETY_DEED", name: "Society Registration Deed", price: 4500 },
-  ],
-  founder_startup: [
-      { id: "FOUNDERS_AGREEMENT", name: "Founders’ Agreement Drafting", price: 7500 },
-      { id: "SHAREHOLDERS_AGREEMENT", name: "Shareholders' Agreement (SHA)", price: 15000 },
-      { id: "ESOP_POLICY", name: "ESOP Policy & Trust Deed", price: 25000 },
-      { id: "SAFE_AGREEMENT", name: "SAFE / Convertible Note", price: 10000 },
-  ],
-  agreements: [
-      { id: "RENTAL_DEED", name: "Rental / Lease Deed", price: 1500 },
-      { id: "NDA", name: "Non-Disclosure Agreement (NDA)", price: 1000 },
-      { id: "CONSULTANT_AGMT", name: "Consultant / Freelancer Agreement", price: 2000 },
-      { id: "VENDOR_AGREEMENT", name: "Vendor Agreement", price: 2000 },
-      { id: "SERVICE_AGREEMENT", name: "Service Agreement", price: 2000 },
-      { id: "FRANCHISE_AGREEMENT", name: "Franchise Agreement", price: 12000 },
-      { id: "LOAN_AGREEMENT", name: "Loan Agreement (Director/Partner)", price: 1500 },
-  ],
-  hr_documents: [
-      { id: "OFFER_LETTER", name: "Offer Letter", price: 500 },
-      { id: "APPOINTMENT_LETTER", name: "Appointment Letter", price: 750 },
-      { id: "INTERNSHIP_AGREEMENT", name: "Internship Agreement", price: 750 },
-  ],
-  company_documents: [
-    { id: "MOA_AOA", name: "MOA & AOA Generation", price: 5000 },
-    { id: "BOARD_RESOLUTION", name: "Board Resolution", price: 750 },
-    { id: "STATUTORY_REGISTERS", name: "Statutory Registers", price: 2000 },
-  ],
-  gst_documents: [
-      { id: "GST_ENGAGEMENT_LETTER", name: "GST Engagement Letter", price: 500 },
-      { id: "SELF_AFFIDAVIT_GST", name: "Self Affidavit for GST", price: 250 },
-      { id: "RENTAL_RECEIPTS_HRA", name: "Rental Receipts for HRA", price: 100 },
-  ],
-  accounting_documents: [
-      { id: "ACCOUNTING_ENGAGEMENT_LETTER", name: "Accounting Engagement Letter", price: 500 },
-  ],
-  notice_handling: [
-      { id: "GST_NOTICE", name: "GST Department Notice Reply", price: 5000 },
-      { id: "IT_NOTICE", name: "Income Tax Department Notice Reply", price: 4000 },
-      { id: "ROC_NOTICE", name: "Registrar of Companies (ROC) Notice Reply", price: 6000 },
-      { id: "OTHER_NOTICE", name: "Other Department Notice Reply", price: 7500 },
-  ],
+// The shape of our pricing data
+type Service = {
+    id: string;
+    name: string;
+    price: number;
 };
+
+export type ServicePricing = {
+    reports: Service[];
+    ca_certs: Service[];
+    registration_deeds: Service[];
+    founder_startup: Service[];
+    agreements: Service[];
+    hr_documents: Service[];
+    company_documents: Service[];
+    gst_documents: Service[];
+    accounting_documents: Service[];
+    notice_handling: Service[];
+};
+
+// We can still keep the initial default values here
+export const servicePricing: ServicePricing = {
+    reports: [
+        { id: "cma_report", name: "CMA Report", price: 4999 },
+        { id: "sales_analysis", name: "Sales Analysis", price: 999 },
+        { id: "purchase_analysis", name: "Purchase Analysis", price: 999 },
+    ],
+    ca_certs: [
+        { id: "net_worth", name: "Net Worth Certificate", price: 2499 },
+        { id: "turnover", name: "Turnover Certificate", price: 1999 },
+        { id: "capital_contribution", name: "Capital Contribution Certificate", price: 2999 },
+        { id: "visa_immigration", name: "Certificate for Visa/Immigration", price: 3499 },
+        { id: "foreign_remittance", name: "Foreign Remittance (Form 15CA/CB)", price: 3999 },
+        { id: "general_attestation", name: "General Attestation", price: 1499 },
+    ],
+    notice_handling: [
+        { id: "income_tax_notice", name: "Income Tax Notice Reply", price: 2999 },
+        { id: "gst_notice", name: "GST Notice Reply", price: 2999 },
+        { id: "roc_notice", name: "ROC/MCA Notice Reply", price: 3999 },
+    ],
+    registration_deeds: [
+        { id: "partnership_deed", name: "Partnership Deed Registration", price: 4999 },
+        { id: "llp_agreement", name: "LLP Agreement", price: 6999 },
+        { id: "trust_deed", name: "Trust Deed Registration", price: 9999 },
+        { id: "society_deed", name: "Society Registration Deed", price: 14999 },
+        { id: "rental_deed", name: "Rental Deed", price: 2999 },
+        { id: "lease_deed", name: "Lease Deed", price: 7999 },
+    ],
+    founder_startup: [
+        { id: "founders_agreement", name: "Founders\' Agreement", price: 9999 },
+        { id: "shareholders_agreement", name: "Shareholders\' Agreement", price: 14999 },
+        { id: "esop_policy", name: "ESOP Policy", price: 19999 },
+        { id: "safe_agreement", name: "SAFE Agreement", price: 7999 },
+        { id: "moa_aoa", name: "Memorandum & Articles of Association", price: 4999 },
+    ],
+    agreements: [
+        { id: "service_agreement", name: "Service Agreement", price: 3999 },
+        { id: "vendor_agreement", name: "Vendor Agreement", price: 3999 },
+        { id: "consultant_agreement", name: "Consultant Agreement", price: 3999 },
+        { id: "franchise_agreement", name: "Franchise Agreement", price: 12999 },
+        { id: "loan_agreement", name: "Loan Agreement", price: 2999 },
+        { id: "nda", name: "Non-Disclosure Agreement (NDA)", price: 2499 },
+    ],
+    hr_documents: [
+        { id: "appointment_letter", name: "Appointment Letter", price: 999 },
+        { id: "offer_letter", name: "Offer Letter", price: 499 },
+        { id: "internship_agreement", name: "Internship Agreement", price: 1499 },
+        { id: "rental_receipt_hra", name: "Rental Receipt for HRA", price: 499 },
+    ],
+    company_documents: [
+        { id: "board_resolutions", name: "Board Resolutions", price: 1999 },
+        { id: "statutory_registers", name: "Statutory Registers", price: 2999 },
+    ],
+    gst_documents: [
+        { id: "gst_engagement_letter", name: "GST Engagement Letter", price: 1499 },
+        { id: "self_affidavit_gst", name: "Self-Affidavit for GST Registration", price: 999 },
+    ],
+    accounting_documents: [
+        { id: "accounting_engagement_letter", name: "Accounting Engagement Letter", price: 1499 },
+    ],
+};
+
+export { getServicePricing, onPricingUpdate };

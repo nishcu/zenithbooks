@@ -1,16 +1,17 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Award, Landmark, TrendingUp, HandCoins, Building, FileSignature, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { servicePricing } from "@/lib/on-demand-pricing";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Button } from "@/components/ui/button";
 
 const certificateTools = [
   {
-    id: "NW_CERT",
+    id: "net_worth",
     title: "Net Worth Certificate",
     description: "Generate a certificate of net worth for individuals/HUFs, commonly required for visa applications or bank loans.",
     icon: Landmark,
@@ -18,7 +19,7 @@ const certificateTools = [
     status: "active",
   },
   {
-    id: "TURNOVER_CERT",
+    id: "turnover",
     title: "Turnover Certificate",
     description: "Certify the annual turnover of a business entity based on audited financial statements or GST returns.",
     icon: TrendingUp,
@@ -26,7 +27,7 @@ const certificateTools = [
     status: "active",
   },
   {
-    id: "CAPITAL_CONT_CERT",
+    id: "capital_contribution",
     title: "Capital Contribution Certificate",
     description: "Certify the capital contributed by partners or directors into an LLP or company.",
     icon: HandCoins,
@@ -34,7 +35,7 @@ const certificateTools = [
     status: "active",
   },
   {
-    id: "FR_CERT",
+    id: "foreign_remittance",
     title: "Form 15CB (Foreign Remittance)",
     description: "Prepare Form 15CB required for making payments to a non-resident, certifying taxability and DTAA benefits.",
     icon: Building,
@@ -42,7 +43,7 @@ const certificateTools = [
     status: "active",
   },
   {
-    id: "VISA_CERT",
+    id: "visa_immigration",
     title: "Visa & Immigration Financials",
     description: "Generate a detailed financial statement and solvency certificate specifically for student or immigration visa purposes.",
     icon: FileSignature,
@@ -50,7 +51,7 @@ const certificateTools = [
     status: "active",
   },
   {
-    id: "GEN_ATTEST",
+    id: "general_attestation",
     title: "General Attestation",
     description: "A flexible tool to draft and request certification for any general-purpose document or statement.",
     icon: FileText,
@@ -59,9 +60,17 @@ const certificateTools = [
   },
 ];
 
-
 export default function CACertificatesPage() {
-  const allCertServices = servicePricing.ca_certs;
+  const [pricing, setPricing] = useState<ServicePricing | null>(null);
+
+  useEffect(() => {
+    getServicePricing().then(setPricing);
+    const unsubscribe = onPricingUpdate(setPricing);
+    return () => unsubscribe();
+  }, []);
+
+  const allCertServices = pricing ? pricing.ca_certs : [];
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -77,7 +86,7 @@ export default function CACertificatesPage() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {certificateTools.map((tool) => {
-          const service = allCertServices.find(s => s.id === tool.id);
+          const service = allCertServices.find(s => s.id === tool.id.toLowerCase());
           const price = service?.price || 0;
 
           return (

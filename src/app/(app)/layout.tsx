@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -19,7 +18,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  useSidebar,
   SidebarInset,
   SidebarMenuSub,
   SidebarMenuSubItem,
@@ -31,12 +29,12 @@ import {
     ZenithBooksLogo, Book, FileText, Gauge, Landmark, Receipt, Settings, Users, 
     Warehouse, ChevronDown, Calculator, FilePlus, FileMinus, Library, Scale, 
     BookOpen, Shield, Presentation, CalendarClock, UserSquare, BadgeDollarSign, 
-    Briefcase, BadgePercent, Wallet, ShieldCheck, Award, CreditCard, Heart, 
+    Briefcase, Wallet, ShieldCheck, Award, CreditCard, 
     BookCopy, ShoppingCart, ShoppingBag, Loader2, GitCompareArrows, FileSpreadsheet, 
     Building, TrendingUp, AreaChart, ConciergeBell, LayoutDashboard, MailWarning, 
     FileSignature, Newspaper, Info, Contact, Keyboard, PieChart, Boxes, Weight, 
-    Target, UserCog, FileArchive, Ticket, Edit, Save,
-    ArrowRightLeft, Calendar as CalendarIcon, Eraser, IndianRupee, Construction, Bell, CalendarDays,
+    Target, UserCog, FileArchive, Ticket, 
+    ArrowRightLeft, Eraser, IndianRupee, Construction, Bell, CalendarDays,
     Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap,
     AlertCircle, CheckCircle, Copy, SlidersHorizontal, Settings2, BarChart3,
     ArrowRight, Upload, Download
@@ -48,7 +46,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc } from "firebase/firestore";
 import { Header } from "@/components/layout/header";
 import { ClientOnly } from "@/components/client-only";
-import { AccountingProvider, useAccountingContext } from "@/context/accounting-context";
+import { AccountingProvider } from "@/context/accounting-context";
 import { Suspense, useEffect } from "react";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -57,7 +55,7 @@ import { RoleSimulatorProvider, useRoleSimulator } from "@/context/role-simulato
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const SUPER_ADMIN_EMAIL = 'smr@smr.com';
+const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
 
 const allMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge, roles: ['business', 'professional', 'super_admin'] },
@@ -270,18 +268,20 @@ const CollapsibleMenuItem = ({ item, pathname }: { item: any, pathname: string }
                   {subItem.subItems ? (
                     <CollapsibleMenuItem item={subItem} pathname={pathname} />
                   ) : (
-                    <Link href={subItem.href} passHref>
-                      <SidebarMenuSubButton
-                        asChild
-                        isActive={pathname.startsWith(subItem.href)}
-                        className="w-full"
-                      >
-                        <span className="flex w-full items-center gap-2">
-                          {subItem.icon && <subItem.icon className="h-4 w-4" />}
-                          <span>{subItem.label}</span>
-                        </span>
-                      </SidebarMenuSubButton>
-                    </Link>
+                     subItem.href && (
+                        <Link href={subItem.href} passHref>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname.startsWith(subItem.href)}
+                            className="w-full"
+                          >
+                            <span className="flex w-full items-center gap-2">
+                              {subItem.icon && <subItem.icon className="h-4 w-4" />}
+                              <span>{subItem.label}</span>
+                            </span>
+                          </SidebarMenuSubButton>
+                        </Link>
+                     )
                   )}
                 </SidebarMenuSubItem>
               ))}
@@ -306,15 +306,15 @@ function MainLayout({
 }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, authLoading, authError] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
   
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
-  const [userData, userLoading, userError] = useDocumentData(userDocRef);
-  const { simulatedRole, setSimulatedRole } = useRoleSimulator();
+  const [userData, userLoading] = useDocumentData(userDocRef);
+  const { simulatedRole } = useRoleSimulator();
 
   const getRole = () => {
     if (!user) return 'business'; // Default to business if not logged in for viewing purposes
-    if (user.email === SUPER_ADMIN_EMAIL) return 'super_admin';
+    if (user.uid === SUPER_ADMIN_UID) return 'super_admin';
     return userData?.userType || 'business'; 
   }
   
@@ -354,29 +354,29 @@ function MainLayout({
   
   const filteredMenuItems = allMenuItems
     .map(item => {
-        if (!item.roles.includes(displayRole)) {
-            return null;
-        }
-        if (item.subItems) {
-            const filteredSubItems = item.subItems
-                .map(subItem => {
-                    if (!subItem.roles.includes(displayRole)) {
-                        return null;
-                    }
-                    if (subItem.subItems) {
-                         const filteredNestedSubItems = subItem.subItems.filter(nested => nested.roles.includes(displayRole));
-                         if (filteredNestedSubItems.length === 0) return null;
-                         return {...subItem, subItems: filteredNestedSubItems};
-                    }
-                    return subItem;
-                })
-                .filter(Boolean);
-            if (filteredSubItems.length === 0) return null;
-            return { ...item, subItems: filteredSubItems };
-        }
-        return item;
+      if (!item.roles.includes(displayRole)) {
+          return null;
+      }
+      if (item.subItems) {
+          const filteredSubItems = item.subItems
+              .map(subItem => {
+                  if (!subItem.roles.includes(displayRole)) {
+                      return null;
+                  }
+                  if (subItem.subItems) {
+                        const filteredNestedSubItems = subItem.subItems.filter(nested => nested.roles.includes(displayRole));
+                        if (filteredNestedSubItems.length === 0) return null;
+                        return {...subItem, subItems: filteredNestedSubItems};
+                  }
+                  return subItem;
+              })
+              .filter(Boolean as any);
+          if (filteredSubItems.length === 0) return null;
+          return { ...item, subItems: filteredSubItems };
+      }
+      return item;
     })
-    .filter(Boolean);
+    .filter(Boolean as any);
 
 
   return (
@@ -393,17 +393,19 @@ function MainLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {filteredMenuItems.map((item, index) => (
+              {filteredMenuItems.map((item: any, index: number) => (
                 <SidebarMenuItem key={index}>
                   {item.subItems ? (
                     <CollapsibleMenuItem item={item} pathname={pathname} />
                   ) : (
-                    <Link href={item.href} passHref>
-                      <SidebarMenuButton size="lg" isActive={pathname === item.href}>
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </Link>
+                    item.href && (
+                      <Link href={item.href} passHref>
+                        <SidebarMenuButton size="lg" isActive={pathname === item.href}>
+                          <item.icon className="h-5 w-5" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </Link>
+                    )
                   )}
                 </SidebarMenuItem>
               ))}

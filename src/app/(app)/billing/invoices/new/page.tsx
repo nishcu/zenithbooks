@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useContext, useEffect, useCallback, useMemo } from "react";
@@ -204,6 +203,7 @@ export default function NewInvoicePage() {
         toast({ title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.` });
         router.push("/billing/invoices");
     } catch (e: any) {
+        console.error("Firebase error:", e);
         toast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
     }
   }

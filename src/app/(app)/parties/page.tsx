@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useContext } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -46,20 +46,35 @@ import {
   Upload,
   Download,
   ChevronDown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  PlusSquare
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { AccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PartyDialog } from "@/components/billing/add-new-dialogs";
+import { PartyDialog, assignAccountCode } from "@/components/billing/add-new-dialogs";
 import { useRouter } from "next/navigation";
 import * as XLSX from 'xlsx';
+
+// Define the structure of a party (Customer or Vendor)
+interface Party {
+  id: string;
+  name: string;
+  gstin?: string;
+  email?: string;
+  phone?: string;
+  address1?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  userId: string;
+  accountCode?: string;
+}
 
 export default function PartiesPage() {
   const { toast } = useToast();
@@ -69,24 +84,26 @@ export default function PartiesPage() {
   const [activeTab, setActiveTab] = useState("customers");
   const [isPartyDialogOpen, setIsPartyDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [selectedParty, setSelectedParty] = useState<Party | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
 
+  // Fetch Customers
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
-  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
+  const customers: Party[] = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Party)) || [], [customersSnapshot]);
 
+  // Fetch Vendors
   const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
-  const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
+  const vendors: Party[] = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Party)) || [], [vendorsSnapshot]);
   
-  const handleOpenDialog = (party: any | null = null) => {
+  const handleOpenDialog = (party: Party | null = null) => {
     setSelectedParty(party);
     setIsPartyDialogOpen(true);
   }
 
-  const handleDeleteParty = async (party: any) => {
+  const handleDeleteParty = async (party: Party) => {
     const collectionName = activeTab === 'customers' ? 'customers' : 'vendors';
     const partyDocRef = doc(db, collectionName, party.id);
     try {
@@ -97,7 +114,18 @@ export default function PartiesPage() {
     }
   }
   
-  const handleViewLedger = (party: any) => {
+  const handleAssignCode = async (party: Party) => {
+      if (!user) return;
+      try {
+          const newCode = await assignAccountCode(party, user.uid);
+          toast({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.`});
+      } catch (error) {
+          console.error(error);
+          toast({ variant: "destructive", title: "Assignment Failed", description: (error as Error).message });
+      }
+  }
+  
+  const handleViewLedger = (party: Party) => {
       router.push(`/accounting/ledgers?account=${party.id}`);
   }
 
@@ -128,6 +156,7 @@ export default function PartiesPage() {
         City: p.city,
         State: p.state,
         Pincode: p.pincode,
+        AccountCode: p.accountCode,
     })));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, type.charAt(0).toUpperCase() + type.slice(1));
@@ -169,9 +198,9 @@ export default function PartiesPage() {
         const collectionName = activeTab === 'customers' ? 'customers' : 'vendors';
         const batch = writeBatch(db);
 
-        json.forEach(row => {
+        for (const row of json) {
             const newDocRef = doc(collection(db, collectionName));
-            batch.set(newDocRef, {
+            const partyData = {
                 userId: user.uid,
                 name: row.Name || '',
                 gstin: row.GSTIN || '',
@@ -181,8 +210,17 @@ export default function PartiesPage() {
                 city: row.City || '',
                 state: row.State || '',
                 pincode: String(row.Pincode || ''),
-            });
-        });
+                accountCode: '', // Initially empty
+            };
+
+            // Assign account code if it's a customer
+            if (collectionName === 'customers') {
+                 const nextCode = await assignAccountCode({ id: newDocRef.id, ...partyData}, user.uid);
+                 partyData.accountCode = nextCode;
+            }
+
+            batch.set(newDocRef, partyData);
+        }
 
         try {
             await batch.commit();
@@ -196,11 +234,12 @@ export default function PartiesPage() {
     reader.readAsArrayBuffer(importFile);
   };
   
-  const PartyTable = ({ parties, type, loading } : { parties: any[], type: 'Customer' | 'Vendor', loading: boolean}) => (
+  const PartyTable = ({ parties, type, loading } : { parties: Party[], type: 'Customer' | 'Vendor', loading: boolean}) => (
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Account Code</TableHead>
             <TableHead>GSTIN</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
@@ -209,13 +248,14 @@ export default function PartiesPage() {
         </TableHeader>
         <TableBody>
           {loading ? (
-            <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell></TableRow>
           ) : parties.length === 0 ? (
-            <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No {type.toLowerCase()}s found.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No {type.toLowerCase()}s found.</TableCell></TableRow>
           ) : (
             parties.map((party) => (
               <TableRow key={party.id}>
                 <TableCell className="font-medium">{party.name}</TableCell>
+                <TableCell className="font-mono text-sm">{party.accountCode || "N/A"}</TableCell>
                 <TableCell className="font-mono text-xs">{party.gstin || 'N/A'}</TableCell>
                 <TableCell>{party.email || 'N/A'}</TableCell>
                 <TableCell>{party.phone || 'N/A'}</TableCell>
@@ -225,6 +265,7 @@ export default function PartiesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewLedger(party)}><FileText className="mr-2"/> View Ledger</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenDialog(party)}><Edit className="mr-2"/> Edit</DropdownMenuItem>
+                        {type === 'Customer' && <DropdownMenuItem onClick={() => handleAssignCode(party)} disabled={!!party.accountCode}><PlusSquare className="mr-2"/> Assign Account Code</DropdownMenuItem>}
                         <DropdownMenuSeparator/>
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteParty(party)}><Trash2 className="mr-2"/> Delete</DropdownMenuItem>
                       </DropdownMenuContent>

@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Upload, GitCompareArrows } from "lucide-react";
+import { Upload, GitCompareArrows, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AccountingContext } from "@/context/accounting-context";
 import * as XLSX from 'xlsx';
@@ -147,9 +148,9 @@ export default function BooksVsGstr1Page() {
             </Card>
 
              <div className="grid md:grid-cols-3 gap-4">
-                <StatCard title="Turnover as per Books" value={formatCurrency(bookTotal)} loading={jvLoading}/>
-                <StatCard title="Turnover as per GSTR-1" value={formatCurrency(gstr1Total)} />
-                <StatCard title="Difference" value={formatCurrency(difference)} className={Math.abs(difference) > 0.01 ? "text-destructive" : ""} />
+                <StatCard icon={FileText} title="Turnover as per Books" value={formatCurrency(bookTotal)} loading={jvLoading}/>
+                <StatCard icon={FileText} title="Turnover as per GSTR-1" value={formatCurrency(gstr1Total)} />
+                <StatCard icon={FileText} title="Difference" value={formatCurrency(difference)} className={Math.abs(difference) > 0.01 ? "text-destructive" : ""} />
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">
@@ -229,4 +230,3 @@ function SalesTable({ data, type }: { data: any[], type: 'book' | 'gstr1' | 'rec
         </Table>
     );
 }
-

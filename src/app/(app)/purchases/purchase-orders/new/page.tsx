@@ -1,12 +1,14 @@
 
 "use client";
 
-import { useState, useContext, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
   Save,
+  PlusCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -38,7 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { PartyDialog, ItemDialog } from "@/components/billing/add-new-dialogs";
@@ -52,29 +54,51 @@ const createNewLineItem = (): LineItem => ({
 export default function NewPurchaseOrderPage() {
   const { toast } = useToast();
   const [user] = useAuthState(auth);
-  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [editId, setEditId] = useState<string | null>(null);
+
   const [orderDate, setOrderDate] = useState<Date | undefined>(new Date());
-  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
-  const [vendor, setVendor] = useState("");
-  
-  const [isVendorDialogOpen, setIsVendorDialogOpen] = useState(false);
+  const [supplier, setSupplier] = useState("");
+
+  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
-  
+
   const [lineItems, setLineItems] = useState<LineItem[]>([createNewLineItem()]);
-  
-  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
-  const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
-  const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
+
+  const suppliersQuery = user ? query(collection(db, 'suppliers'), where("userId", "==", user.uid)) : null;
+  const [suppliersSnapshot, suppliersLoading] = useCollection(suppliersQuery);
+  const suppliers = useMemo(() => suppliersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [suppliersSnapshot]);
 
   const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items: Item[] = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item)) || [], [itemsSnapshot]);
-  
-  const handleVendorChange = useCallback((value: string) => {
+
+  useEffect(() => {
+    const editParam = searchParams.get("edit");
+    if (editParam && user) {
+        setEditId(editParam);
+        const fetchOrder = async () => {
+            const orderDoc = await getDoc(doc(db, "purchase-orders", editParam));
+            if (orderDoc.exists()) {
+                const orderData = orderDoc.data();
+                setSupplier(orderData.supplierId);
+                setOrderDate(orderData.orderDate.toDate());
+                setLineItems(orderData.lineItems);
+            } else {
+                toast({ variant: "destructive", title: "Error", description: "Purchase order not found." });
+                router.push("/purchases/purchase-orders");
+            }
+        };
+        fetchOrder();
+    }
+}, [searchParams, user, toast, router]);
+
+  const handleSupplierChange = useCallback((value: string) => {
     if (value === 'add-new') {
-      setIsVendorDialogOpen(true);
+      setIsSupplierDialogOpen(true);
     } else {
-      setVendor(value);
+      setSupplier(value);
     }
   }, []);
 
@@ -82,12 +106,83 @@ export default function NewPurchaseOrderPage() {
   const totalTax = lineItems.reduce((acc, item) => acc + (item.qty * item.rate * item.taxRate / 100), 0);
   const totalAmount = subtotal + totalTax;
 
-  const handleSave = () => {
-    toast({
-      title: "Purchase Order Saved",
-      description: "Your new purchase order has been saved successfully.",
-    });
-  }
+  const handleSave = async () => {
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to save.", variant: "destructive" });
+      return;
+    }
+    if (!supplier) {
+      toast({ title: "Error", description: "Please select a supplier.", variant: "destructive" });
+      return;
+    }
+    if (!orderDate) {
+      toast({ title: "Error", description: "Please select an order date.", variant: "destructive" });
+      return;
+    }
+    if (lineItems.some(item => !item.itemId || item.qty <= 0 || item.rate < 0)) {
+      toast({ title: "Error", description: "Please ensure all line items are valid.", variant: "destructive" });
+      return;
+    }
+
+    const orderData = {
+        userId: user.uid,
+        supplierId: supplier,
+        orderDate: orderDate,
+        lineItems: lineItems,
+        subtotal: subtotal,
+        totalTax: totalTax,
+        totalAmount: totalAmount,
+        status: "Draft",
+    };
+
+    try {
+        if (editId) {
+            const orderRef = doc(db, "purchase-orders", editId);
+            await updateDoc(orderRef, {
+                ...orderData,
+                updatedAt: serverTimestamp(),
+            });
+            toast({
+                title: "Purchase Order Updated",
+                description: `Purchase order ${editId} has been updated successfully.`,
+            });
+        } else {
+            const newId = await runTransaction(db, async (transaction) => {
+                const counterRef = doc(db, "counters", "purchase-orders");
+                const counterDoc = await transaction.get(counterRef);
+                const newCount = (counterDoc.data()?.count || 0) + 1;
+                const newId = `PO-${String(newCount).padStart(4, '0')}`;
+
+                const newOrderRef = doc(db, "purchase-orders", newId);
+                transaction.set(counterRef, { count: newCount });
+                transaction.set(newOrderRef, {
+                     ...orderData,
+                    createdAt: serverTimestamp(),
+                });
+
+                return newId;
+            });
+
+            toast({
+                title: "Purchase Order Saved",
+                description: `Purchase order saved with ID: ${newId}`,
+            });
+        }
+        setEditId(null);
+        setSupplier("");
+        setOrderDate(new Date());
+        setLineItems([createNewLineItem()]);
+        router.push("/purchases/purchase-orders");
+
+    } catch (error) {
+      console.error("Error saving document: ", error);
+      toast({
+        title: "Error Saving",
+        description: "There was an error saving the purchase order.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -97,34 +192,39 @@ export default function NewPurchaseOrderPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">New Purchase Order</h1>
+        <h1 className="text-2xl font-bold">{editId ? "Edit Purchase Order" : "New Purchase Order"}</h1>
       </div>
 
-      <PartyDialog type="Vendor" open={isVendorDialogOpen} onOpenChange={setIsVendorDialogOpen} />
+      <PartyDialog type="Supplier" open={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} />
       <ItemDialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen} item={null} />
 
       <Card>
         <CardHeader>
-          <CardTitle>Purchase Order Details</CardTitle>
+          <CardTitle>{editId ? "Edit Purchase Order" : "Purchase Order Details"}</CardTitle>
           <CardDescription>
-            Fill out the details for the new purchase order.
+          {editId ? `Editing purchase order ${editId}.` : "Fill out the details for the new purchase order."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-3 gap-6">
              <div className="space-y-2 md:col-span-1">
-              <Label>Vendor</Label>
-               <Select onValueChange={handleVendorChange} value={vendor} disabled={vendorsLoading}>
+              <Label>Supplier</Label>
+               <Select onValueChange={handleSupplierChange} value={supplier} disabled={suppliersLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder={vendorsLoading ? "Loading..." : "Select a vendor"} />
+                  <SelectValue placeholder={suppliersLoading ? "Loading..." : "Select a supplier"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {vendors.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.name}
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
                     </SelectItem>
                   ))}
                   <Separator />
+                   <SelectItem value="add-new" className="text-primary focus:text-primary">
+                    <div className="flex items-center gap-2">
+                        <PlusCircle className="h-4 w-4" /> Add New Supplier
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -140,18 +240,6 @@ export default function NewPurchaseOrderPage() {
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={orderDate} onSelect={setOrderDate} initialFocus /></PopoverContent>
               </Popover>
             </div>
-            <div className="space-y-2">
-              <Label>Expected Delivery Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !deliveryDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deliveryDate ? format(deliveryDate, "PPP") : <span>Pick a delivery date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deliveryDate} onSelect={setDeliveryDate} initialFocus /></PopoverContent>
-              </Popover>
-            </div>
           </div>
           
           <Separator />
@@ -163,7 +251,6 @@ export default function NewPurchaseOrderPage() {
               setLineItems={setLineItems}
               items={items}
               itemsLoading={itemsLoading}
-              isPurchase={true}
               openItemDialog={() => setIsItemDialogOpen(true)}
             />
           </div>
@@ -180,7 +267,7 @@ export default function NewPurchaseOrderPage() {
         <CardFooter className="flex justify-end">
           <Button onClick={handleSave}>
             <Save className="mr-2" />
-            Save Purchase Order
+            {editId ? "Update Purchase Order" : "Save Purchase Order"}
           </Button>
         </CardFooter>
       </Card>

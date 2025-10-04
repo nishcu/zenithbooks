@@ -35,18 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Loader2, Info } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -56,8 +46,14 @@ import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { allAccounts } from "@/lib/accounts";
+
+interface Account {
+    code: string;
+    name: string;
+    type: string;
+    id?: string;
+}
 
 const accountTypes = {
     assets: ["Bank", "Cash", "Current Asset", "Fixed Asset", "Inventory", "Investment"],
@@ -67,7 +63,7 @@ const accountTypes = {
     expenses: ["Expense", "Cost of Goods Sold", "Depreciation"],
 };
 
-const accountCodeRanges = {
+const accountCodeRanges: Record<string, { start: number, end: number }> = {
     "Fixed Asset": { start: 1000, end: 1199 },
     "Investment": { start: 1200, end: 1299 },
     "Current Asset": { start: 1300, end: 1499 },
@@ -87,18 +83,6 @@ const accountSchema = z.object({
     name: z.string().min(3, "Account name is required."),
     code: z.string().regex(/^\d{4}$/, "Account code must be 4 digits."),
     type: z.string().min(1, "Account type is required."),
-    purchaseDate: z.date().optional(),
-    putToUseDate: z.date().optional(),
-    depreciationRate: z.number().optional(),
-    openingWdv: z.number().optional(),
-}).refine(data => {
-    if (data.type === 'Fixed Asset') {
-        return !!data.purchaseDate && !!data.putToUseDate && data.depreciationRate !== undefined && data.openingWdv !== undefined;
-    }
-    return true;
-}, {
-    message: "For Fixed Assets, all detail fields are required.",
-    path: ["purchaseDate"],
 });
 
 export default function ChartOfAccountsPage() {
@@ -106,29 +90,37 @@ export default function ChartOfAccountsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   
-  // Custom accounts added by the user
   const userAccountsRef = collection(db, "user_accounts");
   const userAccountsQuery = user ? query(userAccountsRef, where("userId", "==", user.uid), orderBy("code")) : null;
-  const [userAccountsSnapshot, loading, error] = useCollection(userAccountsQuery);
+  const [userAccountsSnapshot, loading] = useCollection(userAccountsQuery);
   
-  const userAccounts = userAccountsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [];
+  const userAccounts: Account[] = useMemo(() => 
+      userAccountsSnapshot?.docs.map(doc => {
+          const data = doc.data();
+          return {
+              id: doc.id,
+              code: data.code,
+              name: data.name,
+              type: data.type,
+          };
+      }) || [], [userAccountsSnapshot]);
   
-  const combinedAccounts = useMemo(() => {
-    return [...allAccounts, ...userAccounts].sort((a,b) => a.code.localeCompare(b.code));
+  const combinedAccounts: Account[] = useMemo(() => {
+    return [...allAccounts, ...userAccounts].sort((a,b) => (a.code || "").localeCompare(b.code || ""));
   }, [userAccounts]);
 
   const form = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
-    defaultValues: { name: "", code: "", type: "", openingWdv: 0.00 }
+    defaultValues: { name: "", code: "", type: "" }
   });
-  
-  const selectedAccountType = form.watch("type");
 
   const getNextAvailableCode = (type: string) => {
     const range = accountCodeRanges[type as keyof typeof accountCodeRanges];
     if (!range) return "";
     
-    const existingCodes = combinedAccounts.filter(acc => acc.type === type).map(acc => parseInt(acc.code));
+    const existingCodes = combinedAccounts
+        .filter(acc => acc.type === type && acc.code)
+        .map(acc => parseInt(acc.code));
     
     for (let i = range.start; i <= range.end; i++) {
         if (!existingCodes.includes(i)) {
@@ -150,7 +142,7 @@ export default function ChartOfAccountsPage() {
         return;
     }
 
-    const newAccount: any = { ...values, userId: user.uid };
+    const newAccount = { ...values, userId: user.uid };
 
     try {
         await addDoc(userAccountsRef, newAccount);
@@ -159,12 +151,12 @@ export default function ChartOfAccountsPage() {
         setIsAddDialogOpen(false);
     } catch (e) {
         console.error("Error adding document: ", e);
-        toast({ variant: "destructive", title: "Error", description: "Could not save the account."})
+        toast({ variant: "destructive", title: "Error", description: "Could not save the account." })
     }
   };
 
   const renderAccountCategory = (title: string, types: string[]) => {
-    const categoryAccounts = combinedAccounts.filter(acc => types.includes(acc.type));
+    const categoryAccounts = combinedAccounts.filter(acc => acc.type && types.includes(acc.type));
     if (categoryAccounts.length === 0) return null;
     
     return (
@@ -181,7 +173,7 @@ export default function ChartOfAccountsPage() {
                 </TableHeader>
                 <TableBody>
                     {categoryAccounts.map((account) => (
-                        <TableRow key={account.code}>
+                        <TableRow key={account.id || account.code}>
                             <TableCell className="font-mono">{account.code}</TableCell>
                             <TableCell className="font-medium">{account.name}</TableCell>
                             <TableCell className="text-muted-foreground">{account.type}</TableCell>
@@ -224,7 +216,7 @@ export default function ChartOfAccountsPage() {
                              <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Account Name</FormLabel><FormControl><Input placeholder="e.g. Special Project Revenue" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="type" render={({ field }) => ( <FormItem><FormLabel>Account Type</FormLabel>
-                                    <Select onValueChange={handleTypeChange} defaultValue={field.value}>
+                                    <Select onValueChange={handleTypeChange} value={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl>
                                         <SelectContent>
                                             {Object.entries(accountTypes).map(([group, types]) => (
@@ -243,7 +235,10 @@ export default function ChartOfAccountsPage() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Save Account</Button>
+                            <Button type="submit" disabled={form.formState.isSubmitting}>
+                                {form.formState.isSubmitting && <Loader2 className="mr-2 animate-spin"/>}
+                                Save Account
+                            </Button>
                         </DialogFooter>
                     </form>
                   </Form>
@@ -257,7 +252,7 @@ export default function ChartOfAccountsPage() {
               <CardDescription>Browse all accounts, organized by category.</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? <Loader2 className="animate-spin" /> : (
+            {loading ? <Loader2 className="animate-spin mx-auto" /> : (
                 <div className="space-y-8">
                   {renderAccountCategory("Assets", accountTypes.assets)}
                   {renderAccountCategory("Liabilities", accountTypes.liabilities)}

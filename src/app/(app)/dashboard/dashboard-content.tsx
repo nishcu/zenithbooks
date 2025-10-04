@@ -26,7 +26,7 @@ import { ClientList } from "@/components/admin/client-list";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 
-const SUPER_ADMIN_EMAIL = 'smr@smr.com';
+const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
 
 
 function DashboardContent() {
@@ -44,7 +44,7 @@ function DashboardContent() {
 
   const getRole = () => {
     if (!user) return 'business';
-    if (user.email === SUPER_ADMIN_EMAIL) return 'super_admin';
+    if (user.uid === SUPER_ADMIN_UID) return 'super_admin';
     return userData?.userType || 'business'; 
   }
   const userRole = getRole();

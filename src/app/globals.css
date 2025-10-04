@@ -103,4 +103,7 @@
     page-break-after: auto;
     page-break-inside: avoid;
   }
+  .print\:p-8 { padding: 2rem; }
+  table { page-break-inside: avoid; }
+  h1, h2, h3 { page-break-after: avoid; }
 }
