@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -40,18 +40,61 @@ const sampleGodowns = [
     { id: "loc-003", name: "Damaged Goods Area", address: "Backside, Main Warehouse", inCharge: "Ramesh Kumar", contact: "9876543210" },
 ];
 
-export default function GodownsPage() {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
-  
-  const [godowns, setGodowns] = useState(sampleGodowns);
+type Godown = {
+    id: string;
+    name: string;
+    address: string;
+    inCharge: string;
+    contact: string;
+};
 
-  const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    toast({
-        title: `Action: ${action}`,
-        description: `This would ${action.toLowerCase()} godown ${id}. This functionality is a placeholder.`
-    })
+export default function GodownsPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [godowns, setGodowns] = useState(sampleGodowns);
+  const [selectedGodown, setSelectedGodown] = useState<Godown | null>(null);
+  const [formData, setFormData] = useState<Omit<Godown, 'id'> >({ name: '', address: '', inCharge: '', contact: '' });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (selectedGodown) {
+        setFormData(selectedGodown);
+    } else {
+        setFormData({ name: '', address: '', inCharge: '', contact: '' });
+    }
+  }, [selectedGodown]);
+
+  const handleAddClick = () => {
+    setSelectedGodown(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditClick = (godown: Godown) => {
+    setSelectedGodown(godown);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setGodowns(godowns.filter(g => g.id !== id));
+    toast({ title: "Godown Deleted", description: "The godown has been removed." });
+  };
+
+  const handleSave = () => {
+    if (selectedGodown) {
+        setGodowns(godowns.map(g => g.id === selectedGodown.id ? { ...g, ...formData } : g));
+        toast({ title: "Godown Updated", description: "The godown details have been updated." });
+    } else {
+        const newGodown = { id: `loc-${Date.now()}`, ...formData };
+        setGodowns([...godowns, newGodown]);
+        toast({ title: "Godown Added", description: "A new godown has been created." });
+    }
+    setIsDialogOpen(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({...prev, [id]: value }));
   }
+
 
   return (
     <div className="space-y-8">
@@ -62,43 +105,10 @@ export default function GodownsPage() {
             Manage your inventory locations and warehouses.
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2"/>
-                    New Godown
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Create Godown / Location</DialogTitle>
-                    <DialogDescription>
-                        Add a new location to track your inventory.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="g-name">Godown Name</Label>
-                        <Input id="g-name" placeholder="e.g., Bengaluru Warehouse" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="g-address">Address</Label>
-                        <Input id="g-address" placeholder="Full address of the location" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="g-incharge">In-Charge Name</Label>
-                        <Input id="g-incharge" placeholder="e.g., Sunil Varma" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="g-contact">Contact Number</Label>
-                        <Input id="g-contact" placeholder="e.g., 9988776655" />
-                     </div>
-                </div>
-                <DialogFooter>
-                    <Button type="submit">Save Godown</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <Button onClick={handleAddClick}>
+            <PlusCircle className="mr-2"/>
+            New Godown
+        </Button>
       </div>
       
       <Card>
@@ -130,8 +140,8 @@ export default function GodownsPage() {
                                         <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onSelect={() => handleAction("Edit", g.id)}><Edit className="mr-2"/>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive" onSelect={() => handleAction("Delete", g.id)}>
+                                        <DropdownMenuItem onSelect={() => handleEditClick(g)}><Edit className="mr-2"/>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-destructive" onSelect={() => handleDelete(g.id)}>
                                             <Trash2 className="mr-2"/>Delete
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -143,6 +153,37 @@ export default function GodownsPage() {
             </Table>
           </CardContent>
       </Card>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{selectedGodown ? "Edit Godown" : "Create Godown / Location"}</DialogTitle>
+                    <DialogDescription>
+                        {selectedGodown ? "Edit the details of your godown." : "Add a new location to track your inventory."}
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Godown Name</Label>
+                        <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="e.g., Bengaluru Warehouse" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input id="address" value={formData.address} onChange={handleInputChange} placeholder="Full address of the location" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="inCharge">In-Charge Name</Label>
+                        <Input id="inCharge" value={formData.inCharge} onChange={handleInputChange} placeholder="e.g., Sunil Varma" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="contact">Contact Number</Label>
+                        <Input id="contact" value={formData.contact} onChange={handleInputChange} placeholder="e.g., 9988776655" />
+                     </div>
+                </div>
+                <DialogFooter>
+                    <Button type="submit" onClick={handleSave}>Save Godown</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

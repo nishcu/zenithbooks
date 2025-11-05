@@ -38,6 +38,7 @@ type Item = {
   id: string;
   name: string;
   hsn?: string;
+  gstRate?: number;
   stock?: number;
   purchasePrice?: number;
   sellingPrice?: number;
@@ -117,8 +118,9 @@ export default function ItemsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[30%]">Item Name</TableHead>
+                <TableHead className="w-[25%]" >Item Name</TableHead>
                 <TableHead>HSN/SAC</TableHead>
+                <TableHead>GST Rate (%)</TableHead>
                 <TableHead className="text-right">Stock on Hand</TableHead>
                 <TableHead className="text-right">Purchase Price (₹)</TableHead>
                 <TableHead className="text-right">Selling Price (₹)</TableHead>
@@ -127,14 +129,15 @@ export default function ItemsPage() {
             </TableHeader>
             <TableBody>
               {itemsLoading ? (
-                <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading items...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">Loading items...</TableCell></TableRow>
               ) : filteredItems.length === 0 ? (
-                 <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No items found.</TableCell></TableRow>
+                 <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No items found.</TableCell></TableRow>
               ) : (
                 filteredItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="font-mono text-xs">{item.hsn || 'N/A'}</TableCell>
+                    <TableCell className="text-right">{item.gstRate || 0}</TableCell>
                     <TableCell className="text-right">{item.stock || 0}</TableCell>
                     <TableCell className="text-right font-mono">{item.purchasePrice?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell className="text-right font-mono">{item.sellingPrice?.toFixed(2) || '0.00'}</TableCell>
@@ -163,4 +166,3 @@ export default function ItemsPage() {
     </div>
   );
 }
-

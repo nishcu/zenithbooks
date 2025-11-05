@@ -1,5 +1,12 @@
 
-export const allAccounts = [
+export interface Account {
+  code: string;
+  name: string;
+  type: string;
+  openingWdv?: number;
+}
+
+export const allAccounts: Account[] = [
   // ASSETS
   // Fixed Assets (1000-1199)
   { code: "1010", name: "Land & Buildings", type: "Fixed Asset" },

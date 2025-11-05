@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect } from "react";
@@ -45,6 +44,7 @@ type Item = {
   name: string;
   description?: string;
   hsn?: string;
+  gstRate?: number;
   stock?: number;
   purchasePrice?: number;
   sellingPrice?: number;
@@ -66,6 +66,7 @@ const itemSchema = z.object({
     name: z.string().min(2, "Item name is required."),
     description: z.string().optional(),
     hsn: z.string().optional(),
+    gstRate: z.coerce.number().min(0).optional(),
     stock: z.coerce.number().min(0).optional(),
     purchasePrice: z.coerce.number().min(0).optional(),
     sellingPrice: z.coerce.number().min(0).optional(),
@@ -236,14 +237,14 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const form = useForm<z.infer<typeof itemSchema>>({
         resolver: zodResolver(itemSchema),
-        defaultValues: { name: "", description: "", hsn: "", stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" },
+        defaultValues: { name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" },
     });
 
     useEffect(() => {
       if (item && open) {
         form.reset(item);
       } else if (!open) {
-        form.reset({ name: "", description: "", hsn: "", stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" });
+        form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" });
       }
     }, [item, open, form]);
 
@@ -285,6 +286,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
                             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><Label>Description</Label><FormControl><Textarea placeholder="A short description of the item" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                              <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="hsn" render={({ field }) => ( <FormItem><Label>HSN/SAC Code</Label><FormControl><Input placeholder="e.g. 8471" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                 <FormField control={form.control} name="gstRate" render={({ field }) => ( <FormItem><Label>GST Rate (%)</Label><FormControl><Input type="number" placeholder="e.g. 18" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                 <FormField control={form.control} name="stockGroupId" render={({ field }) => ( <FormItem><Label>Stock Group</Label>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a group" /></SelectTrigger></FormControl>
