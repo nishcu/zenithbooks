@@ -33,6 +33,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -229,11 +230,15 @@ export default function InvoicesPage() {
         name: "ZenithBooks Solutions Pvt. Ltd.",
     };
 
+    const [invoiceToCancel, setInvoiceToCancel] = useState<Invoice | null>(null);
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+
     const handleAction = async (action: string, invoice: Invoice) => {
         if (action === 'View') {
             setSelectedInvoice(invoice);
         } else if (action === 'Cancel') {
-            await handleCancelInvoice(invoice.id);
+            setInvoiceToCancel(invoice);
+            setIsCancelDialogOpen(true);
         } else if (action === 'Duplicate') {
             const queryParams = new URLSearchParams({
                 duplicate: invoice.id
@@ -475,6 +480,47 @@ export default function InvoicesPage() {
 
        <EwaybillDialog invoice={selectedInvoice} isOpen={isEwaybillDialogOpen} onOpenChange={setIsEwaybillDialogOpen} />
        <QuickInvoiceDialog open={isQuickInvoiceOpen} onOpenChange={setIsQuickInvoiceOpen} />
+       
+       {/* Cancel Invoice Confirmation Dialog */}
+       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+         <DialogContent>
+           <DialogHeader>
+             <DialogTitle>Confirm Invoice Cancellation</DialogTitle>
+             <DialogDescription>
+               Are you sure you want to cancel invoice <strong>{invoiceToCancel?.id}</strong>?
+               <br />
+               <br />
+               This action will:
+               <ul className="list-disc list-inside mt-2 space-y-1">
+                 <li>Create a reversal entry in your accounting records</li>
+                 <li>Update GSTR-1 and GSTR-3B reports</li>
+                 <li>Mark the invoice as cancelled</li>
+               </ul>
+               <br />
+               <strong className="text-destructive">This action cannot be undone.</strong>
+             </DialogDescription>
+           </DialogHeader>
+           <DialogFooter>
+             <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+               No, Keep Invoice
+             </Button>
+             <Button 
+               variant="destructive" 
+               onClick={async () => {
+                 if (invoiceToCancel) {
+                   const success = await handleCancelInvoice(invoiceToCancel.id);
+                   if (success) {
+                     setIsCancelDialogOpen(false);
+                     setInvoiceToCancel(null);
+                   }
+                 }
+               }}
+             >
+               Yes, Cancel Invoice
+             </Button>
+           </DialogFooter>
+         </DialogContent>
+       </Dialog>
     </div>
   );
 }

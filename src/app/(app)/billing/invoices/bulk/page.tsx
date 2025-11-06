@@ -169,14 +169,20 @@ export default function BulkInvoicePage() {
           let taxRateIndex = -1;
           let dateIndex = -1;
 
-          // Find column indices
+          // Find column indices - be more specific to avoid confusion
           headerRow.forEach((header, index) => {
             const h = header.toLowerCase().replace(/"/g, '').trim();
             if (h.includes('customer')) customerIndex = index;
             if (h.includes('product') || h.includes('item') || h.includes('service')) productIndex = index;
             if (h.includes('quantity') || h.includes('qty')) qtyIndex = index;
-            if (h.includes('price') || h.includes('rate') || h.includes('amount')) priceIndex = index;
-            if (h.includes('tax') && h.includes('rate')) taxRateIndex = index;
+            // Price: match "price" but NOT "tax rate" or just "rate" alone
+            if (h.includes('price') && !h.includes('tax') && !h.includes('rate')) {
+              priceIndex = index;
+            }
+            // Tax Rate: must include both "tax" and "rate"
+            if (h.includes('tax') && h.includes('rate')) {
+              taxRateIndex = index;
+            }
             if (h.includes('date') && h.includes('invoice')) dateIndex = index;
           });
 
@@ -256,8 +262,14 @@ export default function BulkInvoicePage() {
             if (h.includes('customer')) customerIndex = index;
             if (h.includes('product') || h.includes('item') || h.includes('service')) productIndex = index;
             if (h.includes('quantity') || h.includes('qty')) qtyIndex = index;
-            if (h.includes('price') || h.includes('rate') || h.includes('amount')) priceIndex = index;
-            if (h.includes('tax') && h.includes('rate')) taxRateIndex = index;
+            // Price: match "price" but NOT "tax rate" or just "rate" alone
+            if (h.includes('price') && !h.includes('tax') && !h.includes('rate')) {
+              priceIndex = index;
+            }
+            // Tax Rate: must include both "tax" and "rate"
+            if (h.includes('tax') && h.includes('rate')) {
+              taxRateIndex = index;
+            }
             if (h.includes('date') && h.includes('invoice')) dateIndex = index;
           });
 
