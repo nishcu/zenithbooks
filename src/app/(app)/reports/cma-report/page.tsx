@@ -80,6 +80,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { getServicePricing, ServicePricing } from "@/lib/pricing-service";
+import { applyExcelFormatting } from "@/lib/export-utils";
 
 const initialAssets: FixedAsset[] = [
   { id: 1, name: "Plant & Machinery", cost: 1000000, depreciationRate: 15, additionYear: 0 },
@@ -202,17 +203,12 @@ export default function CmaReportGeneratorPage() {
     const wb = XLSX.utils.book_new();
     const processSheet = (data: any[], sheetName: string) => {
         const ws = XLSX.utils.aoa_to_sheet(data);
-        const colWidths = data[0].map((_: any, i: number) => {
-            let maxWidth = 0;
-            data.forEach((row: any[]) => {
-                const cellValue = row[i] ? String(row[i]) : "";
-                if (cellValue.length > maxWidth) {
-                    maxWidth = cellValue.length;
-                }
-            });
-            return { wch: maxWidth + 2 };
-        });
-        ws['!cols'] = colWidths;
+        // Apply formatting for print-ready output
+        if (data.length > 0) {
+            const headers = data[0];
+            const rows = data.slice(1);
+            applyExcelFormatting(ws, headers, rows);
+        }
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
     

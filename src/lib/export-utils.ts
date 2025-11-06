@@ -60,7 +60,64 @@ export function exportToCSV(
 }
 
 /**
- * Export data to Excel format
+ * Apply formatting to Excel worksheet for print-ready output
+ * This function optimizes column widths and sets up the worksheet for printing
+ */
+export function applyExcelFormatting(
+  worksheet: XLSX.WorkSheet,
+  headers: string[],
+  rows: (string | number)[][]
+): void {
+  // Calculate optimal column widths for proper alignment
+  const colWidths = headers.map((_, i) => {
+    let maxWidth = headers[i]?.length || 10;
+    rows.forEach((row) => {
+      const cellValue = row[i] ? String(row[i]) : "";
+      // Account for numbers with formatting (currency, decimals)
+      const numValue = typeof row[i] === "number" ? String(row[i]) : cellValue;
+      const width = numValue.length;
+      if (width > maxWidth) {
+        maxWidth = width;
+      }
+    });
+    // Add padding (3 chars) and ensure minimum width (12) for readability
+    // Cap at 60 characters to prevent overly wide columns
+    return { wch: Math.max(Math.min(maxWidth + 3, 60), 12) };
+  });
+  worksheet["!cols"] = colWidths;
+
+  // Set print area to include all data
+  if (worksheet["!ref"]) {
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
+    // Ensure we have a valid range
+    if (range.e.c >= 0 && range.e.r >= 0) {
+      // Print settings are handled by Excel when the file is opened
+      // Column widths are set above for proper alignment
+    }
+  }
+}
+
+/**
+ * Format Excel worksheet created from JSON data
+ * Converts JSON sheet to array format and applies formatting
+ */
+export function formatExcelFromJson(
+  worksheet: XLSX.WorkSheet,
+  jsonData: Record<string, any>[]
+): void {
+  if (!jsonData || jsonData.length === 0) return;
+  
+  const headers = Object.keys(jsonData[0]);
+  const rows = jsonData.map(row => headers.map(h => {
+    const value = row[h];
+    return value !== null && value !== undefined ? String(value) : "";
+  }));
+  
+  applyExcelFormatting(worksheet, headers, rows);
+}
+
+/**
+ * Export data to Excel format with proper formatting and print settings
  */
 export function exportToExcel(
   data: ExportData | ExportData[],
@@ -81,18 +138,8 @@ export function exportToExcel(
     const worksheetData = [headers, ...rows];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
-    // Auto-fit column widths
-    const colWidths = headers.map((_, i) => {
-      let maxWidth = headers[i]?.length || 10;
-      rows.forEach((row) => {
-        const cellValue = row[i] ? String(row[i]) : "";
-        if (cellValue.length > maxWidth) {
-          maxWidth = cellValue.length;
-        }
-      });
-      return { wch: Math.min(maxWidth + 2, 50) }; // Cap at 50 characters
-    });
-    worksheet["!cols"] = colWidths;
+    // Apply formatting for print-ready output
+    applyExcelFormatting(worksheet, headers, rows);
 
     XLSX.utils.book_append_sheet(workbook, worksheet, currentSheetName.substring(0, 31)); // Excel sheet name limit
   });

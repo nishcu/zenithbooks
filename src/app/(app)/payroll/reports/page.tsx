@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { formatExcelFromJson } from "@/lib/export-utils";
 
 const months = [
     { value: "0", label: "January" }, { value: "1", label: "February" }, { value: "2", label: "March" },
@@ -52,6 +53,10 @@ export default function PayrollReportsPage() {
         ];
 
         const worksheet = XLSX.utils.json_to_sheet(reportData);
+        
+        // Apply formatting for print-ready output
+        formatExcelFromJson(worksheet, reportData);
+        
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Payroll Summary");
 

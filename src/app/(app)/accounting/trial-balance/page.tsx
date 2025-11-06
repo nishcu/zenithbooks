@@ -52,6 +52,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import * as XLSX from 'xlsx';
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { applyExcelFormatting } from "@/lib/export-utils";
 
 
 export default function TrialBalancePage() {
@@ -198,10 +199,18 @@ export default function TrialBalancePage() {
         dataToExport.push(totalRow);
         
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        
+        // Convert to array format for formatting
+        const headers = Object.keys(dataToExport[0] || {});
+        const rows = dataToExport.map(row => headers.map(h => row[h as keyof typeof row]));
+        
+        // Apply formatting for print-ready output
+        applyExcelFormatting(worksheet, headers, rows);
+        
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Trial Balance");
         XLSX.writeFile(workbook, `Trial_Balance_${format(date || new Date(), 'yyyy-MM-dd')}.xlsx`);
-        toast({ title: "Export Successful", description: "Trial Balance has been exported to Excel." });
+        toast({ title: "Export Successful", description: "Trial Balance has been exported to Excel with proper formatting." });
     };
 
 

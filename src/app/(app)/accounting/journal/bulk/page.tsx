@@ -197,6 +197,10 @@ export default function BulkJournalEntryPage() {
         ];
 
         const ws = XLSX.utils.json_to_sheet(templateData);
+        
+        // Apply formatting for print-ready output
+        formatExcelFromJson(ws, templateData);
+        
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Journal Entries");
         
@@ -209,6 +213,7 @@ export default function BulkJournalEntryPage() {
             { Column: "Narration", Description: "Description of the transaction" }
         ];
         const wsInstructions = XLSX.utils.json_to_sheet(instructions);
+        formatExcelFromJson(wsInstructions, instructions);
         XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
         
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");

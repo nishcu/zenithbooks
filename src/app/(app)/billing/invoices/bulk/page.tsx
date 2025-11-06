@@ -44,6 +44,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import * as XLSX from 'xlsx';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { applyExcelFormatting } from "@/lib/export-utils";
 
 interface BulkInvoiceRow {
   customerName: string;
@@ -120,6 +121,10 @@ export default function BulkInvoicePage() {
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+    
+    // Apply formatting for print-ready output
+    applyExcelFormatting(ws, headers, exampleData);
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Bulk Invoices");
     
