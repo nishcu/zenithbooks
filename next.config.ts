@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    // Ensure proper client component handling
+    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'inline',
