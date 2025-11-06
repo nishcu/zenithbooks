@@ -40,32 +40,83 @@ export default function FindProfessionalPage() {
     const [selectedCity, setSelectedCity] = useState<string>("all");
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Predefined professional types
+    const predefinedTypes = [
+        "Chartered Accountant",
+        "Company Secretary",
+        "Cost Accountant",
+        "Advocate",
+        "Accountant",
+        "Auditor"
+    ];
+
     // Get unique cities and types
     const cities = useMemo(() => {
         const citySet = new Set(professionals.map(pro => pro.location));
-        return Array.from(citySet);
+        return Array.from(citySet).sort();
     }, []);
 
     const types = useMemo(() => {
-        const typeSet = new Set(professionals.map(pro => pro.title));
-        return Array.from(typeSet);
+        // Combine predefined types with types from data
+        const typeSet = new Set([
+            ...predefinedTypes,
+            ...professionals.map(pro => pro.title)
+        ]);
+        return Array.from(typeSet).sort();
     }, []);
 
     // Filter professionals
     const filteredProfessionals = useMemo(() => {
+        if (!professionals || professionals.length === 0) return [];
+        
         return professionals.filter(pro => {
-            const matchesService = !selectedService || pro.specialties.some(spec => 
-                spec.toLowerCase().includes(selectedService.toLowerCase().replace(/_/g, ' '))
-            );
-            const matchesType = selectedType === "all" || pro.title.toLowerCase().includes(selectedType.toLowerCase());
-            const matchesCity = selectedCity === "all" || pro.location.toLowerCase() === selectedCity.toLowerCase();
-            const matchesSearch = !searchTerm || 
-                pro.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                pro.firm.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                pro.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                pro.specialties.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase()));
+            // Service filter - check if any specialty matches
+            if (selectedService) {
+                const serviceTerm = selectedService.toLowerCase().replace(/_/g, ' ');
+                const matchesService = pro.specialties?.some(spec => {
+                    const specLower = spec.toLowerCase();
+                    return specLower.includes(serviceTerm) || 
+                           serviceTerm.includes(specLower);
+                }) || false;
+                if (!matchesService) return false;
+            }
             
-            return matchesService && matchesType && matchesCity && matchesSearch;
+            // Type filter - exact match or contains (case-insensitive)
+            if (selectedType !== "all") {
+                const proTitleLower = (pro.title || '').toLowerCase().trim();
+                const selectedTypeLower = selectedType.toLowerCase().trim();
+                
+                // Check if title matches selected type
+                const matchesType = proTitleLower === selectedTypeLower ||
+                    proTitleLower.includes(selectedTypeLower) ||
+                    selectedTypeLower.includes(proTitleLower);
+                
+                if (!matchesType) return false;
+            }
+            
+            // City filter - exact match (case-insensitive)
+            if (selectedCity !== "all") {
+                const proLocationLower = (pro.location || '').toLowerCase().trim();
+                const selectedCityLower = selectedCity.toLowerCase().trim();
+                if (proLocationLower !== selectedCityLower) return false;
+            }
+            
+            // Search filter - search in name, firm, bio, title, location, and specialties
+            if (searchTerm.trim()) {
+                const searchLower = searchTerm.trim().toLowerCase();
+                const searchableText = [
+                    pro.name || '',
+                    pro.firm || '',
+                    pro.bio || '',
+                    pro.title || '',
+                    pro.location || '',
+                    ...(pro.specialties || [])
+                ].join(' ').toLowerCase();
+                
+                if (!searchableText.includes(searchLower)) return false;
+            }
+            
+            return true;
         });
     }, [selectedService, selectedType, selectedCity, searchTerm]);
 
@@ -121,7 +172,7 @@ export default function FindProfessionalPage() {
                 <SelectContent>
                   <SelectItem value="all">All Professionals</SelectItem>
                   {types.map(type => (
-                    <SelectItem key={type} value={type.toLowerCase()}>{type}</SelectItem>
+                    <SelectItem key={type} value={type.toLowerCase().trim()}>{type}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -138,7 +189,7 @@ export default function FindProfessionalPage() {
                 <SelectContent>
                   <SelectItem value="all">All Cities</SelectItem>
                   {cities.map(city => (
-                    <SelectItem key={city} value={city.toLowerCase()}>{city}</SelectItem>
+                    <SelectItem key={city} value={city.toLowerCase().trim()}>{city}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
