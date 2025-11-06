@@ -324,6 +324,12 @@ export default function InvoicesPage() {
                     Voice Invoice
                 </Button>
             </Link>
+            <Link href="/billing/invoices/bulk" passHref>
+                <Button variant="default" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                    <FileSpreadsheet className="mr-2"/>
+                    Bulk Upload
+                </Button>
+            </Link>
             <Link href="/billing/invoices/rapid" passHref>
                 <Button variant="outline">
                     <Zap className="mr-2"/>
