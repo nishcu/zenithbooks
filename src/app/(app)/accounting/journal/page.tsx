@@ -295,7 +295,7 @@ export default function JournalVoucherPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/accounting/journal/bulk" passHref>
+          <Link href="/accounting/journal/bulk">
             <Button variant="outline">
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               Bulk Upload
