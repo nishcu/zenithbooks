@@ -285,30 +285,30 @@ export default function JournalVoucherPage() {
     const totalCredits = lines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
     const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01 && totalDebits > 0;
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Journal Vouchers</h1>
-          <p className="text-muted-foreground">
-            Create manual journal entries to adjust ledger accounts.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/accounting/journal/bulk">
-            <Button variant="outline">
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Bulk Upload
-            </Button>
-          </Link>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2" />
-                New Journal Voucher
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">Journal Vouchers</h1>
+                    <p className="text-muted-foreground">
+                        Create manual journal entries to adjust ledger accounts.
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <Link href="/accounting/journal/bulk">
+                        <Button variant="outline">
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Bulk Upload
+                        </Button>
+                    </Link>
+                    <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <PlusCircle className="mr-2" />
+                                New Journal Voucher
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
                     <DialogDescription>
@@ -432,124 +432,124 @@ export default function JournalVoucherPage() {
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSaveVoucher} disabled={!isBalanced}>{editingVoucher ? 'Save Changes' : 'Save Voucher'}</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      </div>
+                        </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Journal Voucher List</CardTitle>
-          <CardDescription>
-            A list of all manual journal entries. Reversed entries are hidden from this list.
-          </CardDescription>
-           <div className="relative pt-4">
-                <Search className="absolute left-2.5 top-6 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search by Voucher # or Narration..."
-                  className="pl-8 w-full md:w-1/3"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Voucher #</TableHead>
-                <TableHead>Narration</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && <TableRow><TableCell colSpan={5} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell></TableRow>}
-              {filteredJournalVouchers.map((voucher) => (
-                <TableRow key={voucher.id}>
-                  <TableCell>{format(new Date(voucher.date), "dd MMM, yyyy")}</TableCell>
-                  <TableCell className="font-medium">{voucher.id}</TableCell>
-                  <TableCell>{voucher.narration}</TableCell>
-                  <TableCell className="text-right font-mono">₹{voucher.amount.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleVoucherAction("View", voucher)}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          View Voucher
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleVoucherAction("Edit", voucher)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onSelect={() => handleVoucherAction("Delete", voucher)}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Reverse / Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-      {selectedVoucher && (
-        <Dialog open={!!selectedVoucher} onOpenChange={(open) => !open && setSelectedVoucher(null)}>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Journal Voucher: {selectedVoucher.id}</DialogTitle>
-                    <DialogDescription>
-                        Date: {format(new Date(selectedVoucher.date), "dd MMMM, yyyy")}
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Journal Voucher List</CardTitle>
+                    <CardDescription>
+                        A list of all manual journal entries. Reversed entries are hidden from this list.
+                    </CardDescription>
+                    <div className="relative pt-4">
+                        <Search className="absolute left-2.5 top-6 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by Voucher # or Narration..."
+                            className="pl-8 w-full md:w-1/3"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50%]">Account</TableHead>
-                                <TableHead className="w-[20%]">Cost Centre</TableHead>
-                                <TableHead className="text-right">Debit</TableHead>
-                                <TableHead className="text-right">Credit</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Voucher #</TableHead>
+                                <TableHead>Narration</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {selectedVoucher.lines.map((line, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="font-medium">{combinedAccounts.find(a => a.value === line.account)?.label || line.account}</TableCell>
-                                    <TableCell>{costCentres.find(cc => cc.id === line.costCentre)?.name || '-'}</TableCell>
-                                    <TableCell className="text-right font-mono">{parseFloat(line.debit) > 0 ? `₹${parseFloat(line.debit).toFixed(2)}` : '-'}</TableCell>
-                                    <TableCell className="text-right font-mono">{parseFloat(line.credit) > 0 ? `₹${parseFloat(line.credit).toFixed(2)}` : '-'}</TableCell>
+                            {loading && <TableRow><TableCell colSpan={5} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell></TableRow>}
+                            {filteredJournalVouchers.map((voucher) => (
+                                <TableRow key={voucher.id}>
+                                    <TableCell>{format(new Date(voucher.date), "dd MMM, yyyy")}</TableCell>
+                                    <TableCell className="font-medium">{voucher.id}</TableCell>
+                                    <TableCell>{voucher.narration}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{voucher.amount.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <span className="sr-only">Actions</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onSelect={() => handleVoucherAction("View", voucher)}>
+                                                    <FileText className="mr-2 h-4 w-4" />
+                                                    View Voucher
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleVoucherAction("Edit", voucher)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className="text-destructive" onSelect={() => handleVoucherAction("Delete", voucher)}>
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Reverse / Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
-                         <TableFooter>
-                            <TableRow className="font-bold bg-muted/50">
-                                <TableCell colSpan={2}>Total</TableCell>
-                                <TableCell className="text-right font-mono">₹{selectedVoucher.amount.toFixed(2)}</TableCell>
-                                <TableCell className="text-right font-mono">₹{selectedVoucher.amount.toFixed(2)}</TableCell>
-                            </TableRow>
-                        </TableFooter>
                     </Table>
-                     <div>
-                        <p className="font-medium text-sm">Narration:</p>
-                        <p className="text-muted-foreground text-sm">{selectedVoucher.narration}</p>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-      )}
+                </CardContent>
+            </Card>
+            
+            {selectedVoucher && (
+                <Dialog open={!!selectedVoucher} onOpenChange={(open) => !open && setSelectedVoucher(null)}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Journal Voucher: {selectedVoucher.id}</DialogTitle>
+                            <DialogDescription>
+                                Date: {format(new Date(selectedVoucher.date), "dd MMMM, yyyy")}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50%]">Account</TableHead>
+                                        <TableHead className="w-[20%]">Cost Centre</TableHead>
+                                        <TableHead className="text-right">Debit</TableHead>
+                                        <TableHead className="text-right">Credit</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {selectedVoucher.lines.map((line, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell className="font-medium">{combinedAccounts.find(a => a.value === line.account)?.label || line.account}</TableCell>
+                                            <TableCell>{costCentres.find(cc => cc.id === line.costCentre)?.name || '-'}</TableCell>
+                                            <TableCell className="text-right font-mono">{parseFloat(line.debit) > 0 ? `₹${parseFloat(line.debit).toFixed(2)}` : '-'}</TableCell>
+                                            <TableCell className="text-right font-mono">{parseFloat(line.credit) > 0 ? `₹${parseFloat(line.credit).toFixed(2)}` : '-'}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                                <TableFooter>
+                                    <TableRow className="font-bold bg-muted/50">
+                                        <TableCell colSpan={2}>Total</TableCell>
+                                        <TableCell className="text-right font-mono">₹{selectedVoucher.amount.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-mono">₹{selectedVoucher.amount.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                </TableFooter>
+                            </Table>
+                            <div>
+                                <p className="font-medium text-sm">Narration:</p>
+                                <p className="text-muted-foreground text-sm">{selectedVoucher.narration}</p>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
 
-    </div>
-  );
+        </div>
+    );
 }
