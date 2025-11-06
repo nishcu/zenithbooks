@@ -14,9 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileSignature, Printer } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 export default function Form16() {
   const printRef = useRef(null);
+  const reportRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
   });
@@ -34,13 +37,24 @@ export default function Form16() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Form 16 Generator</h1>
-        <p className="text-muted-foreground">
-          Generate Part B of Form 16 (TDS Certificate for Salary).
-        </p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Form 16 Generator</h1>
+          <p className="text-muted-foreground">
+            Generate Part B of Form 16 (TDS Certificate for Salary).
+          </p>
+        </div>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`Form-16-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage="Check out my Form 16 from ZenithBooks"
+          emailSubject="Form 16"
+          emailBody="Please find attached the Form 16 certificate."
+          shareTitle="Form 16"
+        />
       </div>
       
+      <div ref={reportRef}>
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <Card>
             <CardHeader>
@@ -118,6 +132,7 @@ export default function Form16() {
                 </Button>
             </CardFooter>
         </Card>
+      </div>
       </div>
     </div>
   );

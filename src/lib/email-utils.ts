@@ -2,8 +2,6 @@
  * Email utilities for sending reports and documents
  */
 
-import { exportToPDF } from "./export-utils";
-
 export interface EmailOptions {
   to: string | string[];
   subject: string;
@@ -20,6 +18,17 @@ export interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
+    // Process attachments asynchronously
+    const processedAttachments = options.attachments
+      ? await Promise.all(
+          options.attachments.map(async (att) => ({
+            filename: att.filename,
+            content: att.content instanceof Blob ? await blobToBase64(att.content) : att.content,
+            contentType: att.contentType || (att.content instanceof Blob ? att.content.type : "application/octet-stream"),
+          }))
+        )
+      : undefined;
+
     const response = await fetch("/api/email/send", {
       method: "POST",
       headers: {
@@ -29,11 +38,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         to: Array.isArray(options.to) ? options.to : [options.to],
         subject: options.subject,
         body: options.body,
-        attachments: options.attachments?.map((att) => ({
-          filename: att.filename,
-          content: att.content instanceof Blob ? await blobToBase64(att.content) : att.content,
-          contentType: att.contentType || (att.content instanceof Blob ? att.content.type : "application/octet-stream"),
-        })),
+        attachments: processedAttachments,
       }),
     });
 

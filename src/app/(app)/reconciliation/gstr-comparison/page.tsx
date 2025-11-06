@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { compareGstrReportsAction } from '../actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 // Helper to convert file to Data URI
 const fileToDataUri = (file: File): Promise<string> => {
@@ -32,6 +34,7 @@ const gstrCompareSchema = z.object({
 
 export default function GstrComparisonPage() {
     const { toast } = useToast();
+    const reportRef = useRef<HTMLDivElement>(null);
     const [gstrCompareResult, setGstrCompareResult] = useState<string | null>(null);
     const [isGstrLoading, setIsGstrLoading] = useState(false);
 
@@ -65,10 +68,22 @@ export default function GstrComparisonPage() {
 
     return (
         <div className="space-y-8">
-            <Link href="/reconciliation" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="size-4" />
-                Back to Reconciliation
-            </Link>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <Link href="/reconciliation" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="size-4" />
+                  Back to Reconciliation
+              </Link>
+              {gstrCompareResult && (
+                <ShareButtons
+                  contentRef={reportRef}
+                  fileName={`GSTR-Comparison-${format(new Date(), 'yyyy-MM-dd')}`}
+                  whatsappMessage="Check out my GSTR comparison report from ZenithBooks"
+                  emailSubject="GSTR Comparison Report"
+                  emailBody="Please find attached the GSTR comparison report."
+                  shareTitle="GSTR Comparison Report"
+                />
+              )}
+            </div>
             <div className="flex flex-col items-center text-center">
                 <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4">
                     <GitCompareArrows className="h-8 w-8 text-primary" />
@@ -79,6 +94,7 @@ export default function GstrComparisonPage() {
                 </p>
             </div>
 
+            <div ref={reportRef}>
             <Card className="max-w-3xl mx-auto w-full">
                 <CardHeader>
                     <CardTitle>Upload Reports</CardTitle>
@@ -144,6 +160,7 @@ export default function GstrComparisonPage() {
                     </CardContent>
                 )}
             </Card>
+            </div>
         </div>
     );
 }

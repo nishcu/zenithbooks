@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useContext } from 'react';
+import { useState, useMemo, useContext, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -28,6 +28,8 @@ import * as XLSX from 'xlsx';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 type Gstr1Record = {
   'Invoice number': string;
@@ -55,6 +57,7 @@ type ReconciliationResult = {
 export default function BooksVsGstr1Page() {
     const { toast } = useToast();
     const { journalVouchers, loading: jvLoading } = useContext(AccountingContext)!;
+    const reportRef = useRef<HTMLDivElement>(null);
     
     const [gstr1Data, setGstr1Data] = useState<Gstr1Record[]>([]);
     const [reconciliationResult, setReconciliationResult] = useState<ReconciliationResult | null>(null);
@@ -128,7 +131,20 @@ export default function BooksVsGstr1Page() {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold">Books vs. GSTR-1 Reconciliation</h1>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <h1 className="text-3xl font-bold">Books vs. GSTR-1 Reconciliation</h1>
+              {reconciliationResult && (
+                <ShareButtons
+                  contentRef={reportRef}
+                  fileName={`Books-vs-GSTR1-${format(new Date(), 'yyyy-MM-dd')}`}
+                  whatsappMessage="Check out my Books vs GSTR-1 reconciliation from ZenithBooks"
+                  emailSubject="Books vs GSTR-1 Reconciliation"
+                  emailBody="Please find attached the Books vs GSTR-1 reconciliation report."
+                  shareTitle="Books vs GSTR-1 Reconciliation"
+                />
+              )}
+            </div>
+            <div ref={reportRef}>
             <Card>
                 <CardHeader>
                     <CardTitle>Reconciliation Setup</CardTitle>
@@ -187,6 +203,7 @@ export default function BooksVsGstr1Page() {
                     </CardContent>
                 </Card>
             )}
+            </div>
 
         </div>
     );

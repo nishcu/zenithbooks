@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import { FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 type ReportRow = {
     deductee: string;
@@ -60,6 +62,7 @@ const months = [
 
 export default function TdsTcsReportsPage() {
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
   const [reportType, setReportType] = useState("tds");
   const [period, setPeriod] = useState("monthly");
   const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
@@ -111,15 +114,34 @@ export default function TdsTcsReportsPage() {
     setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
   };
 
+  const monthLabel = months.find(m => m.value === month)?.label;
+  const periodLabel = period === 'monthly' 
+    ? `${monthLabel} ${financialYear.split('-')[0]}`
+    : `${quarter.toUpperCase()}, ${financialYear}`;
+  const reportFileName = `${reportType.toUpperCase()}-${periodLabel.replace(/\s+/g, '-')}`;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">TDS &amp; TCS Reports</h1>
-        <p className="text-muted-foreground">
-          Generate reports for TDS deducted on payments and TCS collected on sales.
-        </p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">TDS &amp; TCS Reports</h1>
+          <p className="text-muted-foreground">
+            Generate reports for TDS deducted on payments and TCS collected on sales.
+          </p>
+        </div>
+        {reportData.length > 0 && (
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={reportFileName}
+            whatsappMessage={`Check out my ${reportType.toUpperCase()} report from ZenithBooks`}
+            emailSubject={`${reportType.toUpperCase()} Report`}
+            emailBody={`Please find attached the ${reportType.toUpperCase()} report for ${periodLabel}.`}
+            shareTitle={`${reportType.toUpperCase()} Report`}
+          />
+        )}
       </div>
 
+      <div ref={reportRef}>
       <Card>
         <CardHeader>
           <CardTitle>Report Generation</CardTitle>
@@ -236,6 +258,7 @@ export default function TdsTcsReportsPage() {
           </Table>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

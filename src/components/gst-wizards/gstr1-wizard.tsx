@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useContext, useMemo, useEffect } from "react";
+import { useState, useContext, useMemo, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, PlusCircle, Trash2, FileDown, FileJson } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -62,6 +64,7 @@ export default function Gstr1Wizard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [user] = useAuthState(auth);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const { journalVouchers } = useContext(AccountingContext)!;
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
@@ -921,21 +924,30 @@ export default function Gstr1Wizard() {
 
   return (
     <div className="space-y-8">
-       <div className="flex items-center justify-between">
+       <div className="flex items-center justify-between flex-wrap gap-4">
         <Link href="/gst-filings" passHref>
           <Button variant="outline">
             <ArrowLeft className="mr-2" />
             Back to GST Filings
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">GSTR-1 Filing Wizard</h1>
           <p className="text-muted-foreground">Period: May 2024</p>
         </div>
-
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`GSTR-1-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage="Check out my GSTR-1 return from ZenithBooks"
+          emailSubject="GSTR-1 Return"
+          emailBody="Please find attached the GSTR-1 return."
+          shareTitle="GSTR-1 Return"
+        />
       </div>
 
-      {renderStep()}
+      <div ref={reportRef}>
+        {renderStep()}
+      </div>
     </div>
   );
 }

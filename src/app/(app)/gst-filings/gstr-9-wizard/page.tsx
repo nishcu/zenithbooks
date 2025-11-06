@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, FileJson, Upload, Download } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 const initialOutwardSupplies = [
     { description: "B2C Supplies", taxableValue: 12500000, cgst: 1125000, sgst: 1125000, igst: 0, cess: 0 },
@@ -48,6 +50,7 @@ const initialTaxPaid = [
 
 export default function Gstr9WizardPage() {
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(1);
 
   const handleNext = () => {
@@ -317,20 +320,30 @@ export default function Gstr9WizardPage() {
 
   return (
     <div className="space-y-8">
-       <div className="flex items-center justify-between">
+       <div className="flex items-center justify-between flex-wrap gap-4">
         <Link href="/gst-filings" passHref>
           <Button variant="outline">
             <ArrowLeft className="mr-2" />
             Back to GST Filings
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">GSTR-9 Annual Return Wizard</h1>
           <p className="text-muted-foreground">Financial Year: 2023-24</p>
         </div>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`GSTR-9-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage="Check out my GSTR-9 return from ZenithBooks"
+          emailSubject="GSTR-9 Annual Return"
+          emailBody="Please find attached the GSTR-9 annual return."
+          shareTitle="GSTR-9 Annual Return"
+        />
       </div>
 
-      {renderStep()}
+      <div ref={reportRef}>
+        {renderStep()}
+      </div>
     </div>
   );
 }

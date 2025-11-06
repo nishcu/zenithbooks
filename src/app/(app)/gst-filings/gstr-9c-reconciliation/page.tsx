@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wand2, Upload, GitCompareArrows, Loader2, ArrowLeft, FileDown, FileSpreadsheet, FileJson } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -85,6 +87,7 @@ const initialAdditionalLiability = [
 
 export default function Gstr9cPage() {
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const [turnoverReconData, setTurnoverReconData] = useState(initialTurnoverRecon);
   const [taxableTurnoverReconData, setTaxableTurnoverReconData] = useState(initialTaxableTurnoverRecon);
@@ -192,17 +195,28 @@ export default function Gstr9cPage() {
 
   return (
     <div className="space-y-8">
-        <Link href="/gst-filings" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" />
-            Back to GST Filings
-        </Link>
-        <div className="text-center">
-            <h1 className="text-3xl font-bold">GSTR-9C Preparation Utility</h1>
-            <p className="mt-2 max-w-2xl mx-auto text-muted-foreground">
-                Prepare the reconciliation statement between your audited annual financial statements and your GSTR-9 annual return.
-            </p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <Link href="/gst-filings" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="size-4" />
+              Back to GST Filings
+          </Link>
+          <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold">GSTR-9C Preparation Utility</h1>
+              <p className="mt-2 max-w-2xl mx-auto text-muted-foreground">
+                  Prepare the reconciliation statement between your audited annual financial statements and your GSTR-9 annual return.
+              </p>
+          </div>
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={`GSTR-9C-${format(new Date(), 'yyyy-MM-dd')}`}
+            whatsappMessage="Check out my GSTR-9C reconciliation from ZenithBooks"
+            emailSubject="GSTR-9C Reconciliation"
+            emailBody="Please find attached the GSTR-9C reconciliation statement."
+            shareTitle="GSTR-9C Reconciliation"
+          />
         </div>
 
+        <div ref={reportRef}>
         <Card>
             <CardHeader>
                 <CardTitle>GSTR-9C Data Entry (FY 2024-25)</CardTitle>
@@ -404,6 +418,7 @@ export default function Gstr9cPage() {
                 <Button onClick={handleGenerateJson}><FileJson className="mr-2"/> Download GSTR-9C JSON</Button>
              </CardFooter>
         </Card>
+        </div>
     </div>
   );
 }

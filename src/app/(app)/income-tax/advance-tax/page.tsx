@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useContext, useEffect } from "react";
+import { useState, useMemo, useContext, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -29,6 +29,8 @@ import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatCurrency } from "@/lib/utils";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 
 
 type EntityType = "individual_new" | "individual_old" | "company" | "firm";
@@ -55,6 +57,7 @@ const taxSlabs = {
 export default function AdvanceTax() {
   const { toast } = useToast();
   const { journalVouchers } = useContext(AccountingContext)!;
+  const reportRef = useRef<HTMLDivElement>(null);
   
   const [estimatedIncome, setEstimatedIncome] = useState<number>(0);
   const [deductions, setDeductions] = useState<number>(0);
@@ -145,13 +148,26 @@ export default function AdvanceTax() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Advance Tax Calculator</h1>
-        <p className="text-muted-foreground">
-          Estimate and plan your advance tax payments for the financial year.
-        </p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Advance Tax Calculator</h1>
+          <p className="text-muted-foreground">
+            Estimate and plan your advance tax payments for the financial year.
+          </p>
+        </div>
+        {taxLiability !== null && (
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={`Advance-Tax-${format(new Date(), 'yyyy-MM-dd')}`}
+            whatsappMessage="Check out my advance tax calculation from ZenithBooks"
+            emailSubject="Advance Tax Calculation"
+            emailBody="Please find attached the advance tax calculation."
+            shareTitle="Advance Tax Calculation"
+          />
+        )}
       </div>
 
+      <div ref={reportRef}>
       <Card>
         <CardHeader>
           <CardTitle>Income & Deductions</CardTitle>
@@ -293,6 +309,7 @@ export default function AdvanceTax() {
             <p className="text-xs text-muted-foreground">Disclaimer: This calculator is for estimation purposes only. Surcharges and specific conditions may apply. Consult a tax professional for exact calculations.</p>
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 }

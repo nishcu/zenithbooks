@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useContext, useMemo, useEffect } from "react";
+import { useState, useContext, useMemo, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Save, FileJson, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -48,6 +50,7 @@ export default function Gstr3bWizardPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const { journalVouchers } = useContext(AccountingContext)!;
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const initialStep1Data = useMemo(() => {
     const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-"));
@@ -643,20 +646,30 @@ export default function Gstr3bWizardPage() {
 
   return (
     <div className="space-y-8">
-       <div className="flex items-center justify-between">
+       <div className="flex items-center justify-between flex-wrap gap-4">
         <Link href="/gst-filings" passHref>
           <Button variant="outline">
             <ArrowLeft className="mr-2" />
             Back to GST Filings
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">GSTR-3B Filing Wizard</h1>
           <p className="text-muted-foreground">Period: May 2024</p>
         </div>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`GSTR-3B-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage="Check out my GSTR-3B return from ZenithBooks"
+          emailSubject="GSTR-3B Return"
+          emailBody="Please find attached the GSTR-3B return."
+          shareTitle="GSTR-3B Return"
+        />
       </div>
 
-      {renderStep()}
+      <div ref={reportRef}>
+        {renderStep()}
+      </div>
     </div>
   );
 }
