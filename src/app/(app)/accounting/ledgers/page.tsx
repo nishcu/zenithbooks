@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DateRangePicker } from '@/components/date-range-picker';
+import { DateRangeSelector } from '@/components/date-range-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { allAccounts, Account } from '@/lib/accounts';
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -39,6 +39,8 @@ export default function LedgersPage() {
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>();
   const [accounts, setAccounts] = useState<(Account & { id?: string })[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -141,13 +143,46 @@ export default function LedgersPage() {
       );
   }, [ledgerEntries, loading]);
 
+  const handleGenerateReport = () => {
+    if (fromDate && toDate) {
+      setDateRange({ from: fromDate, to: toDate });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold">Ledgers</h1>
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1"><p className="text-sm text-muted-foreground mb-2">Select Account</p><Select onValueChange={setSelectedAccount} value={selectedAccount || ''}><SelectTrigger><SelectValue placeholder="Search for an account..." /></SelectTrigger><SelectContent className="max-h-96">{accounts.map(acc => <SelectItem key={acc.code} value={acc.code}>{acc.name} ({acc.code})</SelectItem>)}</SelectContent></Select></div>
-        <div className="flex-1"><p className="text-sm text-muted-foreground mb-2">Select Date Range</p><DateRangePicker onUpdate={({ range }) => setDateRange({ from: range.from as Date, to: range.to as Date || range.from as Date })} /></div>
-        <div className="flex items-end"><Button onClick={handleExportPdf} disabled={!selectedAccount || loading}><Download className="mr-2 h-4 w-4"/> Export PDF</Button></div>
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Select Account</p>
+            <Select onValueChange={setSelectedAccount} value={selectedAccount || ''}>
+              <SelectTrigger>
+                <SelectValue placeholder="Search for an account..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-96">
+                {accounts.map(acc => <SelectItem key={acc.code} value={acc.code}>{acc.name} ({acc.code})</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleExportPdf} disabled={!selectedAccount || loading} className="w-full">
+              <Download className="mr-2 h-4 w-4"/> Export PDF
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">Select Date Range</p>
+          <DateRangeSelector
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
+            onSubmit={handleGenerateReport}
+            submitLabel="Generate Report"
+            disabled={!selectedAccount}
+          />
+        </div>
       </div>
 
       {selectedAccount && (

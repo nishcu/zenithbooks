@@ -27,7 +27,7 @@ import {
   TableHead,
   TableFooter,
 } from "@/components/ui/table";
-import { DateRangePicker } from "@/components/date-range-picker";
+import { DateRangeSelector } from "@/components/date-range-selector";
 import { Separator } from "@/components/ui/separator";
 import { ReportRow } from "@/components/accounting/report-row";
 import { useToast } from "@/hooks/use-toast";
@@ -73,6 +73,8 @@ export default function ProfitAndLossPage() {
   const reportRef = useRef<HTMLDivElement>(null);
 
   const [user] = useAuthState(auth);
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const accountsQuery = user ? query(collection(db, "user_accounts"), where("userId", "==", user.uid)) : null;
@@ -207,14 +209,25 @@ export default function ProfitAndLossPage() {
       {/* Date Range */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-            <div>
-              <CardTitle>Report Period</CardTitle>
-              <CardDescription>Select a date range to generate the report.</CardDescription>
-            </div>
-            <DateRangePicker onDateChange={setDateRange} />
+          <div>
+            <CardTitle>Report Period</CardTitle>
+            <CardDescription>Select a date range to generate the report.</CardDescription>
           </div>
         </CardHeader>
+        <CardContent>
+          <DateRangeSelector
+            fromDate={fromDate}
+            toDate={toDate}
+            onFromDateChange={setFromDate}
+            onToDateChange={setToDate}
+            onSubmit={() => {
+              if (fromDate && toDate) {
+                setDateRange({ from: fromDate, to: toDate });
+              }
+            }}
+            submitLabel="Generate Report"
+          />
+        </CardContent>
       </Card>
 
       {/* Trading & P&L T-shape */}
