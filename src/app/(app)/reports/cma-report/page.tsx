@@ -161,9 +161,10 @@ export default function CmaReportGeneratorPage() {
           } else {
               toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.'});
           }
-      } catch (error) {
-          console.error(error);
-          toast({ variant: 'destructive', title: 'Error', description: 'An error occurred while fetching AI observations.'});
+      } catch (error: any) {
+          console.error("CMA Observations Error:", error);
+          const errorMessage = error?.message || 'An error occurred while fetching AI observations.';
+          toast({ variant: 'destructive', title: 'Error', description: errorMessage});
       } finally {
           setIsAiLoading(false);
       }

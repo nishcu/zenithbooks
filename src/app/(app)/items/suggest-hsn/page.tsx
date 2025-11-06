@@ -70,13 +70,14 @@ export default function SuggestHsnPage() {
           description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.",
         });
       }
-    } catch (e) {
+    } catch (e: any) {
+      const errorMessage = e?.message || "An unexpected error occurred. Please check the console and try again.";
       toast({
         variant: "destructive",
         title: "An Error Occurred",
-        description: "An unexpected error occurred. Please check the console and try again.",
+        description: errorMessage,
       });
-      console.error(e);
+      console.error("HSN Code Suggestion Error:", e);
     } finally {
       setIsLoading(false);
     }
