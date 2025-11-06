@@ -844,7 +844,7 @@ function TransactionTable({ transactions, selectedTxs, onToggle, type, onAddEntr
     return (
         <div className="max-h-[500px] overflow-y-auto">
             <Table>
-                <TableHeader className="sticky top-0 bg-background">
+                <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
                         <TableHead className="w-10"></TableHead>
                         <TableHead>Date</TableHead>
