@@ -40,6 +40,13 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
 import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
+import { 
+  isAccountLocked, 
+  recordFailedLogin, 
+  clearFailedLoginAttempts,
+  getLoginIdentifier,
+  sanitizeEmail 
+} from "@/lib/security/auth-utils";
 
 
 const formSchema = z.object({
@@ -98,11 +105,49 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsEmailLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // Sanitize email input
+      const sanitizedEmail = sanitizeEmail(values.email);
+      
+      // Check if account is locked
+      const loginId = getLoginIdentifier(sanitizedEmail);
+      if (isAccountLocked(loginId)) {
+        toast({
+          variant: "destructive",
+          title: "Account Locked",
+          description: "Too many failed login attempts. Please try again later.",
+        });
+        setIsEmailLoading(false);
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, sanitizedEmail, values.password);
+      
+      // Clear failed login attempts on success
+      clearFailedLoginAttempts(loginId);
+      
       showSuccessToast(TOAST_MESSAGES.SUCCESS.LOGIN.title, TOAST_MESSAGES.SUCCESS.LOGIN.description);
       router.push("/dashboard");
     } catch (error: any) {
-      showErrorToast(error, "Login");
+      // Record failed login attempt
+      const loginId = getLoginIdentifier(values.email);
+      const attemptResult = recordFailedLogin(loginId);
+      
+      if (attemptResult.locked) {
+        toast({
+          variant: "destructive",
+          title: "Account Locked",
+          description: "Too many failed login attempts. Your account has been locked for 15 minutes.",
+        });
+      } else {
+        showErrorToast(error, "Login");
+        if (attemptResult.remainingAttempts < 3) {
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: `${attemptResult.remainingAttempts} login attempts remaining before account lockout.`,
+          });
+        }
+      }
     } finally {
       setIsEmailLoading(false);
     }

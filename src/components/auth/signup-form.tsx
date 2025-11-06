@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
 import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
+import { checkPasswordStrength, sanitizeEmail } from "@/lib/security/auth-utils";
 
 const formSchema = z.object({
   userType: z.enum(["business", "professional"], {
@@ -63,10 +64,25 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      // Sanitize email input
+      const sanitizedEmail = sanitizeEmail(values.email);
+      
+      // Check password strength
+      const passwordCheck = checkPasswordStrength(values.password);
+      if (!passwordCheck.valid) {
+        toast({
+          variant: "destructive",
+          title: "Weak Password",
+          description: passwordCheck.feedback.join(". "),
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        values.email,
+        sanitizedEmail,
         values.password
       );
       const user = userCredential.user;
