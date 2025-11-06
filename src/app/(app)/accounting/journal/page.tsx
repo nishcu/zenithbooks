@@ -292,12 +292,19 @@ export default function JournalVoucherPage() {
             Create manual journal entries to adjust ledger accounts.
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
+        <div className="flex gap-2">
+          <Link href="/accounting/journal/bulk" passHref>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Bulk Upload
+            </Button>
+          </Link>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2" />
-                    New Journal Voucher
-                </Button>
+              <Button>
+                <PlusCircle className="mr-2" />
+                New Journal Voucher
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
