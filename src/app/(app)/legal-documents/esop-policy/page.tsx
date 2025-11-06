@@ -12,6 +12,9 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel, FormDes
 import { ArrowLeft, ArrowRight, FileDown } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
+import html2pdf from "html2pdf.js";
+import { format } from "date-fns";
 
 const formSchema = z.object({
   companyName: z.string().min(3, "Company name is required."),
@@ -26,6 +29,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function EsopPolicy() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const documentRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -85,7 +89,7 @@ export default function EsopPolicy() {
               <CardTitle>Step 2: Preview & Download</CardTitle>
               <CardDescription>Review the generated ESOP policy summary. A detailed legal document would be generated based on this.</CardDescription>
             </CardHeader>
-            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+            <CardContent ref={documentRef} className="prose prose-sm dark:prose-invert max-w-none">
               <h4 className="font-bold">DRAFT - EMPLOYEE STOCK OPTION PLAN (ESOP) POLICY</h4>
               <h5 className="font-bold">{formData.companyName}</h5>
               <p><strong>Total ESOP Pool:</strong> {formData.poolSize}% of the fully diluted share capital of the Company.</p>
@@ -98,7 +102,26 @@ export default function EsopPolicy() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={() => toast({ title: "Download Started (Simulated)"})}><FileDown className="mr-2"/> Download Full Policy</Button>
+              <Button type="button" onClick={async () => {
+                try {
+                  if (!documentRef.current) {
+                    toast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    return;
+                  }
+                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
+                  const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `ESOP-Policy-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+                    image: { type: "jpeg", quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                  };
+                  await html2pdf().set(opt).from(documentRef.current).save();
+                  toast({ title: "PDF Generated", description: "Your ESOP Policy has been downloaded successfully." });
+                } catch (error: any) {
+                  toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                }
+              }}><FileDown className="mr-2"/> Download Full Policy</Button>
             </CardFooter>
           </Card>
         );

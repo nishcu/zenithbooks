@@ -76,42 +76,46 @@ export default function TdsTcsReportsPage() {
   const generateReport = () => {
     toast({
         title: "Generating Report...",
-        description: "Simulating data fetch for the selected period."
+        description: "Generating report for the selected period."
     });
     
-    // Simulate fetching data based on selection
+    // Generate sample report data
+    // Note: In a production system, this would fetch actual TDS/TCS data from journal vouchers
+    // For now, we generate sample data based on the selected period
+    const monthLabel = months.find(m => m.value === month)?.label;
+    const periodLabel = period === 'monthly' 
+        ? `${monthLabel} ${financialYear.split('-')[0]}`
+        : `${quarter.toUpperCase()}, ${financialYear}`;
+    
     const generatedData: ReportRow[] = [
       {
-        deductee: "Global Tech Inc.",
+        deductee: "Sample Vendor A",
         pan: "ABCDE1234F",
         invoiceId: "INV-001",
-        invoiceDate: "2024-05-15",
+        invoiceDate: period === 'monthly' ? `${financialYear.split('-')[0]}-${month}-15` : `${financialYear.split('-')[0]}-04-15`,
         invoiceAmount: 25000.0,
-        tdsSection: "194J",
-        tdsRate: 10,
-        tdsAmount: 2500.0,
+        tdsSection: reportType === "tds" ? "194J" : "206C",
+        tdsRate: reportType === "tds" ? 10 : 0.1,
+        tdsAmount: reportType === "tds" ? 2500.0 : 25.0,
       },
       {
-        deductee: "Innovate Solutions",
+        deductee: "Sample Vendor B",
         pan: "FGHIJ5678K",
         invoiceId: "INV-002",
-        invoiceDate: "2024-05-20",
+        invoiceDate: period === 'monthly' ? `${financialYear.split('-')[0]}-${month}-20` : `${financialYear.split('-')[0]}-05-20`,
         invoiceAmount: 15000.0,
-        tdsSection: "194C",
-        tdsRate: 1,
-        tdsAmount: 150.0,
+        tdsSection: reportType === "tds" ? "194C" : "206C",
+        tdsRate: reportType === "tds" ? 1 : 0.1,
+        tdsAmount: reportType === "tds" ? 150.0 : 15.0,
       },
     ];
     setReportData(generatedData);
-    
-    let periodLabel = "";
-    if (period === 'monthly') {
-        const monthLabel = months.find(m => m.value === month)?.label;
-        periodLabel = `${monthLabel} ${financialYear.split('-')[0]}`;
-    } else {
-        periodLabel = `${quarter.toUpperCase()}, ${financialYear}`;
-    }
     setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
+    
+    toast({
+        title: "Report Generated",
+        description: `Report has been generated successfully for ${periodLabel}. Note: This is sample data. To generate actual reports, TDS/TCS tracking needs to be enabled in your journal entries.`
+    });
   };
 
   const monthLabel = months.find(m => m.value === month)?.label;

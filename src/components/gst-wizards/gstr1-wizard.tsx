@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
 import {
   Select,
   SelectContent,
@@ -398,11 +399,135 @@ export default function Gstr1Wizard() {
     setStep(prev => prev - 1);
   };
 
-  const handleGenerateAction = (type: 'JSON' | 'PDF') => {
-    toast({
-      title: `${type} Generation Started`,
-      description: `Your GSTR-1 ${type} file is being generated and will be downloaded shortly. (This is a simulation).`,
-    });
+  const handleGenerateAction = async (type: 'JSON' | 'PDF') => {
+    try {
+      if (type === 'JSON') {
+        // Generate GSTR-1 JSON structure
+        const gstr1Data = {
+          gstin: "", // Should be fetched from user/company settings
+          ret_period: format(new Date(), "MM-YYYY"), // Current month-year
+          b2b: b2bInvoices.map(inv => ({
+            ctin: inv.gstin,
+            inv: [{
+              inum: inv.invoiceNumber,
+              idt: inv.invoiceDate,
+              val: inv.invoiceValue,
+              pos: inv.pos || "",
+              rchrg: "N",
+              inv_typ: "R",
+              itms: [{
+                num: 1,
+                hsn_sc: "",
+                qty: 0,
+                uom: "",
+                rt: inv.taxRate,
+                txval: inv.taxableValue,
+                iamt: inv.igst,
+                camt: inv.cgst,
+                samt: inv.sgst,
+                csamt: inv.cess
+              }]
+            }]
+          })),
+          b2cl: b2cLargeInvoices.map(inv => ({
+            pos: inv.pos,
+            typ: "OE",
+            etin: "",
+            rt: inv.taxRate,
+            ad_amt: inv.taxableValue,
+            iamt: inv.igst,
+            csamt: inv.cess
+          })),
+          b2cs: b2cOther.map(row => ({
+            typ: "OE",
+            pos: row.pos,
+            rt: row.taxRate,
+            txval: row.taxableValue,
+            iamt: row.igst,
+            camt: row.cgst,
+            samt: row.sgst,
+            csamt: row.cess
+          })),
+          cdnr: creditNotes.map(cn => ({
+            ctin: cn.gstin,
+            nt: [{
+              nt_num: cn.noteNumber,
+              nt_dt: cn.noteDate,
+              orig_inum: cn.originalInvoiceNumber,
+              orig_idt: cn.originalInvoiceDate,
+              p_gst: "N",
+              rsn: cn.reason,
+              val: cn.invoiceValue,
+              itms: [{
+                num: 1,
+                hsn_sc: "",
+                qty: 0,
+                uom: "",
+                rt: cn.taxRate,
+                txval: cn.taxableValue,
+                iamt: cn.igst,
+                camt: cn.cgst,
+                samt: cn.sgst,
+                csamt: cn.cess
+              }]
+            }]
+          }))
+        };
+
+        // Download JSON file
+        const jsonStr = JSON.stringify(gstr1Data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `GSTR-1-${format(new Date(), "yyyy-MM-dd")}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "JSON Generated",
+          description: "Your GSTR-1 JSON file has been downloaded successfully.",
+        });
+      } else if (type === 'PDF') {
+        // Generate PDF from report content
+        if (!reportRef.current) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not find the report content to generate PDF.",
+          });
+          return;
+        }
+
+        toast({
+          title: "Generating PDF...",
+          description: "Your GSTR-1 PDF is being generated.",
+        });
+
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `GSTR-1-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        await html2pdf().set(opt).from(reportRef.current).save();
+
+        toast({
+          title: "PDF Generated",
+          description: "Your GSTR-1 PDF has been downloaded successfully.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "An error occurred while generating the file.",
+      });
+    }
   };
 
   const renderStep = () => {

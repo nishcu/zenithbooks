@@ -63,9 +63,41 @@ type Invoice = {
 
 function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const { toast } = useToast();
-    const handleGenerate = () => {
-        toast({ title: "E-Waybill Generated (Simulated)", description: "The E-Waybill has been successfully generated." });
-        onOpenChange(false);
+    const [transporterName, setTransporterName] = useState("");
+    const [vehicleNumber, setVehicleNumber] = useState("");
+    
+    const handleGenerate = async () => {
+        try {
+            // Generate E-Waybill JSON structure
+            const ewaybillData = {
+                invoiceNumber: invoice.id,
+                invoiceDate: invoice.date,
+                invoiceValue: invoice.amount,
+                supplyType: "Outward",
+                subType: "Supply",
+                transporterName: transporterName || "Not Provided",
+                vehicleNumber: vehicleNumber || "Not Provided",
+                generatedDate: new Date().toISOString(),
+                status: "Generated"
+            };
+
+            // Download JSON file
+            const jsonStr = JSON.stringify(ewaybillData, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `E-Waybill-${invoice.id}-${format(new Date(), "yyyy-MM-dd")}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast({ title: "E-Waybill Generated", description: "The E-Waybill JSON has been downloaded successfully." });
+            onOpenChange(false);
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill." });
+        }
     }
 
     if (!invoice) return null;
@@ -89,11 +121,11 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
                     </div>
                     <div className="space-y-2">
                         <Label>Transporter Name</Label>
-                        <Input placeholder="Enter transporter's name" />
+                        <Input placeholder="Enter transporter's name" value={transporterName} onChange={(e) => setTransporterName(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label>Vehicle Number</Label>
-                        <Input placeholder="Enter vehicle number (e.g., MH01AB1234)" />
+                        <Input placeholder="Enter vehicle number (e.g., MH01AB1234)" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} />
                     </div>
                 </div>
                 <DialogFooter>

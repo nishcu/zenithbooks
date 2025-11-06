@@ -14,6 +14,9 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRef } from "react";
+import html2pdf from "html2pdf.js";
+import { format } from "date-fns";
 
 const shareholderSchema = z.object({
   name: z.string().min(2, "Shareholder name is required."),
@@ -34,6 +37,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function ShareholdersAgreement() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const documentRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -117,7 +121,7 @@ export default function ShareholdersAgreement() {
               <CardTitle>Step 3: Preview & Download</CardTitle>
               <CardDescription>Review the generated Shareholders' Agreement summary.</CardDescription>
             </CardHeader>
-            <CardContent className="prose prose-sm dark:prose-invert max-w-none border p-6 rounded-md">
+            <CardContent ref={documentRef} className="prose prose-sm dark:prose-invert max-w-none border p-6 rounded-md">
               <h4 className="font-bold text-center">SHAREHOLDERS' AGREEMENT SUMMARY</h4>
               <p><strong>Company:</strong> {formData.companyName}</p>
               <p><strong>Effective Date:</strong> {new Date(formData.agreementDate).toLocaleDateString()}</p>
@@ -136,7 +140,26 @@ export default function ShareholdersAgreement() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={() => toast({ title: "Download Started (Simulated)"})}><FileDown className="mr-2"/> Download Full Agreement</Button>
+              <Button type="button" onClick={async () => {
+                try {
+                  if (!documentRef.current) {
+                    toast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    return;
+                  }
+                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
+                  const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}.pdf`,
+                    image: { type: "jpeg", quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                  };
+                  await html2pdf().set(opt).from(documentRef.current).save();
+                  toast({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." });
+                } catch (error: any) {
+                  toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                }
+              }}><FileDown className="mr-2"/> Download Full Agreement</Button>
             </CardFooter>
           </Card>
         );

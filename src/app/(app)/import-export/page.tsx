@@ -117,12 +117,39 @@ export default function ImportExportPage() {
         }
     };
     
-    const handleGenericImport = (file: File | null, type: string) => {
+    const handleGenericImport = async (file: File | null, type: string) => {
          if (!file) {
             toast({ variant: "destructive", title: "No File Selected", description: `Please select a file for ${type}.` });
             return;
         }
-         toast({ title: "Import Successful (Simulated)", description: `Your ${type} file '${file.name}' has been processed.`});
+        
+        try {
+            setIsImporting(true);
+            // Read file content for validation
+            const fileContent = await file.text();
+            
+            // Basic validation based on file type
+            if (type.includes("JSON") && !fileContent.trim().startsWith("{")) {
+                toast({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.` });
+                return;
+            }
+            
+            if (type.includes("XML") && !fileContent.trim().startsWith("<")) {
+                toast({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.` });
+                return;
+            }
+            
+            // For now, we'll validate and show success
+            // Actual parsing and import logic would be implemented based on specific requirements
+            toast({ 
+                title: "File Validated", 
+                description: `Your ${type} file '${file.name}' has been validated successfully. File size: ${(file.size / 1024).toFixed(2)} KB. Note: Full import functionality will be implemented based on specific requirements.` 
+            });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file." });
+        } finally {
+            setIsImporting(false);
+        }
     }
 
     // Export functions

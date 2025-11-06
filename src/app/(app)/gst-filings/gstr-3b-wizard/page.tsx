@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
 import {
   Select,
   SelectContent,
@@ -243,11 +244,75 @@ export default function Gstr3bWizardPage() {
      setStep(prev => prev - 1);
   };
   
-  const handleGenerateJson = () => {
+  const handleGenerateJson = async () => {
+    try {
+      // Generate GSTR-3B JSON structure
+      const gstr3bData = {
+        gstin: "", // Should be fetched from user/company settings
+        ret_period: format(new Date(), "MM-YYYY"), // Current month-year
+        sup_details: {
+          osup_det: {
+            txval: step1Data[0]?.taxableValue || 0,
+            iamt: step1Data[0]?.integratedTax || 0,
+            camt: step1Data[0]?.centralTax || 0,
+            samt: step1Data[0]?.stateTax || 0,
+            csamt: step1Data[0]?.cess || 0
+          },
+          inter_sup: step2Data.map(row => ({
+            pos: row.placeOfSupply,
+            txval: row.taxableValue,
+            iamt: row.integratedTax
+          }))
+        },
+        itc_elg: {
+          itc_avl: {
+            iamt: step3Data.allOtherITC.igst || 0,
+            camt: step3Data.allOtherITC.cgst || 0,
+            samt: step3Data.allOtherITC.sgst || 0,
+            csamt: step3Data.allOtherITC.cess || 0
+          },
+          itc_rev: {
+            iamt: step3Data.othersReversed.igst || 0,
+            camt: step3Data.othersReversed.cgst || 0,
+            samt: step3Data.othersReversed.sgst || 0,
+            csamt: step3Data.othersReversed.cess || 0
+          }
+        },
+        inward_sup: {
+          isup_details: step4Data.map(row => ({
+            ty: row.description,
+            inter: row.interState || 0,
+            intra: row.intraState || 0
+          }))
+        },
+        intr_lt: {
+          intr_details: step5Data.paidThroughItc.igst || {}
+        }
+      };
+
+      // Download JSON file
+      const jsonStr = JSON.stringify(gstr3bData, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `GSTR-3B-${format(new Date(), "yyyy-MM-dd")}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
       toast({
-          title: "JSON Generation Started",
-          description: "Your GSTR-3B JSON file is being generated and will be downloaded shortly. (This is a simulation)."
-      })
+        title: "JSON Generated",
+        description: "Your GSTR-3B JSON file has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "An error occurred while generating the JSON file.",
+      });
+    }
   }
 
   const renderStep = () => {
