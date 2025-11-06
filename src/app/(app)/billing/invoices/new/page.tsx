@@ -176,8 +176,11 @@ export default function NewInvoicePage() {
 
     const narration = `Sale of ${lineItems.map(li => li.description).join(', ')} to ${selectedCustomer.name}`;
 
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    const customerAccountCode = selectedCustomer.accountCode || selectedCustomer.id;
+
     const journalLines = [
-        { account: selectedCustomer.id, debit: totalAmount.toFixed(2), credit: '0' },
+        { account: customerAccountCode, debit: totalAmount.toFixed(2), credit: '0' },
         { account: '4010', debit: '0', credit: subtotal.toFixed(2) },
         { account: '2110', debit: '0', credit: totalTax.toFixed(2) }
     ];

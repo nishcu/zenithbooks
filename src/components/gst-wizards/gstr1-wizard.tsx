@@ -75,7 +75,18 @@ export default function Gstr1Wizard() {
     return journalVouchers
       .filter(v => v && v.id && v.id.startsWith("INV-"))
       .map(v => {
-        const customer = customers.find(c => v.customerId === c.id);
+        // Try to find customer by customerId first, then by account code in journal lines
+        let customer = customers.find(c => v.customerId === c.id);
+        
+        // If not found by customerId, try to find by account code in journal lines
+        if (!customer && v.lines && v.lines.length > 0) {
+          const customerAccountLine = v.lines.find(l => l.debit && parseFloat(l.debit) > 0);
+          if (customerAccountLine) {
+            // Try to find customer by accountCode or Firebase ID
+            customer = customers.find(c => c.accountCode === customerAccountLine.account || c.id === customerAccountLine.account);
+          }
+        }
+        
         // B2B invoices must have a GSTIN
         if (!customer?.gstin) return null;
 

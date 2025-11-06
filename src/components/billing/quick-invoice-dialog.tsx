@@ -66,8 +66,11 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
     const totalAmount = subtotal + tax;
     const invoiceId = `INV-${quickInvNum}`;
 
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    const customerAccountCode = selectedCustomer.accountCode || selectedCustomer.id;
+
     const journalLines = [
-        { account: selectedCustomer.id, debit: totalAmount.toFixed(2), credit: '0' },
+        { account: customerAccountCode, debit: totalAmount.toFixed(2), credit: '0' },
         { account: '4010', debit: '0', credit: subtotal.toFixed(2) },
         { account: '2110', debit: '0', credit: tax.toFixed(2) }
     ];

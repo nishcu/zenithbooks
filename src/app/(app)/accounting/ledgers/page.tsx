@@ -56,8 +56,15 @@ export default function LedgersPage() {
   useEffect(() => {
     const combined = [...allAccounts];
     if (userAccountsSnapshot) combined.push(...userAccountsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Account)));
-    if (customersSnapshot) combined.push(...customersSnapshot.docs.map(doc => ({ code: doc.id, name: doc.data().name, type: 'Customer' })));
-    if (vendorsSnapshot) combined.push(...vendorsSnapshot.docs.map(doc => ({ code: doc.id, name: doc.data().name, type: 'Vendor' })));
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    if (customersSnapshot) combined.push(...customersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { code: data.accountCode || doc.id, name: data.name, type: 'Customer' };
+    }));
+    if (vendorsSnapshot) combined.push(...vendorsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { code: data.accountCode || doc.id, name: data.name, type: 'Vendor' };
+    }));
     setAccounts(combined.sort((a, b) => a.name.localeCompare(b.name)));
   }, [userAccountsSnapshot, customersSnapshot, vendorsSnapshot]);
 

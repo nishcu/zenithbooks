@@ -137,11 +137,14 @@ export default function NewCreditNotePage() {
     const creditNoteId = `CN-${originalInvoice.substring(originalInvoice.lastIndexOf('-') + 1)}`;
 
 
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    const customerAccountCode = selectedCustomer.accountCode || selectedCustomer.id;
+
     // Reverse of a sales entry
     const journalLines = [
         { account: '4010', debit: subtotal.toFixed(2), credit: '0' }, // Debit Sales Revenue
         { account: '2110', debit: totalTax.toFixed(2), credit: '0' }, // Debit GST Payable
-        { account: customer, debit: '0', credit: totalAmount.toFixed(2) } // Credit Customer Account
+        { account: customerAccountCode, debit: '0', credit: totalAmount.toFixed(2) } // Credit Customer Account
     ];
 
     try {

@@ -76,8 +76,15 @@ export default function BalanceSheetPage() {
         return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
     };
 
-    const customers = customersSnapshot?.docs.map(doc => ({ id: doc.id, code: doc.id, name: doc.data().name, type: 'Asset' })) || [];
-    const vendors = vendorsSnapshot?.docs.map(doc => ({ id: doc.id, code: doc.id, name: doc.data().name, type: 'Liability' })) || [];
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    const customers = customersSnapshot?.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, code: data.accountCode || doc.id, name: data.name, type: 'Asset' };
+    }) || [];
+    const vendors = vendorsSnapshot?.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, code: data.accountCode || doc.id, name: data.name, type: 'Liability' };
+    }) || [];
     const userAccounts = accountsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (Account & { id: string})[] || [];
     const combinedAccounts: CombinedAccount[] = [...allAccounts, ...userAccounts, ...customers, ...vendors];
 

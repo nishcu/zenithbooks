@@ -57,7 +57,7 @@ export default function RapidInvoiceEntryPage() {
   
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
-  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
+  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
   const form = useForm<RapidInvoiceForm>({
     resolver: zodResolver(rapidInvoiceSchema),
@@ -85,8 +85,11 @@ export default function RapidInvoiceEntryPage() {
     const subtotal = values.amount / (1 + values.taxRate / 100);
     const totalTax = values.amount - subtotal;
     
+    // Use accountCode if available, otherwise fall back to Firebase ID
+    const customerAccountCode = selectedCustomer.accountCode || selectedCustomer.id;
+    
     const journalLines = [
-        { account: values.customerId, debit: values.amount.toFixed(2), credit: '0' },
+        { account: customerAccountCode, debit: values.amount.toFixed(2), credit: '0' },
         { account: '4050', debit: '0', credit: subtotal.toFixed(2) }, // Sales Revenue
         { account: '2110', debit: '0', credit: totalTax.toFixed(2) } // GST Payable
     ];
