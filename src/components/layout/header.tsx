@@ -6,7 +6,8 @@ import { UserNav } from "@/components/layout/user-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { GlobalSearch } from "@/components/layout/global-search";
-import { Bell, HelpCircle, Settings } from "lucide-react";
+import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
+import { HelpCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -95,21 +96,7 @@ export function Header() {
           </DropdownMenu>
 
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
-                {/* Notification badge - can be dynamic */}
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary hidden" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No new notifications
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationsDropdown />
 
           {/* Settings Quick Access */}
           <Button variant="ghost" size="icon" asChild className="hidden md:flex">

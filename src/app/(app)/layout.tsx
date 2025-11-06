@@ -47,6 +47,7 @@ import { doc } from "firebase/firestore";
 import { Header } from "@/components/layout/header";
 import { ClientOnly } from "@/components/client-only";
 import { AccountingProvider } from "@/context/accounting-context";
+import { NotificationsProvider } from "@/context/notifications-context";
 import { Suspense, useEffect } from "react";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -470,7 +471,9 @@ export default function AppLayout({
     <ClientOnly>
        <RoleSimulatorProvider>
           <AccountingProvider>
-            <MainLayout>{children}</MainLayout>
+            <NotificationsProvider>
+              <MainLayout>{children}</MainLayout>
+            </NotificationsProvider>
           </AccountingProvider>
        </RoleSimulatorProvider>
     </ClientOnly>
