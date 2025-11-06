@@ -118,36 +118,88 @@ function parseVoiceInput(
 ): { customerId: string | null; itemId: string | null; quantity: number | null; amount: number | null } {
   const lowerText = text.toLowerCase();
   
-  // Find customer
+  // Enhanced patterns for voice commands
+  // Pattern 1: "Create invoice for [customer], [product], quantity [number]"
+  // Pattern 2: "Invoice [customer] for [product] [number] pieces"
+  // Pattern 3: "[customer] [product] [number]"
+  
+  // Find customer - try multiple patterns
   let bestCustomer: any = null;
   let bestCustomerScore = 0;
   
-  for (const customer of customers) {
-    const score = fuzzyMatch(customer.name, text);
-    if (score > bestCustomerScore && score > 0.3) {
-      bestCustomerScore = score;
-      bestCustomer = customer;
+  // Try to find customer name after keywords like "for", "to", "customer"
+  const customerKeywords = ['for', 'to', 'customer', 'client', 'party'];
+  let customerSearchText = lowerText;
+  
+  for (const keyword of customerKeywords) {
+    const keywordIndex = lowerText.indexOf(keyword);
+    if (keywordIndex !== -1) {
+      customerSearchText = lowerText.substring(keywordIndex + keyword.length).trim();
+      break;
     }
   }
   
-  // Find product/item
+  // Search for customer
+  for (const customer of customers) {
+    const customerName = customer.name.toLowerCase();
+    // Try exact match in the search text
+    if (customerSearchText.includes(customerName) || customerName.includes(customerSearchText.split(' ')[0])) {
+      const score = fuzzyMatch(customer.name, customerSearchText);
+      if (score > bestCustomerScore && score > 0.2) {
+        bestCustomerScore = score;
+        bestCustomer = customer;
+      }
+    } else {
+      // Try fuzzy match on entire text
+      const score = fuzzyMatch(customer.name, text);
+      if (score > bestCustomerScore && score > 0.3) {
+        bestCustomerScore = score;
+        bestCustomer = customer;
+      }
+    }
+  }
+  
+  // Find product/item - try multiple patterns
   let bestItem: any = null;
   let bestItemScore = 0;
   
-  for (const item of items) {
-    const score = fuzzyMatch(item.name, text);
-    if (score > bestItemScore && score > 0.3) {
-      bestItemScore = score;
-      bestItem = item;
+  // Try to find product name after customer or keywords
+  let itemSearchText = lowerText;
+  if (bestCustomer) {
+    const customerNameIndex = lowerText.indexOf(bestCustomer.name.toLowerCase());
+    if (customerNameIndex !== -1) {
+      itemSearchText = lowerText.substring(customerNameIndex + bestCustomer.name.length).trim();
     }
   }
   
-  // Extract quantity
+  // Search for item
+  for (const item of items) {
+    const itemName = item.name.toLowerCase();
+    // Try exact match in the search text
+    if (itemSearchText.includes(itemName) || itemName.includes(itemSearchText.split(' ')[0])) {
+      const score = fuzzyMatch(item.name, itemSearchText);
+      if (score > bestItemScore && score > 0.2) {
+        bestItemScore = score;
+        bestItem = item;
+      }
+    } else {
+      // Try fuzzy match on entire text
+      const score = fuzzyMatch(item.name, text);
+      if (score > bestItemScore && score > 0.3) {
+        bestItemScore = score;
+        bestItem = item;
+      }
+    }
+  }
+  
+  // Extract quantity - enhanced patterns
   let quantity: number | null = null;
   const quantityPatterns = [
-    /(\d+(?:\.\d+)?)\s*(?:quantity|qty|pieces?|units?|nos?|numbers?)/i,
+    /(\d+(?:\.\d+)?)\s*(?:quantity|qty|pieces?|units?|nos?|numbers?|pcs?|pcs)/i,
     /quantity\s*(?:of|is)?\s*(\d+(?:\.\d+)?)/i,
-    /(\d+(?:\.\d+)?)\s*(?:x|times)/i,
+    /(\d+(?:\.\d+)?)\s*(?:x|times|×)/i,
+    /(\d+(?:\.\d+)?)\s*(?:piece|unit|no|number)/i,
+    /(\d+(?:\.\d+)?)\s*(?:of|for)/i,
   ];
   
   for (const pattern of quantityPatterns) {
@@ -158,11 +210,24 @@ function parseVoiceInput(
     }
   }
   
-  // If no quantity found, try to find standalone numbers
+  // If no quantity found, try to find standalone numbers (but exclude prices)
   if (!quantity) {
-    const numberMatch = text.match(/\b(\d+(?:\.\d+)?)\b/);
-    if (numberMatch && parseFloat(numberMatch[1]) < 10000) { // Reasonable quantity limit
-      quantity = parseFloat(numberMatch[1]);
+    // Remove customer and item names from text to find quantity
+    let cleanText = text;
+    if (bestCustomer) {
+      cleanText = cleanText.replace(new RegExp(bestCustomer.name, 'gi'), '');
+    }
+    if (bestItem) {
+      cleanText = cleanText.replace(new RegExp(bestItem.name, 'gi'), '');
+    }
+    
+    const numberMatches = cleanText.match(/\b(\d+(?:\.\d+)?)\b/g);
+    if (numberMatches) {
+      // Filter out large numbers (likely prices) and take the smallest reasonable number
+      const numbers = numberMatches.map(m => parseFloat(m)).filter(n => n > 0 && n < 10000);
+      if (numbers.length > 0) {
+        quantity = Math.min(...numbers);
+      }
     }
   }
   
@@ -170,7 +235,9 @@ function parseVoiceInput(
   let amount: number | null = null;
   if (bestItem && quantity) {
     const itemPrice = bestItem.sellingPrice || bestItem.price || 0;
-    amount = itemPrice * quantity;
+    if (itemPrice > 0) {
+      amount = itemPrice * quantity;
+    }
   }
   
   return {
@@ -372,6 +439,12 @@ export default function VoiceInvoiceEntryPage() {
         return;
     }
     
+    // Validate amount
+    if (!values.amount || values.amount <= 0) {
+        toast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." });
+        return;
+    }
+    
     const invoiceId = `INV-${values.invoiceNumber}`;
     const subtotal = values.amount / (1 + values.taxRate / 100);
     const totalTax = values.amount - subtotal;
@@ -381,7 +454,9 @@ export default function VoiceInvoiceEntryPage() {
     
     // Get selected item if provided
     const selectedItem = values.itemId ? items.find((i: any) => i.id === values.itemId) : null;
-    const itemDescription = selectedItem ? selectedItem.name : "Goods/Services";
+    const itemDescription = selectedItem 
+      ? `${selectedItem.name}${values.quantity && values.quantity > 1 ? ` (Qty: ${values.quantity})` : ''}`
+      : "Goods/Services";
     
     // Use account code 4010 for Sales Revenue (GSTR-1 requirement)
     const journalLines = [
@@ -403,7 +478,10 @@ export default function VoiceInvoiceEntryPage() {
 
         await addJournalVoucher(newInvoice);
 
-        toast({ title: "Invoice Created!", description: `${invoiceId} has been created successfully.` });
+        toast({ 
+          title: "Invoice Created!", 
+          description: `${invoiceId} has been created successfully and will appear in GSTR-1 and GSTR-3B.` 
+        });
 
         // Reset form and transcript
         setTranscript("");
@@ -426,7 +504,12 @@ export default function VoiceInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        console.error("Error creating invoice:", e);
+        toast({ 
+          variant: "destructive", 
+          title: "Failed to save invoice", 
+          description: e.message || "An error occurred while creating the invoice. Please try again." 
+        });
     }
   }, [accountingContext, customers, items, toast, router, form]);
 
@@ -473,9 +556,13 @@ export default function VoiceInvoiceEntryPage() {
             Voice Input
           </CardTitle>
           <CardDescription>
-            Click the microphone button and say: "Customer name, Product name, Quantity"
+            Click the microphone button and speak naturally. Try these examples:
             <br />
-            Example: "Create invoice for ABC Company, Product XYZ, quantity 5"
+            • "Create invoice for ABC Company, Product XYZ, quantity 5"
+            <br />
+            • "Invoice ABC Company for Product XYZ, 5 pieces"
+            <br />
+            • "ABC Company, Product XYZ, 5 units"
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
