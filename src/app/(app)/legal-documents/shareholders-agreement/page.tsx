@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,14 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRef } from "react";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
+import { db, auth } from "@/lib/firebase";
+import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
 
 const shareholderSchema = z.object({
   name: z.string().min(2, "Shareholder name is required."),
@@ -25,6 +29,7 @@ const shareholderSchema = z.object({
 });
 
 const formSchema = z.object({
+  documentName: z.string().min(3, "A document name is required for saving."),
   companyName: z.string().min(3, "Company name is required."),
   agreementDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   shareholders: z.array(shareholderSchema).min(2, "At least two shareholders are required."),
@@ -36,12 +41,19 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function ShareholdersAgreement() {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const docId = searchParams.get('id');
   const [step, setStep] = useState(1);
   const documentRef = useRef<HTMLDivElement>(null);
+  const [user, authLoading] = useAuthState(auth);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!docId);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      documentName: `Shareholders Agreement - ${format(new Date(), 'yyyy-MM-dd')}`,
       companyName: "Acme Innovations Pvt. Ltd.",
       agreementDate: new Date().toISOString().split("T")[0],
       shareholders: [
@@ -53,10 +65,67 @@ export default function ShareholdersAgreement() {
     },
   });
 
+  useEffect(() => {
+    if (docId && user) {
+      const loadDocument = async () => {
+        setIsLoading(true);
+        const docRef = doc(db, 'userDocuments', docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.userId === user.uid) {
+            form.reset(data.formData);
+            toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
+          } else {
+            toast({ variant: 'destructive', title: "Unauthorized", description: "You don't have permission to access this document." });
+            router.push('/legal-documents/shareholders-agreement');
+          }
+        } else {
+          toast({ variant: 'destructive', title: "Not Found", description: "The requested document draft could not be found." });
+          router.push('/legal-documents/shareholders-agreement');
+        }
+        setIsLoading(false);
+      };
+      loadDocument();
+    }
+  }, [docId, user, form, router, toast]);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "shareholders",
   });
+
+  const handleSaveDraft = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Authentication Error' });
+      return;
+    }
+    setIsSubmitting(true);
+    const formData = form.getValues();
+    try {
+      if (docId) {
+        const docRef = doc(db, "userDocuments", docId);
+        await updateDoc(docRef, { formData, updatedAt: new Date() });
+        toast({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
+      } else {
+        const docRef = await addDoc(collection(db, 'userDocuments'), {
+          userId: user.uid,
+          documentType: 'shareholders-agreement',
+          documentName: formData.documentName,
+          status: 'Draft',
+          formData,
+          createdAt: new Date(),
+        });
+        toast({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
+        router.push(`/legal-documents/shareholders-agreement?id=${docRef.id}`);
+      }
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the draft.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const processStep = async () => {
     const isValid = await form.trigger();
@@ -69,6 +138,9 @@ export default function ShareholdersAgreement() {
   const handleBack = () => setStep((prev) => prev - 1);
 
   const renderStep = () => {
+    if (isLoading) {
+      return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin size-8 text-primary"/></div>;
+    }
     switch (step) {
       case 1:
         return (
@@ -77,6 +149,8 @@ export default function ShareholdersAgreement() {
               <CardTitle>Step 1: Company & Shareholders</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField control={form.control} name="documentName" render={({ field }) => (<FormItem><FormLabel>Document Name (for your reference)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+              <Separator/>
               <FormField control={form.control} name="companyName" render={({ field }) => ( <FormItem><FormLabel>Company Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
               <FormField control={form.control} name="agreementDate" render={({ field }) => ( <FormItem><FormLabel>Agreement Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )}/>
               <div className="space-y-2">
@@ -92,7 +166,8 @@ export default function ShareholdersAgreement() {
                 <Button type="button" variant="outline" size="sm" onClick={() => append({ name: "", shareCount: 0, isFounder: false })}><PlusCircle className="mr-2"/> Add Shareholder</Button>
               </div>
             </CardContent>
-            <CardFooter className="justify-end">
+            <CardFooter className="justify-between">
+              <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>} Save Draft</Button>
               <Button type="button" onClick={processStep}>Next <ArrowRight className="ml-2"/></Button>
             </CardFooter>
           </Card>
@@ -121,8 +196,9 @@ export default function ShareholdersAgreement() {
               <CardTitle>Step 3: Preview & Download</CardTitle>
               <CardDescription>Review the generated Shareholders' Agreement summary.</CardDescription>
             </CardHeader>
-            <CardContent ref={documentRef} className="prose prose-sm dark:prose-invert max-w-none border p-6 rounded-md">
-              <h4 className="font-bold text-center">SHAREHOLDERS' AGREEMENT SUMMARY</h4>
+            <CardContent ref={documentRef} className="prose prose-sm dark:prose-invert max-w-none border p-6 rounded-md" style={{ pageBreakInside: 'avoid' }}>
+              <div style={{ pageBreakAfter: 'always' }}>
+                <h4 className="font-bold text-center">SHAREHOLDERS' AGREEMENT SUMMARY</h4>
               <p><strong>Company:</strong> {formData.companyName}</p>
               <p><strong>Effective Date:</strong> {new Date(formData.agreementDate).toLocaleDateString()}</p>
               
@@ -137,6 +213,7 @@ export default function ShareholdersAgreement() {
                 <li><strong>Tag-Along Right:</strong> If a majority shareholder sells their shares, minority shareholders have the right to join the transaction and sell their shares on the same terms.</li>
               </ul>
               <p className="text-xs text-muted-foreground mt-8">Note: This is a high-level summary. The full SHA would include detailed clauses on share transfer restrictions, board composition, reserved matters, anti-dilution, and more.</p>
+              </div>
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
@@ -151,8 +228,9 @@ export default function ShareholdersAgreement() {
                     margin: [10, 10, 10, 10],
                     filename: `Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}.pdf`,
                     image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
                     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                   };
                   await html2pdf().set(opt).from(documentRef.current).save();
                   toast({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." });

@@ -40,14 +40,39 @@ export default function MyDocumentsPage() {
     [docsSnapshot]);
     
     const docTypeToUrl: Record<string, string> = {
+        // CA Certificates
         'net-worth-certificate': '/ca-certificates/net-worth',
         'capital-contribution-certificate': '/ca-certificates/capital-contribution',
         'foreign-remittance-certificate': '/ca-certificates/foreign-remittance',
         'general-attestation-certificate': '/ca-certificates/general-attestation',
-        'partnership-deed': '/legal-documents/partnership-deed',
         'turnover-certificate': '/ca-certificates/turnover',
         'visa-immigration-certificate': '/ca-certificates/visa-immigration',
-        // Add other mappings here as they become available
+        // Legal Documents
+        'partnership-deed': '/legal-documents/partnership-deed',
+        'rental-deed': '/legal-documents/rental-deed',
+        'lease-deed': '/legal-documents/lease-deed',
+        'self-affidavit-gst': '/legal-documents/self-affidavit-gst',
+        'llp-agreement': '/legal-documents/llp-agreement',
+        'rental-receipt': '/legal-documents/rental-receipt',
+        'founders-agreement': '/legal-documents/founders-agreement',
+        'consultant-agreement': '/legal-documents/consultant-agreement',
+        'service-agreement': '/legal-documents/service-agreement',
+        'vendor-agreement': '/legal-documents/vendor-agreement',
+        'franchise-agreement': '/legal-documents/franchise-agreement',
+        'offer-letter': '/legal-documents/offer-letter',
+        'appointment-letter': '/legal-documents/appointment-letter',
+        'internship-agreement': '/legal-documents/internship-agreement',
+        'shareholders-agreement': '/legal-documents/shareholders-agreement',
+        'esop-policy': '/legal-documents/esop-policy',
+        'safe-agreement': '/legal-documents/safe-agreement',
+        'society-registration-deed': '/legal-documents/society-registration-deed',
+        'trust-deed': '/legal-documents/trust-deed',
+        'moa-aoa': '/legal-documents/moa-aoa',
+        'loan-agreement': '/legal-documents/loan-agreement',
+        'nda': '/legal-documents/nda',
+        'accounting-engagement-letter': '/legal-documents/accounting-engagement-letter',
+        'gst-engagement-letter': '/legal-documents/gst-engagement-letter',
+        'board-resolution': '/legal-documents/board-resolutions',
     }
     
     const handleEdit = (doc: any) => {
