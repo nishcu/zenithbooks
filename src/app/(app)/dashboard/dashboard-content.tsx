@@ -3,12 +3,14 @@
 
 import { useState, useMemo, useContext, memo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import { AccountingContext } from "@/context/accounting-context";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, query, where } from 'firebase/firestore';
@@ -137,6 +139,50 @@ function DashboardContent() {
     );
   }, [invoices, searchTerm]);
 
+  // Core Features
+  const coreFeatures = [
+    {
+      title: "Bulk Invoice",
+      description: "Upload CSV/Excel to generate multiple invoices at once",
+      icon: FileSpreadsheet,
+      href: "/billing/invoices/bulk",
+      color: "from-blue-500 to-indigo-600",
+      badge: "Time Saver"
+    },
+    {
+      title: "Bulk Journal",
+      description: "Upload journal entries in bulk - perfect for non-accounting users",
+      icon: BookOpen,
+      href: "/accounting/journal/bulk",
+      color: "from-purple-500 to-pink-600",
+      badge: "Game Changer"
+    },
+    {
+      title: "Rapid Invoice",
+      description: "Quick invoice entry with minimal fields",
+      icon: Zap,
+      href: "/billing/invoices/rapid",
+      color: "from-yellow-500 to-orange-600",
+      badge: "Fast"
+    },
+    {
+      title: "Voice to Invoice",
+      description: "Create invoices using voice commands - perfect for mobile users",
+      icon: Mic,
+      href: "/billing/invoices/voice",
+      color: "from-green-500 to-teal-600",
+      badge: "Innovative"
+    },
+    {
+      title: "Bank Reconciliation",
+      description: "Upload bank statements (PDF/CSV/Excel) and auto-create entries",
+      icon: Upload,
+      href: "/accounting/bank-reconciliation",
+      color: "from-cyan-500 to-blue-600",
+      badge: "Smart"
+    },
+  ];
+
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
           <div className="space-y-8">
@@ -160,6 +206,55 @@ function DashboardContent() {
               {/* Render the main business dashboard below the client manager */}
                <div className="space-y-8 mt-8">
                   <MarketingCarousel />
+                  
+                  {/* Core Features Section */}
+                  <Card className="border-2 border-primary/20 shadow-lg">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-2xl flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6 text-primary" />
+                            Core Features
+                          </CardTitle>
+                          <CardDescription className="mt-2">
+                            Powerful tools to streamline your accounting workflow
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                        {coreFeatures.map((feature) => {
+                          const Icon = feature.icon;
+                          return (
+                            <Link key={feature.href} href={feature.href}>
+                              <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
+                                <CardHeader className="pb-3">
+                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                    <Icon className="h-6 w-6 text-white" />
+                                  </div>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <CardTitle className="text-base group-hover:text-primary transition-colors">
+                                      {feature.title}
+                                    </CardTitle>
+                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                      {feature.badge}
+                                    </Badge>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  <CardDescription className="text-sm line-clamp-2">
+                                    {feature.description}
+                                  </CardDescription>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
                   <div className="grid gap-8 lg:grid-cols-3 items-start">
                     <div className="lg:col-span-2 space-y-8">
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -183,6 +278,55 @@ function DashboardContent() {
   return (
     <div className="space-y-8">
       <MarketingCarousel />
+      
+      {/* Core Features Section */}
+      <Card className="border-2 border-primary/20 shadow-lg">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                Core Features
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Powerful tools to streamline your accounting workflow
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {coreFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <Link key={feature.href} href={feature.href}>
+                  <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
+                    <CardHeader className="pb-3">
+                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-base group-hover:text-primary transition-colors">
+                          {feature.title}
+                        </CardTitle>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {feature.badge}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <CardDescription className="text-sm line-clamp-2">
+                        {feature.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-8 lg:grid-cols-3 items-start">
         <div className="lg:col-span-2 space-y-8">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
