@@ -88,11 +88,11 @@ export default function JournalVoucherPage() {
     // Fetch customers and vendors to resolve names
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
-    const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ value: doc.id, label: `${doc.data().name} (Customer)`, group: "Customers", ...doc.data() })) || [], [customersSnapshot]);
+    const customers = useMemo(() => customersSnapshot?.docs.map((doc: any) => ({ value: doc.id, label: `${doc.data().name} (Customer)`, group: "Customers", ...doc.data() })) || [], [customersSnapshot]);
 
     const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
     const [vendorsSnapshot] = useCollection(vendorsQuery);
-    const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ value: doc.id, label: `${doc.data().name} (Vendor)`, group: "Vendors", ...doc.data() })) || [], [vendorsSnapshot]);
+    const vendors = useMemo(() => vendorsSnapshot?.docs.map((doc: any) => ({ value: doc.id, label: `${doc.data().name} (Vendor)`, group: "Vendors", ...doc.data() })) || [], [vendorsSnapshot]);
 
     const combinedAccounts = useMemo(() => {
         return [
@@ -107,7 +107,7 @@ export default function JournalVoucherPage() {
         if (editingVoucher) {
             setDate(new Date(editingVoucher.date));
             setNarration(editingVoucher.narration);
-            setLines(editingVoucher.lines.map(l => ({...l, costCentre: l.costCentre || ''})));
+            setLines(editingVoucher.lines.map((l: any) => ({...l, costCentre: l.costCentre || ''})));
             setIsAddDialogOpen(true);
         } else {
             // Reset form when not editing
@@ -126,11 +126,11 @@ export default function JournalVoucherPage() {
     const visibleJournalVouchers = useMemo(() => {
       const reversedIds = new Set(
         allVouchers
-          .filter(v => v && v.reverses)
-          .map(v => v.reverses)
+          .filter((v: JournalVoucher | null) => v && v.reverses)
+          .map((v: JournalVoucher) => v.reverses)
       );
 
-      return allVouchers.filter(v => v && v.id && !reversedIds.has(v.id) && !v.reverses);
+      return allVouchers.filter((v: JournalVoucher | null) => v && v.id && !reversedIds.has(v.id) && !v.reverses);
     }, [allVouchers]);
     
     const filteredJournalVouchers = useMemo(() => {
@@ -145,14 +145,14 @@ export default function JournalVoucherPage() {
     }, [visibleJournalVouchers, searchTerm]);
 
     const handleDeleteJournalVoucher = async (voucherId: string) => {
-        const originalVoucher = allVouchers.find(v => v.id === voucherId);
+        const originalVoucher = allVouchers.find((v: JournalVoucher | null) => v && v.id === voucherId);
 
         if (!originalVoucher) {
             toast({ variant: "destructive", title: "Error", description: "Original journal voucher not found." });
             return;
         }
 
-        const reversalLines = originalVoucher.lines.map(line => ({
+        const reversalLines = originalVoucher.lines.map((line: any) => ({
             account: line.account,
             debit: line.credit, // Swap debit and credit
             credit: line.debit,
@@ -243,8 +243,8 @@ export default function JournalVoucherPage() {
             return;
         }
 
-        const totalDebits = lines.reduce((sum, line) => sum + parseFloat(line.debit || '0'), 0);
-        const totalCredits = lines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
+        const totalDebits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.debit || '0'), 0);
+        const totalCredits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.credit || '0'), 0);
         
         if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
             toast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
@@ -281,8 +281,8 @@ export default function JournalVoucherPage() {
         }
     };
 
-    const totalDebits = lines.reduce((sum, line) => sum + parseFloat(line.debit || '0'), 0);
-    const totalCredits = lines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
+    const totalDebits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.debit || '0'), 0);
+    const totalCredits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.credit || '0'), 0);
     const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01 && totalDebits > 0;
 
     return (
@@ -339,7 +339,7 @@ export default function JournalVoucherPage() {
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="narration">Narration</Label>
-                                        <Textarea id="narration" value={narration} onChange={(e) => setNarration(e.target.value)} placeholder="e.g., To record monthly depreciation expense" />
+                                        <Textarea id="narration" value={narration} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNarration(e.target.value)} placeholder="e.g., To record monthly depreciation expense" />
                                     </div>
                                 </div>
                                 <Separator />
@@ -355,37 +355,40 @@ export default function JournalVoucherPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {lines.map((line, index) => {
+                                            {lines.map((line: any, index: number) => {
                                                 const accountDetails = allAccounts.find(acc => acc.code === line.account);
                                                 const showCostCentre = accountDetails && ['Revenue', 'Expense'].includes(accountDetails.type);
                                                 return (
                                                     <TableRow key={index}>
                                                         <TableCell>
-                                                            <Select value={line.account} onValueChange={(value) => handleLineChange(index, 'account', value)}>
+                                                            <Select value={line.account} onValueChange={(value: string) => handleLineChange(index, 'account', value)}>
                                                                 <SelectTrigger>
                                                                     <SelectValue placeholder="Select an account" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {Object.entries(combinedAccounts.reduce((acc, curr) => {
+                                                                    {Object.entries(combinedAccounts.reduce((acc: Record<string, any[]>, curr: any) => {
                                                                         const group = curr.group || "Other";
                                                                         if (!acc[group]) acc[group] = [];
                                                                         acc[group].push(curr);
                                                                         return acc;
-                                                                    }, {} as Record<string, any[]>)).map(([group, accounts]) => (
-                                                                        <React.Fragment key={group}>
-                                                                            <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
-                                                                            {accounts.map(account => (
-                                                                                <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
-                                                                            ))}
-                                                                            <Separator className="my-2"/>
-                                                                        </React.Fragment>
-                                                                    ))}
+                                                                    }, {} as Record<string, any[]>)).map(([group, accounts]) => {
+                                                                        const accountsArray = accounts as any[];
+                                                                        return (
+                                                                            <React.Fragment key={group}>
+                                                                                <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
+                                                                                {accountsArray.map((account: any) => (
+                                                                                    <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
+                                                                                ))}
+                                                                                <Separator className="my-2"/>
+                                                                            </React.Fragment>
+                                                                        );
+                                                                    })}
                                                                 </SelectContent>
                                                             </Select>
                                                         </TableCell>
                                                         <TableCell>
                                                             {showCostCentre && (
-                                                                <Select value={line.costCentre} onValueChange={(value) => handleLineChange(index, 'costCentre', value)}>
+                                                                <Select value={line.costCentre} onValueChange={(value: string) => handleLineChange(index, 'costCentre', value)}>
                                                                     <SelectTrigger>
                                                                         <SelectValue placeholder="Select cost centre" />
                                                                     </SelectTrigger>
@@ -396,10 +399,10 @@ export default function JournalVoucherPage() {
                                                             )}
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Input type="number" className="text-right" value={line.debit} onChange={(e) => handleLineChange(index, 'debit', e.target.value)} />
+                                                            <Input type="number" className="text-right" value={line.debit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleLineChange(index, 'debit', e.target.value)} />
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Input type="number" className="text-right" value={line.credit} onChange={(e) => handleLineChange(index, 'credit', e.target.value)} />
+                                                            <Input type="number" className="text-right" value={line.credit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleLineChange(index, 'credit', e.target.value)} />
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)} disabled={lines.length <= 2}>
@@ -450,7 +453,7 @@ export default function JournalVoucherPage() {
                             placeholder="Search by Voucher # or Narration..."
                             className="pl-8 w-full md:w-1/3"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </CardHeader>
@@ -467,7 +470,7 @@ export default function JournalVoucherPage() {
                         </TableHeader>
                         <TableBody>
                             {loading && <TableRow><TableCell colSpan={5} className="text-center"><Loader2 className="animate-spin mx-auto"/></TableCell></TableRow>}
-                            {filteredJournalVouchers.map((voucher) => (
+                            {filteredJournalVouchers.map((voucher: JournalVoucher) => (
                                 <TableRow key={voucher.id}>
                                     <TableCell>{format(new Date(voucher.date), "dd MMM, yyyy")}</TableCell>
                                     <TableCell className="font-medium">{voucher.id}</TableCell>
@@ -505,7 +508,7 @@ export default function JournalVoucherPage() {
             </Card>
             
             {selectedVoucher && (
-                <Dialog open={!!selectedVoucher} onOpenChange={(open) => !open && setSelectedVoucher(null)}>
+                <Dialog open={!!selectedVoucher} onOpenChange={(open: boolean) => !open && setSelectedVoucher(null)}>
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Journal Voucher: {selectedVoucher.id}</DialogTitle>
@@ -524,9 +527,9 @@ export default function JournalVoucherPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedVoucher.lines.map((line, index) => (
+                                    {selectedVoucher.lines.map((line: any, index: number) => (
                                         <TableRow key={index}>
-                                            <TableCell className="font-medium">{combinedAccounts.find(a => a.value === line.account)?.label || line.account}</TableCell>
+                                            <TableCell className="font-medium">{combinedAccounts.find((a: any) => a.value === line.account)?.label || line.account}</TableCell>
                                             <TableCell>{costCentres.find(cc => cc.id === line.costCentre)?.name || '-'}</TableCell>
                                             <TableCell className="text-right font-mono">{parseFloat(line.debit) > 0 ? `₹${parseFloat(line.debit).toFixed(2)}` : '-'}</TableCell>
                                             <TableCell className="text-right font-mono">{parseFloat(line.credit) > 0 ? `₹${parseFloat(line.credit).toFixed(2)}` : '-'}</TableCell>
