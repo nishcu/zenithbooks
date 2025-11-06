@@ -43,6 +43,7 @@ const rapidInvoiceSchema = z.object({
   customerId: z.string().min(1, "Customer is required."),
   invoiceNumber: z.string().min(1, "Invoice number is required."),
   invoiceDate: z.string().min(1, "Date is required."),
+  itemId: z.string().optional(),
   amount: z.coerce.number().positive("Amount must be greater than zero."),
   taxRate: z.coerce.number().min(0, "Tax rate cannot be negative."),
 });
@@ -59,12 +60,17 @@ export default function RapidInvoiceEntryPage() {
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
+  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
+  const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
+
   const form = useForm<RapidInvoiceForm>({
     resolver: zodResolver(rapidInvoiceSchema),
     defaultValues: {
       customerId: "",
       invoiceNumber: "",
       invoiceDate: format(new Date(), "yyyy-MM-dd"),
+      itemId: "",
       amount: 0,
       taxRate: 18,
     },
@@ -88,12 +94,17 @@ export default function RapidInvoiceEntryPage() {
     // Use accountCode if available, otherwise fall back to Firebase ID
     const customerAccountCode = selectedCustomer.accountCode || selectedCustomer.id;
     
+    // Get selected item if provided
+    const selectedItem = values.itemId ? items.find((i: any) => i.id === values.itemId) : null;
+    const itemDescription = selectedItem ? selectedItem.name : "Goods/Services";
+    
+    // Use account code 4010 for Sales Revenue (GSTR-1 requirement)
     const journalLines = [
         { account: customerAccountCode, debit: values.amount.toFixed(2), credit: '0' },
-        { account: '4050', debit: '0', credit: subtotal.toFixed(2) }, // Sales Revenue
+        { account: '4010', debit: '0', credit: subtotal.toFixed(2) }, // Sales Revenue - must be 4010 for GSTR-1
         { account: '2110', debit: '0', credit: totalTax.toFixed(2) } // GST Payable
     ];
-    const narration = `Sale to ${selectedCustomer.name}`;
+    const narration = `Sale of ${itemDescription} to ${selectedCustomer.name}`;
 
 
     try {
@@ -120,6 +131,7 @@ export default function RapidInvoiceEntryPage() {
                 ...values,
                 invoiceNumber: nextInvoiceNumber,
                 customerId: "",
+                itemId: "",
                 amount: 0,
             });
             form.setFocus("customerId");
@@ -127,7 +139,7 @@ export default function RapidInvoiceEntryPage() {
     } catch (e: any) {
         toast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
     }
-  }, [accountingContext, customers, toast, router, form]);
+  }, [accountingContext, customers, items, toast, router, form]);
 
   const onSaveAndNew = form.handleSubmit(values => handleSave(values, false));
   const onSaveAndClose = form.handleSubmit(values => handleSave(values, true));
@@ -175,7 +187,22 @@ export default function RapidInvoiceEntryPage() {
                             <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <FormField control={form.control} name="itemId" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Product/Item (Optional)</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <FormControl>
+                                    <SelectTrigger><SelectValue placeholder={itemsLoading ? "Loading..." : "Select Product (Optional)"} /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
+                                    {items.map((i: any) => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
                          <FormField control={form.control} name="amount" render={({ field }) => (
                             <FormItem><FormLabel>Total Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 5900" {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
