@@ -16,6 +16,8 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFoot,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
