@@ -49,12 +49,14 @@ export function DateRangeSelector({
                 id="from-date"
                 variant={"outline"}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal min-w-0",
                   !fromDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {fromDate ? format(fromDate, "dd MMM, yyyy") : <span>Select from date</span>}
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate min-w-0">
+                  {fromDate ? format(fromDate, "dd MMM yyyy") : "Select from date"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -78,12 +80,14 @@ export function DateRangeSelector({
                 id="to-date"
                 variant={"outline"}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal min-w-0",
                   !toDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {toDate ? format(toDate, "dd MMM, yyyy") : <span>Select to date</span>}
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                <span className="truncate min-w-0">
+                  {toDate ? format(toDate, "dd MMM yyyy") : "Select to date"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
