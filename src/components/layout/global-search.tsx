@@ -1,0 +1,206 @@
+"use client";
+
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Search, X, FileText, Users, Warehouse, Receipt, Calculator, TrendingUp, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRouter } from "next/navigation";
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, query, where } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+interface SearchResult {
+  id: string;
+  type: 'invoice' | 'customer' | 'vendor' | 'item' | 'report' | 'page';
+  title: string;
+  description?: string;
+  href: string;
+  icon: any;
+}
+
+export function GlobalSearch() {
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  const [user] = useAuthState(auth);
+
+  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  const [customersSnapshot] = useCollection(customersQuery);
+  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
+
+  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
+  const [vendorsSnapshot] = useCollection(vendorsQuery);
+  const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
+
+  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  const [itemsSnapshot] = useCollection(itemsQuery);
+  const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
+
+  const searchResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    
+    const term = searchTerm.toLowerCase();
+    const results: SearchResult[] = [];
+
+    // Search customers
+    customers.forEach((customer: any) => {
+      if (customer.name?.toLowerCase().includes(term) || customer.gstin?.toLowerCase().includes(term)) {
+        results.push({
+          id: customer.id,
+          type: 'customer',
+          title: customer.name,
+          description: customer.gstin || customer.email || '',
+          href: `/parties?customer=${customer.id}`,
+          icon: Users,
+        });
+      }
+    });
+
+    // Search vendors
+    vendors.forEach((vendor: any) => {
+      if (vendor.name?.toLowerCase().includes(term) || vendor.gstin?.toLowerCase().includes(term)) {
+        results.push({
+          id: vendor.id,
+          type: 'vendor',
+          title: vendor.name,
+          description: vendor.gstin || vendor.email || '',
+          href: `/parties?vendor=${vendor.id}`,
+          icon: Users,
+        });
+      }
+    });
+
+    // Search items
+    items.forEach((item: any) => {
+      if (item.name?.toLowerCase().includes(term) || item.hsn?.toLowerCase().includes(term)) {
+        results.push({
+          id: item.id,
+          type: 'item',
+          title: item.name,
+          description: item.hsn || `₹${item.price || item.sellingPrice || 0}`,
+          href: `/items?item=${item.id}`,
+          icon: Warehouse,
+        });
+      }
+    });
+
+    // Search pages
+    const pages: SearchResult[] = [
+      { id: 'invoices', type: 'page', title: 'Invoices', description: 'View and manage sales invoices', href: '/billing/invoices', icon: Receipt },
+      { id: 'voice-invoice', type: 'page', title: 'Voice Invoice', description: 'Create invoice using voice', href: '/billing/invoices/voice', icon: Receipt },
+      { id: 'rapid-invoice', type: 'page', title: 'Rapid Invoice', description: 'Quick invoice entry', href: '/billing/invoices/rapid', icon: Receipt },
+      { id: 'purchases', type: 'page', title: 'Purchase Bills', description: 'View and manage purchase bills', href: '/purchases', icon: Receipt },
+      { id: 'gstr1', type: 'page', title: 'GSTR-1', description: 'File GSTR-1 return', href: '/gst-filings/gstr-1-wizard', icon: FileText },
+      { id: 'gstr3b', type: 'page', title: 'GSTR-3B', description: 'File GSTR-3B return', href: '/gst-filings/gstr-3b-wizard', icon: FileText },
+      { id: 'trial-balance', type: 'page', title: 'Trial Balance', description: 'View trial balance report', href: '/accounting/trial-balance', icon: Calculator },
+      { id: 'balance-sheet', type: 'page', title: 'Balance Sheet', description: 'View balance sheet', href: '/accounting/financial-statements/balance-sheet', icon: TrendingUp },
+      { id: 'profit-loss', type: 'page', title: 'Profit & Loss', description: 'View profit and loss statement', href: '/accounting/financial-statements/profit-and-loss', icon: TrendingUp },
+    ];
+
+    pages.forEach(page => {
+      if (page.title.toLowerCase().includes(term) || page.description?.toLowerCase().includes(term)) {
+        results.push(page);
+      }
+    });
+
+    return results.slice(0, 10); // Limit to 10 results
+  }, [searchTerm, customers, vendors, items]);
+
+  const handleSelect = useCallback((href: string) => {
+    router.push(href);
+    setOpen(false);
+    setSearchTerm("");
+  }, [router]);
+
+  // Keyboard shortcut (Cmd/Ctrl + K)
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        className={cn(
+          "relative h-9 w-full justify-start rounded-[0.5rem] bg-background text-sm font-normal text-muted-foreground shadow-none sm:pr-12 md:w-64 lg:w-80"
+        )}
+        onClick={() => setOpen(true)}
+      >
+        <Search className="mr-2 h-4 w-4" />
+        <span className="hidden lg:inline-flex">Search...</span>
+        <span className="inline-flex lg:hidden">Search</span>
+        <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <span className="text-xs">⌘</span>K
+        </kbd>
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Search</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search customers, items, invoices, reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+            <ScrollArea className="h-[400px]">
+              {searchResults.length === 0 && searchTerm.trim() && (
+                <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                  No results found.
+                </div>
+              )}
+              {searchResults.length > 0 && (
+                <div className="space-y-2">
+                  {searchResults.map((result) => (
+                    <Link
+                      key={result.id}
+                      href={result.href}
+                      onClick={() => {
+                        setOpen(false);
+                        setSearchTerm("");
+                      }}
+                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-accent transition-colors"
+                    >
+                      <result.icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{result.title}</div>
+                        {result.description && (
+                          <div className="text-sm text-muted-foreground truncate">{result.description}</div>
+                        )}
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+

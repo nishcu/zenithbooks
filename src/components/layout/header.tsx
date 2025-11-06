@@ -4,27 +4,137 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/layout/user-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Heart } from "lucide-react";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { GlobalSearch } from "@/components/layout/global-search";
+import { Bell, HelpCircle, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { doc } from "firebase/firestore";
+import { db, auth as firebaseAuth } from "@/lib/firebase";
 
 export function Header() {
-  // In a real app, this data would come from a user context or API call
+  const pathname = usePathname();
+  const [user] = useAuthState(firebaseAuth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  
+  // Get company info from user data or use defaults
   const companyInfo = {
-    name: "ZenithBooks Solutions",
-    gstin: "27ABCDE1234F1Z5",
+    name: userData?.companyName || "ZenithBooks Solutions",
+    gstin: userData?.gstin || "27ABCDE1234F1Z5",
   };
 
+
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:mt-0">
-      <div className="md:hidden">
-        {/* This trigger is now part of the BottomNav for mobile */}
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center gap-4 px-4 lg:px-6">
+        {/* Mobile Sidebar Trigger */}
+        <div className="md:hidden">
+          <SidebarTrigger />
+        </div>
+
+        {/* Company Info - Desktop */}
+        <div className="hidden md:flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-baseline gap-3 min-w-0">
+            <h1 className="text-lg font-semibold truncate">{companyInfo.name}</h1>
+            <Badge variant="outline" className="hidden lg:inline-flex text-xs font-mono">
+              {companyInfo.gstin}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Breadcrumbs - Desktop */}
+        <div className="hidden lg:flex items-center flex-1 min-w-0">
+          <Breadcrumbs />
+        </div>
+
+        {/* Search - Desktop */}
+        <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
+          <GlobalSearch />
+        </div>
+
+        {/* Right Side Actions */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Help & Support */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="hidden md:flex">
+                <HelpCircle className="h-5 w-5" />
+                <span className="sr-only">Help & Support</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href="/resources/knowledge-base">
+                  <span>Knowledge Base</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/app-shortcuts">
+                  <span>Keyboard Shortcuts</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/contact">
+                  <span>Contact Support</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
+                {/* Notification badge - can be dynamic */}
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary hidden" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No new notifications
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Settings Quick Access */}
+          <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+            <Link href="/settings">
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">Settings</span>
+            </Link>
+          </Button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* User Nav */}
+          <UserNav />
+        </div>
       </div>
-      <div className="flex items-baseline gap-4">
-         <h1 className="text-xl font-semibold hidden md:block">{companyInfo.name}</h1>
-         <p className="text-sm text-muted-foreground font-mono hidden lg:block">{companyInfo.gstin}</p>
+
+      {/* Mobile Breadcrumbs */}
+      <div className="lg:hidden border-t px-4 py-2 bg-muted/30">
+        <Breadcrumbs />
       </div>
-      <div className="ml-auto flex items-center gap-4">
-        <ThemeToggle />
-        <UserNav />
+
+      {/* Mobile Search */}
+      <div className="md:hidden px-4 pb-2">
+        <GlobalSearch />
       </div>
     </header>
   );
