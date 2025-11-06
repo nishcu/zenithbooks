@@ -1,8 +1,10 @@
 
 "use client"
 
-import { useMemo, useContext } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { useMemo, useContext, Suspense, memo } from "react";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
+import { Bar, CartesianGrid, XAxis } from "recharts";
 import { format, subMonths, startOfMonth, addMonths, parseISO } from 'date-fns';
 
 import {
@@ -19,8 +21,17 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { type ChartConfig } from "@/components/ui/chart"
+import { type ChartConfig } from "@/components/ui/chart";
 import { AccountingContext } from "@/context/accounting-context";
+
+// Lazy load heavy chart components
+const LazyBarChart = dynamic(
+  () => import("recharts").then((mod) => mod.BarChart),
+  { 
+    loading: () => <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>,
+    ssr: false 
+  }
+);
 
 const chartConfig = {
   sales: {
@@ -37,7 +48,7 @@ const chartConfig = {
   }
 } satisfies ChartConfig
 
-export function FinancialSummaryChart() {
+export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
   const { journalVouchers } = useContext(AccountingContext)!;
 
   const chartData = useMemo(() => {
@@ -94,25 +105,27 @@ export function FinancialSummaryChart() {
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
-          <ChartContainer config={chartConfig}>
-            <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dashed" />}
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
-              <Bar dataKey="purchases" fill="var(--color-purchases)" radius={4} />
-              <Bar dataKey="net" fill="var(--color-net)" radius={4} />
-            </BarChart>
-          </ChartContainer>
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <ChartContainer config={chartConfig}>
+              <LazyBarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dashed" />}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+                <Bar dataKey="purchases" fill="var(--color-purchases)" radius={4} />
+                <Bar dataKey="net" fill="var(--color-net)" radius={4} />
+              </LazyBarChart>
+            </ChartContainer>
+          </Suspense>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             No financial data available for the last 6 months.
@@ -121,4 +134,4 @@ export function FinancialSummaryChart() {
       </CardContent>
     </Card>
   )
-}
+});

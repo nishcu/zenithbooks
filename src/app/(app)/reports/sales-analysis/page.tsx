@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useMemo, useContext, useRef } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Pie, PieChart, Cell } from "recharts"
+import { useMemo, useContext, useRef, Suspense, memo } from "react";
+import { LazyBarChart, LazyPieChart, LazyResponsiveContainer, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Pie, Cell } from "@/components/charts/lazy-charts";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -29,7 +30,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-export default function SalesAnalysis() {
+const SalesAnalysis = memo(function SalesAnalysis() {
   const { journalVouchers, loading } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -91,16 +92,18 @@ export default function SalesAnalysis() {
           <CardTitle>Monthly Sales Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analysisData.monthlySales}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => `₹${(value as number / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(value) => formatCurrency(value as number)}/>
-              <Legend />
-              <Bar dataKey="amount" fill="var(--color-sales)" name="Sales Amount" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="flex items-center justify-center h-[300px]"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <LazyResponsiveContainer width="100%" height={300}>
+              <LazyBarChart data={analysisData.monthlySales}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `₹${(value as number / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value) => formatCurrency(value as number)}/>
+                <Legend />
+                <Bar dataKey="amount" fill="var(--color-sales)" name="Sales Amount" />
+              </LazyBarChart>
+            </LazyResponsiveContainer>
+          </Suspense>
         </CardContent>
       </Card>
 
@@ -110,8 +113,9 @@ export default function SalesAnalysis() {
             <CardTitle>Top 5 Customers by Value</CardTitle>
           </CardHeader>
           <CardContent>
-             <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
+            <Suspense fallback={<div className="flex items-center justify-center h-[250px]"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+              <LazyResponsiveContainer width="100%" height={250}>
+                <LazyPieChart>
                     <Pie
                         data={analysisData.topCustomers}
                         cx="50%"
@@ -129,8 +133,9 @@ export default function SalesAnalysis() {
                     </Pie>
                     <Tooltip formatter={(value) => formatCurrency(value as number)}/>
                     <Legend />
-                </PieChart>
-             </ResponsiveContainer>
+                </LazyPieChart>
+              </LazyResponsiveContainer>
+            </Suspense>
           </CardContent>
         </Card>
         <Card>
@@ -146,4 +151,6 @@ export default function SalesAnalysis() {
       </div>
     </div>
   );
-}
+});
+
+export default SalesAnalysis;

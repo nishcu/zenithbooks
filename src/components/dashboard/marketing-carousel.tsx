@@ -1,6 +1,6 @@
 
 "use client"
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import Image from "next/image"
 import {
   Carousel,
@@ -13,9 +13,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import Autoplay from "embla-carousel-autoplay"
 
-export function MarketingCarousel() {
-  const carouselImages = PlaceHolderImages.filter((img) =>
-    img.id.startsWith("carousel")
+export const MarketingCarousel = memo(function MarketingCarousel() {
+  const carouselImages = useMemo(() => 
+    PlaceHolderImages.filter((img) => img.id.startsWith("carousel")),
+    []
   );
   const plugin = React.useRef(
     Autoplay({ delay: 5000, stopOnInteraction: true })
@@ -55,4 +56,4 @@ export function MarketingCarousel() {
       <CarouselNext className="absolute right-4" />
     </Carousel>
   )
-}
+});

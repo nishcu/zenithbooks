@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useMemo, useContext, useRef } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { useMemo, useContext, useRef, Suspense, memo } from "react";
+import { LazyBarChart, LazyResponsiveContainer, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "@/components/charts/lazy-charts";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,7 +28,7 @@ import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";
 
-export default function PurchaseAnalysis() {
+const PurchaseAnalysis = memo(function PurchaseAnalysis() {
   const { journalVouchers, loading } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -90,16 +91,18 @@ export default function PurchaseAnalysis() {
           <CardTitle>Monthly Purchase Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analysisData.monthlyPurchases}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => `₹${(value as number / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(value) => formatCurrency(value as number)}/>
-              <Legend />
-              <Bar dataKey="amount" fill="var(--color-purchases)" name="Purchase Amount" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="flex items-center justify-center h-[300px]"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <LazyResponsiveContainer width="100%" height={300}>
+              <LazyBarChart data={analysisData.monthlyPurchases}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `₹${(value as number / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value) => formatCurrency(value as number)}/>
+                <Legend />
+                <Bar dataKey="amount" fill="var(--color-purchases)" name="Purchase Amount" />
+              </LazyBarChart>
+            </LazyResponsiveContainer>
+          </Suspense>
         </CardContent>
       </Card>
 
@@ -140,4 +143,6 @@ export default function PurchaseAnalysis() {
       </div>
     </div>
   );
-}
+});
+
+export default PurchaseAnalysis;
