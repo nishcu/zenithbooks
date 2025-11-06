@@ -70,7 +70,7 @@ export default function RapidInvoiceEntryPage() {
       customerId: "",
       invoiceNumber: "",
       invoiceDate: format(new Date(), "yyyy-MM-dd"),
-      itemId: "",
+      itemId: undefined,
       amount: 0,
       taxRate: 18,
     },
@@ -131,7 +131,7 @@ export default function RapidInvoiceEntryPage() {
                 ...values,
                 invoiceNumber: nextInvoiceNumber,
                 customerId: "",
-                itemId: "",
+                itemId: undefined,
                 amount: 0,
             });
             form.setFocus("customerId");
@@ -191,12 +191,14 @@ export default function RapidInvoiceEntryPage() {
                         <FormField control={form.control} name="itemId" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Product/Item (Optional)</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <Select 
+                                    onValueChange={(value) => field.onChange(value || undefined)} 
+                                    value={field.value || undefined}
+                                >
                                     <FormControl>
                                     <SelectTrigger><SelectValue placeholder={itemsLoading ? "Loading..." : "Select Product (Optional)"} /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
                                     {items.map((i: any) => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
