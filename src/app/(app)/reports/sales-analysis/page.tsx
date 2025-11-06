@@ -41,7 +41,8 @@ const SalesAnalysis = memo(function SalesAnalysis() {
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
 
   const analysisData = useMemo(() => {
-    const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-"));
+    // Exclude cancelled invoices from sales analysis
+    const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses);
     
     // Monthly Analysis
     const monthlyData: { [key: string]: { month: string, amount: number } } = {};

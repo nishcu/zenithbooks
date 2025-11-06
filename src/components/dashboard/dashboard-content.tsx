@@ -100,7 +100,7 @@ function DashboardContent() {
 
   const invoices = useMemo(() => {
     return journalVouchers
-        .filter(v => v && v.id && v.id.startsWith("INV-"))
+        .filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses)
         .slice(0, 5)
         .map(v => ({
             invoice: v.id,
