@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useContext } from "react";
+import { useMemo, useContext, useRef } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import {
   Card,
@@ -25,10 +25,12 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 export default function PurchaseAnalysis() {
   const { journalVouchers, loading } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
   const [vendorsSnapshot] = useCollection(vendorsQuery);
@@ -69,7 +71,19 @@ export default function PurchaseAnalysis() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Purchase Analysis</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Purchase Analysis</h1>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`Purchase-Analysis-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage={`Check out my Purchase Analysis Report from ZenithBooks`}
+          emailSubject="Purchase Analysis Report"
+          emailBody="Please find attached the Purchase Analysis Report."
+          shareTitle="Purchase Analysis Report"
+        />
+      </div>
+
+      <div ref={reportRef}>
 
       <Card>
         <CardHeader>
@@ -122,6 +136,7 @@ export default function PurchaseAnalysis() {
             <p className="text-muted-foreground text-center py-8">Item-wise purchase data will be displayed here.</p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

@@ -36,6 +36,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useReactToPrint } from "react-to-print";
 import { formatCurrency, cn } from "@/lib/utils";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 // --- Type Definitions ---
 type CombinedAccount = Account & { id?: string };
@@ -166,8 +167,15 @@ export default function BalanceSheetPage() {
           <h1 className='text-2xl font-bold'>Balance Sheet</h1>
           <p className='text-muted-foreground'>A snapshot of your company's financial health.</p>
         </div>
-        <div className='flex gap-2'>
-          <Button variant="outline" onClick={handlePrint}><Printer className='mr-2 h-4 w-4' /> Print / PDF</Button>
+        <div className='flex gap-2 flex-wrap'>
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={`Balance-Sheet-${format(date || new Date(), 'yyyy-MM-dd')}`}
+            whatsappMessage={`Check out my Balance Sheet from ZenithBooks`}
+            emailSubject="Balance Sheet"
+            emailBody="Please find attached the Balance Sheet."
+            shareTitle="Balance Sheet"
+          />
           <Button variant="outline" onClick={handleDownloadCsv}><FileDown className='mr-2 h-4 w-4' /> Download CSV</Button>
         </div>
       </div>

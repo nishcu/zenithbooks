@@ -17,10 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileText, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 const months = [
     { value: "0", label: "January" }, { value: "1", label: "February" }, { value: "2", label: "March" },
@@ -35,6 +36,7 @@ export default function PayrollReportsPage() {
     const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth()));
     const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
     const { toast } = useToast();
+    const reportRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = () => {
         toast({
@@ -57,14 +59,30 @@ export default function PayrollReportsPage() {
         XLSX.writeFile(workbook, `${reportType}_${monthName}_${selectedYear}.xlsx`);
     };
 
+    const monthName = months.find(m => m.value === selectedMonth)?.label;
+    const reportFileName = `${reportType}_${monthName}_${selectedYear}`;
+
     return (
         <div className="space-y-8">
-             <div>
-                <h1 className="text-3xl font-bold">Payroll Reports</h1>
-                <p className="text-muted-foreground">
-                    Generate and download various payroll and compliance reports.
-                </p>
+             <div className="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold">Payroll Reports</h1>
+                    <p className="text-muted-foreground">
+                        Generate and download various payroll and compliance reports.
+                    </p>
+                </div>
+                {reportType && (
+                    <ShareButtons
+                        contentRef={reportRef}
+                        fileName={reportFileName}
+                        whatsappMessage={`Check out my ${reportType} report from ZenithBooks`}
+                        emailSubject={`${reportType} Report`}
+                        emailBody={`Please find attached the ${reportType} report for ${monthName} ${selectedYear}.`}
+                        shareTitle={`${reportType} Report`}
+                    />
+                )}
             </div>
+            <div ref={reportRef}>
             <Card>
                 <CardHeader>
                     <CardTitle>Report Generation</CardTitle>
@@ -108,6 +126,7 @@ export default function PayrollReportsPage() {
                     </div>
                 </CardContent>
             </Card>
+            </div>
         </div>
     );
 }

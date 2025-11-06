@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AccountingContext, JournalVoucher } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { formatCurrency, cn } from "@/lib/utils";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 // --- UTILITY FUNCTIONS ---
 interface Account {
@@ -69,6 +70,7 @@ export default function ProfitAndLossPage() {
   const { toast } = useToast();
   const context = useContext(AccountingContext);
   const journalVouchers: JournalVoucher[] = context?.journalVouchers ?? [];
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const [user] = useAuthState(auth);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -186,10 +188,20 @@ export default function ProfitAndLossPage() {
           <h1 className="text-3xl font-bold">Trading and Profit & Loss Account</h1>
           <p className="text-muted-foreground">Summary of revenues, costs, and expenses.</p>
         </div>
-        <button className={cn(buttonVariants())} onClick={handleDownloadCsv}>
-          <Download className="mr-2 h-4 w-4" />
-          Download CSV
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={`Profit-Loss-${format(new Date(), 'yyyy-MM-dd')}`}
+            whatsappMessage={`Check out my Profit & Loss Report from ZenithBooks`}
+            emailSubject="Profit & Loss Report"
+            emailBody="Please find attached the Profit & Loss Report."
+            shareTitle="Profit & Loss Report"
+          />
+          <button className={cn(buttonVariants())} onClick={handleDownloadCsv}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV
+          </button>
+        </div>
       </div>
 
       {/* Date Range */}
@@ -206,6 +218,7 @@ export default function ProfitAndLossPage() {
       </Card>
 
       {/* Trading & P&L T-shape */}
+      <div ref={reportRef}>
       <Card>
         <CardHeader>
           <CardTitle>Trading and Profit & Loss Account</CardTitle>
@@ -309,6 +322,7 @@ export default function ProfitAndLossPage() {
           Note: This is a system-generated report. Figures are in INR.
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 }

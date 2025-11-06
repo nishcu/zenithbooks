@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useContext } from "react";
+import { useMemo, useContext, useRef } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Pie, PieChart, Cell } from "recharts"
 import {
   Card,
@@ -25,12 +25,14 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function SalesAnalysis() {
   const { journalVouchers, loading } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot] = useCollection(customersQuery);
@@ -70,7 +72,19 @@ export default function SalesAnalysis() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Sales Analysis</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Sales Analysis</h1>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`Sales-Analysis-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage={`Check out my Sales Analysis Report from ZenithBooks`}
+          emailSubject="Sales Analysis Report"
+          emailBody="Please find attached the Sales Analysis Report."
+          shareTitle="Sales Analysis Report"
+        />
+      </div>
+
+      <div ref={reportRef}>
 
       <Card>
         <CardHeader>
@@ -128,6 +142,7 @@ export default function SalesAnalysis() {
              <p className="text-muted-foreground text-center py-8">Item-wise sales data will be displayed here.</p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

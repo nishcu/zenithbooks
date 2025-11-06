@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useContext, useMemo } from "react";
+import { useState, useContext, useMemo, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -51,6 +51,7 @@ import { collection, query, where } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import * as XLSX from 'xlsx';
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 
 export default function TrialBalancePage() {
@@ -63,6 +64,7 @@ export default function TrialBalancePage() {
     const [isMismatchDialogOpen, setIsMismatchDialogOpen] = useState(false);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const reportRef = useRef<HTMLDivElement>(null);
 
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
@@ -205,14 +207,23 @@ export default function TrialBalancePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Trial Balance</h1>
           <p className="text-muted-foreground">
             A summary of all ledger balances to verify the equality of debits and credits.
           </p>
         </div>
-        <DropdownMenu>
+        <div className="flex gap-2 flex-wrap">
+          <ShareButtons
+            contentRef={reportRef}
+            fileName={`Trial-Balance-${format(date || new Date(), 'yyyy-MM-dd')}`}
+            whatsappMessage={`Check out my Trial Balance Report from ZenithBooks`}
+            emailSubject="Trial Balance Report"
+            emailBody="Please find attached the Trial Balance Report."
+            shareTitle="Trial Balance Report"
+          />
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                     Import/Export
@@ -233,9 +244,11 @@ export default function TrialBalancePage() {
                     Download Template
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
+        </div>
       </div>
       
+      <div ref={reportRef}>
       <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -372,7 +385,7 @@ export default function TrialBalancePage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      </div>
     </div>
   );
 }
