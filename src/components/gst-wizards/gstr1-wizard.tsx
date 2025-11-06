@@ -71,10 +71,15 @@ export default function Gstr1Wizard() {
   const [customersSnapshot] = useCollection(customersQuery);
   const customers: Customer[] = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer)) || [], [customersSnapshot]);
 
-  const b2bInvoicesFromJournal = useMemo(() => {
-    return journalVouchers
+  // Process all invoices and categorize them
+  const { b2bInvoicesFromJournal, b2cLargeInvoicesFromJournal, b2cOtherFromJournal } = useMemo(() => {
+    const b2b: any[] = [];
+    const b2cLarge: any[] = [];
+    const b2cOther: any[] = [];
+
+    journalVouchers
       .filter(v => v && v.id && v.id.startsWith("INV-"))
-      .map(v => {
+      .forEach(v => {
         // Try to find customer by customerId first, then by account code in journal lines
         let customer = customers.find(c => v.customerId === c.id);
         
@@ -86,26 +91,48 @@ export default function Gstr1Wizard() {
             customer = customers.find(c => c.accountCode === customerAccountLine.account || c.id === customerAccountLine.account);
           }
         }
-        
-        // B2B invoices must have a GSTIN
-        if (!customer?.gstin) return null;
 
         const taxableValue = v.lines.find(l => l.account === '4010')?.credit || '0';
         const taxAmount = v.lines.find(l => l.account === '2110')?.credit || '0';
+        const invoiceValue = v.amount || parseFloat(taxableValue) + parseFloat(taxAmount);
 
-        return {
-          gstin: customer.gstin,
+        const invoiceData = {
           invoiceNumber: v.id.replace("INV-", ""),
           invoiceDate: v.date,
-          invoiceValue: v.amount,
+          invoiceValue: invoiceValue,
           taxableValue: parseFloat(taxableValue),
-          taxRate: 18, // Assuming 18% for now
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
           igst: parseFloat(taxAmount),
           cgst: 0,
           sgst: 0,
           cess: 0,
+          pos: customer?.state || "", // Place of Supply - default to customer state
         };
-      }).filter(Boolean); // remove nulls
+
+        // Categorize invoices
+        if (customer?.gstin) {
+          // B2B: Customer has GSTIN
+          b2b.push({
+            ...invoiceData,
+            gstin: customer.gstin,
+          });
+        } else {
+          // B2C: Customer doesn't have GSTIN
+          if (invoiceValue > 250000) {
+            // B2C Large: Invoice value > ₹2.5 lakh
+            b2cLarge.push(invoiceData);
+          } else {
+            // B2C Other: Invoice value <= ₹2.5 lakh (consolidated)
+            b2cOther.push(invoiceData);
+          }
+        }
+      });
+
+    return {
+      b2bInvoicesFromJournal: b2b,
+      b2cLargeInvoicesFromJournal: b2cLarge,
+      b2cOtherFromJournal: b2cOther,
+    };
   }, [journalVouchers, customers]);
 
   const [b2bInvoices, setB2bInvoices] = useState<any[]>([]);
@@ -120,6 +147,39 @@ export default function Gstr1Wizard() {
   useEffect(() => {
     setB2bInvoices(b2bInvoicesFromJournal as any[]);
   }, [b2bInvoicesFromJournal]);
+
+  useEffect(() => {
+    setB2cLargeInvoices(b2cLargeInvoicesFromJournal as any[]);
+  }, [b2cLargeInvoicesFromJournal]);
+
+  // Aggregate B2C Other invoices by Place of Supply
+  useEffect(() => {
+    const aggregated = b2cOtherFromJournal.reduce((acc, invoice) => {
+      const pos = invoice.pos || "Unknown";
+      const existing = acc.find(item => item.pos === pos && item.taxRate === invoice.taxRate);
+      
+      if (existing) {
+        existing.taxableValue += invoice.taxableValue;
+        existing.igst += invoice.igst;
+        existing.cgst += invoice.cgst;
+        existing.sgst += invoice.sgst;
+        existing.cess += invoice.cess;
+      } else {
+        acc.push({
+          pos: pos,
+          taxableValue: invoice.taxableValue,
+          taxRate: invoice.taxRate,
+          igst: invoice.igst,
+          cgst: invoice.cgst,
+          sgst: invoice.sgst,
+          cess: invoice.cess,
+        });
+      }
+      return acc;
+    }, [] as any[]);
+    
+    setB2cOther(aggregated);
+  }, [b2cOtherFromJournal]);
 
 
   const handleInvoiceChange = (index: number, field: keyof typeof b2bInvoices[0], value: string | number) => {
