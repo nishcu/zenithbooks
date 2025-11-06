@@ -29,8 +29,9 @@ import { useContext } from "react";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { collection, query, where, useCollection } from "react-firebase-hooks/firestore";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { db, auth } from "@/lib/firebase";
+import { collection, query, where } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 
