@@ -208,9 +208,11 @@
   a,
   input,
   select,
-  textarea {
+  textarea,
+  [role="button"] {
     min-height: 44px;
     min-width: 44px;
+    touch-action: manipulation;
   }
 
   /* Better spacing on mobile */
@@ -223,11 +225,104 @@
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
   /* Hide less important content on mobile */
   .mobile-hide {
+    display: none !important;
+  }
+
+  /* Show only on mobile */
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Better form inputs on mobile */
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Improved card spacing */
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  /* Better button spacing */
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .button-group > * {
+    width: 100%;
+  }
+
+  /* Optimize text sizes */
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* Better padding for containers */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Improve dropdown menus */
+  [role="menu"] {
+    max-width: calc(100vw - 2rem);
+  }
+
+  /* Better modal/dialog sizing */
+  [role="dialog"] {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+/* Tablet Optimization */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mobile-only {
     display: none;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .tablet-only {
+    display: block;
+  }
+}
+
+/* Desktop - hide mobile-only elements */
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none !important;
+  }
+
+  .tablet-only {
+    display: none !important;
+  }
+
+  .desktop-only {
+    display: block;
   }
 }
 

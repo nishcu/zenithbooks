@@ -10,9 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Printer, MessageSquare, Share2, Mail, Copy, Download } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import html2pdf from "html2pdf.js";
+import { EmailDialog } from "./email-dialog";
 
 interface ShareButtonsProps {
   contentRef: React.RefObject<HTMLDivElement>;
@@ -22,6 +23,7 @@ interface ShareButtonsProps {
   emailBody?: string;
   shareTitle?: string;
   showDownloadOnly?: boolean;
+  enableEmailSend?: boolean;
 }
 
 export function ShareButtons({ 
@@ -31,9 +33,11 @@ export function ShareButtons({
   emailSubject,
   emailBody,
   shareTitle,
-  showDownloadOnly = false
+  showDownloadOnly = false,
+  enableEmailSend = true
 }: ShareButtonsProps) {
   const { toast } = useToast();
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const handleDownloadPdf = () => {
     const element = contentRef.current;
@@ -76,10 +80,16 @@ export function ShareButtons({
   };
 
   const handleEmailShare = () => {
-    const subject = emailSubject || fileName;
-    const body = emailBody || `Please find attached ${fileName}.`;
-    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
+    if (enableEmailSend) {
+      // Open email dialog for sending with attachment
+      setIsEmailDialogOpen(true);
+    } else {
+      // Fallback to mailto link
+      const subject = emailSubject || fileName;
+      const body = emailBody || `Please find attached ${fileName}.`;
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoLink;
+    }
   };
 
   const handleCopyLink = async () => {
@@ -131,31 +141,32 @@ export function ShareButtons({
   }
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      <Button variant="outline" onClick={handleDownloadPdf}>
-        <Download className="mr-2 h-4 w-4" /> Download PDF
-      </Button>
+    <>
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="outline" onClick={handleDownloadPdf}>
+          <Download className="mr-2 h-4 w-4" /> Download PDF
+        </Button>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <Share2 className="mr-2 h-4 w-4" /> Share
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {whatsappMessage && (
-            <>
-              <DropdownMenuItem onClick={handleWhatsAppShare}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                WhatsApp
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuItem onClick={handleEmailShare}>
-            <Mail className="mr-2 h-4 w-4" />
-            Email
-          </DropdownMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Share2 className="mr-2 h-4 w-4" /> Share
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {whatsappMessage && (
+              <>
+                <DropdownMenuItem onClick={handleWhatsAppShare}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onClick={handleEmailShare}>
+              <Mail className="mr-2 h-4 w-4" />
+              {enableEmailSend ? "Email with Attachment" : "Email"}
+            </DropdownMenuItem>
           {navigator.share && (
             <DropdownMenuItem onClick={handleNativeShare}>
               <Share2 className="mr-2 h-4 w-4" />
@@ -168,6 +179,18 @@ export function ShareButtons({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
+      </div>
+
+      {enableEmailSend && (
+        <EmailDialog
+          open={isEmailDialogOpen}
+          onOpenChange={setIsEmailDialogOpen}
+          contentRef={contentRef}
+          fileName={fileName}
+          defaultSubject={emailSubject || fileName}
+          defaultBody={emailBody || `Please find attached ${fileName}.`}
+        />
+      )}
+    </>
   );
 }
