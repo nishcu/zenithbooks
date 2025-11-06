@@ -38,11 +38,13 @@ import { format } from "date-fns";
 interface BulkJournalEntry {
     date: string;
     amount: number;
-    debitAccount: string;
-    creditAccount: string;
+    debitAccount: string; // Can be account name or code (will be converted to code during validation)
+    creditAccount: string; // Can be account name or code (will be converted to code during validation)
     narration: string;
     status?: 'valid' | 'error';
     error?: string;
+    originalDebitAccount?: string; // Store original name for display
+    originalCreditAccount?: string; // Store original name for display
 }
 
 // Accounting Rules Guide
@@ -142,20 +144,54 @@ export default function BulkJournalEntryPage() {
         return code;
     };
 
+    // Convert account name to account code (with fuzzy matching)
+    const getAccountCodeByName = (name: string): string | null => {
+        if (!name || !name.trim()) return null;
+        
+        const normalizedName = name.trim().toLowerCase();
+        
+        // First, try exact match (case-insensitive)
+        let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
+        if (account) return account.code;
+        
+        let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
+        if (customer) return customer.id;
+        
+        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
+        if (vendor) return vendor.id;
+        
+        // Try partial match (contains)
+        account = allAccounts.find(acc => acc.name.toLowerCase().includes(normalizedName) || normalizedName.includes(acc.name.toLowerCase()));
+        if (account) return account.code;
+        
+        customer = customers.find(c => c.name.toLowerCase().includes(normalizedName) || normalizedName.includes(c.name.toLowerCase()));
+        if (customer) return customer.id;
+        
+        vendor = vendors.find(v => v.name.toLowerCase().includes(normalizedName) || normalizedName.includes(v.name.toLowerCase()));
+        if (vendor) return vendor.id;
+        
+        // If it's already a code, return it
+        if (validAccountCodes.has(name.trim())) {
+            return name.trim();
+        }
+        
+        return null;
+    };
+
     const handleDownloadTemplate = () => {
         const templateData = [
             {
                 Date: defaultDate,
                 Amount: 10000,
-                DebitAccount: "1510",
-                CreditAccount: "4010",
+                DebitAccount: "Cash on Hand",
+                CreditAccount: "Sales Revenue",
                 Narration: "Sample: Sale made for cash"
             },
             {
                 Date: defaultDate,
                 Amount: 5000,
-                DebitAccount: "6010",
-                CreditAccount: "1520",
+                DebitAccount: "Salaries and Wages - Indirect",
+                CreditAccount: "HDFC Bank",
                 Narration: "Sample: Salary paid from bank"
             }
         ];
@@ -168,8 +204,8 @@ export default function BulkJournalEntryPage() {
         const instructions = [
             { Column: "Date", Description: "Transaction date in YYYY-MM-DD format (e.g., 2024-01-15)" },
             { Column: "Amount", Description: "Transaction amount (numeric value, no currency symbols)" },
-            { Column: "DebitAccount", Description: "Account code to debit (e.g., 1510 for Cash, 1520 for Bank)" },
-            { Column: "CreditAccount", Description: "Account code to credit (e.g., 4010 for Sales Revenue)" },
+            { Column: "DebitAccount", Description: "Account name or ledger name to debit (e.g., 'Cash on Hand', 'HDFC Bank', 'Salaries and Wages - Indirect', or customer/vendor name)" },
+            { Column: "CreditAccount", Description: "Account name or ledger name to credit (e.g., 'Sales Revenue', 'Service Revenue', or customer/vendor name)" },
             { Column: "Narration", Description: "Description of the transaction" }
         ];
         const wsInstructions = XLSX.utils.json_to_sheet(instructions);
@@ -178,7 +214,7 @@ export default function BulkJournalEntryPage() {
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");
         toast({
             title: "Template Downloaded",
-            description: "Template file has been downloaded. Fill in your journal entries and upload.",
+            description: "Template file has been downloaded. Use account names or ledger names (not codes). Fill in your journal entries and upload.",
         });
     };
 
@@ -193,7 +229,7 @@ export default function BulkJournalEntryPage() {
         const dataLines = hasHeader ? lines.slice(1) : lines;
         const entries: BulkJournalEntry[] = [];
 
-        dataLines.forEach((line, index) => {
+            dataLines.forEach((line, index) => {
             if (!line.trim()) return;
 
             // Handle CSV with quotes
@@ -218,6 +254,8 @@ export default function BulkJournalEntryPage() {
                 debitAccount,
                 creditAccount,
                 narration,
+                originalDebitAccount: debitAccount, // Store original for display
+                originalCreditAccount: creditAccount, // Store original for display
             });
         });
 
@@ -248,6 +286,8 @@ export default function BulkJournalEntryPage() {
                             debitAccount,
                             creditAccount,
                             narration: narration || 'Journal Entry',
+                            originalDebitAccount: debitAccount, // Store original for display
+                            originalCreditAccount: creditAccount, // Store original for display
                         };
                     });
 
@@ -270,22 +310,32 @@ export default function BulkJournalEntryPage() {
                 errors.push("Amount must be greater than zero");
             }
 
+            // Convert account names to codes and validate
+            let debitAccountCode: string | null = null;
+            let creditAccountCode: string | null = null;
+
             // Validate debit account
             if (!entry.debitAccount) {
                 errors.push("Debit account is required");
-            } else if (!validAccountCodes.has(entry.debitAccount)) {
-                errors.push(`Invalid debit account: ${entry.debitAccount}`);
+            } else {
+                debitAccountCode = getAccountCodeByName(entry.debitAccount);
+                if (!debitAccountCode) {
+                    errors.push(`Invalid debit account: "${entry.debitAccount}". Please use the exact account name or ledger name.`);
+                }
             }
 
             // Validate credit account
             if (!entry.creditAccount) {
                 errors.push("Credit account is required");
-            } else if (!validAccountCodes.has(entry.creditAccount)) {
-                errors.push(`Invalid credit account: ${entry.creditAccount}`);
+            } else {
+                creditAccountCode = getAccountCodeByName(entry.creditAccount);
+                if (!creditAccountCode) {
+                    errors.push(`Invalid credit account: "${entry.creditAccount}". Please use the exact account name or ledger name.`);
+                }
             }
 
             // Validate same account not debited and credited
-            if (entry.debitAccount === entry.creditAccount) {
+            if (debitAccountCode && creditAccountCode && debitAccountCode === creditAccountCode) {
                 errors.push("Debit and credit accounts cannot be the same");
             }
 
@@ -296,6 +346,10 @@ export default function BulkJournalEntryPage() {
 
             return {
                 ...entry,
+                originalDebitAccount: entry.originalDebitAccount || entry.debitAccount, // Preserve original name
+                originalCreditAccount: entry.originalCreditAccount || entry.creditAccount, // Preserve original name
+                debitAccount: debitAccountCode || entry.debitAccount, // Store code for processing
+                creditAccount: creditAccountCode || entry.creditAccount, // Store code for processing
                 status: errors.length === 0 ? 'valid' : 'error',
                 error: errors.join('; '),
             };
@@ -403,6 +457,7 @@ export default function BulkJournalEntryPage() {
                     let totalAmount = 0;
 
                     entries.forEach(entry => {
+                        // entry.debitAccount and entry.creditAccount are already converted to codes during validation
                         // Add debit line
                         lines.push({
                             account: entry.debitAccount,
@@ -497,7 +552,7 @@ export default function BulkJournalEntryPage() {
                                 Upload Journal Entries
                             </CardTitle>
                             <CardDescription>
-                                Upload a CSV or Excel file with your journal entries. Download the template to see the required format.
+                                Upload a CSV or Excel file with your journal entries. Use account names or ledger names (not codes). Download the template to see the required format.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -600,8 +655,8 @@ export default function BulkJournalEntryPage() {
                                                         <TableHead>Status</TableHead>
                                                         <TableHead>Date</TableHead>
                                                         <TableHead>Amount</TableHead>
-                                                        <TableHead>Debit Account</TableHead>
-                                                        <TableHead>Credit Account</TableHead>
+                                                        <TableHead>Debit Account (Name)</TableHead>
+                                                        <TableHead>Credit Account (Name)</TableHead>
                                                         <TableHead>Narration</TableHead>
                                                         <TableHead>Error</TableHead>
                                                     </TableRow>
@@ -626,14 +681,18 @@ export default function BulkJournalEntryPage() {
                                                             <TableCell className="text-right font-mono">₹{entry.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                                                             <TableCell>
                                                                 <div className="space-y-0.5">
-                                                                    <div className="font-mono text-xs">{entry.debitAccount}</div>
-                                                                    <div className="text-xs text-muted-foreground">{getAccountName(entry.debitAccount)}</div>
+                                                                    <div className="font-medium">{entry.originalDebitAccount || entry.debitAccount}</div>
+                                                                    {entry.originalDebitAccount && entry.originalDebitAccount !== entry.debitAccount && (
+                                                                        <div className="text-xs text-muted-foreground">Code: {entry.debitAccount}</div>
+                                                                    )}
                                                                 </div>
                                                             </TableCell>
                                                             <TableCell>
                                                                 <div className="space-y-0.5">
-                                                                    <div className="font-mono text-xs">{entry.creditAccount}</div>
-                                                                    <div className="text-xs text-muted-foreground">{getAccountName(entry.creditAccount)}</div>
+                                                                    <div className="font-medium">{entry.originalCreditAccount || entry.creditAccount}</div>
+                                                                    {entry.originalCreditAccount && entry.originalCreditAccount !== entry.creditAccount && (
+                                                                        <div className="text-xs text-muted-foreground">Code: {entry.creditAccount}</div>
+                                                                    )}
                                                                 </div>
                                                             </TableCell>
                                                             <TableCell className="max-w-xs truncate">{entry.narration}</TableCell>
@@ -707,10 +766,10 @@ export default function BulkJournalEntryPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="h-5 w-5" />
-                                Account Codes Reference
+                                Account Names Reference
                             </CardTitle>
                             <CardDescription>
-                                Use these account codes in your debit and credit columns. You can also use customer/vendor IDs.
+                                Use these account names or ledger names in your debit and credit columns. You can also use customer/vendor names. Account codes are shown for reference only.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -727,13 +786,41 @@ export default function BulkJournalEntryPage() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                                 {group.accounts.map(account => (
                                                     <div key={account.code} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm">
-                                                        <span className="font-mono">{account.code}</span>
-                                                        <span className="text-muted-foreground ml-2">{account.name}</span>
+                                                        <span className="font-medium">{account.name}</span>
+                                                        <span className="text-muted-foreground ml-2 text-xs font-mono">({account.code})</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     ))}
+                                    
+                                    {customers.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-semibold text-lg">Customers</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                {customers.map(customer => (
+                                                    <div key={customer.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm">
+                                                        <span className="font-medium">{customer.name}</span>
+                                                        <span className="text-muted-foreground ml-2 text-xs">(Customer)</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {vendors.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-semibold text-lg">Vendors</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                {vendors.map(vendor => (
+                                                    <div key={vendor.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm">
+                                                        <span className="font-medium">{vendor.name}</span>
+                                                        <span className="text-muted-foreground ml-2 text-xs">(Vendor)</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </ScrollArea>
                         </CardContent>
