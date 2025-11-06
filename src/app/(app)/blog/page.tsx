@@ -1,9 +1,12 @@
 
 "use client";
 
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, User, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -95,41 +98,223 @@ export const samplePosts = [
     }
 ];
 
+// Calculate reading time (average 200 words per minute)
+const calculateReadingTime = (content: string[]): number => {
+    const words = content.join(' ').split(/\s+/).length;
+    return Math.ceil(words / 200);
+};
+
 export default function BlogPage() {
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+    // Get unique categories
+    const categories = useMemo(() => {
+        const cats = new Set(samplePosts.map(post => post.category));
+        return Array.from(cats);
+    }, []);
+
+    // Sort posts by date (latest first)
+    const sortedPosts = useMemo(() => {
+        return [...samplePosts].sort((a, b) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+    }, []);
+
+    // Featured post (latest)
+    const featuredPost = sortedPosts[0];
+
+    // Filter posts
+    const filteredPosts = useMemo(() => {
+        let posts = sortedPosts;
+        
+        if (selectedCategory) {
+            posts = posts.filter(post => post.category === selectedCategory);
+        }
+        
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            posts = posts.filter(post => 
+                post.title.toLowerCase().includes(searchLower) ||
+                post.description.toLowerCase().includes(searchLower) ||
+                post.author.toLowerCase().includes(searchLower) ||
+                post.category.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        return posts;
+    }, [searchTerm, selectedCategory, sortedPosts]);
+
+    // Regular posts (excluding featured)
+    const regularPosts = filteredPosts.filter(post => post.id !== featuredPost.id);
+
     return (
         <div className="space-y-8">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold">ZenithBooks Blog</h1>
-                <p className="mt-2 text-lg text-muted-foreground">
+            {/* Header */}
+            <div className="text-center space-y-4">
+                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    ZenithBooks Blog
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                     Insights on finance, compliance, and business growth in India.
                 </p>
             </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {samplePosts.map(post => (
-                    <Card key={post.id} className="flex flex-col overflow-hidden">
-                        <div className="relative aspect-video">
-                           <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" data-ai-hint={post.imageHint} />
-                        </div>
-                        <CardHeader>
-                            <Badge variant="secondary" className="w-fit">{post.category}</Badge>
-                            <CardTitle className="mt-2">{post.title}</CardTitle>
-                             <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-                                <div className="flex items-center gap-1"><User className="size-3"/> {post.author}</div>
-                                <div className="flex items-center gap-1"><Calendar className="size-3"/> {new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric'})}</div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                            <CardDescription>{post.description}</CardDescription>
-                        </CardContent>
-                        <CardFooter>
-                            <Link href={`/blog/${post.id}`} className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                                Read More <ArrowRight className="size-4"/>
-                            </Link>
-                        </CardFooter>
-                    </Card>
-                ))}
+
+            {/* Search and Filter */}
+            <div className="space-y-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search articles..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <Button
+                        variant={selectedCategory === null ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(null)}
+                    >
+                        All
+                    </Button>
+                    {categories.map(category => (
+                        <Button
+                            key={category}
+                            variant={selectedCategory === category ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedCategory(category)}
+                        >
+                            {category}
+                        </Button>
+                    ))}
+                </div>
             </div>
+
+            {/* Featured Post */}
+            {!searchTerm && selectedCategory === null && featuredPost && (
+                <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
+                    <div className="grid md:grid-cols-2 gap-0">
+                        <div className="relative aspect-video md:aspect-auto">
+                            <Image 
+                                src={featuredPost.imageUrl} 
+                                alt={featuredPost.title} 
+                                fill
+                                className="object-cover"
+                                data-ai-hint={featuredPost.imageHint}
+                                priority
+                            />
+                            <div className="absolute top-4 left-4">
+                                <Badge className="bg-primary text-primary-foreground">
+                                    <TrendingUp className="h-3 w-3 mr-1" />
+                                    Featured
+                                </Badge>
+                            </div>
+                        </div>
+                        <div className="flex flex-col p-6 md:p-8">
+                            <Badge variant="secondary" className="w-fit mb-3">{featuredPost.category}</Badge>
+                            <CardTitle className="text-2xl md:text-3xl mb-3 line-clamp-2">{featuredPost.title}</CardTitle>
+                            <CardDescription className="text-base mb-4 line-clamp-3">{featuredPost.description}</CardDescription>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                <div className="flex items-center gap-1">
+                                    <User className="h-4 w-4" />
+                                    <span>{featuredPost.author}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>{new Date(featuredPost.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric'})}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Clock className="h-4 w-4" />
+                                    <span>{calculateReadingTime(featuredPost.content)} min read</span>
+                                </div>
+                            </div>
+                            <Link href={`/blog/${featuredPost.id}`}>
+                                <Button className="w-full md:w-auto">
+                                    Read Article <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </Card>
+            )}
+
+            {/* Results Count */}
+            {filteredPosts.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                    {filteredPosts.length} {filteredPosts.length === 1 ? 'article' : 'articles'} found
+                </div>
+            )}
+
+            {/* Regular Posts Grid */}
+            {filteredPosts.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {(selectedCategory === null && !searchTerm ? regularPosts : filteredPosts).map(post => (
+                        <Card 
+                            key={post.id} 
+                            className="flex flex-col overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                        >
+                            <Link href={`/blog/${post.id}`} className="flex flex-col h-full">
+                                <div className="relative aspect-video overflow-hidden">
+                                    <Image 
+                                        src={post.imageUrl} 
+                                        alt={post.title} 
+                                        fill
+                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                        data-ai-hint={post.imageHint}
+                                    />
+                                </div>
+                                <CardHeader className="flex-grow">
+                                    <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
+                                    <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                                        {post.title}
+                                    </CardTitle>
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-2 flex-wrap">
+                                        <div className="flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            <span className="truncate">{post.author}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            <span>{new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric'})}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            <span>{calculateReadingTime(post.content)} min</span>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                    <CardDescription className="line-clamp-3">{post.description}</CardDescription>
+                                </CardContent>
+                                <CardFooter>
+                                    <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                                        Read More <ArrowRight className="h-4 w-4" />
+                                    </span>
+                                </CardFooter>
+                            </Link>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground text-lg">No articles found matching your criteria.</p>
+                    <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => {
+                            setSearchTerm("");
+                            setSelectedCategory(null);
+                        }}
+                    >
+                        Clear Filters
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
