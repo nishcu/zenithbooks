@@ -19,7 +19,7 @@ export function BottomNav() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-16 bg-background/95 backdrop-blur border-t shadow-lg">
       <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
         {navItems.map((item) => (
           <Link

@@ -645,7 +645,7 @@ export default function BankReconciliationPage() {
         </Card>
       </div>
 
-      <div className="sticky bottom-0 p-4 bg-background/80 backdrop-blur-sm border-t -mx-6 -mb-6">
+      <div className="sticky bottom-16 md:bottom-0 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg z-35 -mx-6 -mb-6 md:mb-0">
         <div className="max-w-7xl mx-auto flex items-center justify-center">
             <Button size="lg" onClick={handleMatch} disabled={selectedStatementTxs.size === 0 || selectedBookTxs.size === 0}>
                 <GitCompareArrows className="mr-2"/> Match Selected Transactions
@@ -773,7 +773,7 @@ export default function BankReconciliationPage() {
                 </Alert>
                 <div className="max-h-[400px] overflow-y-auto">
                     <Table>
-                        <TableHeader className="sticky top-0 bg-background">
+                        <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Description</TableHead>

@@ -25,7 +25,7 @@ const actions = [
 export function Fab() {
     const [open, setOpen] = useState(false);
   return (
-    <div className="fixed bottom-24 right-4 z-50 md:hidden">
+    <div className="fixed bottom-24 right-4 z-45 md:hidden">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

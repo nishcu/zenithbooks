@@ -360,6 +360,49 @@
   }
 }
 
+/* Z-Index Layering - Prevent Overlapping */
+/* Ensure proper layering hierarchy */
+.z-35 {
+  z-index: 35;
+}
+.z-45 {
+  z-index: 45;
+}
+
+/* Sticky Table Headers */
+.sticky-table-header,
+[class*="sticky top-0"] {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: hsl(var(--background));
+}
+
+/* Prevent overlapping with fixed elements on mobile */
+@media (max-width: 768px) {
+  /* Ensure content doesn't overlap with bottom nav */
+  main {
+    padding-bottom: 6rem !important;
+  }
+  
+  /* Ensure dialogs are above everything */
+  [role="dialog"],
+  [data-radix-dialog-content] {
+    z-index: 100 !important;
+  }
+  
+  /* Ensure dropdowns are above content but below dialogs */
+  [role="menu"],
+  [data-radix-dropdown-menu-content] {
+    z-index: 60 !important;
+  }
+  
+  /* Ensure popovers are above content */
+  [data-radix-popover-content] {
+    z-index: 55 !important;
+  }
+}
+
 /* UI/UX Improvements */
 
 /* Smooth Transitions */

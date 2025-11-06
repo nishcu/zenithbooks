@@ -638,7 +638,7 @@ export default function BulkInvoicePage() {
             )}
             <ScrollArea className="h-[500px]">
               <Table>
-                <TableHeader className="sticky top-0 bg-background">
+                <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow>
                     <TableHead>Status</TableHead>
                     <TableHead>Invoice #</TableHead>
