@@ -66,6 +66,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction } from '@/lib/bank-statement-parser';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type StatementTransaction = {
   id: string;
@@ -116,6 +118,11 @@ export default function BankReconciliationPage() {
 
     const [isAddEntryDialogOpen, setIsAddEntryDialogOpen] = useState(false);
     const [entryToCreate, setEntryToCreate] = useState<StatementTransaction | null>(null);
+    
+    // Bulk transaction entry
+    const [isBulkEntryDialogOpen, setIsBulkEntryDialogOpen] = useState(false);
+    const [bulkTransactions, setBulkTransactions] = useState<StatementTransaction[]>([]);
+    const [isProcessingFile, setIsProcessingFile] = useState(false);
 
     // For the Journal Voucher dialog
     const [jvNarration, setJvNarration] = useState("");
@@ -192,32 +199,73 @@ export default function BankReconciliationPage() {
         setBookTransactions(derivedTransactions);
     }, [journalVouchers, bankAccount]);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as any[][];
+        setIsProcessingFile(true);
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+        try {
+            let parsedResult;
             
-            const parsedData: StatementTransaction[] = json.slice(1).map((row, index) => {
-                const parsedDate = parseDateString(String(row[0]));
-                return {
-                    id: `stmt-${index}-${Date.now()}`,
-                    date: parsedDate ? format(parsedDate, 'yyyy-MM-dd') : '1970-01-01',
-                    description: row[1],
-                    withdrawal: row[2] ? parseFloat(String(row[2]).replace(/,/g, '')) : null,
-                    deposit: row[3] ? parseFloat(String(row[3]).replace(/,/g, '')) : null,
+            if (fileExtension === 'csv') {
+                parsedResult = await parseCSV(file);
+            } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                parsedResult = await parseExcel(file);
+            } else if (fileExtension === 'pdf') {
+                try {
+                    parsedResult = await parsePDF(file);
+                } catch (pdfError: any) {
+                    toast({ 
+                        variant: "destructive", 
+                        title: "PDF Parsing Not Available", 
+                        description: pdfError.message || "Please convert your PDF to CSV or Excel format, or use our API endpoint for PDF processing." 
+                    });
+                    setIsProcessingFile(false);
+                    return;
                 }
-            }).filter(row => row.date !== '1970-01-01' && (row.withdrawal || row.deposit));
+            } else {
+                toast({ variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." });
+                setIsProcessingFile(false);
+                return;
+            }
+
+            const parsedData: StatementTransaction[] = parsedResult.transactions.map((tx, index) => ({
+                id: `stmt-${index}-${Date.now()}`,
+                date: tx.date,
+                description: tx.description,
+                withdrawal: tx.withdrawal,
+                deposit: tx.deposit,
+            }));
+
             setStatementTransactions(parsedData);
-            toast({ title: "Statement Uploaded", description: `${parsedData.length} transactions loaded.` });
-        };
-        reader.readAsArrayBuffer(file);
+            
+            // Show unmatched transactions for bulk entry
+            const unmatched = parsedData.filter(tx => !matchedPairs.has(tx.id));
+            if (unmatched.length > 0) {
+                setBulkTransactions(unmatched);
+                setIsBulkEntryDialogOpen(true);
+            }
+            
+            toast({ 
+                title: "Statement Uploaded", 
+                description: `${parsedData.length} transactions loaded. ${unmatched.length} unmatched transactions found.` 
+            });
+        } catch (error: any) {
+            console.error("Error parsing file:", error);
+            toast({ 
+                variant: "destructive", 
+                title: "File Parsing Error", 
+                description: error.message || "Could not parse the file. Please check the format and try again." 
+            });
+        } finally {
+            setIsProcessingFile(false);
+            // Reset file input
+            if (event.target) {
+                event.target.value = '';
+            }
+        }
     };
     
     const handleDownloadTemplate = () => {
@@ -302,17 +350,92 @@ export default function BankReconciliationPage() {
         setJvNarration(tx.description);
         const amount = (tx.deposit || 0) - (tx.withdrawal || 0);
         const isReceipt = amount > 0;
+        
+        // Auto-categorize transaction
+        const category = categorizeTransaction(tx.description);
+        const suggestedAccount = category.suggestedAccount || '';
+        
         const initialLines = isReceipt 
             ? [
                 { account: bankAccount, debit: String(Math.abs(amount)), credit: '0', costCentre: '' },
-                { account: '', debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
+                { account: suggestedAccount, debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
               ]
             : [
-                { account: '', debit: String(Math.abs(amount)), credit: '0', costCentre: '' },
+                { account: suggestedAccount, debit: String(Math.abs(amount)), credit: '0', costCentre: '' },
                 { account: bankAccount, debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
               ];
         setJvLines(initialLines);
         setIsAddEntryDialogOpen(true);
+    };
+    
+    const handleBulkCreateEntries = async () => {
+        if (bulkTransactions.length === 0) {
+            toast({ variant: "destructive", title: "No Transactions", description: "No transactions to create entries for." });
+            return;
+        }
+
+        setIsProcessingFile(true);
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const tx of bulkTransactions) {
+            try {
+                const amount = (tx.deposit || 0) - (tx.withdrawal || 0);
+                if (amount === 0) continue;
+
+                const isReceipt = amount > 0;
+                const category = categorizeTransaction(tx.description);
+                const suggestedAccount = category.suggestedAccount || (isReceipt ? '4010' : '5050'); // Default accounts
+                
+                const voucherId = isReceipt ? `RV-RECON-${Date.now()}-${successCount}` : `PV-RECON-${Date.now()}-${successCount}`;
+                
+                const journalLines = isReceipt
+                    ? [
+                        { account: bankAccount, debit: String(Math.abs(amount)), credit: '0', costCentre: '' },
+                        { account: suggestedAccount, debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
+                      ]
+                    : [
+                        { account: suggestedAccount, debit: String(Math.abs(amount)), credit: '0', costCentre: '' },
+                        { account: bankAccount, debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
+                      ];
+
+                const newVoucher = {
+                    id: voucherId,
+                    date: tx.date,
+                    narration: tx.description,
+                    lines: journalLines,
+                    amount: Math.abs(amount)
+                };
+
+                await addJournalVoucher(newVoucher as any);
+                
+                const newMatchedPairs = new Map(matchedPairs);
+                newMatchedPairs.set(tx.id, `created-${voucherId}`);
+                setMatchedPairs(newMatchedPairs);
+                
+                successCount++;
+            } catch (error) {
+                console.error(`Error creating entry for transaction ${tx.id}:`, error);
+                errorCount++;
+            }
+        }
+
+        setIsProcessingFile(false);
+        setIsBulkEntryDialogOpen(false);
+        setBulkTransactions([]);
+
+        if (successCount > 0) {
+            toast({ 
+                title: "Entries Created", 
+                description: `Successfully created ${successCount} receipt/payment ${successCount === 1 ? 'entry' : 'entries'}.${errorCount > 0 ? ` ${errorCount} failed.` : ''}` 
+            });
+        } else {
+            toast({ 
+                variant: "destructive", 
+                title: "Creation Failed", 
+                description: `Could not create entries. ${errorCount} error${errorCount === 1 ? '' : 's'} occurred.` 
+            });
+        }
     };
 
     const handleJvLineChange = (index: number, field: keyof typeof jvLines[0], value: string) => {
@@ -344,7 +467,11 @@ export default function BankReconciliationPage() {
             return;
         }
         
-        const voucherId = `JV-RECON-${Date.now()}`;
+        // Determine if it's a receipt or payment
+        const amount = (entryToCreate.deposit || 0) - (entryToCreate.withdrawal || 0);
+        const isReceipt = amount > 0;
+        const voucherPrefix = isReceipt ? 'RV-RECON' : 'PV-RECON';
+        const voucherId = `${voucherPrefix}-${Date.now()}`;
         
         const newVoucher = {
             id: voucherId,
@@ -360,11 +487,19 @@ export default function BankReconciliationPage() {
             newMatchedPairs.set(entryToCreate.id, `created-${voucherId}`);
             setMatchedPairs(newMatchedPairs);
             
-            toast({ title: "Entry Created", description: "The missing transaction has been recorded."});
+            toast({ 
+                title: "Entry Created", 
+                description: `${isReceipt ? 'Receipt' : 'Payment'} entry ${voucherId} has been created and recorded in your books.`
+            });
             setIsAddEntryDialogOpen(false);
             setEntryToCreate(null);
-        } catch (error) {
-             toast({ variant: "destructive", title: "Error", description: "Could not create the accounting entry." });
+        } catch (error: any) {
+            console.error("Error creating entry:", error);
+            toast({ 
+                variant: "destructive", 
+                title: "Error", 
+                description: error.message || "Could not create the accounting entry. Please try again." 
+            });
         }
     };
 
@@ -407,9 +542,22 @@ export default function BankReconciliationPage() {
                <div className="flex gap-2 items-end">
                  <div className="space-y-2">
                     <Label htmlFor="statement-upload">Bank Statement File</Label>
-                    <Input id="statement-upload" type="file" className="w-full max-w-xs" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} />
+                    <div className="flex gap-2">
+                        <Input 
+                            id="statement-upload" 
+                            type="file" 
+                            className="w-full max-w-xs" 
+                            accept=".csv,.xlsx,.xls,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf" 
+                            onChange={handleFileUpload}
+                            disabled={isProcessingFile}
+                        />
+                        {isProcessingFile && (
+                            <Loader2 className="h-4 w-4 animate-spin self-center" />
+                        )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Supports CSV, Excel (XLSX, XLS), and PDF formats</p>
                  </div>
-                 <Button variant="outline" size="icon" onClick={handleDownloadTemplate} title="Download Template">
+                 <Button variant="outline" size="icon" onClick={handleDownloadTemplate} title="Download Template" disabled={isProcessingFile}>
                     <Download className="h-4 w-4" />
                  </Button>
             </div>
@@ -426,8 +574,31 @@ export default function BankReconciliationPage() {
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Bank Statement Transactions</CardTitle>
-            <CardDescription>Transactions from your uploaded statement.</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Bank Statement Transactions</CardTitle>
+                <CardDescription>Transactions from your uploaded statement.</CardDescription>
+              </div>
+              {statementTransactions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const unmatched = statementTransactions.filter(tx => !matchedPairs.has(tx.id));
+                    if (unmatched.length > 0) {
+                      setBulkTransactions(unmatched);
+                      setIsBulkEntryDialogOpen(true);
+                    } else {
+                      toast({ title: "All Matched", description: "All transactions have been matched or reconciled." });
+                    }
+                  }}
+                  disabled={isProcessingFile}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Entries for Unmatched
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <TransactionTable
@@ -579,6 +750,90 @@ export default function BankReconciliationPage() {
                     <Button onClick={handleCreateMissingEntry}>Create Journal Entry</Button>
                 </DialogFooter>
             </DialogContent>
+    </Dialog>
+    
+    {/* Bulk Transaction Entry Dialog */}
+    <Dialog open={isBulkEntryDialogOpen} onOpenChange={setIsBulkEntryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+                <DialogTitle>Create Entries for Unmatched Transactions</DialogTitle>
+                <DialogDescription>
+                    Review and create receipt/payment entries for {bulkTransactions.length} unmatched bank statement transactions.
+                    The system will automatically categorize transactions and create appropriate journal entries.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <Alert>
+                    <AlertTitle>Automatic Entry Creation</AlertTitle>
+                    <AlertDescription>
+                        Clicking "Create All Entries" will automatically create receipt or payment entries based on transaction type.
+                        Deposits will be created as receipts, and withdrawals will be created as payments.
+                        Transactions are automatically categorized based on description.
+                    </AlertDescription>
+                </Alert>
+                <div className="max-h-[400px] overflow-y-auto">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-background">
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Category</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {bulkTransactions.map((tx) => {
+                                const amount = (tx.deposit || 0) - (tx.withdrawal || 0);
+                                const category = categorizeTransaction(tx.description);
+                                return (
+                                    <TableRow key={tx.id}>
+                                        <TableCell className="text-xs whitespace-nowrap">
+                                            {format(new Date(tx.date), "dd MMM, yyyy")}
+                                        </TableCell>
+                                        <TableCell className="text-xs">{tx.description}</TableCell>
+                                        <TableCell className={`text-right font-mono text-xs ${amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            ₹{Math.abs(amount).toFixed(2)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={amount >= 0 ? "default" : "destructive"}>
+                                                {amount >= 0 ? 'Receipt' : 'Payment'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            {category.category && (
+                                                <Badge variant="outline">{category.category}</Badge>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                    setIsBulkEntryDialogOpen(false);
+                    setBulkTransactions([]);
+                }}>
+                    Cancel
+                </Button>
+                <Button onClick={handleBulkCreateEntries} disabled={isProcessingFile || bulkTransactions.length === 0}>
+                    {isProcessingFile ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Entries...
+                        </>
+                    ) : (
+                        <>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create All Entries ({bulkTransactions.length})
+                        </>
+                    )}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
     </Dialog>
 
     </div>
