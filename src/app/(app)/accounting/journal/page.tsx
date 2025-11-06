@@ -309,130 +309,130 @@ export default function JournalVoucherPage() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                    <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
-                    <DialogDescription>
-                        {editingVoucher ? `Editing voucher #${editingVoucher.id}` : "Create a manual entry to record transactions."}
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                             <Label>Voucher Date</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="narration">Narration</Label>
-                            <Textarea id="narration" value={narration} onChange={(e) => setNarration(e.target.value)} placeholder="e.g., To record monthly depreciation expense" />
-                        </div>
-                    </div>
-                    <Separator />
-                     <div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[40%]">Account</TableHead>
-                                    <TableHead className="w-[20%]">Cost Centre</TableHead>
-                                    <TableHead className="text-right">Debit</TableHead>
-                                    <TableHead className="text-right">Credit</TableHead>
-                                    <TableHead className="w-[50px] text-right">Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {lines.map((line, index) => {
-                                    const accountDetails = allAccounts.find(acc => acc.code === line.account);
-                                    const showCostCentre = accountDetails && ['Revenue', 'Expense'].includes(accountDetails.type);
-                                    return (
-                                        <TableRow key={index}>
-                                            <TableCell>
-                                                <Select value={line.account} onValueChange={(value) => handleLineChange(index, 'account', value)}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select an account" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.entries(combinedAccounts.reduce((acc, curr) => {
-                                                            const group = curr.group || "Other";
-                                                            if (!acc[group]) acc[group] = [];
-                                                            acc[group].push(curr);
-                                                            return acc;
-                                                        }, {} as Record<string, any[]>)).map(([group, accounts]) => (
-                                                            <React.Fragment key={group}>
-                                                                <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
-                                                                {accounts.map(account => (
-                                                                    <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
-                                                                ))}
-                                                                <Separator className="my-2"/>
-                                                            </React.Fragment>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                             <TableCell>
-                                                {showCostCentre && (
-                                                    <Select value={line.costCentre} onValueChange={(value) => handleLineChange(index, 'costCentre', value)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select cost centre" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {costCentres.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input type="number" className="text-right" value={line.debit} onChange={(e) => handleLineChange(index, 'debit', e.target.value)} />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input type="number" className="text-right" value={line.credit} onChange={(e) => handleLineChange(index, 'credit', e.target.value)} />
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)} disabled={lines.length <= 2}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                            <DialogHeader>
+                                <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
+                                <DialogDescription>
+                                    {editingVoucher ? `Editing voucher #${editingVoucher.id}` : "Create a manual entry to record transactions."}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Voucher Date</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal",
+                                                        !date && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
                                                 </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddLine}>
-                            <PlusCircle className="mr-2"/> Add Line
-                        </Button>
-                     </div>
-                     <Separator />
-                     <div className="flex justify-end">
-                        <div className="w-full max-w-sm space-y-2">
-                             <div className="flex justify-between font-medium">
-                                <span>Total Debits</span>
-                                <span className="font-mono">₹{totalDebits.toFixed(2)}</span>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="narration">Narration</Label>
+                                        <Textarea id="narration" value={narration} onChange={(e) => setNarration(e.target.value)} placeholder="e.g., To record monthly depreciation expense" />
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[40%]">Account</TableHead>
+                                                <TableHead className="w-[20%]">Cost Centre</TableHead>
+                                                <TableHead className="text-right">Debit</TableHead>
+                                                <TableHead className="text-right">Credit</TableHead>
+                                                <TableHead className="w-[50px] text-right">Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {lines.map((line, index) => {
+                                                const accountDetails = allAccounts.find(acc => acc.code === line.account);
+                                                const showCostCentre = accountDetails && ['Revenue', 'Expense'].includes(accountDetails.type);
+                                                return (
+                                                    <TableRow key={index}>
+                                                        <TableCell>
+                                                            <Select value={line.account} onValueChange={(value) => handleLineChange(index, 'account', value)}>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select an account" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {Object.entries(combinedAccounts.reduce((acc, curr) => {
+                                                                        const group = curr.group || "Other";
+                                                                        if (!acc[group]) acc[group] = [];
+                                                                        acc[group].push(curr);
+                                                                        return acc;
+                                                                    }, {} as Record<string, any[]>)).map(([group, accounts]) => (
+                                                                        <React.Fragment key={group}>
+                                                                            <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
+                                                                            {accounts.map(account => (
+                                                                                <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
+                                                                            ))}
+                                                                            <Separator className="my-2"/>
+                                                                        </React.Fragment>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {showCostCentre && (
+                                                                <Select value={line.costCentre} onValueChange={(value) => handleLineChange(index, 'costCentre', value)}>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Select cost centre" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {costCentres.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Input type="number" className="text-right" value={line.debit} onChange={(e) => handleLineChange(index, 'debit', e.target.value)} />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Input type="number" className="text-right" value={line.credit} onChange={(e) => handleLineChange(index, 'credit', e.target.value)} />
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveLine(index)} disabled={lines.length <= 2}>
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddLine}>
+                                        <PlusCircle className="mr-2"/> Add Line
+                                    </Button>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-end">
+                                    <div className="w-full max-w-sm space-y-2">
+                                        <div className="flex justify-between font-medium">
+                                            <span>Total Debits</span>
+                                            <span className="font-mono">₹{totalDebits.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between font-medium">
+                                            <span>Total Credits</span>
+                                            <span className="font-mono">₹{totalCredits.toFixed(2)}</span>
+                                        </div>
+                                        {totalDebits !== totalCredits && <p className="text-sm text-destructive text-right">Totals must match.</p>}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between font-medium">
-                                <span>Total Credits</span>
-                                <span className="font-mono">₹{totalCredits.toFixed(2)}</span>
-                            </div>
-                             {totalDebits !== totalCredits && <p className="text-sm text-destructive text-right">Totals must match.</p>}
-                        </div>
-                     </div>
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleSaveVoucher} disabled={!isBalanced}>{editingVoucher ? 'Save Changes' : 'Save Voucher'}</Button>
-                        </DialogFooter>
+                            <DialogFooter>
+                                <Button onClick={handleSaveVoucher} disabled={!isBalanced}>{editingVoucher ? 'Save Changes' : 'Save Voucher'}</Button>
+                            </DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
