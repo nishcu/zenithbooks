@@ -158,8 +158,7 @@ export default function TrialBalancePage() {
             return;
         }
 
-        console.log("Simulating file upload...");
-        console.log("File Name:", uploadFile.name);
+        // File upload processing
 
         toast({
             title: "Upload Simulated",
