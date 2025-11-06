@@ -81,10 +81,24 @@ GEMINI_API_KEY=your_google_ai_api_key_here
 - **Status**: ✅ Implemented (requires API key)
 
 ### 8. Invoice Data Extraction (`extract-invoice-data-flow.ts`)
-- **Purpose**: Extracts data from invoice images/documents
+- **Location**: `src/app/(app)/purchases/new/page.tsx`
+- **Purpose**: Extracts data from purchase bill/invoice images or PDFs using AI OCR
 - **Features**:
-  - OCR capabilities
-  - Data extraction and structuring
+  - OCR capabilities - reads text from uploaded invoice images/PDFs
+  - Automatic data extraction:
+    - Vendor Name (with auto-matching to existing vendors)
+    - Invoice/Bill Number
+    - Invoice Date
+    - Total Amount (with automatic tax calculation)
+    - Buyer's GSTIN (with validation)
+  - Auto-fills purchase bill form with extracted data
+  - Validates GSTIN to ensure invoice belongs to the user's company
+- **How to Use**:
+  1. Navigate to **Purchases → New Purchase Bill**
+  2. Click the **"Read from Bill (AI-OCR)"** button (with wand icon) in the top right
+  3. Upload an invoice image (JPG, PNG) or PDF
+  4. AI extracts data and auto-fills the form
+  5. Review and save the purchase bill
 - **Status**: ✅ Implemented (requires API key)
 
 ### 9. Logo Analysis (`analyze-logo-flow.ts`)
