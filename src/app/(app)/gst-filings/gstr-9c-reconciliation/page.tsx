@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
 import {
   Table,
   TableBody,
@@ -216,7 +217,173 @@ export default function Gstr9cPage() {
           />
         </div>
 
-        <div ref={reportRef}>
+        {/* Report Summary View for PDF Generation - Positioned off-screen but accessible for PDF */}
+        <div ref={reportRef} className="absolute left-[-9999px] w-[210mm] bg-white" style={{ position: 'absolute', left: '-9999px', width: '210mm' }}>
+          <div className="p-8 bg-white text-black space-y-8">
+            <div className="text-center border-b-2 border-gray-800 pb-4 mb-8">
+              <h1 className="text-2xl font-bold">GSTR-9C Reconciliation Statement</h1>
+              <p className="text-sm">Financial Year: 2024-25</p>
+              <p className="text-xs mt-2">Generated on: {format(new Date(), "dd MMM yyyy, hh:mm a")}</p>
+            </div>
+
+            {/* Part II: Reconciliation of Turnover */}
+            <div className="break-inside-avoid">
+              <h2 className="text-lg font-bold mb-4">Part II: Reconciliation of Turnover</h2>
+              <h3 className="text-md font-semibold mb-2">Table 5: Reconciliation of Gross Turnover</h3>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Sl. No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Amount (₹)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {turnoverReconData.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell className="border border-gray-300 p-2">{item.id}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{item.description}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.value.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell className="border border-gray-300 p-2">Q</TableCell>
+                    <TableCell className="border border-gray-300 p-2">Annual turnover as per GSTR-9</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{totalTurnover.toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+
+            {/* Part III: Reconciliation of Taxable Turnover */}
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Part III: Reconciliation of Taxable Turnover</h2>
+              <h3 className="text-md font-semibold mb-2">Table 7: Reconciliation of Taxable Turnover</h3>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Sl. No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Amount (₹)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {taxableTurnoverReconData.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell className="border border-gray-300 p-2">{item.id}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{item.description}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.value.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell className="border border-gray-300 p-2">E</TableCell>
+                    <TableCell className="border border-gray-300 p-2">Taxable Turnover as per liability declared in GSTR-9</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{totalTaxableTurnover.toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+
+            {/* Part IV: Reconciliation of Tax Paid */}
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Part IV: Reconciliation of Tax Paid</h2>
+              <h3 className="text-md font-semibold mb-2">Table 9: Reconciliation of rate wise liability and amount payable thereon</h3>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Rate</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value (₹)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">CGST (₹)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">SGST (₹)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">IGST (₹)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Cess (₹)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {taxPaidData.map(item => (
+                    <TableRow key={item.rate}>
+                      <TableCell className="border border-gray-300 p-2">{item.rate}%</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.cgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.sgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.igst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{item.cess.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell className="border border-gray-300 p-2">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{(taxPaidData.reduce((a, b) => a + b.taxableValue, 0)).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{(taxPaidData.reduce((a, b) => a + b.cgst, 0)).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{(taxPaidData.reduce((a, b) => a + b.sgst, 0)).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{(taxPaidData.reduce((a, b) => a + b.igst, 0)).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{(taxPaidData.reduce((a, b) => a + b.cess, 0)).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+
+            {/* Part V: Reconciliation of ITC */}
+            <div className="break-inside-avoid mt-8 border-t-2 border-gray-800 pt-4">
+              <h2 className="text-lg font-bold mb-4">Part V: Reconciliation of Input Tax Credit (ITC)</h2>
+              <h3 className="text-md font-semibold mb-2">Table 12: Reconciliation of Net ITC</h3>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Sl. No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Amount (₹)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itcReconData.map(item => (
+                    <TableRow key={item.id} className={item.isTotal ? 'font-bold bg-gray-100' : ''}>
+                      <TableCell className="border border-gray-300 p-2">{item.id}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{item.description}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right font-mono">{item.value.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-destructive/10 text-destructive font-bold">
+                    <TableCell className="border border-gray-300 p-2">F</TableCell>
+                    <TableCell className="border border-gray-300 p-2">Un-reconciled ITC (D-E)</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right font-mono">{itcDifference.toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+
+            {/* Part-B: Certification */}
+            <div className="break-inside-avoid mt-8 border-t-2 border-gray-800 pt-4">
+              <h2 className="text-lg font-bold mb-4">Part-B: Certification</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="border border-gray-300 p-2 font-bold">Name of Auditor</TableCell>
+                    <TableCell className="border border-gray-300 p-2">{auditorDetails.auditorName}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="border border-gray-300 p-2 font-bold">Membership No.</TableCell>
+                    <TableCell className="border border-gray-300 p-2">{auditorDetails.membershipNo}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="border border-gray-300 p-2 font-bold">Name of Audit Firm</TableCell>
+                    <TableCell className="border border-gray-300 p-2">{auditorDetails.firmName}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
+
+        {/* Wizard Steps - Visible in UI */}
+        <div>
         <Card>
             <CardHeader>
                 <CardTitle>GSTR-9C Data Entry (FY 2024-25)</CardTitle>
@@ -415,6 +582,23 @@ export default function Gstr9cPage() {
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
                 <Button variant="outline"><FileSpreadsheet className="mr-2"/> Export to Excel</Button>
+                <Button variant="outline" onClick={async () => {
+                    if (!reportRef.current) {
+                        toast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
+                        return;
+                    }
+                    toast({ title: "Generating PDF...", description: "Your GSTR-9C PDF is being generated." });
+                    const opt = {
+                        margin: [10, 10, 10, 10],
+                        filename: `GSTR-9C-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
+                        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+                    };
+                    await html2pdf().set(opt).from(reportRef.current).save();
+                    toast({ title: "PDF Generated", description: "Your GSTR-9C PDF has been downloaded successfully." });
+                }}><FileDown className="mr-2"/> Download GSTR-9C PDF</Button>
                 <Button onClick={handleGenerateJson}><FileJson className="mr-2"/> Download GSTR-9C JSON</Button>
              </CardFooter>
         </Card>

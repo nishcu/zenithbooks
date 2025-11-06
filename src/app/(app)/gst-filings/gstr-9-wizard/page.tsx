@@ -18,9 +18,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ArrowRight, FileJson, Upload, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileJson, FileDown, Upload, Download } from "lucide-react";
+import html2pdf from "html2pdf.js";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -52,6 +54,9 @@ export default function Gstr9WizardPage() {
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(1);
+  const [outwardSupplies, setOutwardSupplies] = useState(initialOutwardSupplies);
+  const [itc, setItc] = useState(initialItc);
+  const [taxPaid, setTaxPaid] = useState(initialTaxPaid);
 
   const handleNext = () => {
     toast({
@@ -308,10 +313,32 @@ export default function Gstr9WizardPage() {
                     <Button variant="outline" onClick={handleBack}>
                         <ArrowLeft className="mr-2" /> Back
                     </Button>
-                    <Button onClick={handleGenerateAction}>
-                        <FileJson className="mr-2" />
-                        Generate GSTR-9 JSON
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={async () => {
+                            if (!reportRef.current) {
+                                toast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
+                                return;
+                            }
+                            toast({ title: "Generating PDF...", description: "Your GSTR-9 PDF is being generated." });
+                            const opt = {
+                                margin: [10, 10, 10, 10],
+                                filename: `GSTR-9-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+                                image: { type: "jpeg", quality: 0.98 },
+                                html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
+                                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+                            };
+                            await html2pdf().set(opt).from(reportRef.current).save();
+                            toast({ title: "PDF Generated", description: "Your GSTR-9 PDF has been downloaded successfully." });
+                        }}>
+                            <FileDown className="mr-2" />
+                            Download GSTR-9 PDF
+                        </Button>
+                        <Button onClick={handleGenerateAction}>
+                            <FileJson className="mr-2" />
+                            Generate GSTR-9 JSON
+                        </Button>
+                    </div>
                 </CardFooter>
             </Card>
         );
@@ -341,7 +368,121 @@ export default function Gstr9WizardPage() {
         />
       </div>
 
-      <div ref={reportRef}>
+      {/* Report Summary View for PDF Generation - Positioned off-screen but accessible for PDF */}
+      <div ref={reportRef} className="absolute left-[-9999px] w-[210mm] bg-white" style={{ position: 'absolute', left: '-9999px', width: '210mm' }}>
+        <div className="p-8 bg-white text-black space-y-8">
+          <div className="text-center border-b-2 border-gray-800 pb-4 mb-8">
+            <h1 className="text-2xl font-bold">GSTR-9 Annual Return</h1>
+            <p className="text-sm">Financial Year: 2023-24</p>
+            <p className="text-xs mt-2">Generated on: {format(new Date(), "dd MMM yyyy, hh:mm a")}</p>
+          </div>
+
+          {/* Part II: Details of Outward Supplies */}
+          <div className="break-inside-avoid">
+            <h2 className="text-lg font-bold mb-4">Part II: Details of Outward Supplies</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">CGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">SGST/UTGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">CESS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {outwardSupplies.map((row, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="border border-gray-300 p-2">{row.description}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.taxableValue.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.cgst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.sgst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.igst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.cess.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-gray-100 font-bold">
+                  <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{outwardSupplies.reduce((s, r) => s + r.taxableValue, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{outwardSupplies.reduce((s, r) => s + r.cgst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{outwardSupplies.reduce((s, r) => s + r.sgst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{outwardSupplies.reduce((s, r) => s + r.igst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{outwardSupplies.reduce((s, r) => s + r.cess, 0).toFixed(2)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+
+          {/* Part III: Details of ITC */}
+          <div className="break-inside-avoid mt-8">
+            <h2 className="text-lg font-bold mb-4">Part III: Details of ITC</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">CGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">SGST/UTGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">CESS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itc.map((row, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="border border-gray-300 p-2">{row.description}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.cgst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.sgst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.igst.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.cess.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-gray-100 font-bold">
+                  <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{itc.reduce((s, r) => s + r.cgst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{itc.reduce((s, r) => s + r.sgst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{itc.reduce((s, r) => s + r.igst, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{itc.reduce((s, r) => s + r.cess, 0).toFixed(2)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+
+          {/* Part IV: Details of Tax Paid */}
+          <div className="break-inside-avoid mt-8 border-t-2 border-gray-800 pt-4">
+            <h2 className="text-lg font-bold mb-4">Part IV: Details of Tax Paid</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="border border-gray-300 p-2">Description</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Amount Paid</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {taxPaid.map((row, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="border border-gray-300 p-2">{row.description}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.paid.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-gray-100 font-bold">
+                  <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{taxPaid.reduce((s, r) => s + r.paid, 0).toFixed(2)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </div>
+      </div>
+
+      {/* Wizard Steps - Visible in UI */}
+      <div>
         {renderStep()}
       </div>
     </div>

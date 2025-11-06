@@ -39,7 +39,7 @@ export function ShareButtons({
   const { toast } = useToast();
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = contentRef.current;
     if (!element) {
       toast({
@@ -55,15 +55,35 @@ export function ShareButtons({
       description: "Your document is being prepared for download.",
     });
 
-    const opt = {
-      margin: 0.5,
-      filename: `${fileName}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    };
+    try {
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${fileName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          logging: false,
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+      };
 
-    html2pdf().from(element).set(opt).save();
+      await html2pdf().set(opt).from(element).save();
+
+      toast({
+        title: "PDF Generated",
+        description: "Your PDF has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      console.error("PDF generation error:", error);
+      toast({
+        variant: "destructive",
+        title: "PDF Generation Failed",
+        description: error.message || "An error occurred while generating the PDF. Please try again.",
+      });
+    }
   };
 
   const handleWhatsAppShare = () => {

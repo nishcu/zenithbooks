@@ -70,8 +70,8 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
     const netWorth = totalAssets - totalLiabilities;
     
     return (
-        <div ref={ref} className="prose prose-sm dark:prose-invert max-w-none p-8 leading-relaxed">
-            <header className="text-center border-b-2 border-primary pb-4 mb-8">
+        <div ref={ref} className="prose prose-sm dark:prose-invert max-w-none p-8 leading-relaxed bg-white text-black" style={{ pageBreakInside: 'avoid' }}>
+            <header className="text-center border-b-2 border-primary pb-4 mb-8" style={{ pageBreakAfter: 'avoid' }}>
                 <h1 className="text-2xl font-bold text-primary m-0">S. KRANTHI KUMAR & Co.</h1>
                 <p className="text-sm m-0">Chartered Accountants</p>
                 <p className="text-xs m-0">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>

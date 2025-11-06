@@ -36,7 +36,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, FileText, IndianRupee, AlertCircle, CheckCircle, Edit, Download, Copy, Trash2, Zap, Search, MessageSquare, Printer, FileSpreadsheet } from "lucide-react";
+import { PlusCircle, MoreHorizontal, FileText, IndianRupee, AlertCircle, CheckCircle, Edit, Download, Copy, Trash2, Zap, Search, MessageSquare, Printer, FileSpreadsheet, Mic } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -317,7 +317,13 @@ export default function InvoicesPage() {
             Create and manage your sales invoices.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+            <Link href="/billing/invoices/voice" passHref>
+                <Button variant="default" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                    <Mic className="mr-2"/>
+                    Voice Invoice
+                </Button>
+            </Link>
             <Link href="/billing/invoices/rapid" passHref>
                 <Button variant="outline">
                     <Zap className="mr-2"/>

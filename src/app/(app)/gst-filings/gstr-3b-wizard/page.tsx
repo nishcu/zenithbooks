@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Save, FileJson, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, FileJson, FileDown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -311,6 +311,46 @@ export default function Gstr3bWizardPage() {
         variant: "destructive",
         title: "Generation Failed",
         description: error.message || "An error occurred while generating the JSON file.",
+      });
+    }
+  }
+
+  const handleGeneratePdf = async () => {
+    try {
+      if (!reportRef.current) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not find the report content to generate PDF.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Generating PDF...",
+        description: "Your GSTR-3B PDF is being generated.",
+      });
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `GSTR-3B-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+      };
+
+      await html2pdf().set(opt).from(reportRef.current).save();
+
+      toast({
+        title: "PDF Generated",
+        description: "Your GSTR-3B PDF has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "An error occurred while generating the PDF file.",
       });
     }
   }
@@ -704,10 +744,16 @@ export default function Gstr3bWizardPage() {
                         <Button variant="outline" onClick={handleBack}>
                             <ArrowLeft className="mr-2" /> Back
                         </Button>
-                        <Button onClick={handleGenerateJson}>
-                           <FileJson className="mr-2" />
-                           Generate GSTR-3B JSON
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={handleGeneratePdf}>
+                               <FileDown className="mr-2" />
+                               Download GSTR-3B PDF
+                            </Button>
+                            <Button onClick={handleGenerateJson}>
+                               <FileJson className="mr-2" />
+                               Generate GSTR-3B JSON
+                            </Button>
+                        </div>
                     </CardFooter>
                 </Card>
             );
@@ -739,7 +785,188 @@ export default function Gstr3bWizardPage() {
         />
       </div>
 
-      <div ref={reportRef}>
+      {/* Report Summary View for PDF Generation - Positioned off-screen but accessible for PDF */}
+      <div ref={reportRef} className="absolute left-[-9999px] w-[210mm] bg-white" style={{ position: 'absolute', left: '-9999px', width: '210mm' }}>
+        <div className="p-8 bg-white text-black space-y-8">
+          <div className="text-center border-b-2 border-gray-800 pb-4 mb-8">
+            <h1 className="text-2xl font-bold">GSTR-3B Return</h1>
+            <p className="text-sm">Period: {format(new Date(), "MMMM yyyy")}</p>
+            <p className="text-xs mt-2">Generated on: {format(new Date(), "dd MMM yyyy, hh:mm a")}</p>
+          </div>
+
+          {/* Table 3.1: Outward and Inward Supplies */}
+          <div className="break-inside-avoid">
+            <h2 className="text-lg font-bold mb-4">Table 3.1: Details of Outward Supplies and Inward Supplies Liable to Reverse Charge</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="border border-gray-300 p-2">Nature of Supplies</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Total Taxable Value</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Integrated Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Central Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">State/UT Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {step1Data.map((row, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="border border-gray-300 p-2">{row.description}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.taxableValue.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.integratedTax.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.centralTax.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.stateTax.toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{row.cess.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="bg-gray-100 font-bold">
+                  <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step1Data.reduce((s, r) => s + r.taxableValue, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step1Data.reduce((s, r) => s + r.integratedTax, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step1Data.reduce((s, r) => s + r.centralTax, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step1Data.reduce((s, r) => s + r.stateTax, 0).toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step1Data.reduce((s, r) => s + r.cess, 0).toFixed(2)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+
+          {/* Table 3.2: Inter-state Supplies */}
+          {step2Data.length > 0 && (
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Table 3.2: Inter-state Supplies</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Place of Supply</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Total Taxable Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Amount of Integrated Tax</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {step2Data.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{row.placeOfSupply || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.integratedTax.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{step2Data.reduce((s, r) => s + r.taxableValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{step2Data.reduce((s, r) => s + r.integratedTax, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Table 4: Eligible ITC */}
+          <div className="break-inside-avoid mt-8">
+            <h2 className="text-lg font-bold mb-4">Table 4: Details of Eligible Input Tax Credit</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="border border-gray-300 p-2">Details</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Integrated Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Central Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">State/UT Tax</TableHead>
+                  <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="bg-gray-50">
+                  <TableCell colSpan={5} className="border border-gray-300 p-2 font-bold">(A) ITC Available (whether in full or part)</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(1) Import of goods</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.importGoods.igst.toFixed(2)}</TableCell>
+                  <TableCell colSpan={2} className="border border-gray-300 p-2 bg-gray-50"></TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.importGoods.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(2) Import of services</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.importServices.igst.toFixed(2)}</TableCell>
+                  <TableCell colSpan={2} className="border border-gray-300 p-2 bg-gray-50"></TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.importServices.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(3) Inward supplies liable to reverse charge</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardReverseCharge.igst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardReverseCharge.cgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardReverseCharge.sgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardReverseCharge.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(4) Inward supplies from ISD</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardISD.igst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardISD.cgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardISD.sgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.inwardISD.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(5) All other ITC</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.allOtherITC.igst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.allOtherITC.cgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.allOtherITC.sgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.allOtherITC.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-50">
+                  <TableCell colSpan={5} className="border border-gray-300 p-2 font-bold">(B) ITC Reversed</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(1) As per rules 42 & 43 of CGST Rules</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.rule42_43.igst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.rule42_43.cgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.rule42_43.sgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.rule42_43.cess.toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2">(2) Others</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.othersReversed.igst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.othersReversed.cgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.othersReversed.sgst.toFixed(2)}</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right">{step3Data.othersReversed.cess.toFixed(2)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Table 5: Tax Payment */}
+          <div className="break-inside-avoid mt-8 border-t-2 border-gray-800 pt-4">
+            <h2 className="text-lg font-bold mb-4">Table 5: Tax Payment</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableBody>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total Tax Liability</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">
+                    IGST: {step5Data.liability.igst.toFixed(2)} | CGST: {step5Data.liability.cgst.toFixed(2)} | SGST: {step5Data.liability.sgst.toFixed(2)} | Cess: {step5Data.liability.cess.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total ITC Available</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">
+                    IGST: {step5Data.availableItc.igst.toFixed(2)} | CGST: {step5Data.availableItc.cgst.toFixed(2)} | SGST: {step5Data.availableItc.sgst.toFixed(2)} | Cess: {step5Data.availableItc.cess.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="border border-gray-300 p-2 font-bold">Net Tax Payable</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono font-bold">
+                    IGST: {(step5Data.liability.igst - step5Data.availableItc.igst).toFixed(2)} | CGST: {(step5Data.liability.cgst - step5Data.availableItc.cgst).toFixed(2)} | SGST: {(step5Data.liability.sgst - step5Data.availableItc.sgst).toFixed(2)} | Cess: {(step5Data.liability.cess - step5Data.availableItc.cess).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+
+      {/* Wizard Steps - Visible in UI */}
+      <div>
         {renderStep()}
       </div>
     </div>
