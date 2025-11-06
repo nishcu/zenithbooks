@@ -56,8 +56,15 @@ export default function GstFilings() {
     const [month, setMonth] = useState(new Date().getMonth().toString().padStart(2, '0'));
 
     const { gstr1Summary, gstr3bSummary, netGstPayable } = useMemo(() => {
-        const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-"));
-        const creditNotes = journalVouchers.filter(v => v && v.id && v.id.startsWith("CN-"));
+        // Exclude cancelled invoices from regular invoices
+        const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses);
+        // Include both regular credit notes (CN-*) and cancelled invoices (CANCEL-*)
+        const creditNotes = journalVouchers.filter(v => 
+            v && v.id && (
+                (v.id.startsWith("CN-") && !v.reverses) || 
+                (v.id.startsWith("CANCEL-") && v.reverses && v.reverses.startsWith("INV-"))
+            )
+        );
         const purchaseBills = journalVouchers.filter(v => v && v.id && v.id.startsWith("BILL-"));
         const debitNotes = journalVouchers.filter(v => v && v.id && v.id.startsWith("DN-"));
 

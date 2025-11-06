@@ -72,13 +72,16 @@ export default function Gstr1Wizard() {
   const customers: Customer[] = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer)) || [], [customersSnapshot]);
 
   // Process all invoices and categorize them
-  const { b2bInvoicesFromJournal, b2cLargeInvoicesFromJournal, b2cOtherFromJournal } = useMemo(() => {
+  // Also process cancelled invoices (CANCEL-*) as credit notes
+  const { b2bInvoicesFromJournal, b2cLargeInvoicesFromJournal, b2cOtherFromJournal, cancelledInvoicesFromJournal } = useMemo(() => {
     const b2b: any[] = [];
     const b2cLarge: any[] = [];
     const b2cOther: any[] = [];
+    const cancelled: any[] = [];
 
+    // Process regular invoices (exclude cancelled ones)
     journalVouchers
-      .filter(v => v && v.id && v.id.startsWith("INV-"))
+      .filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses)
       .forEach(v => {
         // Try to find customer by customerId first, then by account code in journal lines
         let customer = customers.find(c => v.customerId === c.id);
@@ -128,10 +131,51 @@ export default function Gstr1Wizard() {
         }
       });
 
+    // Process cancelled invoices (CANCEL-*) - treat them as credit notes
+    journalVouchers
+      .filter(v => v && v.id && v.id.startsWith("CANCEL-") && v.reverses && v.reverses.startsWith("INV-"))
+      .forEach(cancelVoucher => {
+        // Find the original invoice
+        const originalInvoice = journalVouchers.find(v => v.id === cancelVoucher.reverses);
+        if (!originalInvoice) return;
+
+        // Try to find customer
+        let customer = customers.find(c => c.id === originalInvoice.customerId);
+        if (!customer && originalInvoice.lines && originalInvoice.lines.length > 0) {
+          const customerAccountLine = originalInvoice.lines.find(l => l.debit && parseFloat(l.debit) > 0);
+          if (customerAccountLine) {
+            customer = customers.find(c => c.accountCode === customerAccountLine.account || c.id === customerAccountLine.account);
+          }
+        }
+
+        const taxableValue = cancelVoucher.lines.find(l => l.account === '4010')?.debit || '0';
+        const taxAmount = cancelVoucher.lines.find(l => l.account === '2110')?.debit || '0';
+        const invoiceValue = cancelVoucher.amount || parseFloat(taxableValue) + parseFloat(taxAmount);
+
+        const creditNoteData = {
+          noteNumber: cancelVoucher.id.replace("CANCEL-", ""),
+          noteDate: cancelVoucher.date,
+          originalInvoiceNumber: originalInvoice.id.replace("INV-", ""),
+          originalInvoiceDate: originalInvoice.date,
+          invoiceValue: invoiceValue,
+          taxableValue: parseFloat(taxableValue),
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
+          igst: parseFloat(taxAmount),
+          cgst: 0,
+          sgst: 0,
+          cess: 0,
+          reason: "Cancellation of Invoice",
+          gstin: customer?.gstin || "",
+        };
+
+        cancelled.push(creditNoteData);
+      });
+
     return {
       b2bInvoicesFromJournal: b2b,
       b2cLargeInvoicesFromJournal: b2cLarge,
       b2cOtherFromJournal: b2cOther,
+      cancelledInvoicesFromJournal: cancelled,
     };
   }, [journalVouchers, customers]);
 
@@ -144,6 +188,9 @@ export default function Gstr1Wizard() {
   const [advancesReceived, setAdvancesReceived] = useState<any[]>([]);
   const [advancesAdjusted, setAdvancesAdjusted] = useState<any[]>([]);
 
+  // State for credit notes (including cancelled invoices)
+  const [creditNotes, setCreditNotes] = useState<any[]>([]);
+
   useEffect(() => {
     setB2bInvoices(b2bInvoicesFromJournal as any[]);
   }, [b2bInvoicesFromJournal]);
@@ -151,6 +198,36 @@ export default function Gstr1Wizard() {
   useEffect(() => {
     setB2cLargeInvoices(b2cLargeInvoicesFromJournal as any[]);
   }, [b2cLargeInvoicesFromJournal]);
+
+  // Combine regular credit notes (CN-*) and cancelled invoices (CANCEL-*)
+  useEffect(() => {
+    // Get regular credit notes
+    const regularCreditNotes = journalVouchers
+      .filter(v => v && v.id && v.id.startsWith("CN-") && !v.reverses)
+      .map(v => {
+        const customer = customers.find(c => c.id === v.customerId);
+        const taxableValue = v.lines.find(l => l.account === '4010')?.debit || '0';
+        const taxAmount = v.lines.find(l => l.account === '2110')?.debit || '0';
+        return {
+          noteNumber: v.id.replace("CN-", ""),
+          noteDate: v.date,
+          originalInvoiceNumber: v.narration.split("against Invoice #")[1]?.trim() || "",
+          originalInvoiceDate: "",
+          invoiceValue: v.amount || parseFloat(taxableValue) + parseFloat(taxAmount),
+          taxableValue: parseFloat(taxableValue),
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
+          igst: parseFloat(taxAmount),
+          cgst: 0,
+          sgst: 0,
+          cess: 0,
+          reason: "Credit Note",
+          gstin: customer?.gstin || "",
+        };
+      });
+
+    // Combine with cancelled invoices
+    setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);
+  }, [journalVouchers, customers, cancelledInvoicesFromJournal]);
 
   // Aggregate B2C Other invoices by Place of Supply
   useEffect(() => {

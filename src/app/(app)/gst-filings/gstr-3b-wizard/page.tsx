@@ -53,8 +53,15 @@ export default function Gstr3bWizardPage() {
   const reportRef = useRef<HTMLDivElement>(null);
 
   const initialStep1Data = useMemo(() => {
-    const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-"));
-    const salesReturns = journalVouchers.filter(v => v && v.id && v.id.startsWith("CN-"));
+    // Exclude cancelled invoices from regular invoices
+    const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses);
+    // Include both regular credit notes (CN-*) and cancelled invoices (CANCEL-*)
+    const salesReturns = journalVouchers.filter(v => 
+      v && v.id && (
+        (v.id.startsWith("CN-") && !v.reverses) || 
+        (v.id.startsWith("CANCEL-") && v.reverses && v.reverses.startsWith("INV-"))
+      )
+    );
 
     const outwardTaxableValue = salesInvoices.reduce((acc, v) => acc + (v.lines.find(l => l.account === '4010')?.credit ? parseFloat(v.lines.find(l => l.account === '4010')!.credit) : 0), 0);
     const outwardTax = salesInvoices.reduce((acc, v) => acc + (v.lines.find(l => l.account === '2110')?.credit ? parseFloat(v.lines.find(l => l.account === '2110')!.credit) : 0), 0);
