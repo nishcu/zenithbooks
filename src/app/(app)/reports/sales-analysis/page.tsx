@@ -27,8 +27,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { CHART_COLORS } from "@/lib/constants";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = CHART_COLORS;
 
 const SalesAnalysis = memo(function SalesAnalysis() {
   const { journalVouchers, loading } = useContext(AccountingContext)!;

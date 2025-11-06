@@ -4,6 +4,8 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ClientOnly } from '@/components/client-only';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -42,8 +44,17 @@ export default function RootLayout({
         )}
       >
         <ClientOnly>
-          {children}
-          <Toaster />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+            <Toaster />
+          </ThemeProvider>
         </ClientOnly>
       </body>
     </html>

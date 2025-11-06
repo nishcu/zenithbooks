@@ -54,8 +54,7 @@ import { Fab } from "@/components/layout/fab";
 import { RoleSimulatorProvider, useRoleSimulator } from "@/context/role-simulator-context";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
+import { SUPER_ADMIN_UID, KEYBOARD_SHORTCUTS } from "@/lib/constants";
 
 const allMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge, roles: ['business', 'professional', 'super_admin'] },
@@ -322,19 +321,19 @@ function MainLayout({
   const displayRole = simulatedRole || userRole;
   
   const hotkeys = new Map<string, (event: KeyboardEvent) => void>([
-      ['escape', () => router.push('/dashboard')],
-      ['ctrl+i', () => router.push('/billing/invoices/new')],
-      ['ctrl+p', () => router.push('/purchases/new')],
-      ['ctrl+j', () => router.push('/accounting/journal')],
-      ['alt+n', () => router.push('/billing/credit-notes/new')],
-      ['ctrl+d', () => router.push('/billing/debit-notes/new')],
-      ['ctrl+r', () => router.push('/accounting/vouchers/rapid')],
-      ['ctrl+b', () => router.push('/accounting/financial-statements/balance-sheet')],
-      ['ctrl+l', () => router.push('/accounting/financial-statements/profit-and-loss')],
-      ['alt+t', () => router.push('/accounting/trial-balance')],
-      ['ctrl+g', () => router.push('/accounting/ledgers')],
-      ['alt+p', () => router.push('/parties')],
-      ['alt+i', () => router.push('/items')],
+      [KEYBOARD_SHORTCUTS.DASHBOARD, () => router.push('/dashboard')],
+      [KEYBOARD_SHORTCUTS.NEW_INVOICE, () => router.push('/billing/invoices/new')],
+      [KEYBOARD_SHORTCUTS.NEW_PURCHASE, () => router.push('/purchases/new')],
+      [KEYBOARD_SHORTCUTS.JOURNAL, () => router.push('/accounting/journal')],
+      [KEYBOARD_SHORTCUTS.NEW_CREDIT_NOTE, () => router.push('/billing/credit-notes/new')],
+      [KEYBOARD_SHORTCUTS.NEW_DEBIT_NOTE, () => router.push('/billing/debit-notes/new')],
+      [KEYBOARD_SHORTCUTS.RAPID_VOUCHER, () => router.push('/accounting/vouchers/rapid')],
+      [KEYBOARD_SHORTCUTS.BALANCE_SHEET, () => router.push('/accounting/financial-statements/balance-sheet')],
+      [KEYBOARD_SHORTCUTS.PROFIT_LOSS, () => router.push('/accounting/financial-statements/profit-and-loss')],
+      [KEYBOARD_SHORTCUTS.TRIAL_BALANCE, () => router.push('/accounting/trial-balance')],
+      [KEYBOARD_SHORTCUTS.LEDGERS, () => router.push('/accounting/ledgers')],
+      [KEYBOARD_SHORTCUTS.PARTIES, () => router.push('/parties')],
+      [KEYBOARD_SHORTCUTS.ITEMS, () => router.push('/items')],
   ]);
   useHotkeys(hotkeys);
 
@@ -449,8 +448,8 @@ function MainLayout({
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6">
-            <Suspense fallback={<Loader2 className="animate-spin" />}>
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6" role="main" aria-label="Main content">
+            <Suspense fallback={<Loader2 className="animate-spin" aria-label="Loading content" />}>
               {children}
             </Suspense>
           </main>

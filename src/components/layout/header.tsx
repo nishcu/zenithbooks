@@ -3,6 +3,7 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/layout/user-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Heart } from "lucide-react";
 
 export function Header() {
@@ -22,6 +23,7 @@ export function Header() {
          <p className="text-sm text-muted-foreground font-mono hidden lg:block">{companyInfo.gstin}</p>
       </div>
       <div className="ml-auto flex items-center gap-4">
+        <ThemeToggle />
         <UserNav />
       </div>
     </header>

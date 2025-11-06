@@ -34,7 +34,11 @@ function DashboardContent() {
   
   if (!accountingContext) {
     // This can happen briefly on initial load or if context is not provided
-    return <div>Loading Accounting Data...</div>;
+    return (
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Loading accounting data">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   const { journalVouchers, loading: journalLoading } = accountingContext;

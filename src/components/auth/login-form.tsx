@@ -38,15 +38,17 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, get
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
+import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
 
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  email: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
+  password: z.string().min(6, { message: VALIDATION_MESSAGES.PASSWORD_MIN }),
 });
 
 const passwordResetSchema = z.object({
-    resetEmail: z.string().email({ message: "Please enter a valid email." }),
+  resetEmail: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
 });
 
 export function LoginForm() {
@@ -97,15 +99,10 @@ export function LoginForm() {
     setIsEmailLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({ title: "Login Successful", description: "Welcome back!" });
+      showSuccessToast(TOAST_MESSAGES.SUCCESS.LOGIN.title, TOAST_MESSAGES.SUCCESS.LOGIN.description);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("Login Error: ", error);
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "An unknown error occurred.",
-      });
+      showErrorToast(error, "Login");
     } finally {
       setIsEmailLoading(false);
     }
@@ -119,16 +116,16 @@ export function LoginForm() {
 
   async function handlePasswordReset() {
       if (!resetEmail) {
-          toast({ variant: "destructive", title: "Email required", description: "Please enter your email address." });
+          toast({ variant: "destructive", title: VALIDATION_MESSAGES.REQUIRED, description: "Please enter your email address." });
           return;
       }
       try {
           await sendPasswordResetEmail(auth, resetEmail);
-          toast({ title: "Password Reset Email Sent", description: "Please check your inbox for instructions to reset your password."});
+          showSuccessToast("Password Reset Email Sent", "Please check your inbox for instructions to reset your password.");
           setIsForgotPasswordOpen(false);
           setResetEmail("");
       } catch (error: any) {
-           toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send password reset email."});
+           showErrorToast(error, "Password Reset");
       }
   }
 
@@ -161,9 +158,16 @@ export function LoginForm() {
                             name="email"
                             render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel htmlFor="email">Email</FormLabel>
                                 <FormControl>
-                                <Input placeholder="m@example.com" {...field} />
+                                <Input 
+                                    id="email"
+                                    type="email"
+                                    placeholder="m@example.com" 
+                                    aria-label="Email address"
+                                    aria-required="true"
+                                    {...field} 
+                                />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -175,20 +179,37 @@ export function LoginForm() {
                             render={({ field }) => (
                             <FormItem>
                                 <div className="flex items-center">
-                                    <FormLabel>Password</FormLabel>
-                                    <Button variant="link" type="button" onClick={() => setIsForgotPasswordOpen(true)} className="ml-auto inline-block text-sm underline">
+                                    <FormLabel htmlFor="password">Password</FormLabel>
+                                    <Button 
+                                        variant="link" 
+                                        type="button" 
+                                        onClick={() => setIsForgotPasswordOpen(true)} 
+                                        className="ml-auto inline-block text-sm underline"
+                                        aria-label="Forgot password"
+                                    >
                                         Forgot your password?
                                     </Button>
                                 </div>
                                 <FormControl>
-                                <Input type="password" {...field} />
+                                <Input 
+                                    id="password"
+                                    type="password" 
+                                    aria-label="Password"
+                                    aria-required="true"
+                                    {...field} 
+                                />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={isEmailLoading || isGoogleLoading}>
-                            {isEmailLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={isEmailLoading || isGoogleLoading}
+                            aria-label="Login to your account"
+                        >
+                            {isEmailLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                             Login
                         </Button>
                         </form>
@@ -201,8 +222,14 @@ export function LoginForm() {
                             <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                         </div>
                     </div>
-                    <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isEmailLoading || isGoogleLoading}>
-                        {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={handleGoogleLogin} 
+                        disabled={isEmailLoading || isGoogleLoading}
+                        aria-label="Login with Google"
+                    >
+                        {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                         Login with Google
                     </Button>
                     <div className="mt-4 text-center text-sm">
@@ -227,7 +254,15 @@ export function LoginForm() {
                 </DialogHeader>
                 <div className="py-4">
                      <Label htmlFor="reset-email">Email Address</Label>
-                    <Input id="reset-email" type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+                    <Input 
+                        id="reset-email" 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        value={resetEmail} 
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        aria-label="Email address for password reset"
+                        aria-required="true"
+                    />
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>

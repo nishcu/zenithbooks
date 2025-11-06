@@ -25,8 +25,7 @@ import { useRoleSimulator } from "@/context/role-simulator-context";
 import { ClientList } from "@/components/admin/client-list";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
-
-const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 
 function DashboardContent() {
@@ -56,7 +55,11 @@ function DashboardContent() {
   const queryUserId = user?.uid;
   
   if (!accountingContext) {
-    return <div>Loading Accounting Data...</div>;
+    return (
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Loading accounting data">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   const { journalVouchers, loading: journalLoading } = accountingContext;

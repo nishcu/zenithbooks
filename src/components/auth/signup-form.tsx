@@ -33,14 +33,16 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
+import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
 
 const formSchema = z.object({
   userType: z.enum(["business", "professional"], {
-    required_error: "You need to select a user type.",
+    required_error: VALIDATION_MESSAGES.REQUIRED,
   }),
-  companyName: z.string().min(2, { message: "Company/Firm name is required." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  companyName: z.string().min(2, { message: VALIDATION_MESSAGES.REQUIRED }),
+  email: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
+  password: z.string().min(6, { message: VALIDATION_MESSAGES.PASSWORD_MIN }),
 });
 
 export function SignupForm() {
@@ -78,21 +80,13 @@ export function SignupForm() {
         createdAt: new Date(),
       });
 
-      toast({
-        title: "Account Created!",
-        description: "You have been successfully signed up and logged in.",
-      });
+      showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
 
       // 3. Redirect to dashboard, user is now logged in.
       router.push("/dashboard");
 
     } catch (error: any) {
-      console.error("Signup Error:", error);
-      toast({
-        variant: "destructive",
-        title: "Sign Up Failed",
-        description: error.message || "An unknown error occurred.",
-      });
+      showErrorToast(error, "Signup");
     } finally {
         setIsLoading(false);
     }

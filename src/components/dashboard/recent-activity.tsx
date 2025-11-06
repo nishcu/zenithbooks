@@ -8,9 +8,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, Loader2 } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 import { Button } from "../ui/button"
 import Link from "next/link"
+import { TableSkeleton } from "@/components/ui/loading-skeletons"
 
 type Invoice = {
   invoice: string;
@@ -52,8 +53,8 @@ export function RecentActivity({ invoices, loading }: RecentActivityProps) {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  <Loader2 className="animate-spin mx-auto text-primary" />
+                <TableCell colSpan={3}>
+                  <TableSkeleton rows={3} columns={3} />
                 </TableCell>
               </TableRow>
             ) : invoices.length > 0 ? (
