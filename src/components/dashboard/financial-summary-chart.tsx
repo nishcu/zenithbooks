@@ -52,30 +52,52 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
   const { journalVouchers } = useContext(AccountingContext)!;
 
   const chartData = useMemo(() => {
-    const data: { [key: string]: { sales: number; purchases: number; month: string } } = {};
-    const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
+    const data: { [key: string]: { sales: number; purchases: number; month: string; sortOrder: number } } = {};
+    const today = new Date();
+    const sixMonthsAgo = startOfMonth(subMonths(today, 5));
+    const currentMonth = startOfMonth(today);
 
     // Initialize last 6 months
     for (let i = 0; i < 6; i++) {
         const monthDate = addMonths(sixMonthsAgo, i);
         const month = format(monthDate, 'MMM');
         const yearMonth = format(monthDate, 'yyyy-MM');
-        data[yearMonth] = { month, sales: 0, purchases: 0 };
+        data[yearMonth] = { month, sales: 0, purchases: 0, sortOrder: i };
     }
 
     journalVouchers.forEach(voucher => {
-        if (!voucher || !voucher.id || !voucher.date) return;
+        if (!voucher || !voucher.id || !voucher.date || voucher.reverses) return;
         
-        const voucherDate = parseISO(voucher.date); // Use parseISO for 'yyyy-MM-dd'
-        if (isNaN(voucherDate.getTime()) || voucherDate < sixMonthsAgo) {
+        // Parse date - handle both ISO format and 'yyyy-MM-dd' format
+        let voucherDate: Date;
+        try {
+            if (voucher.date.includes('T')) {
+                voucherDate = parseISO(voucher.date);
+            } else {
+                // Handle 'yyyy-MM-dd' format
+                const [year, month, day] = voucher.date.split('-').map(Number);
+                voucherDate = new Date(year, month - 1, day);
+            }
+        } catch (e) {
+            console.warn('Invalid date format:', voucher.date);
             return;
         }
         
-        const yearMonth = format(voucherDate, 'yyyy-MM');
+        if (isNaN(voucherDate.getTime())) {
+            return;
+        }
+        
+        // Check if date is within the last 6 months range
+        const monthStart = startOfMonth(voucherDate);
+        if (monthStart < sixMonthsAgo || monthStart > currentMonth) {
+            return;
+        }
+        
+        const yearMonth = format(monthStart, 'yyyy-MM');
         
         if (data[yearMonth]) {
-            const isInvoice = voucher.id.startsWith("INV-");
-            const isBill = voucher.id.startsWith("BILL-");
+            const isInvoice = voucher.id.startsWith("INV-") && !voucher.id.startsWith("CANCEL-");
+            const isBill = voucher.id.startsWith("BILL-") && !voucher.id.startsWith("CANCEL-");
             const isCreditNote = voucher.id.startsWith("CN-");
             const isDebitNote = voucher.id.startsWith("DN-");
 
@@ -83,16 +105,19 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
             if (isInvoice) {
                 data[yearMonth].sales += voucher.amount || 0;
             } else if (isCreditNote) {
-                data[yearMonth].sales -= voucher.amount || 0;
+                data[yearMonth].sales -= Math.abs(voucher.amount || 0);
             } else if (isBill) {
                 data[yearMonth].purchases += voucher.amount || 0;
             } else if (isDebitNote) {
-                data[yearMonth].purchases -= voucher.amount || 0;
+                data[yearMonth].purchases -= Math.abs(voucher.amount || 0);
             }
         }
     });
     
-    return Object.values(data).map(d => ({...d, net: d.sales - d.purchases }));
+    // Sort by sortOrder to maintain chronological order
+    return Object.values(data)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(d => ({ month: d.month, sales: d.sales, purchases: d.purchases, net: d.sales - d.purchases }));
 
   }, [journalVouchers]);
 

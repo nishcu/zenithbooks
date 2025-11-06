@@ -187,7 +187,8 @@ export default function InvoicesPage() {
                 raw: v,
             }
         })
-        .filter((v): v is Invoice => v !== null);
+        .filter((v): v is Invoice => v !== null)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Latest first
   }, [journalVouchers]);
 
 

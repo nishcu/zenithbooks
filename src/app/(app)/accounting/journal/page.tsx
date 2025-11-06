@@ -132,10 +132,11 @@ export default function JournalVoucherPage() {
     }, [allVouchers]);
     
     const filteredJournalVouchers = useMemo(() => {
+        const sorted = [...visibleJournalVouchers].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Latest first
         if (!searchTerm) {
-            return visibleJournalVouchers;
+            return sorted;
         }
-        return visibleJournalVouchers.filter(voucher => 
+        return sorted.filter(voucher => 
             voucher.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             voucher.narration.toLowerCase().includes(searchTerm.toLowerCase())
         );

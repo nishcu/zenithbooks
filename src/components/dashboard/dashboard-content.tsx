@@ -101,6 +101,7 @@ function DashboardContent() {
   const invoices = useMemo(() => {
     return journalVouchers
         .filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Latest first
         .slice(0, 5)
         .map(v => ({
             invoice: v.id,

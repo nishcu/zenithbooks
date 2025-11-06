@@ -78,7 +78,9 @@ export default function PurchasesPage() {
             status: isCancelled ? "Cancelled" : "Pending",
             raw: v,
         }
-    }).filter((v): v is Bill => v !== null);
+    })
+    .filter((v): v is Bill => v !== null)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Latest first
   }, [journalVouchers, vendors]);
 
   const handleCancelBill = async (billId: string) => {

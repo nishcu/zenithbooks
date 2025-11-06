@@ -57,7 +57,9 @@ export default function CreditNotesPage() {
             status: isCancelled ? "Cancelled" : "Active",
             raw: v,
         }
-    }).filter(Boolean);
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(b!.date).getTime() - new Date(a!.date).getTime()); // Latest first
   }, [journalVouchers]);
 
   const filteredCreditNotes = useMemo(() => {

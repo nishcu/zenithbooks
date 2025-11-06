@@ -79,7 +79,7 @@ export default function LedgersPage() {
         const vouchers = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher))
           .filter(voucher => voucher.lines.some(line => line.account === selectedAccount));
-        setJournalVouchers(vouchers.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        setJournalVouchers(vouchers.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())); // Latest first
         setLoading(false);
       };
       fetchVouchers().catch(err => {
