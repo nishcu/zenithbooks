@@ -18,22 +18,62 @@ export function handleError(error: unknown, context?: string): AppError {
   let appError: AppError;
 
   if (error instanceof Error) {
-    // Firebase Auth Errors
-    if (error.message.includes("auth/")) {
-      if (error.message.includes("user-not-found") || error.message.includes("wrong-password")) {
+    // Firebase Auth Errors - Map to user-friendly messages
+    // Firebase errors have a 'code' property (e.g., 'auth/wrong-password')
+    const errorCode = (error as any).code || '';
+    const errorMessage = (error.message || '').toLowerCase();
+    const codeStr = String(errorCode).toLowerCase();
+    
+    // Check if it's a Firebase auth error (by code or message)
+    if (codeStr.includes("auth/") || errorMessage.includes("auth/")) {
+      // Check for specific Firebase auth error codes
+      // Firebase error codes are like: auth/wrong-password, auth/user-not-found, etc.
+      if (codeStr.includes("user-not-found") || errorMessage.includes("user-not-found")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: TOAST_MESSAGES.ERROR.LOGIN.description,
+          message: "Invalid email or password. Please check your credentials and try again.",
         };
-      } else if (error.message.includes("email-already-in-use")) {
+      } else if (codeStr.includes("wrong-password") || codeStr.includes("invalid-credential") || 
+                 errorMessage.includes("wrong-password") || errorMessage.includes("invalid-credential")) {
+        appError = {
+          code: ERROR_CODES.AUTH_REQUIRED,
+          message: "Invalid email or password. Please enter the correct password.",
+        };
+      } else if (codeStr.includes("email-already-in-use") || errorMessage.includes("email-already-in-use")) {
         appError = {
           code: ERROR_CODES.VALIDATION_ERROR,
           message: "This email is already registered. Please use a different email or try logging in.",
         };
-      } else {
+      } else if (codeStr.includes("invalid-email") || errorMessage.includes("invalid-email")) {
+        appError = {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: "Please enter a valid email address.",
+        };
+      } else if (codeStr.includes("weak-password") || errorMessage.includes("weak-password")) {
+        appError = {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: "Password is too weak. Please use a stronger password.",
+        };
+      } else if (codeStr.includes("user-disabled") || errorMessage.includes("user-disabled")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: error.message || TOAST_MESSAGES.ERROR.AUTH.description,
+          message: "This account has been disabled. Please contact support.",
+        };
+      } else if (codeStr.includes("too-many-requests") || errorMessage.includes("too-many-requests")) {
+        appError = {
+          code: ERROR_CODES.AUTH_REQUIRED,
+          message: "Too many login attempts. Please try again later.",
+        };
+      } else if (codeStr.includes("network-request-failed") || errorMessage.includes("network-request-failed")) {
+        appError = {
+          code: ERROR_CODES.NETWORK_ERROR,
+          message: "Network error. Please check your internet connection and try again.",
+        };
+      } else {
+        // Generic auth error - don't expose Firebase details
+        appError = {
+          code: ERROR_CODES.AUTH_REQUIRED,
+          message: "Invalid email or password. Please check your credentials and try again.",
         };
       }
     }
