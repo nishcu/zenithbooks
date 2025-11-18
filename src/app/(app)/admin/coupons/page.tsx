@@ -299,8 +299,33 @@ export default function CouponsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Edit className="mr-2"/>Edit Coupon</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2"/>Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const couponToEdit = coupons.find(c => c.id === coupon.id);
+                          if (couponToEdit) {
+                            form.reset({
+                              code: couponToEdit.code,
+                              type: couponToEdit.type,
+                              value: couponToEdit.value,
+                              expiryDate: new Date(couponToEdit.expiryDate).toISOString().split("T")[0],
+                              appliesTo: couponToEdit.appliesTo
+                            });
+                            setCoupons(coupons.filter(c => c.id !== coupon.id));
+                            setIsDialogOpen(true);
+                          }
+                        }}><Edit className="mr-2"/>Edit Coupon</DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            setCoupons(coupons.filter(c => c.id !== coupon.id));
+                            toast({ 
+                              title: "Coupon Deleted", 
+                              description: `Coupon code ${coupon.code} has been deleted.`,
+                              variant: "destructive"
+                            });
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2"/>Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

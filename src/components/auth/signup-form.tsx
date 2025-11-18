@@ -29,13 +29,14 @@ import { ZenithBooksLogo } from "../icons"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
 import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
 import { checkPasswordStrength, sanitizeEmail } from "@/lib/security/auth-utils";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   userType: z.enum(["business", "professional"], {
@@ -50,6 +51,8 @@ export function SignupForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,6 +63,50 @@ export function SignupForm() {
         password: "",
     }
   });
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User has successfully signed in via Google redirect
+          const user = result.user;
+          
+          // Check if user document already exists
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (!userDoc.exists()) {
+            // Create user document with default values
+            await setDoc(userDocRef, {
+              uid: user.uid,
+              email: user.email,
+              userType: "business", // Default to business
+              companyName: user.displayName || "My Company",
+              createdAt: new Date(),
+            });
+          }
+          
+          toast({ title: "Signup Successful", description: "Welcome to ZenithBooks!" });
+          router.push("/dashboard");
+        } else {
+          // No redirect result, probably a direct page load
+          setIsCheckingRedirect(false);
+        }
+      } catch (error: any) {
+        console.error("Google Signup Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Google Signup Failed",
+          description: error.message || "An unknown error occurred.",
+        });
+        setIsCheckingRedirect(false);
+        setIsGoogleLoading(false);
+      }
+    };
+
+    handleRedirectResult();
+  }, [router, toast]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -108,6 +155,11 @@ export function SignupForm() {
     }
   }
 
+  async function handleGoogleSignup() {
+    setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -120,7 +172,14 @@ export function SignupForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
+          {isCheckingRedirect ? (
+            <div className="flex flex-col items-center justify-center h-48">
+              <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" />
+              <p className="mt-2 text-muted-foreground">Checking for signup...</p>
+            </div>
+          ) : (
+            <>
+              <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                <FormField
                 control={form.control}
@@ -191,18 +250,38 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create an account
               </Button>
             </form>
           </Form>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleGoogleSignup} 
+            disabled={isLoading || isGoogleLoading}
+            aria-label="Sign up with Google"
+          >
+            {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            Sign up with Google
+          </Button>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="underline">
               Sign in
             </Link>
           </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

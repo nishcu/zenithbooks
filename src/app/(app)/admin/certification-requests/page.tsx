@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -17,12 +18,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, FileSignature, CheckCircle, AlertCircle } from "lucide-react";
+import { MoreHorizontal, FileSignature, CheckCircle, AlertCircle, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-const sampleRequests = [
+type Request = {
+  id: string;
+  type: string;
+  client: string;
+  requestedBy: string;
+  date: Date;
+  status: 'Pending' | 'Certified' | 'Rejected';
+};
+
+const initialRequests: Request[] = [
     { id: 'CR-001', type: 'Net Worth Certificate', client: 'Innovate LLC', requestedBy: 'Rohan Sharma', date: new Date(2024, 7, 14), status: 'Pending' },
     { id: 'CR-002', type: 'Turnover Certificate', client: 'Quantum Services', requestedBy: 'Priya Mehta', date: new Date(2024, 7, 12), status: 'Certified' },
     { id: 'CR-003', type: 'Form 15CB', client: 'Synergy Corp', requestedBy: 'Anjali Singh', date: new Date(2024, 7, 11), status: 'Certified' },
@@ -30,6 +44,12 @@ const sampleRequests = [
 ];
 
 export default function AdminCertificationRequests() {
+  const [requests, setRequests] = useState<Request[]>(initialRequests);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -44,8 +64,44 @@ export default function AdminCertificationRequests() {
     }
   };
 
+  const handleViewDocument = (req: Request) => {
+    setSelectedRequest(req);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleApprove = () => {
+    if (!selectedRequest) return;
+    setRequests(requests.map(r => 
+      r.id === selectedRequest.id 
+        ? { ...r, status: 'Certified' as Request['status'] }
+        : r
+    ));
+    toast({
+      title: "Request Approved",
+      description: `Certification request ${selectedRequest.id} has been approved and marked as certified.`,
+    });
+    setIsApproveDialogOpen(false);
+    setSelectedRequest(null);
+  };
+
+  const handleReject = () => {
+    if (!selectedRequest) return;
+    setRequests(requests.map(r => 
+      r.id === selectedRequest.id 
+        ? { ...r, status: 'Rejected' as Request['status'] }
+        : r
+    ));
+    toast({
+      title: "Request Rejected",
+      description: `Certification request ${selectedRequest.id} has been rejected.`,
+      variant: "destructive",
+    });
+    setIsRejectDialogOpen(false);
+    setSelectedRequest(null);
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <div className="flex items-center justify-center size-12 rounded-full bg-primary/10">
             <FileSignature className="size-6 text-primary" />
@@ -59,47 +115,172 @@ export default function AdminCertificationRequests() {
       <Card>
         <CardHeader>
           <CardTitle>All Requests</CardTitle>
+          <CardDescription>Review and manage certification document requests</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Request ID</TableHead>
-                <TableHead>Document Type</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Requested By</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sampleRequests.map((req) => (
-                <TableRow key={req.id}>
-                  <TableCell className="font-mono">{req.id}</TableCell>
-                  <TableCell className="font-medium">{req.type}</TableCell>
-                  <TableCell>{req.client}</TableCell>
-                  <TableCell>{req.requestedBy}</TableCell>
-                  <TableCell>{format(req.date, 'dd MMM, yyyy')}</TableCell>
-                  <TableCell>{getStatusBadge(req.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Draft Document</DropdownMenuItem>
-                        <DropdownMenuItem className="text-green-600 focus:text-green-700"><CheckCircle className="mr-2"/>Approve & Upload Signed</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive"><AlertCircle className="mr-2"/>Reject</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[120px]">Request ID</TableHead>
+                  <TableHead className="min-w-[180px]">Document Type</TableHead>
+                  <TableHead className="min-w-[150px]">Client</TableHead>
+                  <TableHead className="min-w-[150px]">Requested By</TableHead>
+                  <TableHead className="min-w-[120px]">Date</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {requests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No certification requests found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  requests.map((req) => (
+                    <TableRow key={req.id}>
+                      <TableCell className="font-mono">{req.id}</TableCell>
+                      <TableCell className="font-medium">{req.type}</TableCell>
+                      <TableCell>{req.client}</TableCell>
+                      <TableCell>{req.requestedBy}</TableCell>
+                      <TableCell>{format(req.date, 'dd MMM, yyyy')}</TableCell>
+                      <TableCell>{getStatusBadge(req.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => handleViewDocument(req)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Draft Document
+                            </DropdownMenuItem>
+                            {req.status === 'Pending' && (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setSelectedRequest(req);
+                                    setIsApproveDialogOpen(true);
+                                  }}
+                                  className="text-green-600 focus:text-green-700"
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Approve & Upload Signed
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setSelectedRequest(req);
+                                    setIsRejectDialogOpen(true);
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <AlertCircle className="mr-2 h-4 w-4" />
+                                  Reject
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* View Document Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Document Details</DialogTitle>
+            <DialogDescription>View certification request information</DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Request ID</Label>
+                <p className="text-sm font-mono font-medium">{selectedRequest.id}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Document Type</Label>
+                <p className="text-sm font-medium">{selectedRequest.type}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Client</Label>
+                <p className="text-sm font-medium">{selectedRequest.client}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Requested By</Label>
+                <p className="text-sm font-medium">{selectedRequest.requestedBy}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <p className="text-sm font-medium">{format(selectedRequest.date, 'dd MMM, yyyy')}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div>{getStatusBadge(selectedRequest.status)}</div>
+              </div>
+              <div className="pt-4 border-t">
+                <Button variant="outline" className="w-full">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Download Draft Document
+                </Button>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve Dialog */}
+      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve Certification Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve certification request {selectedRequest?.id} for {selectedRequest?.type}? 
+              You will be able to upload the signed document after approval.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Approve & Mark as Certified
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Dialog */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Certification Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject certification request {selectedRequest?.id}? 
+              This action will mark the request as rejected and notify the requester.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Reject Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
