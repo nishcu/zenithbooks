@@ -129,7 +129,7 @@ export default function BulkInvoicePage() {
     XLSX.utils.book_append_sheet(wb, ws, "Bulk Invoices");
     
     XLSX.writeFile(wb, "bulk_invoice_template.xlsx");
-    toast({ title: "Template Downloaded", description: "CSV template has been downloaded. Fill in your invoice data and upload." });
+    toast({ title: "Template Downloaded", description: "Excel template has been downloaded. Fill in your invoice data and upload." });
   };
 
   const parseCSV = (file: File): Promise<BulkInvoiceRow[]> => {

@@ -111,7 +111,29 @@ export default function Gstr9WizardPage() {
                 </p>
                 <div className="flex gap-4">
                     <Button variant="outline"><Upload className="mr-2"/> Upload GSTR-9 CSV</Button>
-                    <Button variant="outline"><Download className="mr-2"/> Download Template</Button>
+                    <Button variant="outline" onClick={() => {
+                        const templateData = {
+                            "Financial Year": "2023-24",
+                            "GSTIN": "27ABCDE1234F1Z5",
+                            "Legal Name": "Sample Company Name",
+                            "Trade Name": "Sample Trade Name",
+                            "Note": "This is a sample template. Replace with your actual GSTR-9 data."
+                        };
+                        const jsonString = JSON.stringify(templateData, null, 2);
+                        const blob = new Blob([jsonString], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `GSTR9_Template_${format(new Date(), "yyyy-MM-dd")}.json`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        toast({
+                            title: "Template Downloaded",
+                            description: "GSTR-9 template has been downloaded. Fill in your data and upload.",
+                        });
+                    }}><Download className="mr-2"/> Download Template</Button>
                 </div>
             </CardContent>
             <CardFooter className="flex justify-end">

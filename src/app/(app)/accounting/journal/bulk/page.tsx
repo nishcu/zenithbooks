@@ -34,6 +34,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
+import { formatExcelFromJson } from "@/lib/export-utils";
 
 interface BulkJournalEntry {
     date: string;
@@ -488,7 +489,7 @@ export default function BulkJournalEntryPage() {
                         throw new Error(`Debits (${totalDebits}) do not equal credits (${totalCredits})`);
                     }
 
-                    const voucherId = `JV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    const voucherId = `JV-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
                     const narration = entries[0].narration || 'Bulk Journal Entry';
 
                     const voucher: any = {

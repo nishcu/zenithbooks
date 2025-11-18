@@ -189,7 +189,101 @@ export default function CmaReportGeneratorPage() {
   };
   
   const handleDownloadTemplate = () => {
-    toast({ title: "Template Downloaded", description: "A template for audited financials has been downloaded. (Simulation)"});
+    const templateData = [
+      {
+        "Particulars": "Revenue from Operations",
+        "Year 1": 10000000,
+        "Year 2": 12000000,
+        "Year 3": 14000000
+      },
+      {
+        "Particulars": "Cost of Goods Sold",
+        "Year 1": 6000000,
+        "Year 2": 7200000,
+        "Year 3": 8400000
+      },
+      {
+        "Particulars": "Gross Profit",
+        "Year 1": 4000000,
+        "Year 2": 4800000,
+        "Year 3": 5600000
+      },
+      {
+        "Particulars": "Operating Expenses",
+        "Year 1": 2000000,
+        "Year 2": 2400000,
+        "Year 3": 2800000
+      },
+      {
+        "Particulars": "EBITDA",
+        "Year 1": 2000000,
+        "Year 2": 2400000,
+        "Year 3": 2800000
+      },
+      {
+        "Particulars": "Depreciation",
+        "Year 1": 500000,
+        "Year 2": 600000,
+        "Year 3": 700000
+      },
+      {
+        "Particulars": "EBIT",
+        "Year 1": 1500000,
+        "Year 2": 1800000,
+        "Year 3": 2100000
+      },
+      {
+        "Particulars": "Interest",
+        "Year 1": 300000,
+        "Year 2": 350000,
+        "Year 3": 400000
+      },
+      {
+        "Particulars": "Profit Before Tax",
+        "Year 1": 1200000,
+        "Year 2": 1450000,
+        "Year 3": 1700000
+      },
+      {
+        "Particulars": "Tax",
+        "Year 1": 360000,
+        "Year 2": 435000,
+        "Year 3": 510000
+      },
+      {
+        "Particulars": "Net Profit",
+        "Year 1": 840000,
+        "Year 2": 1015000,
+        "Year 3": 1190000
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    
+    // Apply formatting
+    const headers = Object.keys(templateData[0] || {});
+    const rows = templateData.map(row => headers.map(h => row[h as keyof typeof row]));
+    applyExcelFormatting(ws, headers, rows);
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Audited Financials");
+    
+    // Add instructions sheet
+    const instructions = [
+      { Column: "Particulars", Description: "Financial statement line items (Revenue, Expenses, etc.)" },
+      { Column: "Year 1", Description: "Financial data for Year 1 (most recent audited year)" },
+      { Column: "Year 2", Description: "Financial data for Year 2 (previous year)" },
+      { Column: "Year 3", Description: "Financial data for Year 3 (year before that)" },
+      { Note: "", Description: "Replace sample data with your actual audited financial figures" }
+    ];
+    const wsInstructions = XLSX.utils.json_to_sheet(instructions);
+    XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
+    
+    XLSX.writeFile(wb, `CMA_Audited_Financials_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast({ 
+      title: "Template Downloaded", 
+      description: "Audited financials template has been downloaded. Fill in your actual data and upload."
+    });
   }
 
   const handleCertificationRequest = () => {

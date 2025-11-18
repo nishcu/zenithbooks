@@ -103,8 +103,18 @@ const parseDateString = (dateStr: string): Date | null => {
 
 export default function BankReconciliationPage() {
     const { toast } = useToast();
-    const { journalVouchers, addJournalVoucher, loading } = useContext(AccountingContext)!;
+    const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
+
+    if (!accountingContext) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    const { journalVouchers, addJournalVoucher, loading } = accountingContext;
 
     const [statementTransactions, setStatementTransactions] = useState<StatementTransaction[]>([]);
     const [bookTransactions, setBookTransactions] = useState<BookTransaction[]>([]);
@@ -185,7 +195,9 @@ export default function BankReconciliationPage() {
         const derivedTransactions = journalVouchers
             .filter(v => v.lines.some(l => l.account === bankAccount))
             .map(v => {
-                const isDebit = parseFloat(v.lines.find(l => l.account === bankAccount)!.debit) > 0;
+                const bankLine = v.lines.find(l => l.account === bankAccount);
+                if (!bankLine) return null;
+                const isDebit = parseFloat(bankLine.debit || '0') > 0;
                 return {
                     id: v.id,
                     date: v.date,
@@ -195,6 +207,7 @@ export default function BankReconciliationPage() {
                     matchedId: null,
                 };
             })
+            .filter((tx): tx is BookTransaction => tx !== null)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setBookTransactions(derivedTransactions);
     }, [journalVouchers, bankAccount]);
