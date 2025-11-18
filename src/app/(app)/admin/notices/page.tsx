@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, MailWarning, Eye, UserPlus, CheckCircle } from "lucide-react";
+import { MoreHorizontal, MailWarning, Eye, UserPlus, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -52,6 +52,7 @@ export default function AdminNotices() {
   const [isUpdateStatusDialogOpen, setIsUpdateStatusDialogOpen] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<Notice['status']>('Pending Assignment');
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -78,8 +79,10 @@ export default function AdminNotices() {
     setIsAssignDialogOpen(true);
   };
 
-  const handleSaveAssignment = () => {
+  const handleSaveAssignment = async () => {
     if (!selectedNotice || !selectedProfessional) return;
+    setIsLoading('assign');
+    await new Promise(resolve => setTimeout(resolve, 600));
     setNotices(notices.map(n => 
       n.id === selectedNotice.id 
         ? { ...n, assignedTo: selectedProfessional, status: 'In Progress' as Notice['status'] }
@@ -92,6 +95,7 @@ export default function AdminNotices() {
     setIsAssignDialogOpen(false);
     setSelectedNotice(null);
     setSelectedProfessional('');
+    setIsLoading(null);
   };
 
   const handleUpdateStatus = (notice: Notice) => {
@@ -100,8 +104,10 @@ export default function AdminNotices() {
     setIsUpdateStatusDialogOpen(true);
   };
 
-  const handleSaveStatus = () => {
+  const handleSaveStatus = async () => {
     if (!selectedNotice) return;
+    setIsLoading('status');
+    await new Promise(resolve => setTimeout(resolve, 600));
     setNotices(notices.map(n => 
       n.id === selectedNotice.id 
         ? { ...n, status: selectedStatus }
@@ -113,6 +119,7 @@ export default function AdminNotices() {
     });
     setIsUpdateStatusDialogOpen(false);
     setSelectedNotice(null);
+    setIsLoading(null);
   };
 
   return (
@@ -170,15 +177,15 @@ export default function AdminNotices() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => handleViewDetails(notice)}>
+                            <DropdownMenuItem onClick={() => handleViewDetails(notice)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details & Document
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleAssign(notice)}>
+                            <DropdownMenuItem onClick={() => handleAssign(notice)} disabled={isLoading !== null}>
                               <UserPlus className="mr-2 h-4 w-4" />
                               Assign to Professional
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(notice)}>
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(notice)} disabled={isLoading !== null}>
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Update Status
                             </DropdownMenuItem>
@@ -263,9 +270,16 @@ export default function AdminNotices() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveAssignment} disabled={!selectedProfessional}>
-              Assign Notice
+            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)} disabled={isLoading === 'assign'}>Cancel</Button>
+            <Button onClick={handleSaveAssignment} disabled={!selectedProfessional || isLoading === 'assign'}>
+              {isLoading === 'assign' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                'Assign Notice'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -294,8 +308,17 @@ export default function AdminNotices() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveStatus}>Update Status</Button>
+            <Button variant="outline" onClick={() => setIsUpdateStatusDialogOpen(false)} disabled={isLoading === 'status'}>Cancel</Button>
+            <Button onClick={handleSaveStatus} disabled={isLoading === 'status'}>
+              {isLoading === 'status' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Status'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

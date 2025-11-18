@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Users, Eye, KeyRound, Ban, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Users, Eye, KeyRound, Ban, Edit, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -51,7 +51,9 @@ export default function AdminUsers() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState(false);
+  const [isUnsuspendDialogOpen, setIsUnsuspendDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', email: '', type: 'Professional' as 'Professional' | 'Business', status: 'Active' as User['status'] });
   const { toast } = useToast();
 
@@ -84,8 +86,11 @@ export default function AdminUsers() {
     setIsEditDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!selectedUser) return;
+    setIsLoading('edit');
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
     setUsers(users.map((u: User) => 
       u.id === selectedUser.id 
         ? { ...u, ...editFormData }
@@ -97,20 +102,28 @@ export default function AdminUsers() {
     });
     setIsEditDialogOpen(false);
     setSelectedUser(null);
+    setIsLoading(null);
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!selectedUser) return;
+    setIsLoading('reset');
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
     toast({
       title: "Password Reset",
       description: `Password reset email has been sent to ${selectedUser.email}.`,
     });
     setIsResetPasswordDialogOpen(false);
     setSelectedUser(null);
+    setIsLoading(null);
   };
 
-  const handleSuspendUser = () => {
+  const handleSuspendUser = async () => {
     if (!selectedUser) return;
+    setIsLoading('suspend');
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 600));
     setUsers(users.map((u: User) => 
       u.id === selectedUser.id 
         ? { ...u, status: 'Suspended' as User['status'] }
@@ -123,10 +136,33 @@ export default function AdminUsers() {
     });
     setIsSuspendDialogOpen(false);
     setSelectedUser(null);
+    setIsLoading(null);
   };
 
-  const handleDeleteUser = () => {
+  const handleUnsuspendUser = async () => {
     if (!selectedUser) return;
+    setIsLoading('unsuspend');
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setUsers(users.map((u: User) => 
+      u.id === selectedUser.id 
+        ? { ...u, status: 'Active' as User['status'] }
+        : u
+    ));
+    toast({
+      title: "User Unsuspended",
+      description: `${selectedUser.name} has been unsuspended and can now access the platform.`,
+    });
+    setIsUnsuspendDialogOpen(false);
+    setSelectedUser(null);
+    setIsLoading(null);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setIsLoading('delete');
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
     setUsers(users.filter((u: User) => u.id !== selectedUser.id));
     toast({
       title: "User Deleted",
@@ -135,6 +171,7 @@ export default function AdminUsers() {
     });
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
+    setIsLoading(null);
   };
 
   return (
@@ -192,36 +229,55 @@ export default function AdminUsers() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => handleViewUser(user)}>
+                            <DropdownMenuItem onClick={() => handleViewUser(user)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View User Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <DropdownMenuItem onClick={() => handleEditUser(user)} disabled={isLoading !== null}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedUser(user);
-                              setIsResetPasswordDialogOpen(true);
-                            }}>
-                              <KeyRound className="mr-2 h-4 w-4" />
-                              Reset Password
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => {
                                 setSelectedUser(user);
-                                setIsSuspendDialogOpen(true);
+                                setIsResetPasswordDialogOpen(true);
                               }}
-                              className="text-destructive focus:text-destructive"
+                              disabled={isLoading !== null || user.status === 'Suspended'}
                             >
-                              <Ban className="mr-2 h-4 w-4" />
-                              Suspend User
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              Reset Password
                             </DropdownMenuItem>
+                            {user.status === 'Suspended' ? (
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setIsUnsuspendDialogOpen(true);
+                                }}
+                                disabled={isLoading !== null}
+                                className="text-green-600 focus:text-green-700"
+                              >
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Unsuspend User
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setIsSuspendDialogOpen(true);
+                                }}
+                                disabled={isLoading !== null}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Suspend User
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem 
                               onClick={() => {
                                 setSelectedUser(user);
                                 setIsDeleteDialogOpen(true);
                               }}
+                              disabled={isLoading !== null}
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -336,8 +392,17 @@ export default function AdminUsers() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isLoading === 'edit'}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={isLoading === 'edit'}>
+              {isLoading === 'edit' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -352,8 +417,17 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetPassword}>Send Reset Email</AlertDialogAction>
+            <AlertDialogCancel disabled={isLoading === 'reset'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword} disabled={isLoading === 'reset'}>
+              {isLoading === 'reset' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Reset Email'
+              )}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -368,9 +442,44 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSuspendUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Suspend User
+            <AlertDialogCancel disabled={isLoading === 'suspend'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSuspendUser} disabled={isLoading === 'suspend'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'suspend' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Suspending...
+                </>
+              ) : (
+                'Suspend User'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unsuspend User Dialog */}
+      <AlertDialog open={isUnsuspendDialogOpen} onOpenChange={setIsUnsuspendDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsuspend User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unsuspend {selectedUser?.name}? They will regain access to the platform immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading === 'unsuspend'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnsuspendUser} disabled={isLoading === 'unsuspend'} className="bg-green-600 hover:bg-green-700">
+              {isLoading === 'unsuspend' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Unsuspending...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Unsuspend User
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -386,9 +495,16 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete User
+            <AlertDialogCancel disabled={isLoading === 'delete'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} disabled={isLoading === 'delete'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'delete' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete User'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

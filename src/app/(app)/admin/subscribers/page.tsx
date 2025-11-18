@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, BadgeDollarSign, Eye, CreditCard, X } from "lucide-react";
+import { MoreHorizontal, BadgeDollarSign, Eye, CreditCard, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +49,7 @@ export default function Subscribers() {
   const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'Professional' | 'Business'>('Professional');
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -73,8 +74,10 @@ export default function Subscribers() {
     setIsChangePlanDialogOpen(true);
   };
 
-  const handleSavePlanChange = () => {
+  const handleSavePlanChange = async () => {
     if (!selectedSubscriber) return;
+    setIsLoading('change-plan');
+    await new Promise(resolve => setTimeout(resolve, 800));
     setSubscribers(subscribers.map(s => 
       s.id === selectedSubscriber.id 
         ? { ...s, plan: selectedPlan }
@@ -86,10 +89,13 @@ export default function Subscribers() {
     });
     setIsChangePlanDialogOpen(false);
     setSelectedSubscriber(null);
+    setIsLoading(null);
   };
 
-  const handleCancelSubscription = () => {
+  const handleCancelSubscription = async () => {
     if (!selectedSubscriber) return;
+    setIsLoading('cancel');
+    await new Promise(resolve => setTimeout(resolve, 800));
     setSubscribers(subscribers.map(s => 
       s.id === selectedSubscriber.id 
         ? { ...s, status: 'Cancelled' as Subscriber['status'] }
@@ -102,6 +108,7 @@ export default function Subscribers() {
     });
     setIsCancelDialogOpen(false);
     setSelectedSubscriber(null);
+    setIsLoading(null);
   };
 
   return (
@@ -157,13 +164,13 @@ export default function Subscribers() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => handleViewBilling(sub)}>
+                            <DropdownMenuItem onClick={() => handleViewBilling(sub)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Billing History
                             </DropdownMenuItem>
                             {sub.status === 'Active' && (
                               <>
-                                <DropdownMenuItem onClick={() => handleChangePlan(sub)}>
+                                <DropdownMenuItem onClick={() => handleChangePlan(sub)} disabled={isLoading !== null}>
                                   <CreditCard className="mr-2 h-4 w-4" />
                                   Change Plan
                                 </DropdownMenuItem>
@@ -172,6 +179,7 @@ export default function Subscribers() {
                                     setSelectedSubscriber(sub);
                                     setIsCancelDialogOpen(true);
                                   }}
+                                  disabled={isLoading !== null}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <X className="mr-2 h-4 w-4" />
@@ -251,8 +259,17 @@ export default function Subscribers() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsChangePlanDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSavePlanChange}>Change Plan</Button>
+            <Button variant="outline" onClick={() => setIsChangePlanDialogOpen(false)} disabled={isLoading === 'change-plan'}>Cancel</Button>
+            <Button onClick={handleSavePlanChange} disabled={isLoading === 'change-plan'}>
+              {isLoading === 'change-plan' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                'Change Plan'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -268,10 +285,19 @@ export default function Subscribers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelSubscription} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              <X className="mr-2 h-4 w-4" />
-              Cancel Subscription
+            <AlertDialogCancel disabled={isLoading === 'cancel'}>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelSubscription} disabled={isLoading === 'cancel'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'cancel' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel Subscription
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

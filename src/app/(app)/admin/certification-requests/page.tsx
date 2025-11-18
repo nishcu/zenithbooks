@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, FileSignature, CheckCircle, AlertCircle, Eye, Upload } from "lucide-react";
+import { MoreHorizontal, FileSignature, CheckCircle, AlertCircle, Eye, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +49,7 @@ export default function AdminCertificationRequests() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -69,8 +70,10 @@ export default function AdminCertificationRequests() {
     setIsViewDialogOpen(true);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedRequest) return;
+    setIsLoading('approve');
+    await new Promise(resolve => setTimeout(resolve, 800));
     setRequests(requests.map(r => 
       r.id === selectedRequest.id 
         ? { ...r, status: 'Certified' as Request['status'] }
@@ -82,10 +85,13 @@ export default function AdminCertificationRequests() {
     });
     setIsApproveDialogOpen(false);
     setSelectedRequest(null);
+    setIsLoading(null);
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selectedRequest) return;
+    setIsLoading('reject');
+    await new Promise(resolve => setTimeout(resolve, 800));
     setRequests(requests.map(r => 
       r.id === selectedRequest.id 
         ? { ...r, status: 'Rejected' as Request['status'] }
@@ -98,6 +104,7 @@ export default function AdminCertificationRequests() {
     });
     setIsRejectDialogOpen(false);
     setSelectedRequest(null);
+    setIsLoading(null);
   };
 
   return (
@@ -155,7 +162,7 @@ export default function AdminCertificationRequests() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => handleViewDocument(req)}>
+                            <DropdownMenuItem onClick={() => handleViewDocument(req)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Draft Document
                             </DropdownMenuItem>
@@ -166,6 +173,7 @@ export default function AdminCertificationRequests() {
                                     setSelectedRequest(req);
                                     setIsApproveDialogOpen(true);
                                   }}
+                                  disabled={isLoading !== null}
                                   className="text-green-600 focus:text-green-700"
                                 >
                                   <CheckCircle className="mr-2 h-4 w-4" />
@@ -176,6 +184,7 @@ export default function AdminCertificationRequests() {
                                     setSelectedRequest(req);
                                     setIsRejectDialogOpen(true);
                                   }}
+                                  disabled={isLoading !== null}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <AlertCircle className="mr-2 h-4 w-4" />
@@ -253,10 +262,19 @@ export default function AdminCertificationRequests() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Approve & Mark as Certified
+            <AlertDialogCancel disabled={isLoading === 'approve'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApprove} disabled={isLoading === 'approve'} className="bg-green-600 hover:bg-green-700">
+              {isLoading === 'approve' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Approve & Mark as Certified
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -273,10 +291,19 @@ export default function AdminCertificationRequests() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              <AlertCircle className="mr-2 h-4 w-4" />
-              Reject Request
+            <AlertDialogCancel disabled={isLoading === 'reject'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReject} disabled={isLoading === 'reject'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'reject' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  Reject Request
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

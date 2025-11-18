@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Briefcase, ShieldCheck, Eye } from "lucide-react";
+import { MoreHorizontal, Briefcase, ShieldCheck, Eye, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,6 +48,8 @@ export default function AdminProfessionals() {
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
+  const [isRevokeDialogOpen, setIsRevokeDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -66,8 +68,10 @@ export default function AdminProfessionals() {
     setIsViewDialogOpen(true);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!selectedProfessional) return;
+    setIsLoading('verify');
+    await new Promise(resolve => setTimeout(resolve, 600));
     setProfessionals(professionals.map(p => 
       p.id === selectedProfessional.id 
         ? { ...p, status: 'Verified' as Professional['status'] }
@@ -79,6 +83,26 @@ export default function AdminProfessionals() {
     });
     setIsVerifyDialogOpen(false);
     setSelectedProfessional(null);
+    setIsLoading(null);
+  };
+
+  const handleRevokeVerification = async () => {
+    if (!selectedProfessional) return;
+    setIsLoading('revoke');
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setProfessionals(professionals.map(p => 
+      p.id === selectedProfessional.id 
+        ? { ...p, status: 'Pending Verification' as Professional['status'] }
+        : p
+    ));
+    toast({
+      title: "Verification Revoked",
+      description: `${selectedProfessional.name}'s verification has been revoked.`,
+      variant: "destructive",
+    });
+    setIsRevokeDialogOpen(false);
+    setSelectedProfessional(null);
+    setIsLoading(null);
   };
 
   return (
@@ -134,16 +158,29 @@ export default function AdminProfessionals() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => handleViewProfile(pro)}>
+                            <DropdownMenuItem onClick={() => handleViewProfile(pro)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Profile & Documents
                             </DropdownMenuItem>
-                            {pro.status !== 'Verified' && (
+                            {pro.status === 'Verified' ? (
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedProfessional(pro);
+                                  setIsRevokeDialogOpen(true);
+                                }}
+                                disabled={isLoading !== null}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Revoke Verification
+                              </DropdownMenuItem>
+                            ) : (
                               <DropdownMenuItem 
                                 onClick={() => {
                                   setSelectedProfessional(pro);
                                   setIsVerifyDialogOpen(true);
                                 }}
+                                disabled={isLoading !== null}
                                 className="text-green-600 focus:text-green-700"
                               >
                                 <ShieldCheck className="mr-2 h-4 w-4" />
@@ -215,10 +252,48 @@ export default function AdminProfessionals() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleVerify} className="bg-green-600 hover:bg-green-700">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Verify Professional
+            <AlertDialogCancel disabled={isLoading === 'verify'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleVerify} disabled={isLoading === 'verify'} className="bg-green-600 hover:bg-green-700">
+              {isLoading === 'verify' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Verify Professional
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Revoke Verification Dialog */}
+      <AlertDialog open={isRevokeDialogOpen} onOpenChange={setIsRevokeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Verification</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke verification for {selectedProfessional?.name}? 
+              They will need to be verified again to access full platform features.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading === 'revoke'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRevokeVerification} disabled={isLoading === 'revoke'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'revoke' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Revoking...
+                </>
+              ) : (
+                <>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Revoke Verification
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

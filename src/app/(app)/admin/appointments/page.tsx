@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, CalendarClock, Eye, Calendar, X } from "lucide-react";
+import { MoreHorizontal, CalendarClock, Eye, Calendar, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -52,6 +52,7 @@ export default function AdminAppointments() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
@@ -83,8 +84,10 @@ export default function AdminAppointments() {
     setIsRescheduleDialogOpen(true);
   };
 
-  const handleSaveReschedule = () => {
+  const handleSaveReschedule = async () => {
     if (!selectedAppointment || !rescheduleDate || !rescheduleTime) return;
+    setIsLoading('reschedule');
+    await new Promise(resolve => setTimeout(resolve, 800));
     const [hours, minutes] = rescheduleTime.split(':').map(Number);
     const newDate = new Date(rescheduleDate);
     newDate.setHours(hours, minutes);
@@ -102,10 +105,13 @@ export default function AdminAppointments() {
     setSelectedAppointment(null);
     setRescheduleDate('');
     setRescheduleTime('');
+    setIsLoading(null);
   };
 
-  const handleCancelAppointment = () => {
+  const handleCancelAppointment = async () => {
     if (!selectedAppointment) return;
+    setIsLoading('cancel');
+    await new Promise(resolve => setTimeout(resolve, 600));
     setAppointments(appointments.map(a => 
       a.id === selectedAppointment.id 
         ? { ...a, status: 'Cancelled' as Appointment['status'] }
@@ -118,6 +124,7 @@ export default function AdminAppointments() {
     });
     setIsCancelDialogOpen(false);
     setSelectedAppointment(null);
+    setIsLoading(null);
   };
 
   return (
@@ -175,13 +182,13 @@ export default function AdminAppointments() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => handleViewDetails(apt)}>
+                            <DropdownMenuItem onClick={() => handleViewDetails(apt)} disabled={isLoading !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
                             {apt.status !== 'Completed' && apt.status !== 'Cancelled' && (
                               <>
-                                <DropdownMenuItem onClick={() => handleReschedule(apt)}>
+                                <DropdownMenuItem onClick={() => handleReschedule(apt)} disabled={isLoading !== null}>
                                   <Calendar className="mr-2 h-4 w-4" />
                                   Reschedule
                                 </DropdownMenuItem>
@@ -190,6 +197,7 @@ export default function AdminAppointments() {
                                     setSelectedAppointment(apt);
                                     setIsCancelDialogOpen(true);
                                   }}
+                                  disabled={isLoading !== null}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <X className="mr-2 h-4 w-4" />
@@ -279,9 +287,16 @@ export default function AdminAppointments() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveReschedule} disabled={!rescheduleDate || !rescheduleTime}>
-              Save Changes
+            <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)} disabled={isLoading === 'reschedule'}>Cancel</Button>
+            <Button onClick={handleSaveReschedule} disabled={!rescheduleDate || !rescheduleTime || isLoading === 'reschedule'}>
+              {isLoading === 'reschedule' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Rescheduling...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -298,10 +313,19 @@ export default function AdminAppointments() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelAppointment} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              <X className="mr-2 h-4 w-4" />
-              Cancel Appointment
+            <AlertDialogCancel disabled={isLoading === 'cancel'}>Keep Appointment</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelAppointment} disabled={isLoading === 'cancel'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoading === 'cancel' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel Appointment
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
