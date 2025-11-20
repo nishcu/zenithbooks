@@ -41,16 +41,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  FileUp,
-  GitCompareArrows,
-  Check,
-  PlusCircle,
-  Loader2,
-  FileText,
-  Download,
-  Trash2,
-  Calendar as CalendarIcon
-} from "lucide-react";
+    FileUp,
+    GitCompareArrows,
+    Check,
+    PlusCircle,
+    Loader2,
+    FileText,
+    Download,
+    Trash2,
+    Calendar as CalendarIcon,
+    ChevronsUpDown
+  } from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +71,15 @@ import { cn } from "@/lib/utils";
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction } from '@/lib/bank-statement-parser';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+  import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+  } from "@/components/ui/command";
 
 type StatementTransaction = {
   id: string;
@@ -726,24 +735,13 @@ export default function BankReconciliationPage() {
                                     const showCostCentre = accountDetails && ['Revenue', 'Expense'].includes(accountDetails.type);
                                     return (
                                         <TableRow key={index}>
-                                            <TableCell>
-                                                 <Select value={line.account} onValueChange={(value) => handleJvLineChange(index, 'account', value)}>
-                                                    <SelectTrigger><SelectValue placeholder="Select an account" /></SelectTrigger>
-                                                    <SelectContent>
-                                                          {Object.entries(groupedAccounts).map(([group, accounts], index, arr) => (
-                                                              <React.Fragment key={group}>
-                                                                  <SelectGroup>
-                                                                      <SelectLabel>{group}</SelectLabel>
-                                                                      {accounts.map(account => (
-                                                                          <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
-                                                                      ))}
-                                                                  </SelectGroup>
-                                                                  {index < arr.length - 1 && <SelectSeparator />}
-                                                              </React.Fragment>
-                                                          ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
+                                              <TableCell>
+                                                  <AccountSelect
+                                                      value={line.account}
+                                                      groupedAccounts={groupedAccounts}
+                                                      onChange={(value) => handleJvLineChange(index, 'account', value)}
+                                                  />
+                                              </TableCell>
                                              <TableCell>
                                                 {showCostCentre && (
                                                     <Select value={line.costCentre} onValueChange={(value) => handleJvLineChange(index, 'costCentre', value)}>
@@ -910,6 +908,67 @@ function TransactionTable({ transactions, selectedTxs, onToggle, type, onAddEntr
                 </TableBody>
             </Table>
         </div>
+    );
+}
+
+type GroupedAccounts = Record<string, { value: string; label: string; group?: string }[]>;
+
+function AccountSelect({
+    value,
+    onChange,
+    groupedAccounts
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    groupedAccounts: GroupedAccounts;
+}) {
+    const [open, setOpen] = React.useState(false);
+
+    const flatAccounts = React.useMemo(() => {
+        return Object.values(groupedAccounts).flat();
+    }, [groupedAccounts]);
+
+    const selectedAccount = flatAccounts.find(acc => acc.value === value);
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                >
+                    {selectedAccount ? selectedAccount.label : "Select account"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0">
+                <Command>
+                    <CommandInput placeholder="Search account..." className="text-sm" />
+                    <CommandList>
+                        <CommandEmpty>No account found.</CommandEmpty>
+                        {Object.entries(groupedAccounts).map(([group, accounts]) => (
+                            <CommandGroup key={group} heading={group}>
+                                {accounts.map(account => (
+                                    <CommandItem
+                                        key={account.value}
+                                        value={`${account.label} ${account.value}`}
+                                        onSelect={() => {
+                                            onChange(account.value);
+                                            setOpen(false);
+                                        }}
+                                    >
+                                        {account.label}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        ))}
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
     );
 }
 
