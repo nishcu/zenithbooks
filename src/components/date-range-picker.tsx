@@ -18,6 +18,17 @@ const DISPLAY_FORMAT = "dd/MM/yyyy"
 const INPUT_PLACEHOLDER = "DD/MM/YYYY"
 const SUPPORTED_INPUT_FORMATS = ["dd/MM/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "dd MMM yyyy"]
 
+const autoFormatInput = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 8)
+  const day = digits.slice(0, 2)
+  const month = digits.slice(2, 4)
+  const year = digits.slice(4, 8)
+  let formatted = day
+  if (month) formatted = `${day}/${month}`
+  if (year) formatted = `${formatted}/${year}`
+  return formatted
+}
+
 export function DateRangePicker({
   className,
   onDateChange,
@@ -77,8 +88,8 @@ export function DateRangePicker({
     })
   }, [normalizeRange])
 
-  const commitInputValue = React.useCallback((type: "from" | "to") => {
-    const rawValue = type === "from" ? fromInput : toInput
+  const commitInputValue = React.useCallback((type: "from" | "to", override?: string) => {
+    const rawValue = override ?? (type === "from" ? fromInput : toInput)
     const setError = type === "from" ? setFromError : setToError
 
     if (!rawValue) {
@@ -97,14 +108,19 @@ export function DateRangePicker({
   }, [fromInput, toInput, parseInputToDate, setRangeDate])
 
   const handleInputChange = React.useCallback((type: "from" | "to", value: string) => {
+    const formatted = autoFormatInput(value)
     if (type === "from") {
-      setFromInput(value)
+      setFromInput(formatted)
       if (fromError) setFromError(null)
     } else {
-      setToInput(value)
+      setToInput(formatted)
       if (toError) setToError(null)
     }
-  }, [fromError, toError])
+
+    if (formatted.length === 10) {
+      commitInputValue(type, formatted)
+    }
+  }, [commitInputValue, fromError, toError])
 
   const renderInput = (type: "from" | "to") => {
     const value = type === "from" ? fromInput : toInput

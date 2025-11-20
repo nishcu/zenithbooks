@@ -49,8 +49,7 @@ import {
     FileText,
     Download,
     Trash2,
-    Calendar as CalendarIcon,
-    ChevronsUpDown
+    Calendar as CalendarIcon
   } from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -72,11 +71,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction } from '@/lib/bank-statement-parser';
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-  import {
+import {
     Command,
     CommandEmpty,
     CommandGroup,
-    CommandInput,
     CommandItem,
     CommandList,
   } from "@/components/ui/command";
@@ -1051,73 +1049,92 @@ function AccountSelect({
     groupedAccounts: GroupedAccounts;
 }) {
     const [open, setOpen] = React.useState(false);
-    const [searchValue, setSearchValue] = React.useState("");
+    const [query, setQuery] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    const flatAccounts = React.useMemo(() => {
-        return Object.values(groupedAccounts).flat();
-    }, [groupedAccounts]);
-
-    const selectedAccount = flatAccounts.find(acc => acc.value === value);
+    const flatAccounts = React.useMemo(() => Object.values(groupedAccounts).flat(), [groupedAccounts]);
 
     React.useEffect(() => {
-        if (open) {
-            const id = requestAnimationFrame(() => {
-                inputRef.current?.focus();
-            });
-            return () => cancelAnimationFrame(id);
-        } else {
-            setSearchValue("");
+        const selected = flatAccounts.find(acc => acc.value === value);
+        if (selected && !open) {
+            setQuery(selected.label);
+        } else if (!value) {
+            setQuery("");
         }
-    }, [open]);
+    }, [value, flatAccounts, open]);
 
-    const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (open) return;
-        const isCharacterKey = event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
-        if (isCharacterKey) {
+    const normalizedQuery = query.trim().toLowerCase();
+    const filteredGroups = React.useMemo(() => {
+        if (!normalizedQuery) return groupedAccounts;
+        const result: GroupedAccounts = {};
+        Object.entries(groupedAccounts).forEach(([group, accounts]) => {
+            const filtered = accounts.filter(account =>
+                account.label.toLowerCase().includes(normalizedQuery) ||
+                account.value.toLowerCase().includes(normalizedQuery)
+            );
+            if (filtered.length > 0) {
+                result[group] = filtered;
+            }
+        });
+        return result;
+    }, [groupedAccounts, normalizedQuery]);
+
+    const firstMatch = React.useMemo(() => {
+        for (const accounts of Object.values(filteredGroups)) {
+            if (accounts.length > 0) return accounts[0];
+        }
+        return undefined;
+    }, [filteredGroups]);
+
+    const handleSelect = (accountValue: string) => {
+        const account = flatAccounts.find(acc => acc.value === accountValue);
+        if (account) {
+            onChange(account.value);
+            setQuery(account.label);
+            setOpen(false);
+        }
+    };
+
+    const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter" && firstMatch) {
+            event.preventDefault();
+            handleSelect(firstMatch.value);
+        }
+        if (event.key === "ArrowDown" && !open) {
             event.preventDefault();
             setOpen(true);
-            setSearchValue(event.key);
         }
     };
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between"
-                    onKeyDown={handleTriggerKeyDown}
-                >
-                    {selectedAccount ? selectedAccount.label : "Select account"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
+                <Input
+                    ref={inputRef}
+                    value={query}
+                    placeholder="Type account name or code"
+                    onChange={(event) => {
+                        setQuery(event.target.value);
+                        if (!open) setOpen(true);
+                    }}
+                    onFocus={() => setOpen(true)}
+                    onKeyDown={handleInputKeyDown}
+                    className="w-full"
+                />
             </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0">
+            <PopoverContent className="w-[360px] p-0">
                 <Command>
-                    <CommandInput
-                        ref={inputRef}
-                        value={searchValue}
-                        onValueChange={setSearchValue}
-                        placeholder="Type to search accounts..."
-                        className="text-sm"
-                        autoFocus
-                    />
                     <CommandList>
-                        <CommandEmpty>No account found.</CommandEmpty>
-                        {Object.entries(groupedAccounts).map(([group, accounts]) => (
+                        {!firstMatch && (
+                            <CommandEmpty>No account found.</CommandEmpty>
+                        )}
+                        {Object.entries(filteredGroups).map(([group, accounts]) => (
                             <CommandGroup key={group} heading={group}>
                                 {accounts.map(account => (
                                     <CommandItem
                                         key={account.value}
                                         value={`${account.label} ${account.value}`}
-                                        onSelect={() => {
-                                            onChange(account.value);
-                                            setOpen(false);
-                                        }}
+                                        onSelect={() => handleSelect(account.value)}
                                     >
                                         {account.label}
                                     </CommandItem>
