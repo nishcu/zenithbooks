@@ -465,48 +465,94 @@ export function parsePDF(file: File): Promise<ParseResult> {
  */
 function parseDate(dateStr: string): string | null {
   if (!dateStr) return null;
-  
-  // Try parsing as Excel date number
-  if (!isNaN(Number(dateStr))) {
-    const excelDate = Number(dateStr);
-    if (excelDate > 25569) { // Excel epoch starts at 1900-01-01
-      const date = new Date((excelDate - 25569) * 86400 * 1000);
-      return date.toISOString().split('T')[0];
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const normalizeMonth = (value: string): number | null => {
+    const monthIndex = MONTH_NAMES.findIndex(m => value.toLowerCase().startsWith(m));
+    return monthIndex === -1 ? null : monthIndex + 1;
+  };
+  const normalizeYear = (value: string): string => {
+    if (value.length === 2) {
+      const num = Number(value);
+      const century = num > 50 ? '19' : '20';
+      return `${century}${value}`;
     }
-  }
+    return value.padStart(4, '0');
+  };
+  const buildISODate = (year: string, month: number, day: string) => {
+    const monthString = String(month).padStart(2, '0');
+    const dayString = day.padStart(2, '0');
+    return `${normalizeYear(year)}-${monthString}-${dayString}`;
+  };
 
-  // Try common date formats
-  const formats = [
-    /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/, // DD-MM-YYYY or DD/MM/YYYY
-    /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/, // YYYY-MM-DD or YYYY/MM/DD
-    /(\d{1,2})\s+(\w{3,})\s+(\d{4})/i, // DD MMM YYYY
-  ];
-
-  for (const format of formats) {
-    const match = dateStr.match(format);
-    if (match) {
-      if (format === formats[0]) {
-        // DD-MM-YYYY
-        const [, day, month, year] = match;
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      } else if (format === formats[1]) {
-        // YYYY-MM-DD
-        const [, year, month, day] = match;
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      } else if (format === formats[2]) {
-        // DD MMM YYYY
-        const [, day, month, year] = match;
-        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-        const monthIndex = monthNames.findIndex(m => month.toLowerCase().startsWith(m));
-        if (monthIndex !== -1) {
-          return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${day.padStart(2, '0')}`;
-        }
+  // Try parsing as Excel date number
+  const excelCandidate = Number(trimmed);
+  if (!Number.isNaN(excelCandidate) && /^\d+(\.\d+)?$/.test(trimmed)) {
+    if (excelCandidate > 25569) { // Excel epoch starts at 1900-01-01
+      const date = new Date((excelCandidate - 25569) * 86400 * 1000);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
       }
     }
   }
 
+  const textualPatterns: Array<{ regex: RegExp; handler: (match: RegExpMatchArray) => string | null }> = [
+    {
+      // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+      regex: /(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{2,4})/,
+      handler: ([, day, month, year]) => `${normalizeYear(year)}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    },
+    {
+      // YYYY-MM-DD or YYYY/MM/DD
+      regex: /(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/,
+      handler: ([, year, month, day]) => `${normalizeYear(year)}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    },
+    {
+      // DD MMM YYYY (space)
+      regex: /(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{2,4})/,
+      handler: ([, day, monthText, year]) => {
+        const month = normalizeMonth(monthText);
+        return month ? buildISODate(year, month, day) : null;
+      }
+    },
+    {
+      // DD-MMM-YYYY or DD.MMM.YYYY
+      regex: /(\d{1,2})[-\.](\w{3,})[-\.](\d{2,4})/,
+      handler: ([, day, monthText, year]) => {
+        const month = normalizeMonth(monthText);
+        return month ? buildISODate(year, month, day) : null;
+      }
+    },
+    {
+      // MMM-DD-YYYY or MMM DD YYYY
+      regex: /([A-Za-z]{3,})[-\s\.](\d{1,2})[-\s\.](\d{2,4})/,
+      handler: ([, monthText, day, year]) => {
+        const month = normalizeMonth(monthText);
+        return month ? buildISODate(year, month, day) : null;
+      }
+    },
+    {
+      // YYYY-MMM-DD
+      regex: /(\d{2,4})[-\/\.]([A-Za-z]{3,})[-\/\.](\d{1,2})/,
+      handler: ([, year, monthText, day]) => {
+        const month = normalizeMonth(monthText);
+        return month ? buildISODate(year, month, day) : null;
+      }
+    }
+  ];
+
+  for (const pattern of textualPatterns) {
+    const match = trimmed.match(pattern.regex);
+    if (match) {
+      const result = pattern.handler(match);
+      if (result) return result;
+    }
+  }
+
   // Try direct Date parsing
-  const parsed = new Date(dateStr);
+  const parsed = new Date(trimmed);
   if (!isNaN(parsed.getTime())) {
     return parsed.toISOString().split('T')[0];
   }
