@@ -80,6 +80,7 @@ import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTrans
     CommandItem,
     CommandList,
   } from "@/components/ui/command";
+  import { DateRange } from "react-day-picker";
 
 type StatementTransaction = {
   id: string;
@@ -97,6 +98,60 @@ type BookTransaction = {
   type: 'Receipt' | 'Payment';
   amount: number;
   matchedId?: string | null;
+};
+
+type JournalLine = {
+  account: string;
+  debit: string;
+  credit: string;
+  costCentre: string;
+};
+
+type StoredReconAccountState = {
+  bankAccount: string;
+  statementTransactions: StatementTransaction[];
+  matchedPairs: [string, string][];
+  jvDraft: {
+    narration: string;
+    date: string | null;
+    lines: JournalLine[];
+  };
+  dateRange?: {
+    from: string | null;
+    to: string | null;
+  };
+  updatedAt: number;
+};
+
+type ReconStorageMap = Record<string, StoredReconAccountState>;
+
+const createDefaultJvLines = (): JournalLine[] => ([
+  { account: '', debit: '0', credit: '0', costCentre: '' },
+  { account: '', debit: '0', credit: '0', costCentre: '' }
+]);
+
+const readStorageMap = (key: string): ReconStorageMap => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as ReconStorageMap;
+    }
+  } catch (error) {
+    console.error("Could not read bank reconciliation state:", error);
+  }
+  return {};
+};
+
+const writeStorageMap = (key: string, data: ReconStorageMap) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error("Could not persist bank reconciliation state:", error);
+  }
 };
 
 const parseDateString = (dateStr: string): Date | null => {
@@ -128,15 +183,18 @@ export default function BankReconciliationPage() {
 
     const { journalVouchers, addJournalVoucher, loading } = accountingContext;
 
-    const [statementTransactions, setStatementTransactions] = useState<StatementTransaction[]>([]);
-    const [bookTransactions, setBookTransactions] = useState<BookTransaction[]>([]);
-    
-    const [selectedStatementTxs, setSelectedStatementTxs] = useState<Set<string>>(new Set());
-    const [selectedBookTxs, setSelectedBookTxs] = useState<Set<string>>(new Set());
+     const [statementTransactions, setStatementTransactions] = useState<StatementTransaction[]>([]);
+     const [bookTransactions, setBookTransactions] = useState<BookTransaction[]>([]);
+     
+     const [selectedStatementTxs, setSelectedStatementTxs] = useState<Set<string>>(new Set());
+     const [selectedBookTxs, setSelectedBookTxs] = useState<Set<string>>(new Set());
 
-    const [matchedPairs, setMatchedPairs] = useState<Map<string, string>>(new Map());
+     const [matchedPairs, setMatchedPairs] = useState<Map<string, string>>(new Map());
 
-    const [bankAccount, setBankAccount] = useState<string>("1520");
+     const [bankAccount, setBankAccount] = useState<string>("1520");
+     const [reconDateRange, setReconDateRange] = useState<DateRange | undefined>(undefined);
+     const [hydrationKey, setHydrationKey] = useState<string | null>(null);
+     const storageKey = useMemo(() => user ? `bankReconState_${user.uid}` : 'bankReconState_local', [user]);
 
     const [isAddEntryDialogOpen, setIsAddEntryDialogOpen] = useState(false);
     const [entryToCreate, setEntryToCreate] = useState<StatementTransaction | null>(null);
@@ -147,12 +205,9 @@ export default function BankReconciliationPage() {
     const [isProcessingFile, setIsProcessingFile] = useState(false);
 
     // For the Journal Voucher dialog
-    const [jvNarration, setJvNarration] = useState("");
-    const [jvDate, setJvDate] = useState<Date | undefined>(new Date());
-    const [jvLines, setJvLines] = useState([
-        { account: '', debit: '0', credit: '0', costCentre: '' },
-        { account: '', debit: '0', credit: '0', costCentre: '' }
-    ]);
+     const [jvNarration, setJvNarration] = useState("");
+     const [jvDate, setJvDate] = useState<Date | undefined>(new Date());
+     const [jvLines, setJvLines] = useState<JournalLine[]>(createDefaultJvLines());
     
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
@@ -179,38 +234,108 @@ export default function BankReconciliationPage() {
           }, {});
       }, [combinedAccounts]);
 
-    useEffect(() => {
-        // Load from sessionStorage on initial mount
-        try {
-            const savedStatement = sessionStorage.getItem('bankStatementTransactions');
-            if (savedStatement) {
-                setStatementTransactions(JSON.parse(savedStatement));
-            }
-            const savedMatchedPairs = sessionStorage.getItem('bankReconMatchedPairs');
-             if (savedMatchedPairs) {
-                setMatchedPairs(new Map(JSON.parse(savedMatchedPairs)));
-            }
-        } catch (error) {
-            console.error("Could not load from session storage:", error);
-        }
-    }, []);
+      useEffect(() => {
+          if (typeof window === 'undefined') return;
+          try {
+              const lastAccount = localStorage.getItem(`${storageKey}__lastAccount`);
+              if (lastAccount) {
+                  setBankAccount(lastAccount);
+              }
+          } catch (error) {
+              console.error("Could not restore last bank account:", error);
+          }
+      }, [storageKey]);
 
-    useEffect(() => {
-        // Persist to sessionStorage whenever statementTransactions changes
-        try {
-            sessionStorage.setItem('bankStatementTransactions', JSON.stringify(statementTransactions));
-        } catch (error) {
-            console.error("Could not save to session storage:", error);
-        }
-    }, [statementTransactions]);
-    
-    useEffect(() => {
-        try {
-            sessionStorage.setItem('bankReconMatchedPairs', JSON.stringify(Array.from(matchedPairs.entries())));
-        } catch (error) {
-            console.error("Could not save matched pairs to session storage:", error);
-        }
-    }, [matchedPairs]);
+      useEffect(() => {
+          if (typeof window === 'undefined' || !bankAccount) return;
+          try {
+              localStorage.setItem(`${storageKey}__lastAccount`, bankAccount);
+          } catch (error) {
+              console.error("Could not persist last bank account:", error);
+          }
+      }, [bankAccount, storageKey]);
+
+      useEffect(() => {
+          if (typeof window === 'undefined' || !bankAccount) return;
+
+          const currentHydrationKey = `${storageKey}:${bankAccount}`;
+          setHydrationKey(null);
+
+          const storage = readStorageMap(storageKey);
+          const savedState = storage[bankAccount];
+
+          if (savedState) {
+              setStatementTransactions(savedState.statementTransactions || []);
+              setMatchedPairs(new Map(savedState.matchedPairs || []));
+
+              if (savedState.jvDraft) {
+                  setJvNarration(savedState.jvDraft.narration || "");
+                  setJvLines(savedState.jvDraft.lines && savedState.jvDraft.lines.length > 0 ? savedState.jvDraft.lines : createDefaultJvLines());
+                  setJvDate(savedState.jvDraft.date ? new Date(savedState.jvDraft.date) : new Date());
+              } else {
+                  setJvNarration("");
+                  setJvLines(createDefaultJvLines());
+                  setJvDate(new Date());
+              }
+
+              if (savedState.dateRange) {
+                  const from = savedState.dateRange.from ? new Date(savedState.dateRange.from) : undefined;
+                  const to = savedState.dateRange.to ? new Date(savedState.dateRange.to) : undefined;
+                  if (from || to) {
+                      setReconDateRange({ from, to });
+                  } else {
+                      setReconDateRange(undefined);
+                  }
+              } else {
+                  setReconDateRange(undefined);
+              }
+          } else {
+              setStatementTransactions([]);
+              setMatchedPairs(new Map());
+              setJvNarration("");
+              setJvLines(createDefaultJvLines());
+              setJvDate(new Date());
+              setReconDateRange(undefined);
+          }
+
+          setHydrationKey(currentHydrationKey);
+      }, [bankAccount, storageKey]);
+
+      const currentHydrationKey = `${storageKey}:${bankAccount}`;
+      const canPersistState = hydrationKey === currentHydrationKey && !!bankAccount;
+
+      useEffect(() => {
+          if (!canPersistState || typeof window === 'undefined' || !bankAccount) return;
+
+          const storage = readStorageMap(storageKey);
+          storage[bankAccount] = {
+              bankAccount,
+              statementTransactions,
+              matchedPairs: Array.from(matchedPairs.entries()),
+              jvDraft: {
+                  narration: jvNarration,
+                  date: jvDate ? jvDate.toISOString() : null,
+                  lines: jvLines,
+              },
+              dateRange: {
+                  from: reconDateRange?.from ? reconDateRange.from.toISOString() : null,
+                  to: reconDateRange?.to ? reconDateRange.to.toISOString() : null,
+              },
+              updatedAt: Date.now(),
+          };
+
+          writeStorageMap(storageKey, storage);
+      }, [
+          bankAccount,
+          statementTransactions,
+          matchedPairs,
+          jvNarration,
+          jvDate,
+          jvLines,
+          reconDateRange,
+          storageKey,
+          canPersistState
+      ]);
 
     useEffect(() => {
         const derivedTransactions = journalVouchers
@@ -571,7 +696,10 @@ export default function BankReconciliationPage() {
               </div>
               <div className="space-y-2">
                 <Label>Reconciliation Period</Label>
-                <DateRangePicker onDateChange={() => {}} />
+                  <DateRangePicker
+                      initialDateRange={reconDateRange}
+                      onDateChange={setReconDateRange}
+                  />
               </div>
                <div className="flex gap-2 items-end">
                  <div className="space-y-2">
@@ -923,12 +1051,35 @@ function AccountSelect({
     groupedAccounts: GroupedAccounts;
 }) {
     const [open, setOpen] = React.useState(false);
+    const [searchValue, setSearchValue] = React.useState("");
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
     const flatAccounts = React.useMemo(() => {
         return Object.values(groupedAccounts).flat();
     }, [groupedAccounts]);
 
     const selectedAccount = flatAccounts.find(acc => acc.value === value);
+
+    React.useEffect(() => {
+        if (open) {
+            const id = requestAnimationFrame(() => {
+                inputRef.current?.focus();
+            });
+            return () => cancelAnimationFrame(id);
+        } else {
+            setSearchValue("");
+        }
+    }, [open]);
+
+    const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (open) return;
+        const isCharacterKey = event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
+        if (isCharacterKey) {
+            event.preventDefault();
+            setOpen(true);
+            setSearchValue(event.key);
+        }
+    };
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -939,14 +1090,22 @@ function AccountSelect({
                     role="combobox"
                     aria-expanded={open}
                     className="w-full justify-between"
+                    onKeyDown={handleTriggerKeyDown}
                 >
                     {selectedAccount ? selectedAccount.label : "Select account"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
+            <PopoverContent className="w-[320px] p-0">
                 <Command>
-                    <CommandInput placeholder="Search account..." className="text-sm" />
+                    <CommandInput
+                        ref={inputRef}
+                        value={searchValue}
+                        onValueChange={setSearchValue}
+                        placeholder="Type to search accounts..."
+                        className="text-sm"
+                        autoFocus
+                    />
                     <CommandList>
                         <CommandEmpty>No account found.</CommandEmpty>
                         {Object.entries(groupedAccounts).map(([group, accounts]) => (
