@@ -24,6 +24,35 @@ export interface ParseResult {
   closingBalance?: number;
 }
 
+function parseAmount(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  let stringValue = String(value).trim();
+  if (!stringValue) return null;
+
+  const hasParentheses =
+    stringValue.includes('(') && stringValue.includes(')');
+
+  // Remove currency symbols, spaces (including non-breaking) and alpha chars
+  stringValue = stringValue
+    .replace(/\s+/g, '')
+    .replace(/[^\d.,\-]/g, '');
+
+  if (!stringValue) return null;
+
+  stringValue = stringValue.replace(/,/g, '');
+
+  if (hasParentheses && !stringValue.startsWith('-')) {
+    stringValue = `-${stringValue}`;
+  }
+
+  const parsed = Number.parseFloat(stringValue);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 /**
  * Parse CSV file
  */
@@ -77,20 +106,21 @@ export function parseCSV(file: File): Promise<ParseResult> {
 
         for (let i = startIndex; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+          const getValue = (idx: number) => (idx >= 0 && idx < values.length ? values[idx] : '');
           
           if (values.length < 2) continue;
 
-          const dateStr = values[dateIndex] || '';
-          const description = values[descIndex] || '';
-          const withdrawalStr = values[withdrawalIndex] || values[debitIndex] || '';
-          const depositStr = values[depositIndex] || values[creditIndex] || '';
-          const balanceStr = values[balanceIndex] || '';
+          const dateStr = getValue(dateIndex);
+          const description = getValue(descIndex);
+          const withdrawalStr = getValue(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
+          const depositStr = getValue(depositIndex >= 0 ? depositIndex : creditIndex);
+          const balanceStr = getValue(balanceIndex);
 
           if (!dateStr || !description) continue;
 
-          const withdrawal = withdrawalStr ? parseFloat(withdrawalStr.replace(/,/g, '')) : null;
-          const deposit = depositStr ? parseFloat(depositStr.replace(/,/g, '')) : null;
-          const balance = balanceStr ? parseFloat(balanceStr.replace(/,/g, '')) : null;
+          const withdrawal = parseAmount(withdrawalStr);
+          const deposit = parseAmount(depositStr);
+          const balance = parseAmount(balanceStr);
 
           if (withdrawal === null && deposit === null) continue;
 
@@ -171,17 +201,20 @@ export function parseExcel(file: File): Promise<ParseResult> {
           const row = json[i];
           if (!row || row.length < 2) continue;
 
-          const dateStr = String(row[dateIndex] || '');
-          const description = String(row[descIndex] || '');
-          const withdrawalStr = String(row[withdrawalIndex] || row[debitIndex] || '');
-          const depositStr = String(row[depositIndex] || row[creditIndex] || '');
-          const balanceStr = String(row[balanceIndex] || '');
+          const getCell = (idx: number) =>
+            idx >= 0 && idx < row.length ? row[idx] : '';
+
+          const dateStr = String(getCell(dateIndex) || '');
+          const description = String(getCell(descIndex) || '');
+          const withdrawalStr = getCell(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
+          const depositStr = getCell(depositIndex >= 0 ? depositIndex : creditIndex);
+          const balanceStr = getCell(balanceIndex);
 
           if (!dateStr || !description) continue;
 
-          const withdrawal = withdrawalStr ? parseFloat(String(withdrawalStr).replace(/,/g, '')) : null;
-          const deposit = depositStr ? parseFloat(String(depositStr).replace(/,/g, '')) : null;
-          const balance = balanceStr ? parseFloat(String(balanceStr).replace(/,/g, '')) : null;
+          const withdrawal = parseAmount(withdrawalStr);
+          const deposit = parseAmount(depositStr);
+          const balance = parseAmount(balanceStr);
 
           if (withdrawal === null && deposit === null) continue;
 

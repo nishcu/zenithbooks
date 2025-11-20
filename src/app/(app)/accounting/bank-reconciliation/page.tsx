@@ -23,12 +23,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectSeparator,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -150,13 +153,22 @@ export default function BankReconciliationPage() {
     const [vendorsSnapshot] = useCollection(vendorsQuery);
     const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ value: doc.id, label: `${doc.data().name} (Vendor)`, group: "Vendors" })) || [], [vendorsSnapshot]);
 
-    const combinedAccounts = useMemo(() => {
-        return [
-            ...allAccounts.map(acc => ({ value: acc.code, label: `${acc.name} (${acc.code})`, group: "Main Accounts" })),
-            ...customers,
-            ...vendors,
-        ];
-    }, [customers, vendors]);
+      const combinedAccounts = useMemo(() => {
+          return [
+              ...allAccounts.map(acc => ({ value: acc.code, label: `${acc.name} (${acc.code})`, group: "Main Accounts" })),
+              ...customers,
+              ...vendors,
+          ];
+      }, [customers, vendors]);
+
+      const groupedAccounts = useMemo(() => {
+          return combinedAccounts.reduce<Record<string, { value: string; label: string; group?: string }[]>>((acc, account) => {
+              const groupName = account.group || "Other";
+              if (!acc[groupName]) acc[groupName] = [];
+              acc[groupName].push(account);
+              return acc;
+          }, {});
+      }, [combinedAccounts]);
 
     useEffect(() => {
         // Load from sessionStorage on initial mount
@@ -718,20 +730,17 @@ export default function BankReconciliationPage() {
                                                  <Select value={line.account} onValueChange={(value) => handleJvLineChange(index, 'account', value)}>
                                                     <SelectTrigger><SelectValue placeholder="Select an account" /></SelectTrigger>
                                                     <SelectContent>
-                                                        {Object.entries(combinedAccounts.reduce((acc, curr) => {
-                                                            const group = curr.group || "Other";
-                                                            if (!acc[group]) acc[group] = [];
-                                                            acc[group].push(curr);
-                                                            return acc;
-                                                        }, {} as Record<string, any[]>)).map(([group, accounts]) => (
-                                                            <React.Fragment key={group}>
-                                                                <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
-                                                                {accounts.map(account => (
-                                                                    <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
-                                                                ))}
-                                                                <Separator className="my-2"/>
-                                                            </React.Fragment>
-                                                        ))}
+                                                          {Object.entries(groupedAccounts).map(([group, accounts], index, arr) => (
+                                                              <React.Fragment key={group}>
+                                                                  <SelectGroup>
+                                                                      <SelectLabel>{group}</SelectLabel>
+                                                                      {accounts.map(account => (
+                                                                          <SelectItem key={account.value} value={account.value}>{account.label}</SelectItem>
+                                                                      ))}
+                                                                  </SelectGroup>
+                                                                  {index < arr.length - 1 && <SelectSeparator />}
+                                                              </React.Fragment>
+                                                          ))}
                                                     </SelectContent>
                                                 </Select>
                                             </TableCell>
