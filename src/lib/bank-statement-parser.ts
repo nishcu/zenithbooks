@@ -88,6 +88,8 @@ export function parseCSV(file: File): Promise<ParseResult> {
         let balanceIndex = -1;
         let amountIndex = -1;
         let typeIndex = -1;
+        let referenceIndex = -1;
+        let referenceIndex = -1;
 
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
         const normalizedHeaders = headers.map(h => h.replace(/\s+/g, ''));
@@ -122,6 +124,21 @@ export function parseCSV(file: File): Promise<ParseResult> {
           ) {
             typeIndex = index;
           }
+          if (
+            referenceIndex === -1 &&
+            (
+              header.includes('reference') ||
+              header.includes('utr') ||
+              header.includes('cheque') ||
+              header.includes('instrument') ||
+              header.includes('transaction id') ||
+              normalized === 'refno' ||
+              normalized === 'ref' ||
+              normalized === 'utrno'
+            )
+          ) {
+            referenceIndex = index;
+          }
         });
 
         // If no headers found, assume standard format: Date, Description, Withdrawal, Deposit
@@ -134,6 +151,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
         const startIndex = headers.some(h => h.includes('date')) ? 1 : 0;
         let rawRowCount = 0;
         let skippedRowCount = 0;
+        let lastKnownDate: string | null = null;
 
         for (let i = startIndex; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
@@ -147,16 +165,26 @@ export function parseCSV(file: File): Promise<ParseResult> {
 
           const dateStr = getValue(dateIndex);
           const description = getValue(descIndex);
+          const referenceValue = getValue(referenceIndex);
           const withdrawalStr = getValue(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
           const depositStr = getValue(depositIndex >= 0 ? depositIndex : creditIndex);
           const balanceStr = getValue(balanceIndex);
           const amountStr = getValue(amountIndex);
           const typeIndicator = getValue(typeIndex);
 
-          if (!dateStr || !description) {
+          const parsedDate = parseDate(dateStr);
+          const effectiveDate = parsedDate ?? lastKnownDate;
+          if (!effectiveDate) {
             skippedRowCount++;
             continue;
           }
+          if (parsedDate) {
+            lastKnownDate = parsedDate;
+          }
+
+          const reference = (referenceValue || '').toString().trim();
+          const baseDescription = description?.trim();
+          const finalDescription = baseDescription || reference || `Statement row ${rawRowCount}`;
 
           const withdrawalRaw = parseAmount(withdrawalStr);
           const depositRaw = parseAmount(depositStr);
@@ -185,12 +213,13 @@ export function parseCSV(file: File): Promise<ParseResult> {
           }
 
           transactions.push({
-            date: parseDate(dateStr),
-            description: description.trim(),
+            date: effectiveDate,
+            description: finalDescription,
             withdrawal: withdrawal && withdrawal > 0 ? withdrawal : null,
             deposit: deposit && deposit > 0 ? deposit : null,
             balance: balance || null,
             type: deposit && deposit > 0 ? 'credit' : 'debit',
+            reference: reference || undefined,
           });
         }
 
@@ -271,6 +300,21 @@ export function parseExcel(file: File): Promise<ParseResult> {
           ) {
             typeIndex = index;
           }
+          if (
+            referenceIndex === -1 &&
+            (
+              h.includes('reference') ||
+              h.includes('utr') ||
+              h.includes('cheque') ||
+              h.includes('instrument') ||
+              h.includes('transaction id') ||
+              normalized === 'refno' ||
+              normalized === 'ref' ||
+              normalized === 'utrno'
+            )
+          ) {
+            referenceIndex = index;
+          }
         });
 
         // Default indices if not found
@@ -283,6 +327,7 @@ export function parseExcel(file: File): Promise<ParseResult> {
         const startIndex = headerRow.some(h => h.includes('date')) ? 1 : 0;
         let rawRowCount = 0;
         let skippedRowCount = 0;
+        let lastKnownDate: string | null = null;
 
         for (let i = startIndex; i < json.length; i++) {
           const row = json[i];
@@ -301,16 +346,26 @@ export function parseExcel(file: File): Promise<ParseResult> {
 
           const dateStr = String(getCell(dateIndex) || '');
           const description = String(getCell(descIndex) || '');
+          const referenceValue = String(getCell(referenceIndex) || '');
           const withdrawalStr = getCell(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
           const depositStr = getCell(depositIndex >= 0 ? depositIndex : creditIndex);
           const balanceStr = getCell(balanceIndex);
           const amountStr = getCell(amountIndex);
           const typeIndicator = getCell(typeIndex);
 
-          if (!dateStr || !description) {
+          const parsedDate = parseDate(dateStr);
+          const effectiveDate = parsedDate ?? lastKnownDate;
+          if (!effectiveDate) {
             skippedRowCount++;
             continue;
           }
+          if (parsedDate) {
+            lastKnownDate = parsedDate;
+          }
+
+          const reference = referenceValue.trim();
+          const baseDescription = description.trim();
+          const finalDescription = baseDescription || reference || `Statement row ${rawRowCount}`;
 
           const withdrawalRaw = parseAmount(withdrawalStr);
           const depositRaw = parseAmount(depositStr);
@@ -339,12 +394,13 @@ export function parseExcel(file: File): Promise<ParseResult> {
           }
 
           transactions.push({
-            date: parseDate(dateStr),
-            description: description.trim(),
+            date: effectiveDate,
+            description: finalDescription,
             withdrawal: withdrawal && withdrawal > 0 ? withdrawal : null,
             deposit: deposit && deposit > 0 ? deposit : null,
             balance: balance || null,
             type: deposit && deposit > 0 ? 'credit' : 'debit',
+            reference: reference || undefined,
           });
         }
 
@@ -408,8 +464,8 @@ export function parsePDF(file: File): Promise<ParseResult> {
 /**
  * Parse date string in various formats
  */
-function parseDate(dateStr: string): string {
-  if (!dateStr) return new Date().toISOString().split('T')[0];
+function parseDate(dateStr: string): string | null {
+  if (!dateStr) return null;
   
   // Try parsing as Excel date number
   if (!isNaN(Number(dateStr))) {
@@ -456,8 +512,7 @@ function parseDate(dateStr: string): string {
     return parsed.toISOString().split('T')[0];
   }
 
-  // Default to today
-  return new Date().toISOString().split('T')[0];
+  return null;
 }
 
 function determineTypeFromIndicator(value?: unknown): 'credit' | 'debit' | null {

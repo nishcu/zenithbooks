@@ -1210,9 +1210,9 @@ function AccountSelect({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[360px] p-0">
+            <PopoverContent align="start" className="z-[140] w-[360px] p-0 shadow-xl">
                 <Command>
-                    <CommandInput placeholder="Search account name or code" />
+                    <CommandInput placeholder="Search account name or code" className="border-b" />
                     <CommandList>
                         <CommandEmpty>No account found.</CommandEmpty>
                         {recommendationList.length > 0 && (
