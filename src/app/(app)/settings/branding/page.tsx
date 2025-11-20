@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,6 +33,7 @@ import { generateTermsAction } from "./actions";
 import { Separator } from "@/components/ui/separator";
 import SignatureCanvas from 'react-signature-canvas';
 import { states } from "@/lib/states";
+import { defaultBrandingSettings, readBrandingSettings, writeBrandingSettings, type BrandingSettings } from "@/lib/branding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
@@ -70,24 +71,17 @@ export default function BrandingPage() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            companyName: "ZenithBooks Inc.",
-            address1: "123 Business Rd, Industrial Area",
-            address2: "Suite 456, Near Landmark",
-            city: "Commerce City",
-            state: "Maharashtra",
-            pincode: "400001",
-            gstin: "27ABCDE1234F1Z5",
-            pan: "ABCDE1234F",
-            invoicePrefix: "INV-",
-            invoiceNextNumber: 1,
-            bankName: "HDFC Bank",
-            bankAccount: "1234567890",
-            bankIfsc: "HDFC0001234",
-            upiId: "yourbusiness@okhdfcbank",
-            defaultPaymentTerms: "net_30",
-            invoiceTerms: "1. All payments to be made via cheque or NEFT. 2. Goods once sold will not be taken back. 3. Interest @18% p.a. will be charged on overdue bills.",
+            ...defaultBrandingSettings,
+            logo: null,
         },
     });
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const saved = readBrandingSettings();
+        form.reset({ ...saved, logo: null });
+        setLogoPreview(saved.logoDataUrl || null);
+    }, [form]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -108,7 +102,14 @@ export default function BrandingPage() {
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSaving(true);
-        console.log(values);
+        const { logo, ...rest } = values;
+        const payload: BrandingSettings = {
+            ...defaultBrandingSettings,
+            ...rest,
+            invoiceNextNumber: Number(rest.invoiceNextNumber) || defaultBrandingSettings.invoiceNextNumber,
+            logoDataUrl: logoPreview,
+        };
+        writeBrandingSettings(payload);
         setTimeout(() => {
             setIsSaving(false);
             toast({

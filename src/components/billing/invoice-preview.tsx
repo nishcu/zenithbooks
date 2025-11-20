@@ -5,6 +5,7 @@ import * as React from "react";
 import { format } from 'date-fns';
 import QRCode from 'qrcode';
 import Image from 'next/image';
+import { defaultBrandingSettings, readBrandingSettings, type BrandingSettings } from "@/lib/branding";
 
 const numberToWords = (num: number): string => {
     const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
@@ -50,7 +51,7 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
     const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState('');
 
     const customerDetails = customers.find(c => c.id === invoice.raw.customerId);
-    const companyDetails = { name: "ZenithBooks Solutions Pvt. Ltd.", address: "123 Business Avenue, Commerce City, Maharashtra - 400001", gstin: "27ABCDE1234F1Z5", pan: "ABCDE1234F", bankName: "HDFC Bank", bankAccount: "1234567890", bankIfsc: "HDFC0001234", upiId: "zenithbooks@okhdfcbank" };
+    const [companyDetails, setCompanyDetails] = React.useState<BrandingSettings>(defaultBrandingSettings);
 
     const salesLine = invoice.raw.lines.find((l: any) => l.account === '4010');
     const taxLine = invoice.raw.lines.find((l: any) => l.account === '2110');
@@ -70,8 +71,13 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
     }];
     
     React.useEffect(() => {
+        if (typeof window === "undefined") return;
+        setCompanyDetails(readBrandingSettings());
+    }, []);
+
+    React.useEffect(() => {
         if (companyDetails.upiId) {
-            const upiString = `upi://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.name)}&am=${invoice.amount.toFixed(2)}&cu=INR&tn=${invoice.id}`;
+            const upiString = `upi://pay?pa=${companyDetails.upiId}&pn=${encodeURIComponent(companyDetails.companyName)}&am=${invoice.amount.toFixed(2)}&cu=INR&tn=${invoice.id}`;
             QRCode.toDataURL(upiString, (err, url) => {
                 if (err) {
                     console.error("Could not generate QR code", err);
@@ -80,7 +86,16 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
                 setQrCodeDataUrl(url);
             });
         }
-    }, [companyDetails.upiId, companyDetails.name, invoice.amount, invoice.id]);
+    }, [companyDetails.upiId, companyDetails.companyName, invoice.amount, invoice.id]);
+
+    const companyAddress = React.useMemo(() => {
+        const parts = [
+            companyDetails.address1,
+            companyDetails.address2,
+            `${companyDetails.city}, ${companyDetails.state} - ${companyDetails.pincode}`,
+        ].filter(Boolean);
+        return parts.join(", ");
+    }, [companyDetails]);
 
 
     return (
@@ -91,8 +106,8 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
 
             <section className="grid grid-cols-2 gap-4 mb-8">
                 <div>
-                    <h2 className="font-bold text-sm">{companyDetails.name}</h2>
-                    <p>{companyDetails.address}</p>
+                    <h2 className="font-bold text-sm">{companyDetails.companyName}</h2>
+                    <p>{companyAddress}</p>
                     <p><strong>GSTIN:</strong> {companyDetails.gstin}</p>
                 </div>
                 <div className="text-right">
@@ -168,7 +183,7 @@ export const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewPro
             </section>
 
             <footer className="mt-16 text-right">
-                <p>For {companyDetails.name}</p>
+                <p>For {companyDetails.companyName}</p>
                 <div className="h-20"></div>
                 <p className="border-t pt-1">Authorised Signatory</p>
             </footer>
