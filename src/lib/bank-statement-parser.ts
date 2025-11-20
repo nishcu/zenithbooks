@@ -56,6 +56,12 @@ function parseAmount(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normalizeAmount(value: number | null): number | null {
+  if (value === null) return null;
+  const absValue = Math.abs(value);
+  return absValue > 0 ? absValue : null;
+}
+
 /**
  * Parse CSV file
  */
@@ -152,11 +158,14 @@ export function parseCSV(file: File): Promise<ParseResult> {
             continue;
           }
 
-          let withdrawal = parseAmount(withdrawalStr);
-          let deposit = parseAmount(depositStr);
+          const withdrawalRaw = parseAmount(withdrawalStr);
+          const depositRaw = parseAmount(depositStr);
           const balance = parseAmount(balanceStr);
           const amountValue = parseAmount(amountStr);
           const derivedType = determineTypeFromIndicator(typeIndicator);
+
+          let withdrawal = normalizeAmount(withdrawalRaw);
+          let deposit = normalizeAmount(depositRaw);
 
           if ((withdrawal === null && deposit === null) && amountValue !== null && amountValue !== 0) {
             if (derivedType === 'credit') {
@@ -303,11 +312,14 @@ export function parseExcel(file: File): Promise<ParseResult> {
             continue;
           }
 
-          let withdrawal = parseAmount(withdrawalStr);
-          let deposit = parseAmount(depositStr);
+          const withdrawalRaw = parseAmount(withdrawalStr);
+          const depositRaw = parseAmount(depositStr);
           const balance = parseAmount(balanceStr);
           const amountValue = parseAmount(amountStr);
           const derivedType = determineTypeFromIndicator(typeIndicator);
+
+          let withdrawal = normalizeAmount(withdrawalRaw);
+          let deposit = normalizeAmount(depositRaw);
 
           if ((withdrawal === null && deposit === null) && amountValue !== null && amountValue !== 0) {
             if (derivedType === 'credit') {
