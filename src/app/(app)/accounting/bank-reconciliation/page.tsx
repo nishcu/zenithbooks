@@ -49,7 +49,8 @@ import {
     FileText,
     Download,
     Trash2,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    ChevronsUpDown
   } from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,8 +76,10 @@ import {
     Command,
     CommandEmpty,
     CommandGroup,
+    CommandInput,
     CommandItem,
     CommandList,
+    CommandSeparator,
   } from "@/components/ui/command";
   import { DateRange } from "react-day-picker";
 
@@ -127,6 +130,13 @@ const createDefaultJvLines = (): JournalLine[] => ([
   { account: '', debit: '0', credit: '0', costCentre: '' },
   { account: '', debit: '0', credit: '0', costCentre: '' }
 ]);
+
+type ImportSummary = {
+  totalRows: number;
+  parsedRows: number;
+  skippedRows: number;
+  warnings: string[];
+};
 
 const readStorageMap = (key: string): ReconStorageMap => {
   if (typeof window === 'undefined') return {};
@@ -201,11 +211,13 @@ export default function BankReconciliationPage() {
     const [isBulkEntryDialogOpen, setIsBulkEntryDialogOpen] = useState(false);
     const [bulkTransactions, setBulkTransactions] = useState<StatementTransaction[]>([]);
     const [isProcessingFile, setIsProcessingFile] = useState(false);
+    const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
 
     // For the Journal Voucher dialog
-     const [jvNarration, setJvNarration] = useState("");
-     const [jvDate, setJvDate] = useState<Date | undefined>(new Date());
-     const [jvLines, setJvLines] = useState<JournalLine[]>(createDefaultJvLines());
+    const [jvNarration, setJvNarration] = useState("");
+    const [jvDate, setJvDate] = useState<Date | undefined>(new Date());
+    const [jvLines, setJvLines] = useState<JournalLine[]>(createDefaultJvLines());
+    const [jvDateInput, setJvDateInput] = useState("");
     
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
@@ -231,6 +243,32 @@ export default function BankReconciliationPage() {
               return acc;
           }, {});
       }, [combinedAccounts]);
+
+      const entryCategory = useMemo(() => {
+          if (!entryToCreate) return null;
+          return categorizeTransaction(entryToCreate.description);
+      }, [entryToCreate]);
+
+      const counterpartyRecommendations = useMemo(() => {
+          if (!entryToCreate) return [];
+          const codes = new Set<string>();
+          if (entryCategory?.suggestedAccount) {
+              codes.add(entryCategory.suggestedAccount);
+          }
+          const amount = (entryToCreate.deposit || 0) - (entryToCreate.withdrawal || 0);
+          if (amount > 0) {
+              codes.add('4010');
+          } else if (amount < 0) {
+              codes.add('5050');
+          }
+          return Array.from(codes);
+      }, [entryCategory, entryToCreate]);
+
+      const recommendedAccountLabel = useMemo(() => {
+          if (!entryCategory?.suggestedAccount) return null;
+          const match = combinedAccounts.find(acc => acc.value === entryCategory.suggestedAccount);
+          return match?.label || entryCategory.suggestedAccount;
+      }, [entryCategory, combinedAccounts]);
 
       useEffect(() => {
           if (typeof window === 'undefined') return;
@@ -258,6 +296,7 @@ export default function BankReconciliationPage() {
 
           const currentHydrationKey = `${storageKey}:${bankAccount}`;
           setHydrationKey(null);
+          setImportSummary(null);
 
           const storage = readStorageMap(storageKey);
           const savedState = storage[bankAccount];
@@ -356,6 +395,10 @@ export default function BankReconciliationPage() {
         setBookTransactions(derivedTransactions);
     }, [journalVouchers, bankAccount]);
 
+    useEffect(() => {
+        setJvDateInput(jvDate ? format(jvDate, 'yyyy-MM-dd') : '');
+    }, [jvDate]);
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -396,6 +439,17 @@ export default function BankReconciliationPage() {
                 deposit: tx.deposit,
             }));
 
+            const totalRows = parsedResult.rawRowCount ?? parsedResult.transactions.length;
+            const parsedRows = parsedResult.transactions.length;
+            const skippedRows = parsedResult.skippedRowCount ?? Math.max(0, totalRows - parsedRows);
+            const warnings = parsedResult.warnings ?? [];
+            setImportSummary({
+                totalRows,
+                parsedRows,
+                skippedRows,
+                warnings,
+            });
+
             setStatementTransactions(parsedData);
             
             // Show unmatched transactions for bulk entry
@@ -405,12 +459,20 @@ export default function BankReconciliationPage() {
                 setIsBulkEntryDialogOpen(true);
             }
             
+            const summaryPieces = [
+                `${parsedRows} transaction${parsedRows === 1 ? '' : 's'} ready`,
+                `${unmatched.length} unmatched transaction${unmatched.length === 1 ? '' : 's'} found`
+            ];
+            if (skippedRows > 0) {
+                summaryPieces.splice(1, 0, `${skippedRows} row${skippedRows === 1 ? '' : 's'} skipped`);
+            }
             toast({ 
                 title: "Statement Uploaded", 
-                description: `${parsedData.length} transactions loaded. ${unmatched.length} unmatched transactions found.` 
+                description: summaryPieces.join(". ") 
             });
         } catch (error: any) {
             console.error("Error parsing file:", error);
+            setImportSummary(null);
             toast({ 
                 variant: "destructive", 
                 title: "File Parsing Error", 
@@ -595,6 +657,19 @@ export default function BankReconciliationPage() {
         }
     };
 
+    const handleManualDateInputChange = (value: string) => {
+        setJvDateInput(value);
+        const trimmed = value.trim();
+        if (!trimmed) {
+            setJvDate(undefined);
+            return;
+        }
+        const parsed = parseDateString(trimmed);
+        if (parsed) {
+            setJvDate(parsed);
+        }
+    };
+
     const handleJvLineChange = (index: number, field: keyof typeof jvLines[0], value: string) => {
         const newLines = [...jvLines];
         const line = newLines[index];
@@ -731,6 +806,27 @@ export default function BankReconciliationPage() {
             <StatCard title="Difference" value={`₹${difference.toFixed(2)}`} className={Math.abs(difference) > 0.01 ? "text-destructive" : ""} icon={FileText}/>
       </div>
 
+      {importSummary && (
+        <Alert variant={importSummary.skippedRows > 0 ? "destructive" : "default"}>
+            <AlertTitle>Statement import summary</AlertTitle>
+            <AlertDescription>
+                Imported {importSummary.parsedRows} of {importSummary.totalRows} row{importSummary.totalRows === 1 ? '' : 's'}.
+                {importSummary.skippedRows > 0 ? (
+                    <> {importSummary.skippedRows} row{importSummary.skippedRows === 1 ? '' : 's'} skipped due to missing dates or amounts.</>
+                ) : (
+                    <> All rows processed successfully.</>
+                )}
+                {importSummary.warnings.length > 0 && (
+                    <ul className="mt-2 list-disc space-y-1 pl-4">
+                        {importSummary.warnings.map((warning, index) => (
+                            <li key={`import-warning-${index}`}>{warning}</li>
+                        ))}
+                    </ul>
+                )}
+            </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
@@ -822,21 +918,41 @@ export default function BankReconciliationPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-6">
+                {entryCategory?.suggestedAccount && (
+                    <Alert>
+                        <AlertTitle>Recommended account</AlertTitle>
+                        <AlertDescription>
+                            Based on this description we suggest posting against {recommendedAccountLabel}.
+                            You can still choose a different ledger if needed.
+                        </AlertDescription>
+                    </Alert>
+                )}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                             <Label>Voucher Date</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn("w-full justify-start text-left font-normal", !jvDate && "text-muted-foreground")}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {jvDate ? format(jvDate, "dd MMM, yyyy") : <span>Pick a date</span>}
-                                </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={jvDate} onSelect={setJvDate} initialFocus /></PopoverContent>
-                            </Popover>
+                         <Label>Voucher Date</Label>
+                         <div className="space-y-2">
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn("w-full justify-start text-left font-normal", !jvDate && "text-muted-foreground")}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {jvDate ? format(jvDate, "dd MMM, yyyy") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={jvDate} onSelect={setJvDate} initialFocus /></PopoverContent>
+                                </Popover>
+                                <Input
+                                    value={jvDateInput}
+                                    placeholder="YYYY-MM-DD or DD/MM/YYYY"
+                                    onChange={(e) => handleManualDateInputChange(e.target.value)}
+                                    className="w-full"
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Type a date manually or use the picker.</p>
+                         </div>
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="narration">Narration</Label>
@@ -859,12 +975,16 @@ export default function BankReconciliationPage() {
                                 {jvLines.map((line, index) => {
                                     const accountDetails = allAccounts.find(acc => acc.code === line.account);
                                     const showCostCentre = accountDetails && ['Revenue', 'Expense'].includes(accountDetails.type);
+                                    const recommendedAccounts = line.account === bankAccount && bankAccount
+                                        ? [bankAccount]
+                                        : counterpartyRecommendations;
                                     return (
                                         <TableRow key={index}>
                                               <TableCell>
                                                   <AccountSelect
                                                       value={line.account}
                                                       groupedAccounts={groupedAccounts}
+                                                      recommendedAccounts={recommendedAccounts}
                                                       onChange={(value) => handleJvLineChange(index, 'account', value)}
                                                   />
                                               </TableCell>
@@ -1042,93 +1162,77 @@ type GroupedAccounts = Record<string, { value: string; label: string; group?: st
 function AccountSelect({
     value,
     onChange,
-    groupedAccounts
+    groupedAccounts,
+    recommendedAccounts = []
 }: {
     value: string;
     onChange: (value: string) => void;
     groupedAccounts: GroupedAccounts;
+    recommendedAccounts?: string[];
 }) {
     const [open, setOpen] = React.useState(false);
-    const [query, setQuery] = React.useState("");
-    const inputRef = React.useRef<HTMLInputElement>(null);
 
     const flatAccounts = React.useMemo(() => Object.values(groupedAccounts).flat(), [groupedAccounts]);
+    const selectedAccount = React.useMemo(
+        () => flatAccounts.find(acc => acc.value === value),
+        [flatAccounts, value]
+    );
 
-    React.useEffect(() => {
-        const selected = flatAccounts.find(acc => acc.value === value);
-        if (selected && !open) {
-            setQuery(selected.label);
-        } else if (!value) {
-            setQuery("");
-        }
-    }, [value, flatAccounts, open]);
-
-    const normalizedQuery = query.trim().toLowerCase();
-    const filteredGroups = React.useMemo(() => {
-        if (!normalizedQuery) return groupedAccounts;
-        const result: GroupedAccounts = {};
-        Object.entries(groupedAccounts).forEach(([group, accounts]) => {
-            const filtered = accounts.filter(account =>
-                account.label.toLowerCase().includes(normalizedQuery) ||
-                account.value.toLowerCase().includes(normalizedQuery)
-            );
-            if (filtered.length > 0) {
-                result[group] = filtered;
-            }
-        });
-        return result;
-    }, [groupedAccounts, normalizedQuery]);
-
-    const firstMatch = React.useMemo(() => {
-        for (const accounts of Object.values(filteredGroups)) {
-            if (accounts.length > 0) return accounts[0];
-        }
-        return undefined;
-    }, [filteredGroups]);
+    const recommendationList = React.useMemo(() => {
+        if (!recommendedAccounts.length) return [];
+        const seen = new Set<string>();
+        return recommendedAccounts
+            .map(code => {
+                if (!code || seen.has(code)) return null;
+                seen.add(code);
+                return flatAccounts.find(acc => acc.value === code) || null;
+            })
+            .filter((acc): acc is { value: string; label: string; group?: string } => Boolean(acc));
+    }, [recommendedAccounts, flatAccounts]);
 
     const handleSelect = (accountValue: string) => {
-        const account = flatAccounts.find(acc => acc.value === accountValue);
-        if (account) {
-            onChange(account.value);
-            setQuery(account.label);
-            setOpen(false);
-        }
+        onChange(accountValue);
+        setOpen(false);
     };
 
-    const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter" && firstMatch) {
-            event.preventDefault();
-            handleSelect(firstMatch.value);
-        }
-        if (event.key === "ArrowDown" && !open) {
-            event.preventDefault();
-            setOpen(true);
-        }
-    };
+    const displayLabel = selectedAccount ? selectedAccount.label : "Select account";
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Input
-                    ref={inputRef}
-                    value={query}
-                    placeholder="Type account name or code"
-                    onChange={(event) => {
-                        setQuery(event.target.value);
-                        if (!open) setOpen(true);
-                    }}
-                    onFocus={() => setOpen(true)}
-                    onKeyDown={handleInputKeyDown}
-                    className="w-full"
-                />
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between text-left font-normal"
+                >
+                    <span className="truncate">{displayLabel}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[360px] p-0">
                 <Command>
+                    <CommandInput placeholder="Search account name or code" />
                     <CommandList>
-                        {!firstMatch && (
-                            <CommandEmpty>No account found.</CommandEmpty>
+                        <CommandEmpty>No account found.</CommandEmpty>
+                        {recommendationList.length > 0 && (
+                            <>
+                                <CommandGroup heading="Suggested">
+                                    {recommendationList.map(account => (
+                                        <CommandItem
+                                            key={`suggested-${account.value}`}
+                                            value={`${account.label} ${account.value}`}
+                                            onSelect={() => handleSelect(account.value)}
+                                        >
+                                            <span className="truncate">{account.label}</span>
+                                            <Badge variant="secondary" className="ml-auto">Suggested</Badge>
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                                <CommandSeparator />
+                            </>
                         )}
-                        {Object.entries(filteredGroups).map(([group, accounts]) => (
+                        {Object.entries(groupedAccounts).map(([group, accounts]) => (
                             <CommandGroup key={group} heading={group}>
                                 {accounts.map(account => (
                                     <CommandItem
@@ -1136,7 +1240,7 @@ function AccountSelect({
                                         value={`${account.label} ${account.value}`}
                                         onSelect={() => handleSelect(account.value)}
                                     >
-                                        {account.label}
+                                        <span className="truncate">{account.label}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
