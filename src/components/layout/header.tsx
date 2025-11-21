@@ -23,18 +23,29 @@ import { useDocumentData } from "react-firebase-hooks/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { doc } from "firebase/firestore";
 import { db, auth as firebaseAuth } from "@/lib/firebase";
+import { readBrandingSettings } from "@/lib/branding";
+import { useState, useEffect } from "react";
 
 export function Header() {
   const pathname = usePathname();
   const [user] = useAuthState(firebaseAuth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
-  
-  // Get company info from user data or use defaults
-  const companyInfo = {
-    name: userData?.companyName || "ZenithBooks Solutions",
-    gstin: userData?.gstin || "27ABCDE1234F1Z5",
-  };
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "ZenithBooks Solutions",
+    gstin: "27ABCDE1234F1Z5",
+  });
+
+  // Get company info from branding settings
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const brandingSettings = readBrandingSettings();
+      setCompanyInfo({
+        name: brandingSettings.companyName,
+        gstin: brandingSettings.gstin || "",
+      });
+    }
+  }, []);
 
 
   return (
