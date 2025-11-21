@@ -90,6 +90,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
         let typeIndex = -1;
         let referenceIndex = -1;
         let referenceIndex = -1;
+        let referenceIndex = -1;
 
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
         const normalizedHeaders = headers.map(h => h.replace(/\s+/g, ''));
