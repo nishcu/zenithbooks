@@ -24,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Wand2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Wand2, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
@@ -89,9 +89,12 @@ export default function ItemsPage() {
             Manage your products, services, and inventory.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
             <Link href="/items/suggest-hsn">
                  <Button variant="outline"><Wand2 className="mr-2"/>Suggest HSN (AI)</Button>
+            </Link>
+            <Link href="/items/bulk">
+                <Button variant="outline"><UploadCloud className="mr-2"/>Bulk Upload</Button>
             </Link>
             <Button onClick={() => handleOpenDialog()}><PlusCircle className="mr-2"/>Add New Item</Button>
         </div>

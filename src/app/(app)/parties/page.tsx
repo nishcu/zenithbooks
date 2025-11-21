@@ -47,7 +47,8 @@ import {
   Download,
   ChevronDown,
   FileSpreadsheet,
-  PlusSquare
+  PlusSquare,
+  UploadCloud
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PartyDialog, assignAccountCode } from "@/components/billing/add-new-dialogs";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import * as XLSX from 'xlsx';
 
 // Define the structure of a party (Customer or Vendor)
@@ -287,7 +289,7 @@ export default function PartiesPage() {
             Manage your customers and vendors from one central place.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
@@ -299,6 +301,9 @@ export default function PartiesPage() {
                     <DropdownMenuItem onSelect={() => handleExport('vendors')}><FileSpreadsheet className="mr-2"/> Export Vendors</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <Link href="/parties/bulk">
+                <Button variant="outline"><UploadCloud className="mr-2"/>Bulk Upload</Button>
+            </Link>
             <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}><Upload className="mr-2"/> Import</Button>
             <Button onClick={() => handleOpenDialog()}><PlusCircle className="mr-2"/>Add New {activeTab === 'customers' ? 'Customer' : 'Vendor'}</Button>
         </div>
