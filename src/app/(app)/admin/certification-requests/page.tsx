@@ -39,8 +39,14 @@ type Request = {
   requestedBy: string;
   date: Date;
   status: 'Pending' | 'Certified' | 'Rejected';
-  userId?: string;
+  userId: string;
   certificateData?: any;
+  reportType?: string;
+  clientName?: string;
+  requestDate?: Date;
+  draftUrl?: string;
+  signedDocumentUrl?: string;
+  formData?: any;
 };
 
 export default function AdminCertificationRequests() {
@@ -51,8 +57,19 @@ export default function AdminCertificationRequests() {
 
   const requests: Request[] = requestsCollection?.docs.map(doc => ({
     id: doc.id,
-    ...doc.data(),
-    date: doc.data().createdAt?.toDate() || new Date(),
+    type: doc.data().reportType || 'Unknown',
+    client: doc.data().clientName || 'Unknown',
+    requestedBy: doc.data().requestedBy || 'Unknown',
+    date: doc.data().requestDate?.toDate() || doc.data().createdAt?.toDate() || new Date(),
+    status: doc.data().status || 'Pending',
+    userId: doc.data().userId,
+    certificateData: doc.data().formData,
+    reportType: doc.data().reportType,
+    clientName: doc.data().clientName,
+    requestDate: doc.data().requestDate?.toDate(),
+    draftUrl: doc.data().draftUrl,
+    signedDocumentUrl: doc.data().signedDocumentUrl,
+    formData: doc.data().formData,
   })) as Request[] || [];
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -80,10 +97,19 @@ export default function AdminCertificationRequests() {
   };
 
   const handleApprove = async () => {
-    if (!selectedRequest || !user) return;
+    if (!selectedRequest || !user || !selectedRequest.userId) {
+      toast({
+        variant: "destructive",
+        title: "Approval Failed",
+        description: "Invalid request data. User information is missing.",
+      });
+      return;
+    }
     setIsLoading('approve');
 
     try {
+      console.log("Approving request:", selectedRequest); // Debug log
+
       // Update the certification request status to 'Certified'
       await updateDoc(doc(db, "certificationRequests", selectedRequest.id), {
         status: 'Certified',
