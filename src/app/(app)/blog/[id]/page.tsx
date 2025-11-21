@@ -12,8 +12,6 @@ import { SocialShareButtons } from '@/components/social-share-buttons';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 
-export default function BlogPostPage() {
-
 // Calculate reading time
 const calculateReadingTime = (content: string[]): number => {
     const words = content.join(' ').split(/\s+/).length;
@@ -23,10 +21,10 @@ const calculateReadingTime = (content: string[]): number => {
 // Get related posts
 const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof samplePosts, limit: number = 3) => {
     return allPosts
-        .filter(post => 
-            post.id !== currentPost.id && 
-            (post.category === currentPost.category || 
-             post.title.toLowerCase().split(' ').some(word => 
+        .filter(post =>
+            post.id !== currentPost.id &&
+            (post.category === currentPost.category ||
+             post.title.toLowerCase().split(' ').some(word =>
                 currentPost.title.toLowerCase().includes(word) && word.length > 4
              ))
         )
