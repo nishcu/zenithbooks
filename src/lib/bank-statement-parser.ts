@@ -267,6 +267,7 @@ export function parseExcel(file: File): Promise<ParseResult> {
         let balanceIndex = -1;
         let amountIndex = -1;
         let typeIndex = -1;
+        let referenceIndex = -1;
 
         headerRow.forEach((header, index) => {
           const h = String(header || '').toLowerCase();
