@@ -161,19 +161,11 @@ export function parseCSV(file: File): Promise<ParseResult> {
           const hasContent = values.some(value => value && value.trim() !== '');
           if (!hasContent) continue;
 
-          const referenceValue = getValue(referenceIndex);
-          const reference = (referenceValue || '').toString().trim();
-          const baseDescription = getValue(descIndex)?.trim();
+          const rawReference = referenceIndex >= 0 ? getValue(referenceIndex) : '';
+          const referenceText = (rawReference || '').toString().trim();
+          const baseDescription = (getValue(descIndex) || '').trim();
 
-          if (!reference && !baseDescription) {
-            skippedRowCount++;
-            continue;
-          }
-
-          const referenceValue = String(getCell(referenceIndex) || '');
-          const description = String(getCell(descIndex) || '');
-
-          if (!referenceValue && !description) {
+          if (!referenceText && !baseDescription) {
             skippedRowCount++;
             continue;
           }
@@ -181,8 +173,8 @@ export function parseCSV(file: File): Promise<ParseResult> {
           rawRowCount++;
 
           const dateStr = getValue(dateIndex);
-          const description = getValue(descIndex);
-          const referenceValue = getValue(referenceIndex);
+          const description = baseDescription;
+          const referenceValue = rawReference || '';
           const withdrawalStr = getValue(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
           const depositStr = getValue(depositIndex >= 0 ? depositIndex : creditIndex);
           const balanceStr = getValue(balanceIndex);
@@ -199,9 +191,8 @@ export function parseCSV(file: File): Promise<ParseResult> {
             lastKnownDate = parsedDate;
           }
 
-          const reference = (referenceValue || '').toString().trim();
-          const baseDescription = description?.trim();
-          const finalDescription = baseDescription || reference || `Statement row ${rawRowCount}`;
+          const reference = referenceText;
+          const finalDescription = description || reference || `Statement row ${rawRowCount}`;
 
           const withdrawalRaw = parseAmount(withdrawalStr);
           const depositRaw = parseAmount(depositStr);
@@ -361,11 +352,17 @@ export function parseExcel(file: File): Promise<ParseResult> {
           });
           if (!hasContent) continue;
 
+          const referenceValue = referenceIndex >= 0 ? String(getCell(referenceIndex) || '') : '';
+          const descriptionRaw = String(getCell(descIndex) || '').trim();
+
+          if (!referenceValue.trim() && !descriptionRaw) {
+            skippedRowCount++;
+            continue;
+          }
+
           rawRowCount++;
 
           const dateStr = String(getCell(dateIndex) || '');
-          const description = String(getCell(descIndex) || '');
-          const referenceValue = String(getCell(referenceIndex) || '');
           const withdrawalStr = getCell(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
           const depositStr = getCell(depositIndex >= 0 ? depositIndex : creditIndex);
           const balanceStr = getCell(balanceIndex);
@@ -383,8 +380,7 @@ export function parseExcel(file: File): Promise<ParseResult> {
           }
 
           const reference = referenceValue.trim();
-          const baseDescription = description.trim();
-          const finalDescription = baseDescription || reference || `Statement row ${rawRowCount}`;
+          const finalDescription = descriptionRaw || reference || `Statement row ${rawRowCount}`;
 
           const withdrawalRaw = parseAmount(withdrawalStr);
           const depositRaw = parseAmount(depositStr);
