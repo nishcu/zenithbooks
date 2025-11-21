@@ -50,25 +50,44 @@ export function ShareButtons({
       return;
     }
 
+    // Check if element has content
+    if (!element.innerHTML || element.innerHTML.trim() === '') {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "The content appears to be empty. Please ensure the page is fully loaded.",
+      });
+      return;
+    }
+
     toast({
       title: "Generating PDF...",
       description: "Your document is being prepared for download.",
     });
 
     try {
+      // Ensure content is fully loaded before generating PDF
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const opt = {
         margin: [10, 10, 10, 10],
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
           logging: false,
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          allowTaint: true,
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+          width: element.scrollWidth,
+          height: element.scrollHeight,
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       };
+
+      console.log("Generating PDF for element:", element);
+      console.log("PDF options:", opt);
 
       await html2pdf().set(opt).from(element).save();
 
@@ -78,6 +97,7 @@ export function ShareButtons({
       });
     } catch (error: any) {
       console.error("PDF generation error:", error);
+      console.error("Element:", element);
       toast({
         variant: "destructive",
         title: "PDF Generation Failed",

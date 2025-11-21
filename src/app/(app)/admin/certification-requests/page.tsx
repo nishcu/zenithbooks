@@ -392,25 +392,25 @@ export default function AdminCertificationRequests() {
       printWindow.document.close();
 
       // Wait for the content to load
-      await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Generate and download PDF
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `${request.type.replace(/[^a-zA-Z0-9]/g, '_')}_Draft_${request.client.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: true,
-          allowTaint: true,
-          width: 794,
-          height: 1123,
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
+                // Generate and download PDF
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `${request.type.replace(/[^a-zA-Z0-9]/g, '_')}_Draft_${request.client.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        allowTaint: true,
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+                };
 
-      await html2pdf().set(opt).from(printWindow.document.body).save();
+                await html2pdf().set(opt).from(printWindow.document.body).save();
 
       // Close the print window
       printWindow.close();

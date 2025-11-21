@@ -176,7 +176,7 @@ export default function MyDocumentsPage() {
                 printWindow.document.close();
 
                 // Wait for the content to load
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
 
                 // Generate and download PDF
                 const opt = {
@@ -186,12 +186,12 @@ export default function MyDocumentsPage() {
                     html2canvas: {
                         scale: 2,
                         useCORS: true,
-                        logging: true,
+                        logging: false,
                         allowTaint: true,
-                        width: 794, // A4 width in pixels at 96 DPI
-                        height: 1123, // A4 height in pixels at 96 DPI
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                 };
 
                 console.log("Generating PDF from window"); // Debug log
