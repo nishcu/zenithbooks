@@ -71,25 +71,49 @@ export default function LedgersPage() {
   }, [userAccountsSnapshot, customersSnapshot, vendorsSnapshot]);
 
   useEffect(() => {
-    if (user && selectedAccount && dateRange?.from && dateRange?.to) {
-      setLoading(true);
-      const fetchVouchers = async () => {
-        const q = query(collection(db, "journal_vouchers"), where("userId", "==", user.uid), where("date", ">=", format(dateRange.from, 'yyyy-MM-dd')), where("date", "<=", format(dateRange.to, 'yyyy-MM-dd')));
+    if (!(user && selectedAccount && dateRange?.from && dateRange?.to)) {
+      setJournalVouchers([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchVouchers = async () => {
+      try {
+        setLoading(true);
+        const start = dateRange.from;
+        const end = dateRange.to;
+        const q = query(collection(db, "journal_vouchers"), where("userId", "==", user.uid));
         const querySnapshot = await getDocs(q);
         const vouchers = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher))
-          .filter(voucher => voucher.lines.some(line => line.account === selectedAccount));
-        setJournalVouchers(vouchers.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())); // Latest first
-        setLoading(false);
-      };
-      fetchVouchers().catch(err => {
-          console.error("Error fetching vouchers: ", err);
+          .filter(voucher => {
+            const voucherDate = new Date(voucher.date);
+            const inRange = isValidDate(start) && isValidDate(end) && isValidDate(voucherDate)
+              ? voucherDate >= start && voucherDate <= end
+              : true;
+            const hasAccount = voucher.lines.some(line => line.account === selectedAccount);
+            return inRange && hasAccount;
+          })
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        if (isMounted) {
+          setJournalVouchers(vouchers);
+        }
+      } catch (err) {
+        console.error("Error fetching vouchers: ", err);
+        toast({ title: "Error", description: "Could not fetch ledger data.", variant: "destructive"});
+      } finally {
+        if (isMounted) {
           setLoading(false);
-          toast({ title: "Error", description: "Could not fetch ledger data.", variant: "destructive"});
-      });
-    } else {
-      setJournalVouchers([]);
-    }
+        }
+      }
+    };
+
+    fetchVouchers();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, selectedAccount, dateRange, toast]);
 
   // --- Memoized Calculations ---

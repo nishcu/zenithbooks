@@ -218,7 +218,7 @@ export default function ChartOfAccountsPage() {
                                 <FormField control={form.control} name="type" render={({ field }) => ( <FormItem><FormLabel>Account Type</FormLabel>
                                     <Select onValueChange={handleTypeChange} value={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl>
-                                        <SelectContent>
+                                        <SelectContent position="popper" className="z-[250] max-h-64 overflow-auto">
                                             {Object.entries(accountTypes).map(([group, types]) => (
                                                 <div key={group}>
                                                      <Separator className="my-2"/>
