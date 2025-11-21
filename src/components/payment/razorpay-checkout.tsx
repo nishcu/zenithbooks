@@ -39,6 +39,8 @@ export function RazorpayCheckout({
     setIsLoading(true);
 
     try {
+      console.log('Creating payment order for:', { amount, planId, userId });
+
       // Create order on server
       const response = await fetch('/api/payment', {
         method: 'POST',
@@ -58,22 +60,46 @@ export function RazorpayCheckout({
       });
 
       const orderData = await response.json();
+      console.log('Payment order response:', orderData);
 
       if (!response.ok) {
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
+      // Check if this is a mock response (for testing)
+      if (orderData.mock) {
+        toast({
+          variant: 'destructive',
+          title: 'Payment Gateway Not Configured',
+          description: 'Razorpay API keys are not set up. Please contact support or configure the payment gateway.',
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Load Razorpay script if not already loaded
       if (!window.Razorpay) {
+        console.log('Loading Razorpay script...');
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
         document.body.appendChild(script);
 
-        await new Promise((resolve) => {
-          script.onload = resolve;
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            console.log('Razorpay script loaded successfully');
+            resolve(void 0);
+          };
+          script.onerror = () => {
+            console.error('Failed to load Razorpay script');
+            reject(new Error('Failed to load Razorpay script'));
+          };
         });
+      } else {
+        console.log('Razorpay script already loaded');
       }
+
+      console.log('Initializing Razorpay with options:', orderData);
 
       // Initialize Razorpay
       const options = {
@@ -151,10 +177,20 @@ export function RazorpayCheckout({
 
     } catch (error) {
       console.error('Payment initialization error:', error);
+
+      let errorMessage = 'Failed to initialize payment. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('Payment gateway not configured')) {
+          errorMessage = 'Payment gateway is not configured. Please contact support or set up your Razorpay keys.';
+        } else if (error.message.includes('Failed to load Razorpay script')) {
+          errorMessage = 'Failed to load payment gateway. Please check your internet connection and try again.';
+        }
+      }
+
       toast({
         variant: 'destructive',
         title: 'Payment Failed',
-        description: 'Failed to initialize payment. Please try again.',
+        description: errorMessage,
       });
       onFailure?.();
     } finally {
