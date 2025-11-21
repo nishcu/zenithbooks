@@ -11,6 +11,8 @@ import Link from 'next/link';
 import { SocialShareButtons } from '@/components/social-share-buttons';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { Metadata } from 'next';
+import Head from 'next/head';
 
 // Calculate reading time
 const calculateReadingTime = (content: string[]): number => {
@@ -30,6 +32,62 @@ const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof sa
         )
         .slice(0, limit);
 };
+
+// Generate metadata for SEO and social sharing
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const post = samplePosts.find(p => p.id === params.id);
+
+  if (!post) {
+    return {
+      title: 'Blog Post Not Found',
+      description: 'The requested blog post could not be found.',
+    };
+  }
+
+  // Use a default base URL or get from environment
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://zenithbooks.in';
+  const postUrl = `${baseUrl}/blog/${post.id}`;
+
+  return {
+    title: `${post.title} | ZenithBooks`,
+    description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
+    authors: [{ name: post.author }],
+    keywords: [post.category, 'accounting', 'GST', 'tax', 'finance', 'CA', 'chartered accountant'],
+    openGraph: {
+      title: post.title,
+      description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
+      url: postUrl,
+      siteName: 'ZenithBooks',
+      images: [
+        {
+          url: post.imageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+          type: 'image/jpeg',
+        },
+      ],
+      locale: 'en_US',
+      type: 'article',
+      publishedTime: new Date(post.date).toISOString(),
+      authors: [post.author],
+      tags: [post.category],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
+      images: [post.imageUrl],
+      creator: '@zenithbooks',
+    },
+    other: {
+      'article:author': post.author,
+      'article:published_time': new Date(post.date).toISOString(),
+      'article:section': post.category,
+      'article:tag': post.category,
+    },
+  };
+}
 
 export default function BlogPostPage() {
     const params = useParams();
@@ -114,14 +172,43 @@ export default function BlogPostPage() {
     const relatedPosts = getRelatedPosts(post, samplePosts);
 
     return (
-        <div className="max-w-6xl mx-auto">
-            {/* Reading Progress Bar */}
-            <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
-                <div 
-                    className="h-full bg-primary transition-all duration-150"
-                    style={{ width: `${readingProgress}%` }}
-                />
-            </div>
+        <>
+            <Head>
+                <title>{post ? `${post.title} | ZenithBooks` : 'Blog Post | ZenithBooks'}</title>
+                <meta name="description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="article" />
+                <meta property="og:site_name" content="ZenithBooks" />
+                <meta property="og:title" content={post?.title || 'Blog Post'} />
+                <meta property="og:description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/blog/${id}` : `/blog/${id}`} />
+                {post && <meta property="og:image" content={post.imageUrl} />}
+                {post && <meta property="og:image:width" content="1200" />}
+                {post && <meta property="og:image:height" content="630" />}
+                {post && <meta property="og:image:alt" content={post.title} />}
+
+                {/* Twitter */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={post?.title || 'Blog Post'} />
+                <meta name="twitter:description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                {post && <meta name="twitter:image" content={post.imageUrl} />}
+
+                {/* Article specific */}
+                {post && <meta property="article:author" content={post.author} />}
+                {post && <meta property="article:published_time" content={new Date(post.date).toISOString()} />}
+                {post && <meta property="article:section" content={post.category} />}
+                {post && <meta property="article:tag" content={post.category} />}
+            </Head>
+
+            <div className="max-w-6xl mx-auto">
+                {/* Reading Progress Bar */}
+                <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
+                    <div
+                        className="h-full bg-primary transition-all duration-150"
+                        style={{ width: `${readingProgress}%` }}
+                    />
+                </div>
 
             <div className="grid lg:grid-cols-4 gap-8">
                 {/* Main Content */}
@@ -219,5 +306,6 @@ export default function BlogPostPage() {
                 )}
             </div>
         </div>
+        </>
     )
 }
