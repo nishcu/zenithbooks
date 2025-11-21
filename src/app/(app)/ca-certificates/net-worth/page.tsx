@@ -70,47 +70,200 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
     const netWorth = totalAssets - totalLiabilities;
     
     return (
-        <div ref={ref} className="prose prose-sm dark:prose-invert max-w-none p-8 leading-relaxed bg-white text-black" style={{ pageBreakInside: 'avoid' }}>
-            <header className="text-center border-b-2 border-primary pb-4 mb-8" style={{ pageBreakAfter: 'avoid' }}>
-                <h1 className="text-2xl font-bold text-primary m-0">S. KRANTHI KUMAR & Co.</h1>
-                <p className="text-sm m-0">Chartered Accountants</p>
-                <p className="text-xs m-0">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
-                <p className="text-xs m-0">Email: skkandco@gmail.com</p>
+        <div ref={ref} style={{
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#000000',
+            backgroundColor: '#ffffff',
+            maxWidth: '100%',
+            padding: '40px',
+            margin: '0',
+            pageBreakInside: 'avoid',
+            boxSizing: 'border-box'
+        }}>
+            <header style={{
+                textAlign: 'center',
+                borderBottom: '2px solid #2563eb',
+                paddingBottom: '20px',
+                marginBottom: '40px',
+                pageBreakAfter: 'avoid'
+            }}>
+                <h1 style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#2563eb',
+                    margin: '0 0 8px 0'
+                }}>S. KRANTHI KUMAR & Co.</h1>
+                <p style={{
+                    fontSize: '14px',
+                    margin: '0 0 4px 0'
+                }}>Chartered Accountants</p>
+                <p style={{
+                    fontSize: '12px',
+                    margin: '0 0 4px 0'
+                }}>H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
+                <p style={{
+                    fontSize: '12px',
+                    margin: '0'
+                }}>Email: skkandco@gmail.com</p>
             </header>
-            <h4 className="font-bold text-center">TO WHOM IT MAY CONCERN</h4>
-            <h4 className="font-bold text-center underline">NET WORTH CERTIFICATE</h4>
+            <h4 style={{
+                fontWeight: 'bold',
+                textAlign: 'center',
+                margin: '20px 0',
+                fontSize: '16px'
+            }}>TO WHOM IT MAY CONCERN</h4>
+            <h4 style={{
+                fontWeight: 'bold',
+                textAlign: 'center',
+                textDecoration: 'underline',
+                margin: '20px 0',
+                fontSize: '18px'
+            }}>NET WORTH CERTIFICATE</h4>
+
+            <p style={{
+                margin: '20px 0',
+                textAlign: 'justify',
+                lineHeight: '1.6'
+            }}>This is to certify that the Net Worth of Sri <strong style={{fontWeight: 'bold'}}>{formData.clientName}</strong>, S/o (or other relation) [Parent's Name], R/o {formData.clientAddress} (PAN: <strong style={{fontWeight: 'bold'}}>{formData.clientPan}</strong>) as on <strong style={{fontWeight: 'bold'}}>{new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)}</strong> is as follows:</p>
+
+            <h5 style={{
+                fontWeight: 'bold',
+                margin: '30px 0 15px 0',
+                fontSize: '16px'
+            }}>A. ASSETS</h5>
+            <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                marginBottom: '20px',
+                fontSize: '14px'
+            }}>
+                <thead>
+                    <tr style={{borderBottom: '1px solid #000'}}>
+                        <th style={{
+                            width: '70%',
+                            textAlign: 'left',
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Description</th>
+                        <th style={{
+                            textAlign: 'right',
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {formData.assets.map((a, i) => (
+                        <tr key={i} style={{borderBottom: '1px solid #eee'}}>
+                            <td style={{padding: '8px 12px'}}>{a.description}</td>
+                            <td style={{
+                                textAlign: 'right',
+                                padding: '8px 12px',
+                                fontFamily: 'monospace'
+                            }}>{a.value.toLocaleString('en-IN')}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot>
+                    <tr style={{borderTop: '2px solid #000'}}>
+                        <td style={{
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Total Assets</td>
+                        <td style={{
+                            textAlign: 'right',
+                            padding: '8px 12px',
+                            fontWeight: 'bold',
+                            fontFamily: 'monospace'
+                        }}>{totalAssets.toLocaleString('en-IN')}</td>
+                    </tr>
+                </tfoot>
+            </table>
             
-            <p>This is to certify that the Net Worth of Sri <strong>{formData.clientName}</strong>, S/o (or other relation) [Parent's Name], R/o {formData.clientAddress} (PAN: <strong>{formData.clientPan}</strong>) as on <strong>{new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)}</strong> is as follows:</p>
+            <h5 style={{
+                fontWeight: 'bold',
+                margin: '30px 0 15px 0',
+                fontSize: '16px'
+            }}>B. LIABILITIES</h5>
+            <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                marginBottom: '20px',
+                fontSize: '14px'
+            }}>
+                <thead>
+                    <tr style={{borderBottom: '1px solid #000'}}>
+                        <th style={{
+                            width: '70%',
+                            textAlign: 'left',
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Description</th>
+                        <th style={{
+                            textAlign: 'right',
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {formData.liabilities.map((l, i) => (
+                        <tr key={i} style={{borderBottom: '1px solid #eee'}}>
+                            <td style={{padding: '8px 12px'}}>{l.description}</td>
+                            <td style={{
+                                textAlign: 'right',
+                                padding: '8px 12px',
+                                fontFamily: 'monospace'
+                            }}>{l.value.toLocaleString('en-IN')}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot>
+                    <tr style={{borderTop: '2px solid #000'}}>
+                        <td style={{
+                            padding: '8px 12px',
+                            fontWeight: 'bold'
+                        }}>Total Liabilities</td>
+                        <td style={{
+                            textAlign: 'right',
+                            padding: '8px 12px',
+                            fontWeight: 'bold',
+                            fontFamily: 'monospace'
+                        }}>{totalLiabilities.toLocaleString('en-IN')}</td>
+                    </tr>
+                </tfoot>
+            </table>
 
-            <h5 className="font-bold mt-4">A. ASSETS</h5>
-             <Table>
-                <TableHeader><TableRow><TableHead className="w-2/3">Description</TableHead><TableHead className="text-right">Amount (₹)</TableHead></TableRow></TableHeader>
-                <TableBody>
-                    {formData.assets.map((a, i) => <TableRow key={i}><TableCell>{a.description}</TableCell><TableCell className="text-right font-mono">{a.value.toLocaleString('en-IN')}</TableCell></TableRow>)}
-                </TableBody>
-                <TableFoot><TableRow><TableCell className="font-bold">Total Assets</TableCell><TableCell className="text-right font-bold font-mono">{totalAssets.toLocaleString('en-IN')}</TableCell></TableRow></TableFoot>
-            </Table>
-            
-            <h5 className="font-bold mt-4">B. LIABILITIES</h5>
-             <Table>
-                <TableHeader><TableRow><TableHead className="w-2/3">Description</TableHead><TableHead className="text-right">Amount (₹)</TableHead></TableRow></TableHeader>
-                <TableBody>
-                     {formData.liabilities.map((l, i) => <TableRow key={i}><TableCell>{l.description}</TableCell><TableCell className="text-right font-mono">{l.value.toLocaleString('en-IN')}</TableCell></TableRow>)}
-                </TableBody>
-                 <TableFoot><TableRow><TableCell className="font-bold">Total Liabilities</TableCell><TableCell className="text-right font-bold font-mono">{totalLiabilities.toLocaleString('en-IN')}</TableCell></TableRow></TableFoot>
-            </Table>
+            <h5 style={{
+                fontWeight: 'bold',
+                margin: '30px 0 15px 0',
+                fontSize: '16px'
+            }}>NET WORTH (A - B)</h5>
+            <p style={{
+                margin: '15px 0',
+                textAlign: 'justify',
+                lineHeight: '1.6'
+            }}>The net worth of <strong style={{fontWeight: 'bold'}}>{formData.clientName}</strong> as on {new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)} is <strong style={{fontWeight: 'bold'}}>₹{netWorth.toLocaleString('en-IN')}</strong> (Rupees {numberToWords(netWorth)} only).</p>
 
-            <h5 className="font-bold mt-4">NET WORTH (A - B)</h5>
-            <p>The net worth of <strong>{formData.clientName}</strong> as on {new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)} is <strong>₹{netWorth.toLocaleString('en-IN')}</strong> (Rupees {numberToWords(netWorth)} only).</p>
-
-            <div className="mt-16">
-                <p>This certificate is issued based on the information and records produced before us and is true to the best of our knowledge and belief.</p>
-                <p className="mt-8 font-bold">For S. KRANTHI KUMAR & Co.</p>
-                <p>Chartered Accountants</p>
-                <div className="h-20"></div>
-                <p>(S. Kranthi Kumar)</p>
-                <p>Proprietor</p>
-                <p>Membership No: 224983</p>
+            <div style={{
+                marginTop: '60px',
+                textAlign: 'justify'
+            }}>
+                <p style={{
+                    margin: '15px 0',
+                    lineHeight: '1.6'
+                }}>This certificate is issued based on the information and records produced before us and is true to the best of our knowledge and belief.</p>
+                <p style={{
+                    margin: '40px 0 10px 0',
+                    fontWeight: 'bold'
+                }}>For S. KRANTHI KUMAR & Co.</p>
+                <p style={{margin: '5px 0'}}>Chartered Accountants</p>
+                <div style={{height: '80px'}}></div>
+                <p style={{margin: '5px 0'}}>(S. Kranthi Kumar)</p>
+                <p style={{margin: '5px 0'}}>Proprietor</p>
+                <p style={{margin: '5px 0'}}>Membership No: 224983</p>
             </div>
         </div>
     );

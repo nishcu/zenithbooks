@@ -26,6 +26,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Request = {
   id: string;
@@ -34,17 +38,21 @@ type Request = {
   requestedBy: string;
   date: Date;
   status: 'Pending' | 'Certified' | 'Rejected';
+  userId?: string;
+  certificateData?: any;
 };
 
-const initialRequests: Request[] = [
-    { id: 'CR-001', type: 'Net Worth Certificate', client: 'Innovate LLC', requestedBy: 'Rohan Sharma', date: new Date(2024, 7, 14), status: 'Pending' },
-    { id: 'CR-002', type: 'Turnover Certificate', client: 'Quantum Services', requestedBy: 'Priya Mehta', date: new Date(2024, 7, 12), status: 'Certified' },
-    { id: 'CR-003', type: 'Form 15CB', client: 'Synergy Corp', requestedBy: 'Anjali Singh', date: new Date(2024, 7, 11), status: 'Certified' },
-    { id: 'CR-004', type: 'Capital Contribution', client: 'Innovate LLC', requestedBy: 'Rohan Sharma', date: new Date(2024, 7, 10), status: 'Rejected' },
-];
-
 export default function AdminCertificationRequests() {
-  const [requests, setRequests] = useState<Request[]>(initialRequests);
+  const { user } = useAuth();
+  const [requestsCollection, loading] = useCollection(
+    user ? query(collection(db, "certificationRequests"), where("status", "in", ["Pending", "Certified", "Rejected"])) : null
+  );
+
+  const requests: Request[] = requestsCollection?.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    date: doc.data().createdAt?.toDate() || new Date(),
+  })) as Request[];
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
@@ -71,21 +79,50 @@ export default function AdminCertificationRequests() {
   };
 
   const handleApprove = async () => {
-    if (!selectedRequest) return;
+    if (!selectedRequest || !user) return;
     setIsLoading('approve');
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setRequests(requests.map(r => 
-      r.id === selectedRequest.id 
-        ? { ...r, status: 'Certified' as Request['status'] }
-        : r
-    ));
-    toast({
-      title: "Request Approved",
-      description: `Certification request ${selectedRequest.id} has been approved and marked as certified.`,
-    });
-    setIsApproveDialogOpen(false);
-    setSelectedRequest(null);
-    setIsLoading(null);
+
+    try {
+      // Update the certification request status to 'Certified'
+      await updateDoc(doc(db, "certificationRequests", selectedRequest.id), {
+        status: 'Certified',
+        approvedAt: serverTimestamp(),
+        approvedBy: user.uid,
+      });
+
+      // Save the certified document to user's userDocuments collection
+      const certifiedDocData = {
+        userId: selectedRequest.userId,
+        documentName: `${selectedRequest.type} - ${selectedRequest.client}`,
+        documentType: selectedRequest.type,
+        status: 'Certified',
+        certificateData: selectedRequest.certificateData,
+        createdAt: serverTimestamp(),
+        approvedAt: serverTimestamp(),
+        approvedBy: user.uid,
+        isCertified: true,
+        downloadUrl: null, // Will be set when PDF is generated
+      };
+
+      await addDoc(collection(db, "userDocuments"), certifiedDocData);
+
+      toast({
+        title: "Request Approved",
+        description: `Certification request has been approved. The certified document is now available in the client's "My Documents" section.`,
+      });
+
+      setIsApproveDialogOpen(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error("Error approving certification request:", error);
+      toast({
+        variant: "destructive",
+        title: "Approval Failed",
+        description: "Failed to approve the certification request. Please try again.",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const handleReject = async () => {
