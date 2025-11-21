@@ -26,7 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import html2pdf from "html2pdf.js";
 
 export default function MyDocumentsPage() {
     const [user, loadingUser] = useAuthState(auth);
@@ -113,14 +114,64 @@ export default function MyDocumentsPage() {
         }
     };
 
-    const handleDownload = (doc: any) => {
-        // For certified documents, download the PDF
-        if (doc.isCertified && doc.downloadUrl) {
+    const handleDownload = async (doc: any) => {
+        // For certified documents, generate PDF on-demand
+        if (doc.isCertified) {
+            try {
+                toast({
+                    title: "Generating PDF...",
+                    description: "Your certified document is being prepared for download.",
+                });
+
+                // Create a temporary element with the certificate content
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.top = '-9999px';
+
+                // Generate certificate HTML based on document type and data
+                const certificateHTML = generateCertificateHTML(doc);
+                tempDiv.innerHTML = certificateHTML;
+                document.body.appendChild(tempDiv);
+
+                // Generate and download PDF
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `${doc.documentName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+                };
+
+                await html2pdf().set(opt).from(tempDiv).save();
+
+                // Clean up
+                document.body.removeChild(tempDiv);
+
+                toast({
+                    title: "PDF Downloaded",
+                    description: "Your certified document has been downloaded successfully.",
+                });
+            } catch (error) {
+                console.error("PDF generation error:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Download Failed",
+                    description: "Failed to generate PDF. Please try again or contact support.",
+                });
+            }
+        } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');
         } else {
             toast({
                 title: "Download Not Available",
-                description: "The PDF for this certified document is not yet available. Please contact support.",
+                description: "The PDF for this document is not available. Please contact support.",
                 variant: "destructive",
             });
         }
@@ -134,7 +185,109 @@ export default function MyDocumentsPage() {
                 description: `This is a certified ${doc.documentType} for ${doc.documentName}. Use the download button to get the PDF.`,
             });
         }
-    };
+    }
+
+    const generateCertificateHTML = (doc: any) => {
+        const data = doc.certificateData;
+        if (!data) return '<div>No certificate data available</div>';
+
+        const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+
+        // Generate HTML based on certificate type
+        switch (doc.documentType.toLowerCase()) {
+            case 'net worth certificate':
+                const totalAssets = data.assets?.reduce((acc: number, asset: any) => acc + (Number(asset.value) || 0), 0) || 0;
+                const totalLiabilities = data.liabilities?.reduce((acc: number, liability: any) => acc + (Number(liability.value) || 0), 0) || 0;
+                const netWorth = totalAssets - totalLiabilities;
+
+                return `
+                    <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
+                        <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
+                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
+                            <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
+                            <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
+                            <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                        </header>
+                        <h4 style="font-weight: bold; text-align: center; margin: 20px 0; font-size: 16px;">TO WHOM IT MAY CONCERN</h4>
+                        <h4 style="font-weight: bold; text-align: center; text-decoration: underline; margin: 20px 0; font-size: 18px;">NET WORTH CERTIFICATE</h4>
+                        <p style="margin: 20px 0; text-align: justify;">This is to certify that the Net Worth of Sri <strong style="font-weight: bold;">${data.clientName || 'N/A'}</strong>, S/o (or other relation) [Parent's Name], R/o ${data.clientAddress || 'N/A'} (PAN: <strong style="font-weight: bold;">${data.clientPan || 'N/A'}</strong>) as on <strong style="font-weight: bold;">${data.asOnDate ? new Date(data.asOnDate).toLocaleDateString('en-GB', dateOptions) : 'N/A'}</strong> is as follows:</p>
+
+                        <h5 style="font-weight: bold; margin: 30px 0 15px 0; font-size: 16px;">A. ASSETS</h5>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <th style="width: 70%; text-align: left; padding: 8px 12px; font-weight: bold;">Description</th>
+                                    <th style="text-align: right; padding: 8px 12px; font-weight: bold;">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(data.assets || []).map((asset: any) => `
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 12px;">${asset.description || ''}</td>
+                                        <td style="text-align: right; padding: 8px 12px; font-family: monospace;">${(asset.value || 0).toLocaleString('en-IN')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top: 2px solid #000;">
+                                    <td style="padding: 8px 12px; font-weight: bold;">Total Assets</td>
+                                    <td style="text-align: right; padding: 8px 12px; font-weight: bold; font-family: monospace;">${totalAssets.toLocaleString('en-IN')}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <h5 style="font-weight: bold; margin: 30px 0 15px 0; font-size: 16px;">B. LIABILITIES</h5>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <th style="width: 70%; text-align: left; padding: 8px 12px; font-weight: bold;">Description</th>
+                                    <th style="text-align: right; padding: 8px 12px; font-weight: bold;">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(data.liabilities || []).map((liability: any) => `
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px 12px;">${liability.description || ''}</td>
+                                        <td style="text-align: right; padding: 8px 12px; font-family: monospace;">${(liability.value || 0).toLocaleString('en-IN')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top: 2px solid #000;">
+                                    <td style="padding: 8px 12px; font-weight: bold;">Total Liabilities</td>
+                                    <td style="text-align: right; padding: 8px 12px; font-weight: bold; font-family: monospace;">${totalLiabilities.toLocaleString('en-IN')}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <h5 style="font-weight: bold; margin: 30px 0 15px 0; font-size: 16px;">NET WORTH (A - B)</h5>
+                        <p style="margin: 15px 0; text-align: justify;">The net worth of <strong style="font-weight: bold;">${data.clientName || 'N/A'}</strong> as on ${data.asOnDate ? new Date(data.asOnDate).toLocaleDateString('en-GB', dateOptions) : 'N/A'} is <strong style="font-weight: bold;">₹${netWorth.toLocaleString('en-IN')}</strong>.</p>
+
+                        <div style="margin-top: 60px; text-align: justify;">
+                            <p style="margin: 15px 0;">This certificate is issued based on the information and records produced before us and is true to the best of our knowledge and belief.</p>
+                            <p style="margin: 40px 0 10px 0; font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
+                            <p style="margin: 5px 0;">Chartered Accountants</p>
+                            <div style="height: 80px;"></div>
+                            <p style="margin: 5px 0;">(S. Kranthi Kumar)</p>
+                            <p style="margin: 5px 0;">Proprietor</p>
+                            <p style="margin: 5px 0;">Membership No: 224983</p>
+                        </div>
+                    </div>
+                `;
+
+            default:
+                return `
+                    <div style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+                        <h1>Certified Document</h1>
+                        <p><strong>Document Type:</strong> ${doc.documentType}</p>
+                        <p><strong>Client:</strong> ${doc.documentName}</p>
+                        <p><strong>Status:</strong> Certified</p>
+                        <p><strong>Approved Date:</strong> ${doc.approvedAt ? doc.approvedAt.toDate().toLocaleDateString() : 'N/A'}</p>
+                        <p>This is a certified document approved by S. KRANTHI KUMAR & Co.</p>
+                    </div>
+                `;
+        }
+    };;
 
 
     return (
