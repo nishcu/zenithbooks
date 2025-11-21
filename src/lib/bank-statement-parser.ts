@@ -147,7 +147,8 @@ export function parseCSV(file: File): Promise<ParseResult> {
         if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
 
         const transactions: ParsedTransaction[] = [];
-        const startIndex = headers.some(h => h.includes('date')) ? 1 : 0;
+        const hasHeaderRow = headers.some(h => h.includes('date') || h.includes('description'));
+        const startIndex = hasHeaderRow ? 1 : 0;
         let rawRowCount = 0;
         let skippedRowCount = 0;
         let lastKnownDate: string | null = null;
@@ -159,6 +160,23 @@ export function parseCSV(file: File): Promise<ParseResult> {
           if (values.length < 2) continue;
           const hasContent = values.some(value => value && value.trim() !== '');
           if (!hasContent) continue;
+
+          const referenceValue = getValue(referenceIndex);
+          const reference = (referenceValue || '').toString().trim();
+          const baseDescription = getValue(descIndex)?.trim();
+
+          if (!reference && !baseDescription) {
+            skippedRowCount++;
+            continue;
+          }
+
+          const referenceValue = String(getCell(referenceIndex) || '');
+          const description = String(getCell(descIndex) || '');
+
+          if (!referenceValue && !description) {
+            skippedRowCount++;
+            continue;
+          }
 
           rawRowCount++;
 
@@ -324,7 +342,8 @@ export function parseExcel(file: File): Promise<ParseResult> {
         if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
 
         const transactions: ParsedTransaction[] = [];
-        const startIndex = headerRow.some(h => h.includes('date')) ? 1 : 0;
+        const hasHeaderRow = headerRow.some(h => h.includes('date') || h.includes('description'));
+        const startIndex = hasHeaderRow ? 1 : 0;
         let rawRowCount = 0;
         let skippedRowCount = 0;
         let lastKnownDate: string | null = null;
