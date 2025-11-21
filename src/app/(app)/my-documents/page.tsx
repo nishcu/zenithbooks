@@ -29,6 +29,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import html2pdf from "html2pdf.js";
 
+const numberToWords = (num: number): string => {
+    const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
+    const b = ['', '', 'twenty','thirty','forty','fifty', 'sixty','seventy','eighty','ninety'];
+    if (!num) return 'Zero';
+    if ((num.toString()).length > 9) return 'overflow';
+    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return '';
+    let str = '';
+    str += (parseInt(n[1]) != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+    str += (parseInt(n[2]) != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+    str += (parseInt(n[3]) != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+    str += (parseInt(n[4]) != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+    str += (parseInt(n[5]) != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+    return str.trim().charAt(0).toUpperCase() + str.trim().slice(1) + " Only";
+};
+
 export default function MyDocumentsPage() {
     const [user, loadingUser] = useAuthState(auth);
     const router = useRouter();
@@ -351,6 +367,68 @@ export default function MyDocumentsPage() {
                             <p style="margin: 5px 0;">(S. Kranthi Kumar)</p>
                             <p style="margin: 5px 0;">Proprietor</p>
                             <p style="margin: 5px 0;">Membership No: 224983</p>
+                        </div>
+                    </div>
+                `;
+
+            case 'turnover certificate':
+                return `
+                    <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
+                        <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
+                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
+                            <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
+                            <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
+                            <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                        </header>
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+                            <div>
+                                <p style="font-weight: bold; font-size: 14px;">TO WHOMSOEVER IT MAY CONCERN</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-weight: bold;">UDIN: ${doc.udin || '[UDIN GOES HERE]'}</p>
+                                <p style="font-size: 12px;">Date: ${new Date().toLocaleDateString('en-GB', dateOptions)}</p>
+                            </div>
+                        </div>
+
+                        <h4 style="font-weight: bold; text-align: center; text-decoration: underline; margin: 40px 0; font-size: 18px;">TURNOVER CERTIFICATE</h4>
+
+                        <p style="margin: 20px 0; text-align: justify;">This is to certify that we have verified the books of accounts and other relevant records of <strong style="font-weight: bold;">M/s ${data.entityName || 'N/A'}</strong>, having its registered office at ${data.entityAddress || 'N/A'} and holding PAN <strong style="font-weight: bold;">${data.entityPan || 'N/A'}</strong>.</p>
+
+                        <p style="margin: 20px 0; text-align: justify;">Based on our verification of the ${data.dataSource || 'records'}, we certify that the total turnover of the entity for the financial year ended on 31st March ${data.financialYear?.slice(0,4) || 'N/A'} is as follows:</p>
+
+                        <table style="width: 100%; border-collapse: collapse; margin: 30px 0; font-size: 14px;">
+                            <tbody>
+                                <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                                    <td style="padding: 12px; font-weight: bold;">Financial Year</td>
+                                    <td style="padding: 12px; text-align: right; font-weight: bold;">${data.financialYear || 'N/A'}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <td style="padding: 12px; font-weight: bold;">Turnover / Gross Receipts</td>
+                                    <td style="padding: 12px; text-align: right; font-family: monospace; font-weight: bold;">₹ ${(data.turnoverAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin: 20px 0;">The total turnover is <strong style="font-weight: bold;">Rupees ${numberToWords(data.turnoverAmount || 0)} only</strong>.</p>
+
+                        <p style="margin: 40px 0; font-size: 12px; text-align: justify;">This certificate is issued at the specific request of the entity for the purpose of submitting to [Purpose, e.g., Tender Application]. Our liability is limited to the extent of information provided by the management and is based on the records produced before us.</p>
+
+                        <div style="margin-top: 100px; text-align: right;">
+                            <p style="font-weight: bold; margin-bottom: 5px;">For S. KRANTHI KUMAR & Co.</p>
+                            <p style="margin-bottom: 5px;">Chartered Accountants</p>
+                            <div style="height: 80px;"></div>
+
+                            ${doc.digitalSignature ? `
+                            <div style="margin: 20px 0; text-align: center;">
+                                <p style="margin: 10px 0; font-style: italic;">Digital Signature:</p>
+                                <p style="margin: 10px 0; font-family: 'Brush Script MT', cursive; font-size: 18px;">${doc.digitalSignature}</p>
+                            </div>
+                            ` : ''}
+
+                            <p style="margin-bottom: 5px;">(S. Kranthi Kumar)</p>
+                            <p style="margin-bottom: 5px;">Proprietor</p>
+                            <p style="margin-bottom: 5px;">Membership No: 224983</p>
                         </div>
                     </div>
                 `;
