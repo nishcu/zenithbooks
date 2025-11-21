@@ -394,7 +394,66 @@ export default function InvoicesPage() {
               </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-4">
+            {filteredInvoices.map((invoice) => (
+              <Card key={invoice.id} className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-lg">{invoice.id}</h3>
+                    <p className="text-sm text-muted-foreground">{invoice.customer}</p>
+                  </div>
+                  <div className="text-right">
+                    {getStatusBadge(invoice.status)}
+                    <p className="font-semibold text-lg mt-1">₹{invoice.amount.toFixed(2)}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div>
+                    <p className="text-muted-foreground">Date</p>
+                    <p>{format(new Date(invoice.date), "dd MMM, yyyy")}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Due Date</p>
+                    <p>{format(new Date(invoice.dueDate), "dd MMM, yyyy")}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end flex-wrap">
+                  <Button variant="outline" size="sm" onClick={() => handleAction('View', invoice)}>
+                    <FileText className="h-4 w-4 mr-1" /> View
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleAction('Edit', invoice)} disabled={invoice.status === 'Cancelled'}>
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => handleAction('Ewaybill', invoice)} disabled={invoice.status === 'Cancelled'}>
+                        <FileSpreadsheet className="mr-2" /> E-Waybill
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleAction('Remind', invoice)} disabled={invoice.status === 'Cancelled' || invoice.status === 'Paid'}>
+                        <MessageSquare className="mr-2" /> Send Reminder
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleAction('Duplicate', invoice)}>
+                        <Copy className="mr-2" /> Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onSelect={() => handleAction('Cancel', invoice)} disabled={invoice.status === 'Cancelled'}>
+                        <Trash2 className="mr-2" /> Cancel
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
                 <TableHeader>
                 <TableRow>
@@ -452,6 +511,23 @@ export default function InvoicesPage() {
                 </TableBody>
             </Table>
           </div>
+
+          {/* Empty State */}
+          {filteredInvoices.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No invoices found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm ? "No invoices match your search criteria." : "Create your first invoice to get started."}
+              </p>
+              <Link href="/billing/invoices/new">
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Invoice
+                </Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
       

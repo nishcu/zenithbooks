@@ -12,6 +12,8 @@ import { SocialShareButtons } from '@/components/social-share-buttons';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 
+export default function BlogPostPage() {
+
 // Calculate reading time
 const calculateReadingTime = (content: string[]): number => {
     const words = content.join(' ').split(/\s+/).length;
@@ -38,6 +40,49 @@ export default function BlogPostPage() {
     const [readingProgress, setReadingProgress] = useState(0);
 
     const post = samplePosts.find(p => p.id === id);
+
+    // Set dynamic meta tags for social sharing
+    useEffect(() => {
+        if (post && typeof window !== 'undefined') {
+            const baseUrl = window.location.origin;
+            const postUrl = `${baseUrl}/blog/${post.id}`;
+
+            // Update document title
+            document.title = `${post.title} | ZenithBooks`;
+
+            // Create or update meta tags
+            const updateMetaTag = (property: string, content: string) => {
+                let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+                if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.setAttribute('property', property);
+                    document.head.appendChild(meta);
+                }
+                meta.setAttribute('content', content);
+            };
+
+            // Open Graph tags
+            updateMetaTag('og:title', post.title);
+            updateMetaTag('og:description', post.description);
+            updateMetaTag('og:url', postUrl);
+            updateMetaTag('og:image', post.imageUrl);
+            updateMetaTag('og:image:width', '1200');
+            updateMetaTag('og:image:height', '630');
+            updateMetaTag('og:type', 'article');
+            updateMetaTag('og:site_name', 'ZenithBooks');
+
+            // Twitter Card tags
+            updateMetaTag('twitter:card', 'summary_large_image');
+            updateMetaTag('twitter:title', post.title);
+            updateMetaTag('twitter:description', post.description);
+            updateMetaTag('twitter:image', post.imageUrl);
+
+            // Article specific tags
+            updateMetaTag('article:author', post.author);
+            updateMetaTag('article:published_time', post.date);
+            updateMetaTag('article:section', post.category);
+        }
+    }, [post, id]);
 
     // Reading progress indicator
     useEffect(() => {
