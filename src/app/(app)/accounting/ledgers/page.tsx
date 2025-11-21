@@ -71,6 +71,16 @@ export default function LedgersPage() {
   }, [userAccountsSnapshot, customersSnapshot, vendorsSnapshot]);
 
   useEffect(() => {
+    if (!fromDate && !toDate) {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      setFromDate(startOfMonth);
+      setToDate(today);
+      setDateRange({ from: startOfMonth, to: today });
+    }
+  }, [fromDate, toDate]);
+
+  useEffect(() => {
     if (!(user && selectedAccount && dateRange?.from && dateRange?.to)) {
       setJournalVouchers([]);
       return;

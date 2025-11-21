@@ -41,6 +41,13 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 // --- Type Definitions ---
 type CombinedAccount = Account & { id?: string };
 type Balances = Record<string, number>;
+type ExportRow = {
+    section: "Liabilities" | "Assets";
+    category: string;
+    label: string;
+    amount?: number;
+    type: "header" | "row" | "total";
+};
 
 // --- Sub-Components ---
 const ReportTableRow: FC<{ label: string; amount?: number; isSub?: boolean; isTotal?: boolean; className?: string }> = ({ label, amount, isSub, isTotal, className }) => (
@@ -116,8 +123,23 @@ export default function BalanceSheetPage() {
   const getDisplayBalance = (code: string, type: 'Asset' | 'Liability'): number => type === 'Asset' ? -getBalance(code) : getBalance(code);
 
   // --- Liabilities & Equity Rows ---
-  const { liabilityRows, totalEquityAndLiabilities } = useMemo(() => {
+  const { liabilityRows, liabilityExportRows, totalEquityAndLiabilities } = useMemo(() => {
     const rows: ReactNode[] = [];
+    const exportRows: ExportRow[] = [];
+    const pushHeader = (label: string) => {
+        rows.push(<TableRow key={`le-header-${label}`} className='font-bold bg-muted/30'><TableCell colSpan={2}>{label}</TableCell></TableRow>);
+        exportRows.push({ section: "Liabilities", category: label, label, type: "header" });
+    };
+    const pushLine = (category: string, label: string, amount: number, opts?: { isSub?: boolean; isTotal?: boolean }) => {
+        rows.push(<ReportTableRow key={`le-${label}`} label={label} amount={amount} isSub={opts?.isSub} isTotal={opts?.isTotal} />);
+        exportRows.push({
+            section: "Liabilities",
+            category,
+            label,
+            amount,
+            type: opts?.isTotal ? "total" : "row",
+        });
+    };
     const capitalAccount = getDisplayBalance('2010', 'Liability');
     const reservesAndSurplus = getDisplayBalance('2020', 'Liability') + getDisplayBalance('2030', 'Liability') + netProfit;
     const longTermLiabilitiesAccounts = combinedAccounts.filter(a => a.type === 'Long Term Liability');
@@ -126,20 +148,45 @@ export default function BalanceSheetPage() {
     const totalCurrentLiabilities = currentLiabilitiesAccounts.reduce((sum, acc) => sum + getDisplayBalance(acc.code, 'Liability'), 0);
     const total = capitalAccount + reservesAndSurplus + totalLongTermLiabilities + totalCurrentLiabilities;
 
-    rows.push(<TableRow key="le-cr-header" className='font-bold'><TableCell colSpan={2}>Capital & Reserves</TableCell></TableRow>);
-    rows.push(<ReportTableRow key="le-capital" label="Capital Account" amount={capitalAccount} isSub />);
-    rows.push(<ReportTableRow key="le-reserves" label="Reserves & Surplus (incl. P&L)" amount={reservesAndSurplus} isSub />);
-    rows.push(<TableRow key="le-ltl-header" className='font-bold'><TableCell colSpan={2}>Long-Term Liabilities</TableCell></TableRow>);
-    longTermLiabilitiesAccounts.forEach(acc => rows.push(<ReportTableRow key={`le-${acc.code}`} label={acc.name} amount={getDisplayBalance(acc.code, 'Liability')} isSub />));
-    rows.push(<TableRow key="le-cl-header" className='font-bold'><TableCell colSpan={2}>Current Liabilities</TableCell></TableRow>);
-    currentLiabilitiesAccounts.forEach(acc => rows.push(<ReportTableRow key={`le-${acc.code}`} label={acc.name} amount={getDisplayBalance(acc.code, 'Liability')} isSub />));
+    pushHeader("Capital & Reserves");
+    pushLine("Capital & Reserves", "Capital Account", capitalAccount, { isSub: true });
+    pushLine("Capital & Reserves", "Reserves & Surplus (incl. P&L)", reservesAndSurplus, { isSub: true });
+
+    pushHeader("Long-Term Liabilities");
+    longTermLiabilitiesAccounts.forEach(acc => pushLine("Long-Term Liabilities", acc.name, getDisplayBalance(acc.code, 'Liability'), { isSub: true }));
+
+    pushHeader("Current Liabilities");
+    currentLiabilitiesAccounts.forEach(acc => pushLine("Current Liabilities", acc.name, getDisplayBalance(acc.code, 'Liability'), { isSub: true }));
     
-    return { liabilityRows: rows, totalEquityAndLiabilities: total };
+    exportRows.push({
+        section: "Liabilities",
+        category: "Liabilities & Equity",
+        label: "Total Liabilities & Equity",
+        amount: total,
+        type: "total",
+    });
+    
+    return { liabilityRows: rows, liabilityExportRows: exportRows, totalEquityAndLiabilities: total };
   }, [combinedAccounts, getDisplayBalance, netProfit]);
 
   // --- Asset Rows ---
-  const { assetRows, totalAssets } = useMemo(() => {
+  const { assetRows, assetExportRows, totalAssets } = useMemo(() => {
     const rows: ReactNode[] = [];
+    const exportRows: ExportRow[] = [];
+    const pushHeader = (label: string) => {
+        rows.push(<TableRow key={`as-header-${label}`} className='font-bold bg-muted/30'><TableCell colSpan={2}>{label}</TableCell></TableRow>);
+        exportRows.push({ section: "Assets", category: label, label, type: "header" });
+    };
+    const pushLine = (category: string, label: string, amount: number, opts?: { isSub?: boolean; isTotal?: boolean }) => {
+        rows.push(<ReportTableRow key={`as-${label}`} label={label} amount={amount} isSub={opts?.isSub} isTotal={opts?.isTotal} />);
+        exportRows.push({
+            section: "Assets",
+            category,
+            label,
+            amount,
+            type: opts?.isTotal ? "total" : "row",
+        });
+    };
     const fixedAssetsAccounts = combinedAccounts.filter(a => a.type === 'Fixed Asset');
     const netFixedAssets = fixedAssetsAccounts.reduce((sum, acc) => sum + getDisplayBalance(acc.code, 'Asset'), 0);
     const totalInvestments = combinedAccounts.filter(a => a.type === 'Investment').reduce((sum, acc) => sum + getDisplayBalance(acc.code, 'Asset'), 0);
@@ -149,22 +196,60 @@ export default function BalanceSheetPage() {
     const totalCurrentAssets = totalReceivables + totalOtherCurrentAssets;
     const total = netFixedAssets + totalInvestments + totalCurrentAssets;
 
-    rows.push(<TableRow key="as-fa-header" className='font-bold'><TableCell colSpan={2}>Fixed Assets</TableCell></TableRow>);
-    fixedAssetsAccounts.forEach(acc => rows.push(<ReportTableRow key={`as-${acc.code}`} label={acc.name} amount={getDisplayBalance(acc.code, 'Asset')} isSub />));
-    rows.push(<ReportTableRow key="as-nfa-total" label='Net Fixed Assets' amount={netFixedAssets} isTotal />);
-    rows.push(<ReportTableRow key="as-inv" label='Investments' amount={totalInvestments} />);
-    rows.push(<TableRow key="as-ca-header" className='font-bold'><TableCell colSpan={2}>Current Assets</TableCell></TableRow>);
-    rows.push(<ReportTableRow key="as-ar" label="Accounts Receivable" amount={totalReceivables} isSub />);
-    otherCurrentAssetsAccounts.forEach(acc => rows.push(<ReportTableRow key={`as-${acc.code}`} label={acc.name} amount={getDisplayBalance(acc.code, 'Asset')} isSub />));
-    rows.push(<ReportTableRow key="as-tca-total" label='Total Current Assets' amount={totalCurrentAssets} isTotal />);
+    pushHeader("Fixed Assets");
+    fixedAssetsAccounts.forEach(acc => pushLine("Fixed Assets", acc.name, getDisplayBalance(acc.code, 'Asset'), { isSub: true }));
+    pushLine("Fixed Assets", 'Net Fixed Assets', netFixedAssets, { isTotal: true });
+    pushLine("Investments", 'Investments', totalInvestments);
+
+    pushHeader("Current Assets");
+    pushLine("Current Assets", "Accounts Receivable", totalReceivables, { isSub: true });
+    otherCurrentAssetsAccounts.forEach(acc => pushLine("Current Assets", acc.name, getDisplayBalance(acc.code, 'Asset'), { isSub: true }));
+    pushLine("Current Assets", 'Total Current Assets', totalCurrentAssets, { isTotal: true });
+    exportRows.push({
+        section: "Assets",
+        category: "Assets",
+        label: "Total Assets",
+        amount: total,
+        type: "total",
+    });
     
-    return { assetRows: rows, totalAssets: total };
+    return { assetRows: rows, assetExportRows: exportRows, totalAssets: total };
   }, [combinedAccounts, getDisplayBalance]);
 
   // --- Mismatch & Download Logic ---
   const difference = totalEquityAndLiabilities - totalAssets;
   const isMismatched = Math.abs(difference) > 0.01;
-  const handleDownloadCsv = () => { /* Restore this if needed */ toast({ title: "Not Implemented", description: "CSV download will be restored shortly." }) };
+  const handleDownloadCsv = () => {
+    const header = ["Section", "Category", "Line Item", "Amount (₹)"];
+    const formatNumber = (value?: number) => (typeof value === "number" ? value.toFixed(2) : "");
+    const rows = [
+        ...liabilityExportRows.map(row => [
+            row.section,
+            row.category,
+            row.label,
+            formatNumber(row.amount),
+        ]),
+        [],
+        ...assetExportRows.map(row => [
+            row.section,
+            row.category,
+            row.label,
+            formatNumber(row.amount),
+        ]),
+    ];
+
+    const csv = [header, ...rows].map(line => line.map(cell => `"${cell ?? ""}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Balance-Sheet-${format(date || new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV downloaded", description: "Balance sheet exported successfully." });
+  };
 
 
   return (
@@ -187,7 +272,10 @@ export default function BalanceSheetPage() {
         </div>
       </div>
 
-      <div ref={reportRef} className='p-4 md:p-8'>
+      <div
+        ref={reportRef}
+        className='mx-auto max-w-5xl rounded-3xl border bg-white shadow-2xl p-6 md:p-10 text-slate-900 print:bg-white'
+      >
         <div className='text-center mb-6'>
           <h2 className='text-xl md:text-2xl font-bold'>Balance Sheet</h2>
           <p className='text-sm md:text-base text-muted-foreground'>As on {format(date || new Date(), 'PPP')}</p>
