@@ -34,6 +34,7 @@ import { db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import html2pdf from "html2pdf.js";
+import { readBrandingSettings } from "@/lib/branding";
 
 const numberToWords = (num: number): string => {
     const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
@@ -205,6 +206,17 @@ export default function AdminCertificationRequests() {
     }
 
     try {
+      // For certificates, use CA firm details instead of user company branding
+      const caFirmDetails = {
+        companyName: "S K J D & Associates",
+        address1: "Chartered Accountants",
+        address2: "",
+        city: "Hyderabad",
+        state: "Telangana",
+        pincode: "500001",
+        gstin: "GSTIN of CA Firm",
+        pan: "PAN of CA Firm"
+      };
       toast({
         title: "Generating PDF...",
         description: "Your draft certificate is being prepared for download.",
@@ -225,10 +237,10 @@ export default function AdminCertificationRequests() {
           certificateHTML = `
             <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
               <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
-                <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
-                <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
-                <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
-                <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">${caFirmDetails.companyName}</h1>
+                <p style="font-size: 14px; margin: 0 0 4px 0;">${caFirmDetails.address1}</p>
+                <p style="font-size: 12px; margin: 0 0 4px 0;">${caFirmDetails.city}, ${caFirmDetails.state} - ${caFirmDetails.pincode}</p>
+                <p style="font-size: 12px; margin: 0;">GSTIN: ${caFirmDetails.gstin}</p>
               </header>
               <h4 style="font-weight: bold; text-align: center; margin: 20px 0; font-size: 16px;">TO WHOM IT MAY CONCERN</h4>
               <h4 style="font-weight: bold; text-align: center; text-decoration: underline; margin: 20px 0; font-size: 18px;">NET WORTH CERTIFICATE</h4>
@@ -287,8 +299,8 @@ export default function AdminCertificationRequests() {
 
               <div style="margin-top: 60px; text-align: justify;">
                 <p style="margin: 15px 0;">This certificate is issued based on the information and records produced before us and is true to the best of our knowledge and belief.</p>
-                <p style="margin: 40px 0 10px 0; font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
-                <p style="margin: 5px 0;">Chartered Accountants</p>
+                            <p style="margin: 40px 0 10px 0; font-weight: bold;">For ${caFirmDetails.companyName}</p>
+                            <p style="margin: 5px 0;">${caFirmDetails.address1}</p>
                 <div style="height: 80px;"></div>
                 <p style="margin: 5px 0;">(S. Kranthi Kumar)</p>
                 <p style="margin: 5px 0;">Proprietor</p>
@@ -302,10 +314,10 @@ export default function AdminCertificationRequests() {
           certificateHTML = `
             <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
               <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
-                <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
-                <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
-                <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
-                <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">${caFirmDetails.companyName}</h1>
+                <p style="font-size: 14px; margin: 0 0 4px 0;">${caFirmDetails.address1}</p>
+                <p style="font-size: 12px; margin: 0 0 4px 0;">${caFirmDetails.city}, ${caFirmDetails.state} - ${caFirmDetails.pincode}</p>
+                <p style="font-size: 12px; margin: 0;">GSTIN: ${caFirmDetails.gstin}</p>
               </header>
 
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
@@ -341,9 +353,9 @@ export default function AdminCertificationRequests() {
 
               <p style="margin: 40px 0; font-size: 12px; text-align: justify;">This certificate is issued at the specific request of the entity for the purpose of submitting to [Purpose, e.g., Tender Application]. Our liability is limited to the extent of information provided by the management and is based on the records produced before us.</p>
 
-              <div style="margin-top: 100px; text-align: right;">
-                <p style="font-weight: bold; margin-bottom: 5px;">For S. KRANTHI KUMAR & Co.</p>
-                <p style="margin-bottom: 5px;">Chartered Accountants</p>
+                        <div style="margin-top: 100px; text-align: right;">
+                            <p style="font-weight: bold; margin-bottom: 5px;">For ${caFirmDetails.companyName}</p>
+                            <p style="margin-bottom: 5px;">${caFirmDetails.address1}</p>
                 <div style="height: 80px;"></div>
                 <p style="margin-bottom: 5px;">(S. Kranthi Kumar)</p>
                 <p style="margin-bottom: 5px;">Proprietor</p>

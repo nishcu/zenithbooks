@@ -16,6 +16,7 @@ import { MoreHorizontal, FileText, Edit, Trash2, Download, FileArchive, CheckCir
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { readBrandingSettings } from "@/lib/branding";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -235,6 +236,17 @@ export default function MyDocumentsPage() {
 
     const generateCertificateHTML = (doc: any) => {
         const data = doc.certificateData || doc.formData;
+        // For certificates, use CA firm details instead of user company branding
+        const caFirmDetails = {
+            companyName: "S K J D & Associates",
+            address1: "Chartered Accountants",
+            address2: "",
+            city: "Hyderabad",
+            state: "Telangana",
+            pincode: "500001",
+            gstin: "GSTIN of CA Firm",
+            pan: "PAN of CA Firm"
+        };
         console.log("Certificate data for PDF generation:", data); // Debug log
         console.log("Full document object:", doc); // Debug log
 
@@ -249,7 +261,7 @@ export default function MyDocumentsPage() {
                         ${doc.udin ? `<p style="margin-bottom: 10px;"><strong>UDIN:</strong> ${doc.udin}</p>` : ''}
 
                         <div style="margin: 30px 0; text-align: justify;">
-                            <p>This is a certified document approved by S. KRANTHI KUMAR & Co.</p>
+                            <p>This is a certified document approved by ${caFirmDetails.companyName}.</p>
                             <p style="margin-top: 20px; color: #666;">Note: Detailed certificate data is not available for PDF generation.</p>
 
                             ${doc.digitalSignature ? `
@@ -260,10 +272,9 @@ export default function MyDocumentsPage() {
                             ` : ''}
 
                             <div style="margin-top: 40px;">
-                                <p style="font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
-                                <p>Chartered Accountants</p>
+                                <p style="font-weight: bold;">For ${caFirmDetails.companyName}</p>
+                                <p>${caFirmDetails.address1}</p>
                                 <div style="height: 40px;"></div>
-                                <p>(S. Kranthi Kumar)</p>
                                 <p>Proprietor</p>
                                 <p>Membership No: 224983</p>
                             </div>
@@ -284,10 +295,10 @@ export default function MyDocumentsPage() {
                 return `
                     <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
                         <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
-                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
-                            <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
-                            <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
-                            <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">${caFirmDetails.companyName}</h1>
+                            <p style="font-size: 14px; margin: 0 0 4px 0;">${caFirmDetails.address1}</p>
+                            <p style="font-size: 12px; margin: 0 0 4px 0;">${caFirmDetails.city}, ${caFirmDetails.state} - ${caFirmDetails.pincode}</p>
+                            <p style="font-size: 12px; margin: 0;">GSTIN: ${caFirmDetails.gstin}</p>
                         </header>
                         <h4 style="font-weight: bold; text-align: center; margin: 20px 0; font-size: 16px;">TO WHOM IT MAY CONCERN</h4>
                         <h4 style="font-weight: bold; text-align: center; text-decoration: underline; margin: 20px 0; font-size: 18px;">NET WORTH CERTIFICATE</h4>
@@ -353,8 +364,8 @@ export default function MyDocumentsPage() {
                             </div>
                             ` : ''}
 
-                            <p style="margin: 40px 0 10px 0; font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
-                            <p style="margin: 5px 0;">Chartered Accountants</p>
+                            <p style="margin: 40px 0 10px 0; font-weight: bold;">For ${caFirmDetails.companyName}</p>
+                            <p style="margin: 5px 0;">${caFirmDetails.address1}</p>
                             <div style="height: 80px;"></div>
 
                             ${doc.digitalSignature ? `
@@ -375,10 +386,10 @@ export default function MyDocumentsPage() {
                 return `
                     <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff; max-width: 100%; padding: 40px; margin: 0; box-sizing: border-box;">
                         <header style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px;">
-                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">S. KRANTHI KUMAR & Co.</h1>
-                            <p style="font-size: 14px; margin: 0 0 4px 0;">Chartered Accountants</p>
-                            <p style="font-size: 12px; margin: 0 0 4px 0;">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
-                            <p style="font-size: 12px; margin: 0;">Email: skkandco@gmail.com</p>
+                            <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0 0 8px 0;">${caFirmDetails.companyName}</h1>
+                            <p style="font-size: 14px; margin: 0 0 4px 0;">${caFirmDetails.address1}</p>
+                            <p style="font-size: 12px; margin: 0 0 4px 0;">${caFirmDetails.city}, ${caFirmDetails.state} - ${caFirmDetails.pincode}</p>
+                            <p style="font-size: 12px; margin: 0;">GSTIN: ${caFirmDetails.gstin}</p>
                         </header>
 
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
@@ -415,8 +426,8 @@ export default function MyDocumentsPage() {
                         <p style="margin: 40px 0; font-size: 12px; text-align: justify;">This certificate is issued at the specific request of the entity for the purpose of submitting to [Purpose, e.g., Tender Application]. Our liability is limited to the extent of information provided by the management and is based on the records produced before us.</p>
 
                         <div style="margin-top: 100px; text-align: right;">
-                            <p style="font-weight: bold; margin-bottom: 5px;">For S. KRANTHI KUMAR & Co.</p>
-                            <p style="margin-bottom: 5px;">Chartered Accountants</p>
+                            <p style="font-weight: bold; margin-bottom: 5px;">For ${caFirmDetails.companyName}</p>
+                            <p style="margin-bottom: 5px;">${caFirmDetails.address1}</p>
                             <div style="height: 80px;"></div>
 
                             ${doc.digitalSignature ? `
@@ -441,7 +452,7 @@ export default function MyDocumentsPage() {
                         <p><strong>Client:</strong> ${doc.documentName}</p>
                         <p><strong>Status:</strong> Certified</p>
                         <p><strong>Approved Date:</strong> ${doc.approvedAt ? doc.approvedAt.toDate().toLocaleDateString() : 'N/A'}</p>
-                        <p>This is a certified document approved by S. KRANTHI KUMAR & Co.</p>
+                        <p>This is a certified document approved by ${branding.companyName}.</p>
                     </div>
                 `;
         }
