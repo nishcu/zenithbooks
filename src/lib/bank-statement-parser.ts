@@ -15,6 +15,12 @@ export interface ParsedTransaction {
   type?: 'debit' | 'credit';
 }
 
+export interface SkippedRow {
+  rowNumber: number;
+  reason: string;
+  raw?: string;
+}
+
 export interface ParseResult {
   transactions: ParsedTransaction[];
   accountNumber?: string;
@@ -25,6 +31,7 @@ export interface ParseResult {
   rawRowCount?: number;
   skippedRowCount?: number;
   warnings?: string[];
+  skippedRows?: SkippedRow[];
 }
 
 function parseAmount(value: unknown): number | null {
@@ -147,6 +154,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
         if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
 
         const transactions: ParsedTransaction[] = [];
+        const skippedRows: SkippedRow[] = [];
         const hasHeaderRow = headers.some(h => h.includes('date') || h.includes('description'));
         const startIndex = hasHeaderRow ? 1 : 0;
         let rawRowCount = 0;
@@ -161,16 +169,23 @@ export function parseCSV(file: File): Promise<ParseResult> {
           const hasContent = values.some(value => value && value.trim() !== '');
           if (!hasContent) continue;
 
+          const displayRowNumber = i + 1;
+          const rawSnapshot = values.join(' | ');
+          rawRowCount++;
+
           const rawReference = referenceIndex >= 0 ? getValue(referenceIndex) : '';
           const referenceText = (rawReference || '').toString().trim();
           const baseDescription = (getValue(descIndex) || '').trim();
 
           if (!referenceText && !baseDescription) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing description or reference',
+              raw: rawSnapshot,
+            });
             continue;
           }
-
-          rawRowCount++;
 
           const dateStr = getValue(dateIndex);
           const description = baseDescription;
@@ -185,6 +200,11 @@ export function parseCSV(file: File): Promise<ParseResult> {
           const effectiveDate = parsedDate ?? lastKnownDate;
           if (!effectiveDate) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing or invalid date',
+              raw: rawSnapshot,
+            });
             continue;
           }
           if (parsedDate) {
@@ -217,6 +237,11 @@ export function parseCSV(file: File): Promise<ParseResult> {
 
           if (withdrawal === null && deposit === null) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing debit/credit amount',
+              raw: rawSnapshot,
+            });
             continue;
           }
 
@@ -236,7 +261,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
           warnings.push(`${skippedRowCount} row${skippedRowCount === 1 ? '' : 's'} skipped due to missing dates or amounts.`);
         }
 
-        resolve({ transactions, rawRowCount, skippedRowCount, warnings });
+        resolve({ transactions, rawRowCount, skippedRowCount, warnings, skippedRows });
       } catch (error) {
         reject(error);
       }
@@ -333,6 +358,7 @@ export function parseExcel(file: File): Promise<ParseResult> {
         if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
 
         const transactions: ParsedTransaction[] = [];
+        const skippedRows: SkippedRow[] = [];
         const hasHeaderRow = headerRow.some(h => h.includes('date') || h.includes('description'));
         const startIndex = hasHeaderRow ? 1 : 0;
         let rawRowCount = 0;
@@ -352,15 +378,22 @@ export function parseExcel(file: File): Promise<ParseResult> {
           });
           if (!hasContent) continue;
 
+          const displayRowNumber = i + 1;
+          const rawSnapshot = row.map(cell => String(cell ?? '')).join(' | ');
+          rawRowCount++;
+
           const referenceValue = referenceIndex >= 0 ? String(getCell(referenceIndex) || '') : '';
           const descriptionRaw = String(getCell(descIndex) || '').trim();
 
           if (!referenceValue.trim() && !descriptionRaw) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing description or reference',
+              raw: rawSnapshot,
+            });
             continue;
           }
-
-          rawRowCount++;
 
           const dateStr = String(getCell(dateIndex) || '');
           const withdrawalStr = getCell(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
@@ -373,6 +406,11 @@ export function parseExcel(file: File): Promise<ParseResult> {
           const effectiveDate = parsedDate ?? lastKnownDate;
           if (!effectiveDate) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing or invalid date',
+              raw: rawSnapshot,
+            });
             continue;
           }
           if (parsedDate) {
@@ -405,6 +443,11 @@ export function parseExcel(file: File): Promise<ParseResult> {
 
           if (withdrawal === null && deposit === null) {
             skippedRowCount++;
+            skippedRows.push({
+              rowNumber: displayRowNumber,
+              reason: 'Missing debit/credit amount',
+              raw: rawSnapshot,
+            });
             continue;
           }
 
@@ -424,7 +467,7 @@ export function parseExcel(file: File): Promise<ParseResult> {
           warnings.push(`${skippedRowCount} row${skippedRowCount === 1 ? '' : 's'} skipped due to missing dates or amounts.`);
         }
 
-        resolve({ transactions, rawRowCount, skippedRowCount, warnings });
+        resolve({ transactions, rawRowCount, skippedRowCount, warnings, skippedRows });
       } catch (error) {
         reject(error);
       }

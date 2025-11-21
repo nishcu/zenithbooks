@@ -41,17 +41,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-    FileUp,
-    GitCompareArrows,
-    Check,
-    PlusCircle,
-    Loader2,
-    FileText,
-    Download,
-    Trash2,
-    Calendar as CalendarIcon,
-    ChevronsUpDown
-  } from "lucide-react";
+  FileUp,
+  GitCompareArrows,
+  Check,
+  PlusCircle,
+  Loader2,
+  FileText,
+  Download,
+  Trash2,
+  Calendar as CalendarIcon,
+  ChevronsUpDown,
+  AlertTriangle
+} from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +71,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction } from '@/lib/bank-statement-parser';
+import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction, type SkippedRow } from '@/lib/bank-statement-parser';
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     Command,
@@ -212,6 +213,8 @@ export default function BankReconciliationPage() {
     const [bulkTransactions, setBulkTransactions] = useState<StatementTransaction[]>([]);
     const [isProcessingFile, setIsProcessingFile] = useState(false);
     const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
+    const [skippedRowsDetail, setSkippedRowsDetail] = useState<SkippedRow[]>([]);
+    const [isSkippedRowsDialogOpen, setIsSkippedRowsDialogOpen] = useState(false);
 
     // For the Journal Voucher dialog
     const [jvNarration, setJvNarration] = useState("");
@@ -403,6 +406,9 @@ export default function BankReconciliationPage() {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        setSkippedRowsDetail([]);
+        setIsSkippedRowsDialogOpen(false);
+        setImportSummary(null);
         setIsProcessingFile(true);
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
@@ -449,6 +455,7 @@ export default function BankReconciliationPage() {
                 skippedRows,
                 warnings,
             });
+            setSkippedRowsDetail(parsedResult.skippedRows || []);
 
             setStatementTransactions(parsedData);
             
@@ -473,6 +480,7 @@ export default function BankReconciliationPage() {
         } catch (error: any) {
             console.error("Error parsing file:", error);
             setImportSummary(null);
+            setSkippedRowsDetail([]);
             toast({ 
                 variant: "destructive", 
                 title: "File Parsing Error", 
@@ -503,6 +511,27 @@ export default function BankReconciliationPage() {
         document.body.removeChild(link);
         toast({ title: "Template Downloaded", description: "A sample CSV template has been downloaded." });
     };
+
+    const handleDownloadSkippedRows = useCallback(() => {
+        if (!skippedRowsDetail.length) return;
+        const escapeCsv = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
+        const header = 'Row Number,Reason,Row Data\n';
+        const body = skippedRowsDetail
+            .map(row => {
+                const rowData = row.raw ?? '';
+                return `${row.rowNumber},${escapeCsv(row.reason)},${escapeCsv(rowData)}`;
+            })
+            .join('\n');
+        const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `skipped-rows-${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, [skippedRowsDetail]);
 
     const toggleSelection = useCallback((id: string, type: 'statement' | 'book') => {
         if (type === 'statement') {
@@ -739,6 +768,7 @@ export default function BankReconciliationPage() {
     const bookBalance = useMemo(() => bookTransactions.reduce((acc, tx) => acc + (tx.type === 'Receipt' ? tx.amount : -tx.amount), 0), [bookTransactions]);
     const statementBalance = useMemo(() => statementTransactions.reduce((acc, tx) => acc + (tx.deposit || 0) - (tx.withdrawal || 0), 0), [statementTransactions]);
     const difference = statementBalance - bookBalance;
+    const skippedRowsPreview = useMemo(() => skippedRowsDetail.slice(0, 100), [skippedRowsDetail]);
 
 
   return (
@@ -753,11 +783,14 @@ export default function BankReconciliationPage() {
       <Card>
         <CardHeader>
           <CardTitle>Reconciliation Setup</CardTitle>
-          <div className="flex flex-col md:flex-row gap-4 pt-4">
+          <CardDescription>Pick the bank, date range, and upload a clean statement for best results.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
                 <Label>Bank Account</Label>
                 <Select value={bankAccount} onValueChange={setBankAccount}>
-                    <SelectTrigger className="w-full md:w-[250px]">
+                    <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a bank" />
                     </SelectTrigger>
                     <SelectContent>
@@ -774,30 +807,40 @@ export default function BankReconciliationPage() {
                       onDateChange={setReconDateRange}
                   />
               </div>
-               <div className="flex gap-2 items-end">
-                 <div className="space-y-2">
-                    <Label htmlFor="statement-upload">Bank Statement File</Label>
-                    <div className="flex gap-2">
-                        <Input 
-                            id="statement-upload" 
-                            type="file" 
-                            className="w-full max-w-xs" 
-                            accept=".csv,.xlsx,.xls,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf" 
-                            onChange={handleFileUpload}
-                            disabled={isProcessingFile}
-                        />
-                        {isProcessingFile && (
-                            <Loader2 className="h-4 w-4 animate-spin self-center" />
-                        )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Supports CSV, Excel (XLSX, XLS), and PDF formats</p>
-                 </div>
-                 <Button variant="outline" size="icon" onClick={handleDownloadTemplate} title="Download Template" disabled={isProcessingFile}>
-                    <Download className="h-4 w-4" />
-                 </Button>
+          </div>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+            <div className="space-y-2 w-full">
+              <Label htmlFor="statement-upload">Bank Statement File</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input 
+                    id="statement-upload" 
+                    type="file" 
+                    className="w-full sm:max-w-sm" 
+                    accept=".csv,.xlsx,.xls,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf" 
+                    onChange={handleFileUpload}
+                    disabled={isProcessingFile}
+                />
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={handleDownloadTemplate} title="Download Template" disabled={isProcessingFile}>
+                      <Download className="h-4 w-4" />
+                  </Button>
+                  {isProcessingFile && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Supports CSV, Excel (XLSX, XLS), and PDF formats</p>
             </div>
           </div>
-        </CardHeader>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Upload tips</AlertTitle>
+            <AlertDescription>
+              For better results, upload clean statements without blank lines, merged header rows, or invalid/empty dates.
+              Fixing these issues upfront helps us import all {importSummary?.totalRows ?? "your"} rows without skips.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
       </Card>
       
        <div className="grid md:grid-cols-3 gap-4">
@@ -824,6 +867,26 @@ export default function BankReconciliationPage() {
                     </ul>
                 )}
             </AlertDescription>
+            {skippedRowsDetail.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => setIsSkippedRowsDialogOpen(true)}>
+                  View skipped rows ({skippedRowsDetail.length})
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDownloadSkippedRows}>
+                  Download skipped rows
+                </Button>
+              </div>
+            )}
+        </Alert>
+      )}
+      {importSummary?.skippedRows && importSummary.skippedRows > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Some rows were skipped</AlertTitle>
+          <AlertDescription>
+            {importSummary.skippedRows} row{importSummary.skippedRows === 1 ? '' : 's'} still have blank dates/descriptions.
+            Please clean the file (remove blank lines or fix date formats) and upload again so all {importSummary.totalRows} entries—including the missing 167th row—get reconciled. Use “View skipped rows” above to review the exact lines.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -909,6 +972,56 @@ export default function BankReconciliationPage() {
         </div>
       </div>
       
+      <Dialog open={isSkippedRowsDialogOpen} onOpenChange={setIsSkippedRowsDialogOpen}>
+          <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                  <DialogTitle>Skipped rows ({skippedRowsDetail.length})</DialogTitle>
+                  <DialogDescription>
+                      Fix the issues below (missing dates, descriptions, or amounts) and upload the statement again.
+                  </DialogDescription>
+              </DialogHeader>
+              {skippedRowsDetail.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">All good! No skipped rows to review.</p>
+              ) : (
+                  <>
+                      <div className="max-h-[420px] overflow-auto rounded-md border">
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead className="w-20">Row #</TableHead>
+                                      <TableHead>Reason</TableHead>
+                                      <TableHead>Row snapshot</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {skippedRowsPreview.map((row, index) => (
+                                      <TableRow key={`${row.rowNumber}-${index}`}>
+                                          <TableCell className="font-mono text-xs">{row.rowNumber}</TableCell>
+                                          <TableCell className="text-sm">{row.reason}</TableCell>
+                                          <TableCell>
+                                              <p className="text-xs text-muted-foreground break-words">{row.raw || '—'}</p>
+                                          </TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      </div>
+                      {skippedRowsDetail.length > skippedRowsPreview.length && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                              Showing first {skippedRowsPreview.length} rows of {skippedRowsDetail.length}. Download the CSV for the full list.
+                          </p>
+                      )}
+                  </>
+              )}
+              <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+                  <Button variant="outline" onClick={() => setIsSkippedRowsDialogOpen(false)}>Close</Button>
+                  {skippedRowsDetail.length > 0 && (
+                      <Button onClick={handleDownloadSkippedRows}>Download CSV</Button>
+                  )}
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+
        <Dialog open={isAddEntryDialogOpen} onOpenChange={setIsAddEntryDialogOpen}>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
