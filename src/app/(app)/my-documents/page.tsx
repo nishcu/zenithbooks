@@ -131,8 +131,36 @@ export default function MyDocumentsPage() {
 
                 // Generate certificate HTML based on document type and data
                 const certificateHTML = generateCertificateHTML(doc);
-                tempDiv.innerHTML = certificateHTML;
-                document.body.appendChild(tempDiv);
+                console.log("Generated HTML:", certificateHTML); // Debug log
+                console.log("Document data:", doc); // Debug log
+
+                // Create a new window with the certificate HTML
+                const printWindow = window.open('', '_blank', 'width=800,height=600');
+                if (!printWindow) {
+                    throw new Error('Failed to open print window. Please allow popups for this site.');
+                }
+
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${doc.documentName}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                            @media print {
+                                body { margin: 0; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${certificateHTML}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+
+                // Wait for the content to load
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Generate and download PDF
                 const opt = {
@@ -142,17 +170,19 @@ export default function MyDocumentsPage() {
                     html2canvas: {
                         scale: 2,
                         useCORS: true,
-                        logging: false,
-                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                        logging: true,
+                        allowTaint: true,
+                        width: 794, // A4 width in pixels at 96 DPI
+                        height: 1123, // A4 height in pixels at 96 DPI
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                 };
 
-                await html2pdf().set(opt).from(tempDiv).save();
+                console.log("Generating PDF from window"); // Debug log
+                await html2pdf().set(opt).from(printWindow.document.body).save();
 
-                // Clean up
-                document.body.removeChild(tempDiv);
+                // Close the print window
+                printWindow.close();
 
                 toast({
                     title: "PDF Downloaded",
@@ -188,8 +218,43 @@ export default function MyDocumentsPage() {
     }
 
     const generateCertificateHTML = (doc: any) => {
-        const data = doc.certificateData;
-        if (!data) return '<div>No certificate data available</div>';
+        const data = doc.certificateData || doc.formData;
+        console.log("Certificate data for PDF generation:", data); // Debug log
+        console.log("Full document object:", doc); // Debug log
+
+        if (!data) {
+                return `
+                    <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #000000; background-color: #ffffff;">
+                        <h1 style="font-size: 24px; margin-bottom: 20px;">Certified Document</h1>
+                        <p style="margin-bottom: 10px;"><strong>Document Type:</strong> ${doc.documentType || 'Unknown'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Client:</strong> ${doc.documentName || 'Unknown'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Status:</strong> Certified</p>
+                        <p style="margin-bottom: 10px;"><strong>Approved Date:</strong> ${doc.approvedAt ? doc.approvedAt.toDate().toLocaleDateString() : 'N/A'}</p>
+                        ${doc.udin ? `<p style="margin-bottom: 10px;"><strong>UDIN:</strong> ${doc.udin}</p>` : ''}
+
+                        <div style="margin: 30px 0; text-align: justify;">
+                            <p>This is a certified document approved by S. KRANTHI KUMAR & Co.</p>
+                            <p style="margin-top: 20px; color: #666;">Note: Detailed certificate data is not available for PDF generation.</p>
+
+                            ${doc.digitalSignature ? `
+                            <div style="margin: 20px 0; text-align: center;">
+                                <p style="margin: 10px 0; font-style: italic;">Digital Signature:</p>
+                                <p style="margin: 10px 0; font-family: 'Brush Script MT', cursive; font-size: 18px;">${doc.digitalSignature}</p>
+                            </div>
+                            ` : ''}
+
+                            <div style="margin-top: 40px;">
+                                <p style="font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
+                                <p>Chartered Accountants</p>
+                                <div style="height: 40px;"></div>
+                                <p>(S. Kranthi Kumar)</p>
+                                <p>Proprietor</p>
+                                <p>Membership No: 224983</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        }
 
         const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
 
@@ -265,9 +330,24 @@ export default function MyDocumentsPage() {
 
                         <div style="margin-top: 60px; text-align: justify;">
                             <p style="margin: 15px 0;">This certificate is issued based on the information and records produced before us and is true to the best of our knowledge and belief.</p>
+
+                            ${doc.udin ? `
+                            <div style="margin: 20px 0; padding: 10px; border: 1px solid #2563eb; background-color: #f0f9ff;">
+                                <p style="margin: 0; font-weight: bold; color: #2563eb;">UDIN: ${doc.udin}</p>
+                            </div>
+                            ` : ''}
+
                             <p style="margin: 40px 0 10px 0; font-weight: bold;">For S. KRANTHI KUMAR & Co.</p>
                             <p style="margin: 5px 0;">Chartered Accountants</p>
                             <div style="height: 80px;"></div>
+
+                            ${doc.digitalSignature ? `
+                            <div style="margin: 20px 0; text-align: center;">
+                                <p style="margin: 10px 0; font-style: italic;">Digital Signature:</p>
+                                <p style="margin: 10px 0; font-family: 'Brush Script MT', cursive; font-size: 18px;">${doc.digitalSignature}</p>
+                            </div>
+                            ` : ''}
+
                             <p style="margin: 5px 0;">(S. Kranthi Kumar)</p>
                             <p style="margin: 5px 0;">Proprietor</p>
                             <p style="margin: 5px 0;">Membership No: 224983</p>

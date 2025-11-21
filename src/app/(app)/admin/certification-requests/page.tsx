@@ -24,6 +24,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
@@ -74,6 +76,9 @@ export default function AdminCertificationRequests() {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [udin, setUdin] = useState('');
+  const [digitalSignature, setDigitalSignature] = useState('');
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
@@ -105,6 +110,16 @@ export default function AdminCertificationRequests() {
       });
       return;
     }
+
+    if (!udin.trim()) {
+      toast({
+        variant: "destructive",
+        title: "UDIN Required",
+        description: "Please enter the UDIN (Unique Document Identification Number) for this certificate.",
+      });
+      return;
+    }
+
     setIsLoading('approve');
 
     try {
@@ -115,6 +130,9 @@ export default function AdminCertificationRequests() {
         status: 'Certified',
         approvedAt: serverTimestamp(),
         approvedBy: user.uid,
+        udin: udin.trim(),
+        digitalSignature: digitalSignature.trim(),
+        signatureFileUrl: null, // Will be set if file is uploaded
       });
 
       // Save the certified document to user's userDocuments collection
@@ -129,15 +147,22 @@ export default function AdminCertificationRequests() {
         approvedBy: user.uid,
         isCertified: true,
         downloadUrl: null, // Will be set when PDF is generated
+        udin: udin.trim(),
+        digitalSignature: digitalSignature.trim(),
+        signatureFileUrl: null,
       };
 
       await addDoc(collection(db, "userDocuments"), certifiedDocData);
 
       toast({
         title: "Request Approved",
-        description: `Certification request has been approved. The certified document is now available in the client's "My Documents" section.`,
+        description: `Certification request has been approved with UDIN: ${udin}. The certified document is now available in the client's "My Documents" section.`,
       });
 
+      // Reset form fields
+      setUdin('');
+      setDigitalSignature('');
+      setSignatureFile(null);
       setIsApproveDialogOpen(false);
       setSelectedRequest(null);
     } catch (error) {
@@ -316,18 +341,85 @@ export default function AdminCertificationRequests() {
       </Dialog>
 
       {/* Approve Dialog */}
-      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Approve Certification Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to approve certification request {selectedRequest?.id} for {selectedRequest?.type}? 
-              You will be able to upload the signed document after approval.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading === 'approve'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApprove} disabled={isLoading === 'approve'} className="bg-green-600 hover:bg-green-700">
+      <Dialog open={isApproveDialogOpen} onOpenChange={(open) => {
+        setIsApproveDialogOpen(open);
+        if (!open) {
+          // Reset form fields when dialog closes
+          setUdin('');
+          setDigitalSignature('');
+          setSignatureFile(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Approve Certification Request</DialogTitle>
+            <DialogDescription>
+              Approve certification request {selectedRequest?.id} for {selectedRequest?.type}.
+              Please provide the required certification details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="udin" className="text-sm font-medium">
+                UDIN (Unique Document Identification Number) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="udin"
+                placeholder="Enter UDIN number"
+                value={udin}
+                onChange={(e) => setUdin(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                UDIN is a unique number assigned by ICAI for audit reports and certificates.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="digital-signature" className="text-sm font-medium">
+                Digital Signature / DSC (Optional)
+              </Label>
+              <Textarea
+                id="digital-signature"
+                placeholder="Paste digital signature text or enter signature details"
+                value={digitalSignature}
+                onChange={(e) => setDigitalSignature(e.target.value)}
+                className="w-full min-h-[80px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                You can paste the digital signature text or upload a signature file below.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="signature-file" className="text-sm font-medium">
+                Upload Signature File (Optional)
+              </Label>
+              <Input
+                id="signature-file"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload a scanned signature image or PDF file (max 5MB).
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsApproveDialogOpen(false)}
+              disabled={isLoading === 'approve'}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={isLoading === 'approve' || !udin.trim()}
+              className="bg-green-600 hover:bg-green-700"
+            >
               {isLoading === 'approve' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,10 +431,10 @@ export default function AdminCertificationRequests() {
                   Approve & Mark as Certified
                 </>
               )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
