@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
   clientName: z.string().min(3, "Client name is required."),
+  fatherOrSpouseName: z.string().optional(),
   clientAddress: z.string().min(10, "Client address is required."),
   certificateDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   subject: z.string().min(5, "Subject is required."),
@@ -49,6 +50,7 @@ export default function GeneralAttestationPage() {
     defaultValues: {
       documentName: `General Attestation - ${new Date().toISOString().split("T")[0]}`,
       clientName: "",
+      fatherOrSpouseName: "",
       clientAddress: "",
       certificateDate: new Date().toISOString().split("T")[0],
       subject: "",
@@ -167,8 +169,9 @@ export default function GeneralAttestationPage() {
           <CardContent className="space-y-4">
              <FormField control={form.control} name="documentName" render={({ field }) => (<FormItem><FormLabel>Document Name (for your reference)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
              <Separator/>
-             <FormField control={form.control} name="clientName" render={({ field }) => (<FormItem><FormLabel>To (Client Name / Authority)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-             <FormField control={form.control} name="clientAddress" render={({ field }) => (<FormItem><FormLabel>Client / Authority Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="clientName" render={({ field }) => (<FormItem><FormLabel>To (Client Name / Authority)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="fatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Father/Spouse Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., S/o Late Sri Venkata Ramana or W/o Smt. Lakshmi" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="clientAddress" render={({ field }) => (<FormItem><FormLabel>Client / Authority Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)} />
             <div className="grid md:grid-cols-2 gap-4">
               <FormField control={form.control} name="certificateDate" render={({ field }) => (<FormItem><FormLabel>Date of Certificate</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel>Subject of Certificate</FormLabel><FormControl><Input placeholder="e.g., Certificate of Financial Solvency" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -206,7 +209,7 @@ export default function GeneralAttestationPage() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <p className="font-bold text-sm">To,</p>
-                  <p>{formData.clientName}</p>
+                  <p>{formData.clientName}{formData.fatherOrSpouseName ? ` (${formData.fatherOrSpouseName})` : ''}</p>
                   <p>{formData.clientAddress}</p>
                 </div>
                 <div className="text-right">

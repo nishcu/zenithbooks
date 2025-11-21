@@ -30,7 +30,9 @@ const assetSchema = z.object({
 const formSchema = z.object({
   documentName: z.string().min(3, "Document name is required."),
   studentName: z.string().min(3, "Student's name is required."),
+  studentFatherOrSpouseName: z.string().optional(),
   sponsorNames: z.string().min(3, "Sponsor name(s) are required."),
+  sponsorFatherOrSpouseName: z.string().optional(),
   sponsorAddress: z.string().min(10, "Sponsor address is required."),
   universityName: z.string().min(3, "University name is required."),
   universityAddress: z.string().min(10, "University address is required."),
@@ -62,7 +64,9 @@ export default function VisaImmigrationCertificatePage() {
     defaultValues: {
       documentName: `Visa Certificate - ${new Date().toISOString().split("T")[0]}`,
       studentName: "Meghana Macha",
+      studentFatherOrSpouseName: "",
       sponsorNames: "Mr Narsimha Reddy Macha and Mrs Saritha Macha",
+      sponsorFatherOrSpouseName: "",
       sponsorAddress: "H No : 1-2-39, Paripally Street, Siddipet, Telangana, India – 502103",
       universityName: "THE UNIVERSITY OF MEMPHIS",
       universityAddress: "110 PANHELLENIC BUILDING, Center for International Education and Services, MEMPHIS, TN 38152",
@@ -281,7 +285,9 @@ export default function VisaImmigrationCertificatePage() {
                         <FormField control={form.control} name="documentName" render={({ field }) => (<FormItem><FormLabel>Document Name (for your reference)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <Separator/>
                         <FormField control={form.control} name="studentName" render={({ field }) => (<FormItem><FormLabel>Student's Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="studentFatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Student's Father/Spouse Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., D/o Sri Narsimha Reddy Macha" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="sponsorNames" render={({ field }) => (<FormItem><FormLabel>Sponsor(s) Name (e.g., Parents)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="sponsorFatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Sponsor(s) Father/Spouse Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., S/o Late Sri Venkata Ramana" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="sponsorAddress" render={({ field }) => (<FormItem><FormLabel>Sponsor(s) Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="universityName" render={({ field }) => (<FormItem><FormLabel>University Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="universityAddress" render={({ field }) => (<FormItem><FormLabel>University Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -346,7 +352,7 @@ export default function VisaImmigrationCertificatePage() {
                                 <p className="text-sm font-semibold m-0">AMERICAN CONSULATE GENERAL</p>
                            </header>
 
-                            <p className="text-sm">I, S. Kranthi Kumar Member of The Institute of Chartered Accountants of India, with ICAI Membership No 224983, FRN 017148S, have reviewed the financial condition of <strong>{formData.sponsorNames}</strong> parents of <strong>Ms {formData.studentName}</strong>, R/o {formData.sponsorAddress}, with the view of establishing their ability to meet the cost of their daughter {formData.studentName}'s EDUCATION and STAY at <strong>{formData.universityName}</strong>, {formData.universityAddress}.</p>
+                            <p className="text-sm">I, S. Kranthi Kumar Member of The Institute of Chartered Accountants of India, with ICAI Membership No 224983, FRN 017148S, have reviewed the financial condition of <strong>{formData.sponsorNames}</strong>{formData.sponsorFatherOrSpouseName ? ` (${formData.sponsorFatherOrSpouseName})` : ''} parents of <strong>Ms {formData.studentName}</strong>{formData.studentFatherOrSpouseName ? ` (${formData.studentFatherOrSpouseName})` : ''}, R/o {formData.sponsorAddress}, with the view of establishing their ability to meet the cost of their daughter {formData.studentName}'s EDUCATION and STAY at <strong>{formData.universityName}</strong>, {formData.universityAddress}.</p>
                             <p className="text-sm">The Financial position of {formData.sponsorNames} as on {asOnDate} is as follows:</p>
                             
                             <Table className="text-sm">

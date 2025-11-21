@@ -27,6 +27,7 @@ const formSchema = z.object({
   entityName: z.string().min(3, "Entity name is required."),
   entityType: z.enum(["Company", "LLP", "Partnership", "Private Limited Company"]),
   contributorName: z.string().min(3, "Contributor's name is required."),
+  fatherOrSpouseName: z.string().optional(),
   contributorType: z.enum(["Director", "Partner", "Shareholder"]),
   contributionAmount: z.coerce.number().positive("Amount must be a positive number."),
   contributionDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
@@ -71,6 +72,7 @@ export default function CapitalContributionCertificatePage() {
       entityName: "",
       entityType: "Company",
       contributorName: "",
+      fatherOrSpouseName: "",
       contributorType: "Director",
       contributionAmount: 100000,
       contributionDate: new Date().toISOString().split("T")[0],
@@ -196,6 +198,7 @@ export default function CapitalContributionCertificatePage() {
                      </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="contributorName" render={({ field }) => (<FormItem><FormLabel>Contributor's Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="fatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Father/Spouse Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., S/o Late Sri Venkata Ramana or W/o Smt. Lakshmi" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="contributorType" render={({ field }) => (<FormItem><FormLabel>Contributor's Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Director">Director</SelectItem><SelectItem value="Partner">Partner</SelectItem><SelectItem value="Shareholder">Shareholder</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                      </div>
                      <div className="grid md:grid-cols-2 gap-4">
@@ -245,7 +248,7 @@ export default function CapitalContributionCertificatePage() {
                         </div>
                         <h4 className="font-bold text-center underline my-6">CAPITAL CONTRIBUTION CERTIFICATE</h4>
                         <p>This is to certify that we have verified the books of accounts and other relevant records of <strong>M/s {formData.entityName}</strong>.</p>
-                        <p>Based on our verification, we confirm that <strong>{formData.contributorName}</strong>, {formData.contributorType} of the {formData.entityType}, has contributed an amount of <strong>₹ {formData.contributionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong> (Rupees {numberToWords(formData.contributionAmount)} only) towards their capital contribution on <strong>{new Date(formData.contributionDate).toLocaleDateString('en-GB', dateOptions)}</strong>.</p>
+                        <p>Based on our verification, we confirm that <strong>{formData.contributorName}</strong>{formData.fatherOrSpouseName ? ` (${formData.fatherOrSpouseName})` : ''}, {formData.contributorType} of the {formData.entityType}, has contributed an amount of <strong>₹ {formData.contributionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong> (Rupees {numberToWords(formData.contributionAmount)} only) towards their capital contribution on <strong>{new Date(formData.contributionDate).toLocaleDateString('en-GB', dateOptions)}</strong>.</p>
                         <p>The contribution was made via {formData.contributionMode}. {formData.contributionMode !== 'Cash' && `The details are as follows: ${formData.bankDetails}`}</p>
                          <p className="mt-8 text-xs">This certificate is issued based on the information and records produced before us by the management and is true to the best of our knowledge and belief.</p>
                         <div className="mt-24 text-right">

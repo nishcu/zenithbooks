@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
   entityName: z.string().min(3, "Entity name is required."),
+  fatherOrSpouseName: z.string().optional(),
   entityAddress: z.string().min(10, "Entity address is required."),
   entityPan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format."),
   financialYear: z.string().regex(/^\d{4}-\d{2}$/, "Invalid format. Use YYYY-YY."),
@@ -65,6 +66,7 @@ export default function TurnoverCertificatePage() {
     defaultValues: {
       documentName: `Turnover Certificate - ${new Date().toISOString().split("T")[0]}`,
       entityName: "",
+      fatherOrSpouseName: "",
       entityAddress: "",
       entityPan: "",
       financialYear: "2023-24",
@@ -185,6 +187,7 @@ export default function TurnoverCertificatePage() {
                      <FormField control={form.control} name="documentName" render={({ field }) => (<FormItem><FormLabel>Document Name (for reference)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                      <Separator/>
                      <FormField control={form.control} name="entityName" render={({ field }) => (<FormItem><FormLabel>Entity Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                     <FormField control={form.control} name="fatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Proprietor/Director Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., S/o Late Sri Venkata Ramana or W/o Smt. Lakshmi" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                      <FormField control={form.control} name="entityAddress" render={({ field }) => (<FormItem><FormLabel>Registered Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     <div className="grid md:grid-cols-2 gap-4">
                          <FormField control={form.control} name="entityPan" render={({ field }) => (<FormItem><FormLabel>PAN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -235,7 +238,7 @@ export default function TurnoverCertificatePage() {
                         
                         <h4 className="font-bold text-center underline my-6">TURNOVER CERTIFICATE</h4>
 
-                        <p>This is to certify that we have verified the books of accounts and other relevant records of <strong>M/s {formData.entityName}</strong>, having its registered office at {formData.entityAddress} and holding PAN <strong>{formData.entityPan}</strong>.</p>
+                        <p>This is to certify that we have verified the books of accounts and other relevant records of <strong>M/s {formData.entityName}</strong>{formData.fatherOrSpouseName ? ` (${formData.fatherOrSpouseName})` : ''}, having its registered office at {formData.entityAddress} and holding PAN <strong>{formData.entityPan}</strong>.</p>
                         
                         <p>Based on our verification of the {formData.dataSource}, we certify that the total turnover of the entity for the financial year ended on 31st March {formData.financialYear.slice(0,4)} is as follows:</p>
 

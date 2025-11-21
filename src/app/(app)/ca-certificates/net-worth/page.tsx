@@ -37,6 +37,7 @@ const liabilitySchema = z.object({
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
   clientName: z.string().min(3, "Client's name is required."),
+  fatherOrSpouseName: z.string().optional(),
   clientPan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format."),
   clientAddress: z.string().min(10, "Address is required."),
   asOnDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
@@ -126,7 +127,7 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
                 margin: '20px 0',
                 textAlign: 'justify',
                 lineHeight: '1.6'
-            }}>This is to certify that the Net Worth of Sri <strong style={{fontWeight: 'bold'}}>{formData.clientName}</strong>, S/o (or other relation) [Parent's Name], R/o {formData.clientAddress} (PAN: <strong style={{fontWeight: 'bold'}}>{formData.clientPan}</strong>) as on <strong style={{fontWeight: 'bold'}}>{new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)}</strong> is as follows:</p>
+            }}>This is to certify that the Net Worth of Sri <strong style={{fontWeight: 'bold'}}>{formData.clientName}</strong>{formData.fatherOrSpouseName ? `, ${formData.fatherOrSpouseName}` : ''}, R/o {formData.clientAddress} (PAN: <strong style={{fontWeight: 'bold'}}>{formData.clientPan}</strong>) as on <strong style={{fontWeight: 'bold'}}>{new Date(formData.asOnDate).toLocaleDateString('en-GB', dateOptions)}</strong> is as follows:</p>
 
             <h5 style={{
                 fontWeight: 'bold',
@@ -288,6 +289,7 @@ export default function NetWorthCertificatePage() {
     defaultValues: {
       documentName: `Net Worth Certificate - ${format(new Date(), 'yyyy-MM-dd')}`,
       clientName: "",
+      fatherOrSpouseName: "",
       clientPan: "",
       clientAddress: "",
       asOnDate: new Date().toISOString().split("T")[0],
@@ -419,6 +421,7 @@ export default function NetWorthCertificatePage() {
                         <FormField control={form.control} name="documentName" render={({ field }) => (<FormItem><FormLabel>Document Name</FormLabel><FormControl><Input placeholder="A name to identify this draft" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <Separator/>
                         <FormField control={form.control} name="clientName" render={({ field }) => (<FormItem><FormLabel>Client's Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <FormField control={form.control} name="fatherOrSpouseName" render={({ field }) => (<FormItem><FormLabel>Father/Spouse Name (Optional)</FormLabel><FormControl><Input placeholder="e.g., S/o Late Sri Venkata Ramana or W/o Smt. Lakshmi" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="clientAddress" render={({ field }) => (<FormItem><FormLabel>Client's Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         <div className="grid md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="clientPan" render={({ field }) => (<FormItem><FormLabel>Client's PAN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -427,7 +430,7 @@ export default function NetWorthCertificatePage() {
                     </CardContent>
                      <CardFooter className="justify-between">
                          <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <Save className="mr-2"/>} Save Draft</Button>
-                         <Button type="button" onClick={() => form.trigger(["clientName", "clientAddress", "clientPan", "asOnDate"]).then(isValid => isValid && setStep(2))}>Next <ArrowRight className="mr-2"/></Button>
+                         <Button type="button" onClick={() => form.trigger(["clientName", "fatherOrSpouseName", "clientAddress", "clientPan", "asOnDate"]).then(isValid => isValid && setStep(2))}>Next <ArrowRight className="mr-2"/></Button>
                     </CardFooter>
                 </Card>
             )
