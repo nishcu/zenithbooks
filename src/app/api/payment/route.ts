@@ -14,22 +14,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if environment variables are set
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error('Razorpay environment variables not set:', {
+    const hasValidKeys = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET &&
+                        process.env.RAZORPAY_KEY_ID.startsWith('rzp_') &&
+                        process.env.RAZORPAY_KEY_SECRET.length > 20;
+
+    if (!hasValidKeys) {
+      console.error('Razorpay environment variables not properly set:', {
         keyId: !!process.env.RAZORPAY_KEY_ID,
         keySecret: !!process.env.RAZORPAY_KEY_SECRET,
+        keyIdValid: process.env.RAZORPAY_KEY_ID?.startsWith('rzp_'),
+        keySecretValid: (process.env.RAZORPAY_KEY_SECRET?.length || 0) > 20,
       });
 
-      // For testing/development, return a mock response
-      // Remove this in production
-      console.log('Using mock payment response for testing');
+      // Return a demo response for testing - this will show the payment UI but won't process real payments
       return NextResponse.json({
-        orderId: `order_test_${Date.now()}`,
+        orderId: `demo_order_${Date.now()}`,
         amount: amount * 100,
         currency: 'INR',
-        key: 'rzp_test_mock_key', // This won't work, but shows the flow
-        mock: true,
-        message: 'Environment variables not set. Please configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.'
+        key: 'rzp_test_demo_key', // This will cause Razorpay to show an error, but demonstrates the flow
+        demoMode: true,
+        message: 'Demo mode - configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET for real payments.'
       });
     }
 

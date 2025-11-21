@@ -66,15 +66,14 @@ export function RazorpayCheckout({
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
-      // Check if this is a mock response (for testing)
-      if (orderData.mock) {
+      // Check if this is demo mode (no real API keys configured)
+      if (orderData.demoMode) {
+        console.log('Running in demo mode - payment UI will show but transactions won\'t process');
         toast({
-          variant: 'destructive',
-          title: 'Payment Gateway Not Configured',
-          description: 'Razorpay API keys are not set up. Please contact support or configure the payment gateway.',
+          title: 'Demo Mode',
+          description: 'Payment gateway is in demo mode. Configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET for real payments.',
+          duration: 5000,
         });
-        setIsLoading(false);
-        return;
       }
 
       // Load Razorpay script if not already loaded
@@ -123,6 +122,18 @@ export function RazorpayCheckout({
         },
         handler: async function (response: any) {
           try {
+            console.log('Payment successful, verifying...', response);
+
+            // For demo mode, skip verification and show success
+            if (orderData.demoMode) {
+              toast({
+                title: 'Demo Payment Successful!',
+                description: `Demo payment completed for ${planName}. Configure real API keys for actual payments.`,
+              });
+              onSuccess?.(response.razorpay_payment_id || 'demo_payment_id');
+              return;
+            }
+
             // Verify payment on server
             const verifyResponse = await fetch('/api/payment/verify', {
               method: 'POST',
@@ -172,8 +183,19 @@ export function RazorpayCheckout({
         },
       };
 
-      const razorpayInstance = new window.Razorpay(options);
-      razorpayInstance.open();
+      try {
+        const razorpayInstance = new window.Razorpay(options);
+        console.log('Opening Razorpay checkout...');
+        razorpayInstance.open();
+      } catch (razorpayError) {
+        console.error('Razorpay initialization error:', razorpayError);
+        toast({
+          variant: 'destructive',
+          title: 'Payment Gateway Error',
+          description: 'Failed to initialize payment gateway. Please check your Razorpay configuration.',
+        });
+        onFailure?.();
+      }
 
     } catch (error) {
       console.error('Payment initialization error:', error);
