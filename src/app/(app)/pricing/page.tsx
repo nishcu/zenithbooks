@@ -19,6 +19,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRoleSimulator } from "@/context/role-simulator-context";
 import { Badge } from "@/components/ui/badge";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 const initialTiers = [
   {
@@ -86,6 +89,7 @@ export default function PricingPage() {
   const { toast } = useToast();
   const { simulatedRole } = useRoleSimulator();
   const isSuperAdmin = simulatedRole === 'super_admin';
+  const [user] = useAuthState(auth);
 
   const handleEdit = (tierId: string) => {
     setEditingTier(tierId);
@@ -224,7 +228,50 @@ export default function PricingPage() {
                   </Button>
                 )
               ) : (
-                 <Button className="w-full">{tier.cta}</Button>
+                <div className="w-full">
+                  {tier.priceMonthly === 0 ? (
+                    // Free plan
+                    <Button className="w-full">{tier.cta}</Button>
+                  ) : (
+                    // Paid plans
+                    user ? (
+                      <RazorpayCheckout
+                        amount={billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual}
+                        planId={tier.id}
+                        planName={tier.name}
+                        userId={user.uid}
+                        userEmail={user.email || ''}
+                        userName={user.displayName || user.email || ''}
+                        onSuccess={(paymentId) => {
+                          toast({
+                            title: 'Subscription Activated!',
+                            description: `Welcome to ${tier.name} plan. Your subscription is now active.`,
+                          });
+                          // You might want to redirect to dashboard or show success page
+                        }}
+                        onFailure={() => {
+                          toast({
+                            variant: 'destructive',
+                            title: 'Payment Failed',
+                            description: 'Payment could not be processed. Please try again.',
+                          });
+                        }}
+                      />
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          toast({
+                            title: 'Login Required',
+                            description: 'Please login or sign up to purchase a subscription.',
+                          });
+                        }}
+                      >
+                        Login to Subscribe
+                      </Button>
+                    )
+                  )}
+                </div>
               )}
             </CardFooter>
           </Card>

@@ -75,6 +75,56 @@ This document lists all the environment variables that need to be configured in 
 
 ---
 
+### 4. `RAZORPAY_KEY_ID` ⚠️ **REQUIRED for Payments**
+
+**Purpose**: Razorpay API Key ID for payment processing
+
+**Used For**:
+- Payment gateway integration
+- Creating payment orders
+- Processing subscriptions and one-time payments
+
+**How to Get**:
+1. Visit [Razorpay Dashboard](https://dashboard.razorpay.com/)
+2. Go to Settings → API Keys
+3. Generate Test API Key (for testing) or Live API Key (for production)
+4. Copy the "Key ID"
+
+**How to Add in Vercel**:
+1. Go to your Vercel dashboard: https://vercel.com/dashboard
+2. Select your project: `zenithbooks`
+3. Go to **Settings** → **Environment Variables**
+4. Click **Add New**
+5. Name: `RAZORPAY_KEY_ID`
+6. Value: Paste your Razorpay Key ID (starts with `rzp_test_` or `rzp_live_`)
+7. Select environments: **Production**, **Preview**, and **Development**
+8. Click **Save**
+
+### 5. `RAZORPAY_KEY_SECRET` ⚠️ **REQUIRED for Payments**
+
+**Purpose**: Razorpay API Key Secret for server-side payment verification
+
+**Used For**:
+- Verifying payment signatures
+- Creating payment orders server-side
+- Handling webhooks
+
+**How to Get**:
+1. Visit [Razorpay Dashboard](https://dashboard.razorpay.com/)
+2. Go to Settings → API Keys
+3. Copy the "Key Secret" (shown only once when generated)
+
+**How to Add in Vercel**:
+1. Settings → Environment Variables
+2. Name: `RAZORPAY_KEY_SECRET`
+3. Value: Paste your Razorpay Key Secret
+4. Select environments: **Production** (⚠️ Never add to Preview/Development for security)
+5. Click **Save**
+
+**Security Note**: Key Secret should only be in Production environment. Use test keys for development.
+
+---
+
 ## Quick Setup Steps
 
 ### Step 1: Get Your Gemini API Key
