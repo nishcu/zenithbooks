@@ -42,18 +42,18 @@ export default function MyDocumentsPage() {
 
     // Separate certified and draft documents
     const certifiedDocuments = useMemo(() =>
-        documents.filter(doc => doc.isCertified),
+        documents?.filter(doc => doc.isCertified) || [],
     [documents]);
 
     const draftDocuments = useMemo(() =>
-        documents.filter(doc => !doc.isCertified),
+        documents?.filter(doc => !doc.isCertified) || [],
     [documents]);
 
     // Check for newly certified documents (approved in last 7 days)
     const newCertifiedDocuments = useMemo(() => {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        return certifiedDocuments.filter(doc =>
+        return (certifiedDocuments || []).filter(doc =>
             doc.approvedAt && doc.approvedAt.toDate() > sevenDaysAgo
         );
     }, [certifiedDocuments]);

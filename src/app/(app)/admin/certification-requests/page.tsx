@@ -53,7 +53,7 @@ export default function AdminCertificationRequests() {
     id: doc.id,
     ...doc.data(),
     date: doc.data().createdAt?.toDate() || new Date(),
-  })) as Request[];
+  })) as Request[] || [];
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
