@@ -37,6 +37,7 @@ type ParsedItemRow = {
   stock?: number;
   purchasePrice?: number;
   sellingPrice?: number;
+  stockGroup?: string;
   status: "pending" | "success" | "error";
   error?: string;
 };
@@ -51,6 +52,7 @@ const COLUMN_ALIASES: Record<
   stock: ["stock", "opening stock", "qty", "quantity"],
   purchasePrice: ["purchase price", "cost price", "buy price", "purchase"],
   sellingPrice: ["selling price", "sale price", "mrp", "sell price"],
+  stockGroup: ["stock group", "group", "category"],
 };
 
 const REQUIRED_FIELDS: Array<keyof ParsedItemRow> = ["name"];
@@ -119,7 +121,7 @@ export default function ItemBulkUploadPage() {
 
   const normalizeRow = (row: Record<string, any>, index: number): ParsedItemRow => {
     const getValue = createRowAccessor(row);
-    const item: ParsedItemRow = {
+  const item: ParsedItemRow = {
       id: index,
       name: String(getValue(COLUMN_ALIASES.name) || "").trim(),
       description: String(getValue(COLUMN_ALIASES.description) || "").trim() || undefined,
@@ -128,6 +130,7 @@ export default function ItemBulkUploadPage() {
       stock: numberOrNull(getValue(COLUMN_ALIASES.stock)),
       purchasePrice: numberOrNull(getValue(COLUMN_ALIASES.purchasePrice)),
       sellingPrice: numberOrNull(getValue(COLUMN_ALIASES.sellingPrice)),
+    stockGroup: String(getValue(COLUMN_ALIASES.stockGroup) || "").trim() || undefined,
       status: "pending",
     };
 
@@ -227,6 +230,7 @@ export default function ItemBulkUploadPage() {
           stock: row.stock ?? 0,
           purchasePrice: row.purchasePrice ?? 0,
           sellingPrice: row.sellingPrice ?? 0,
+            stockGroupId: row.stockGroup || "",
           createdAt: new Date().toISOString(),
         });
         row.status = "success";
@@ -337,6 +341,7 @@ export default function ItemBulkUploadPage() {
                     <TableHead>Stock</TableHead>
                     <TableHead>Purchase</TableHead>
                     <TableHead>Selling</TableHead>
+                  <TableHead>Stock Group</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -355,6 +360,7 @@ export default function ItemBulkUploadPage() {
                       <TableCell>{row.stock ?? "—"}</TableCell>
                       <TableCell>₹{row.purchasePrice?.toFixed(2) ?? "—"}</TableCell>
                       <TableCell>₹{row.sellingPrice?.toFixed(2) ?? "—"}</TableCell>
+                      <TableCell>{row.stockGroup || "—"}</TableCell>
                       <TableCell>
                         {row.status === "pending" && (
                           <Badge variant="secondary" className="flex items-center gap-1">
