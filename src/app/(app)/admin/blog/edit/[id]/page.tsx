@@ -30,6 +30,31 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { samplePosts } from "@/app/(app)/blog/page";
 
+// Function to update a blog post in the samplePosts array
+function updateSamplePost(postId: string, updatedData: any) {
+    const postIndex = samplePosts.findIndex(post => post.id === postId);
+    if (postIndex !== -1) {
+        // Convert contentBlocks back to content array format
+        const content = updatedData.contentBlocks
+            .filter((block: any) => block.value.trim() !== '')
+            .map((block: any) => block.value);
+
+        // Update the post with new data
+        samplePosts[postIndex] = {
+            ...samplePosts[postIndex],
+            title: updatedData.title,
+            author: updatedData.authorName,
+            authorTitle: updatedData.authorTitle,
+            category: updatedData.category,
+            content: content,
+            // Handle image - if a new image was uploaded, use the data URL
+            // Otherwise keep the existing imageUrl
+            imageUrl: updatedData.imageDataUrl || samplePosts[postIndex].imageUrl,
+            image: updatedData.imageDataUrl || samplePosts[postIndex].imageUrl,
+        };
+    }
+}
+
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
 });
@@ -134,8 +159,22 @@ export default function EditBlogPostPage() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsSaving(true);
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Prepare the data for saving
+            const postData = {
+                title: values.title,
+                authorName: values.authorName,
+                authorTitle: values.authorTitle,
+                category: values.category,
+                contentBlocks: values.contentBlocks,
+                // If a new image was uploaded, use the data URL, otherwise keep existing
+                imageDataUrl: values.image ? imagePreview : undefined,
+            };
+
+            // Update the blog post in the samplePosts array
+            updateSamplePost(postId, postData);
+
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             toast({
                 title: "Blog Post Updated!",
