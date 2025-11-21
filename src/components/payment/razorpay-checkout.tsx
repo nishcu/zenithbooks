@@ -78,27 +78,115 @@ export function RazorpayCheckout({
 
       // Load Razorpay script if not already loaded
       if (!window.Razorpay) {
-        console.log('Loading Razorpay script...');
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        document.body.appendChild(script);
+        console.log('🔄 Loading Razorpay script...');
 
-        await new Promise((resolve, reject) => {
-          script.onload = () => {
-            console.log('Razorpay script loaded successfully');
-            resolve(void 0);
+        // Check if script is already in the DOM (from previous attempts)
+        const existingScript = document.querySelector('script[data-razorpay-script]');
+        if (existingScript) {
+          console.log('ℹ️ Razorpay script already exists in DOM, waiting for it to load...');
+          // Wait for existing script to load
+          await new Promise((resolve, reject) => {
+            if (window.Razorpay) {
+              console.log('✅ Razorpay already available');
+              resolve(void 0);
+              return;
+            }
+
+            const checkLoaded = () => {
+              if (window.Razorpay) {
+                console.log('✅ Razorpay loaded from existing script');
+                resolve(void 0);
+              } else {
+                setTimeout(checkLoaded, 100);
+              }
+            };
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+              if (window.Razorpay) {
+                console.log('✅ Razorpay loaded within timeout');
+                resolve(void 0);
+              } else {
+                console.error('❌ Razorpay script failed to load within timeout');
+                reject(new Error('Razorpay script failed to load within timeout'));
+              }
+            }, 10000);
+
+            checkLoaded();
+          });
+        } else {
+          // Load new script with better error handling
+          console.log('📦 Creating new Razorpay script element...');
+
+          const loadScript = (src: string, isFallback = false): Promise<void> => {
+            return new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = src;
+              script.async = true;
+              script.setAttribute('data-razorpay-script', 'true');
+              script.crossOrigin = 'anonymous';
+
+              script.onload = () => {
+                console.log(`✅ Razorpay script loaded successfully${isFallback ? ' (fallback)' : ''}`);
+                resolve();
+              };
+
+              script.onerror = (event) => {
+                const errorDetails = {
+                  src,
+                  isFallback,
+                  eventType: event.type,
+                  target: event.target,
+                  timeStamp: event.timeStamp
+                };
+                console.error('❌ Failed to load Razorpay script:', errorDetails);
+
+                if (!isFallback) {
+                  console.log('🔄 Trying fallback script...');
+                  // Try fallback with same URL but different approach
+                  loadScript('https://checkout.razorpay.com/v1/checkout.js', true)
+                    .then(resolve)
+                    .catch(() => {
+                      console.error('❌ Fallback script also failed');
+                      reject(new Error(`Failed to load Razorpay script from ${src}`));
+                    });
+                } else {
+                  reject(new Error(`Failed to load Razorpay script from fallback source`));
+                }
+              };
+
+              console.log(`🔗 Appending script to DOM: ${src}`);
+              document.head.appendChild(script);
+            });
           };
-          script.onerror = () => {
-            console.error('Failed to load Razorpay script');
-            reject(new Error('Failed to load Razorpay script'));
-          };
-        });
+
+          await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+        }
       } else {
-        console.log('Razorpay script already loaded');
+        console.log('✅ Razorpay script already loaded and available');
       }
 
-      console.log('Initializing Razorpay with options:', orderData);
+      console.log('🔧 Initializing Razorpay with options:', {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        orderId: orderData.orderId,
+        demoMode: orderData.demoMode
+      });
+
+      // Check if we should use demo mode
+      if (orderData.demoMode) {
+        console.log('🎭 Running in demo mode - simulating payment success');
+        toast({
+          title: 'Demo Payment',
+          description: 'Demo mode: Payment simulated successfully!',
+          duration: 3000,
+        });
+        setTimeout(() => {
+          onSuccess?.('demo_payment_' + Date.now());
+        }, 1000);
+        return;
+      }
 
       // Initialize Razorpay
       const options = {
@@ -184,15 +272,46 @@ export function RazorpayCheckout({
       };
 
       try {
+        // Double-check that Razorpay is available
+        if (!window.Razorpay) {
+          throw new Error('Razorpay is not available after script loading');
+        }
+
+        console.log('Creating Razorpay instance with options:', {
+          key: options.key,
+          amount: options.amount,
+          currency: options.currency,
+          order_id: options.order_id ? 'present' : 'missing'
+        });
+
         const razorpayInstance = new window.Razorpay(options);
-        console.log('Opening Razorpay checkout...');
+        console.log('Razorpay instance created successfully, opening checkout...');
+
         razorpayInstance.open();
+        console.log('Razorpay checkout opened successfully');
       } catch (razorpayError) {
         console.error('Razorpay initialization error:', razorpayError);
+
+        let errorMessage = 'Failed to initialize payment gateway.';
+        let errorTitle = 'Payment Gateway Error';
+
+        if (razorpayError instanceof Error) {
+          if (razorpayError.message.includes('Invalid key')) {
+            errorTitle = 'Invalid API Key';
+            errorMessage = 'The Razorpay API key is invalid. Please check your configuration.';
+          } else if (razorpayError.message.includes('Network')) {
+            errorTitle = 'Network Error';
+            errorMessage = 'Network connectivity issue. Please check your internet connection.';
+          } else if (razorpayError.message.includes('order_id')) {
+            errorTitle = 'Order Error';
+            errorMessage = 'Failed to create payment order. Please try again.';
+          }
+        }
+
         toast({
           variant: 'destructive',
-          title: 'Payment Gateway Error',
-          description: 'Failed to initialize payment gateway. Please check your Razorpay configuration.',
+          title: errorTitle,
+          description: errorMessage,
         });
         onFailure?.();
       }

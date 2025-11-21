@@ -19,11 +19,13 @@ export async function POST(request: NextRequest) {
                         process.env.RAZORPAY_KEY_SECRET.length > 20;
 
     if (!hasValidKeys) {
-      console.error('Razorpay environment variables not properly set:', {
+      console.error('❌ Razorpay environment variables not properly set:', {
         keyId: !!process.env.RAZORPAY_KEY_ID,
         keySecret: !!process.env.RAZORPAY_KEY_SECRET,
         keyIdValid: process.env.RAZORPAY_KEY_ID?.startsWith('rzp_'),
         keySecretValid: (process.env.RAZORPAY_KEY_SECRET?.length || 0) > 20,
+        keyIdValue: process.env.RAZORPAY_KEY_ID?.substring(0, 10) + '...',
+        keySecretLength: process.env.RAZORPAY_KEY_SECRET?.length || 0,
       });
 
       // Return a demo response for testing - this will show the payment UI but won't process real payments
