@@ -45,7 +45,7 @@ export default function Form16() {
           </p>
         </div>
         <ShareButtons
-          contentRef={reportRef}
+          contentRef={printRef}
           fileName={`Form-16-${format(new Date(), 'yyyy-MM-dd')}`}
           whatsappMessage="Check out my Form 16 from ZenithBooks"
           emailSubject="Form 16"

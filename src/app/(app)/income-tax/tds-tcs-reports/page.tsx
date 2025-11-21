@@ -74,6 +74,7 @@ export default function TdsTcsReportsPage() {
   const financialYears = getFinancialYears();
 
   const generateReport = () => {
+    setReportData([]); // Clear previous data
     toast({
         title: "Generating Report...",
         description: "Generating report for the selected period."
@@ -111,7 +112,9 @@ export default function TdsTcsReportsPage() {
     ];
     setReportData(generatedData);
     setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
-    
+
+    console.log("Report generated:", generatedData); // Debug log
+
     toast({
         title: "Report Generated",
         description: `Report has been generated successfully for ${periodLabel}. Note: This is sample data. To generate actual reports, TDS/TCS tracking needs to be enabled in your journal entries.`
@@ -218,9 +221,42 @@ export default function TdsTcsReportsPage() {
             <CardTitle>{reportTitle || "Generated Report"}</CardTitle>
             <CardDescription>A summary of tax deducted/collected for the selected period will appear here.</CardDescription>
           </div>
-          <Button variant="outline" disabled={reportData.length === 0}>
+          <Button
+            variant="outline"
+            disabled={reportData.length === 0}
+            onClick={() => {
+              const csv = [
+                ["Deductee/Collectee", "PAN", "Invoice #", "Invoice Date", "Invoice Amount", "TDS/TCS Section", "Rate (%)", "Tax Amount"],
+                ...reportData.map(row => [
+                  row.deductee,
+                  row.pan,
+                  row.invoiceId,
+                  row.invoiceDate,
+                  row.invoiceAmount.toFixed(2),
+                  row.tdsSection,
+                  row.tdsRate.toString(),
+                  row.tdsAmount.toFixed(2)
+                ])
+              ].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `${reportType.toUpperCase()}-${periodLabel.replace(/\s+/g, '-')}.csv`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+
+              toast({
+                title: "Report Exported",
+                description: "The report has been downloaded as a CSV file."
+              });
+            }}
+          >
             <FileDown className="mr-2" />
-            Export Report
+            Export CSV
           </Button>
         </CardHeader>
         <CardContent>
