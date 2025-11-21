@@ -29,7 +29,8 @@ import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 type Request = {
   id: string;
@@ -43,7 +44,7 @@ type Request = {
 };
 
 export default function AdminCertificationRequests() {
-  const { user } = useAuth();
+  const [user] = useAuthState(auth);
   const [requestsCollection, loading] = useCollection(
     user ? query(collection(db, "certificationRequests"), where("status", "in", ["Pending", "Certified", "Rejected"])) : null
   );
