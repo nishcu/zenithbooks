@@ -203,12 +203,14 @@ export default function BlogPage() {
 
                 // Always show posts from Firebase, or sample posts if empty
                 const finalPosts = posts.length > 0 ? posts : defaultPosts;
+                console.log('📝 SETTING BLOG POSTS:', finalPosts.length, 'posts');
                 setBlogPosts(finalPosts);
                 setHasLoaded(true);
             } catch (error) {
                 console.error('Error loading blog posts from Firebase:', error);
                 if (isMounted) {
                     // Fall back to sample posts on error
+                    console.log('📝 FALLBACK: Setting default posts on error');
                     setBlogPosts(defaultPosts);
                     setHasLoaded(true);
                 }
@@ -228,7 +230,11 @@ export default function BlogPage() {
 
     // Get unique categories
     const categories = useMemo(() => {
-        const cats = new Set(blogPosts.map(post => post.category));
+        console.log('🔄 BUILDING CATEGORIES from', blogPosts?.length || 0, 'posts');
+        if (!Array.isArray(blogPosts) || blogPosts.length === 0) {
+            return [];
+        }
+        const cats = new Set(blogPosts.map(post => post?.category).filter(Boolean));
         return Array.from(cats);
     }, [blogPosts]);
 
@@ -248,33 +254,38 @@ export default function BlogPage() {
 
     // Sort posts by date (latest first)
     const sortedPosts = useMemo(() => {
+        console.log('🔄 SORTING POSTS:', blogPosts?.length || 0, 'posts');
+        if (!Array.isArray(blogPosts) || blogPosts.length === 0) {
+            return [];
+        }
         return [...blogPosts].sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+            new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime()
         );
     }, [blogPosts]);
 
     // Featured post (latest)
-    const featuredPost = sortedPosts[0];
+    const featuredPost = sortedPosts?.[0] || null;
 
     // Filter posts
     const filteredPosts = useMemo(() => {
-        let posts = sortedPosts;
-        
-        if (selectedCategory) {
-            posts = posts.filter(post => post.category === selectedCategory);
+        console.log('🔄 FILTERING POSTS:', sortedPosts?.length || 0, 'sorted posts');
+        let posts = sortedPosts || [];
+
+        if (selectedCategory && Array.isArray(posts)) {
+            posts = posts.filter(post => post?.category === selectedCategory);
         }
-        
-        if (searchTerm) {
+
+        if (searchTerm && Array.isArray(posts)) {
             const searchLower = searchTerm.toLowerCase();
-            posts = posts.filter(post => 
-                post.title.toLowerCase().includes(searchLower) ||
-                post.description.toLowerCase().includes(searchLower) ||
-                post.author.toLowerCase().includes(searchLower) ||
-                post.category.toLowerCase().includes(searchLower)
+            posts = posts.filter(post =>
+                post?.title?.toLowerCase().includes(searchLower) ||
+                post?.description?.toLowerCase().includes(searchLower) ||
+                post?.author?.toLowerCase().includes(searchLower) ||
+                post?.category?.toLowerCase().includes(searchLower)
             );
         }
-        
-        return posts;
+
+        return Array.isArray(posts) ? posts : [];
     }, [searchTerm, selectedCategory, sortedPosts]);
 
     // Regular posts (excluding featured)
