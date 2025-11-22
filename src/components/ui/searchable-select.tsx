@@ -16,7 +16,8 @@ function SimpleDropdown({
   onValueChange,
   searchPlaceholder,
   emptyMessage,
-  groupBy
+  groupBy,
+  containerRef
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +27,7 @@ function SimpleDropdown({
   searchPlaceholder: string;
   emptyMessage: string;
   groupBy: boolean;
+  containerRef: React.RefObject<HTMLDivElement>;
 }) {
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -206,6 +208,7 @@ export function SearchableSelect({
         searchPlaceholder={searchPlaceholder}
         emptyMessage={emptyMessage}
         groupBy={groupBy}
+        containerRef={containerRef}
       />
     </div>
   );
