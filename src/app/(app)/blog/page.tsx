@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter } from "lucide-react";
+import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter, RefreshCw } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -113,19 +113,68 @@ function getStoredBlogPosts() {
 
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : samplePosts;
+        const posts = stored ? JSON.parse(stored) : samplePosts;
+        console.log('Blog page: Loaded posts from storage:', posts.length, 'posts');
+        console.log('Blog page: Sample posts length:', samplePosts.length);
+
+        // Log the first few posts to see their images
+        posts.slice(0, 3).forEach((post, index) => {
+            console.log(`Post ${index + 1} (${post.id}): imageUrl =`, post.imageUrl ? post.imageUrl.substring(0, 50) + '...' : 'missing');
+        });
+
+        return posts;
     } catch (error) {
         console.error('Error loading blog posts from localStorage:', error);
         return samplePosts;
     }
 }
 
+// Function to save blog posts to localStorage (for debugging)
+function saveBlogPostsDebug(posts: any[]) {
+    if (typeof window === 'undefined') return;
+
+    try {
+        localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
+        console.log('Blog page: Saved posts to localStorage:', posts.length, 'posts');
+    } catch (error) {
+        console.error('Error saving blog posts to localStorage:', error);
+    }
+}
+
 export default function BlogPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [blogPosts, setBlogPosts] = useState(() => getStoredBlogPosts());
 
-    // Get posts from localStorage or fallback to samplePosts
-    const blogPosts = getStoredBlogPosts();
+    // Update posts when localStorage changes (for edit persistence)
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === BLOG_POSTS_STORAGE_KEY) {
+                console.log('Blog posts updated in localStorage, refreshing...');
+                const updatedPosts = getStoredBlogPosts();
+                setBlogPosts(updatedPosts);
+            }
+        };
+
+        // Listen for storage changes
+        window.addEventListener('storage', handleStorageChange);
+
+        // Also check on mount and focus (for when user comes back to tab)
+        const handleFocus = () => {
+            const currentPosts = getStoredBlogPosts();
+            if (JSON.stringify(currentPosts) !== JSON.stringify(blogPosts)) {
+                console.log('Blog posts changed while away, refreshing...');
+                setBlogPosts(currentPosts);
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [blogPosts]);
 
     // Get unique categories
     const categories = useMemo(() => {
@@ -181,15 +230,29 @@ export default function BlogPage() {
 
             {/* Search and Filter */}
             <div className="space-y-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Search articles..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search articles..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                            const updatedPosts = getStoredBlogPosts();
+                            setBlogPosts(updatedPosts);
+                            console.log('Manually refreshed blog posts');
+                        }}
+                        title="Refresh posts"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2">
