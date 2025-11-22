@@ -199,7 +199,7 @@ export default function BlogPage() {
             {!searchTerm && selectedCategory === null && featuredPost && (
                 <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
                     <div className="grid md:grid-cols-2 gap-0">
-                        <div className="relative aspect-video md:aspect-auto bg-muted featured-image-container">
+                        <div className="relative aspect-video md:aspect-auto">
                             <Image
                                 src={featuredPost.imageUrl}
                                 alt={featuredPost.title}
@@ -208,36 +208,6 @@ export default function BlogPage() {
                                 data-ai-hint={featuredPost.imageHint}
                                 priority
                                 sizes="(max-width: 768px) 100vw, 50vw"
-                                onLoadingComplete={() => {
-                                    // Image loaded successfully, hide any error message
-                                    const parent = document.querySelector('.featured-image-container');
-                                    if (parent) {
-                                        const errorDiv = parent.querySelector('.image-error');
-                                        if (errorDiv) errorDiv.style.display = 'none';
-                                    }
-                                }}
-                                onError={(e) => {
-                                    console.warn('Featured image failed to load:', featuredPost.imageUrl);
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent && !parent.querySelector('.image-error')) {
-                                        const errorDiv = document.createElement('div');
-                                        errorDiv.className = 'image-error flex items-center justify-center h-full bg-muted text-muted-foreground';
-                                        errorDiv.innerHTML = `
-                                            <div class="text-center p-8">
-                                                <div class="w-16 h-16 mx-auto mb-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
-                                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-                                                    </svg>
-                                                </div>
-                                                <h3 class="font-semibold mb-2">Featured Image Unavailable</h3>
-                                                <p class="text-sm">The featured blog image could not be loaded.</p>
-                                            </div>
-                                        `;
-                                        parent.appendChild(errorDiv);
-                                    }
-                                }}
                             />
                             <div className="absolute top-4 left-4">
                                 <Badge className="bg-primary text-primary-foreground">
@@ -290,7 +260,7 @@ export default function BlogPage() {
                             className="flex flex-col overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                         >
                             <Link href={`/blog/${post.id}`} className="flex flex-col h-full">
-                                <div className="relative aspect-video overflow-hidden bg-muted">
+                                <div className="relative aspect-video overflow-hidden">
                                     <Image
                                         src={post.imageUrl}
                                         alt={post.title}
@@ -298,33 +268,6 @@ export default function BlogPage() {
                                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                        onLoadingComplete={() => {
-                                            // Image loaded successfully, hide any error message
-                                            const parent = document.querySelector(`.blog-image-${post.id}`);
-                                            if (parent) {
-                                                const errorDiv = parent.querySelector('.image-error');
-                                                if (errorDiv) errorDiv.style.display = 'none';
-                                            }
-                                        }}
-                                        onError={(e) => {
-                                            console.warn('Blog image failed to load:', post.imageUrl);
-                                            const target = e.target as HTMLImageElement;
-                                            target.style.display = 'none';
-                                            const parent = target.parentElement;
-                                            if (parent && !parent.querySelector('.image-error')) {
-                                                const errorDiv = document.createElement('div');
-                                                errorDiv.className = 'image-error flex items-center justify-center h-full bg-muted text-muted-foreground';
-                                                errorDiv.innerHTML = `
-                                                    <div class="text-center p-4">
-                                                        <svg class="w-8 h-8 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                        <p class="text-xs">Image unavailable</p>
-                                                    </div>
-                                                `;
-                                                parent.appendChild(errorDiv);
-                                            }
-                                        }}
                                     />
                                 </div>
                                 <CardHeader className="flex-grow">
