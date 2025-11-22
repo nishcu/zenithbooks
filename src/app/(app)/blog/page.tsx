@@ -274,24 +274,24 @@ export default function BlogPage() {
             {filteredPosts.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {(selectedCategory === null && !searchTerm ? regularPosts : filteredPosts).map(post => (
-                        <Card 
-                            key={post.id} 
-                            className="flex flex-col overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                        <Card
+                            key={post.id}
+                            className="flex flex-col overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                         >
-                            <Link href={`/blog/${post.id}`} className="flex flex-col h-full">
-                                <div className="relative aspect-video overflow-hidden">
+                            <Link href={`/blog/${post.id}`} className="flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
+                                <div className="relative aspect-video overflow-hidden rounded-t-lg">
                                     <Image
                                         src={post.imageUrl}
                                         alt={post.title}
                                         fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                        className="object-cover hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
                                 </div>
                                 <CardHeader className="flex-grow">
                                     <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
-                                    <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                                    <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
                                         {post.title}
                                     </CardTitle>
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground pt-2 flex-wrap">

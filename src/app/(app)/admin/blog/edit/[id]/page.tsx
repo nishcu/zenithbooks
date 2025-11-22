@@ -39,7 +39,9 @@ function getStoredBlogPosts() {
 
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : samplePosts;
+        const posts = stored ? JSON.parse(stored) : samplePosts;
+        console.log('Loaded blog posts from storage:', posts.length, 'posts');
+        return posts;
     } catch (error) {
         console.error('Error loading blog posts from localStorage:', error);
         return samplePosts;
@@ -59,8 +61,12 @@ function saveBlogPosts(posts: any[]) {
 
 // Function to update a blog post
 function updateSamplePost(postId: string, updatedData: any) {
+    console.log('Updating blog post:', postId, updatedData);
     const posts = getStoredBlogPosts();
+    console.log('Current posts from storage:', posts.length);
+
     const postIndex = posts.findIndex((post: any) => post.id === postId);
+    console.log('Post index found:', postIndex);
 
     if (postIndex !== -1) {
         // Convert contentBlocks back to content array format
@@ -69,7 +75,7 @@ function updateSamplePost(postId: string, updatedData: any) {
             .map((block: any) => block.value);
 
         // Update the post with new data
-        posts[postIndex] = {
+        const updatedPost = {
             ...posts[postIndex],
             title: updatedData.title,
             author: updatedData.authorName,
@@ -82,14 +88,21 @@ function updateSamplePost(postId: string, updatedData: any) {
             image: updatedData.imageDataUrl || posts[postIndex].imageUrl,
         };
 
+        posts[postIndex] = updatedPost;
+        console.log('Updated post:', updatedPost);
+
         // Save updated posts to localStorage
         saveBlogPosts(posts);
+        console.log('Saved to localStorage');
 
         // Update the global samplePosts array (for immediate updates)
         const globalIndex = samplePosts.findIndex(p => p.id === postId);
         if (globalIndex !== -1) {
-            samplePosts[globalIndex] = posts[postIndex];
+            samplePosts[globalIndex] = updatedPost;
+            console.log('Updated global samplePosts');
         }
+    } else {
+        console.error('Post not found for updating:', postId);
     }
 }
 
@@ -205,8 +218,8 @@ export default function EditBlogPostPage() {
                 authorTitle: values.authorTitle,
                 category: values.category,
                 contentBlocks: values.contentBlocks,
-                // If a new image was uploaded, use the data URL, otherwise keep existing
-                imageDataUrl: values.image ? imagePreview : undefined,
+                // If a new image was uploaded (imagePreview exists), use the data URL
+                imageDataUrl: imagePreview || undefined,
             };
 
             // Update the blog post in the samplePosts array
