@@ -276,6 +276,8 @@ CertificateToPrint.displayName = 'CertificateToPrint';
 
 
 export default function NetWorthCertificatePage() {
+  console.log('🎯 NET-WORTH PAGE: Component rendered/mounted');
+
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -334,12 +336,23 @@ export default function NetWorthCertificatePage() {
 
   // Load pricing data
   useEffect(() => {
+    console.log('🚀 NET-WORTH PAGE: Loading pricing data...');
     getServicePricing().then(pricingData => {
+      console.log('✅ NET-WORTH PAGE: Pricing data received:', pricingData);
       setPricing(pricingData);
+      console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render');
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error('❌ NET-WORTH PAGE: Error loading pricing:', error);
     });
   }, []);
+
+  // Debug pricing changes
+  useEffect(() => {
+    console.log('🔄 NET-WORTH PAGE: Pricing state changed:', pricing);
+    if (pricing) {
+      console.log('📊 NET-WORTH PAGE: Available ca_certs services:', pricing.ca_certs?.map(s => `${s.id}: ₹${s.price}`));
+    }
+  }, [pricing]);
 
   const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({ control: form.control, name: "assets" });
   const { fields: liabilityFields, append: appendLiability, remove: removeLiability } = useFieldArray({ control: form.control, name: "liabilities" });
