@@ -232,14 +232,14 @@ export default function BlogPage() {
             <div className="space-y-4">
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search articles..."
-                            className="pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search articles..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                     </div>
                     <Button
                         variant="outline"
@@ -282,9 +282,9 @@ export default function BlogPage() {
                 <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
                     <div className="grid md:grid-cols-2 gap-0">
                         <div className="relative aspect-video md:aspect-auto">
-                            <Image
-                                src={featuredPost.imageUrl}
-                                alt={featuredPost.title}
+                            <Image 
+                                src={featuredPost.imageUrl} 
+                                alt={featuredPost.title} 
                                 fill
                                 className="object-cover"
                                 data-ai-hint={featuredPost.imageHint}
@@ -337,15 +337,15 @@ export default function BlogPage() {
             {filteredPosts.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {(selectedCategory === null && !searchTerm ? regularPosts : filteredPosts).map(post => (
-                        <Card
-                            key={post.id}
+                        <Card 
+                            key={post.id} 
                             className="flex flex-col overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                         >
                             <Link href={`/blog/${post.id}`} className="flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
                                 <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                                    <Image
-                                        src={post.imageUrl}
-                                        alt={post.title}
+                                    <Image 
+                                        src={post.imageUrl} 
+                                        alt={post.title} 
                                         fill
                                         className="object-cover hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}

@@ -22,10 +22,10 @@ const calculateReadingTime = (content: string[]): number => {
 // Get related posts
 const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof samplePosts, limit: number = 3) => {
     return allPosts
-        .filter(post =>
-            post.id !== currentPost.id &&
-            (post.category === currentPost.category ||
-             post.title.toLowerCase().split(' ').some(word =>
+        .filter(post => 
+            post.id !== currentPost.id && 
+            (post.category === currentPost.category || 
+             post.title.toLowerCase().split(' ').some(word => 
                 currentPost.title.toLowerCase().includes(word) && word.length > 4
              ))
         )
@@ -162,14 +162,14 @@ export default function BlogPostPage() {
                 {post && <meta property="article:tag" content={post.category} />}
             </Head>
 
-            <div className="max-w-6xl mx-auto">
-                {/* Reading Progress Bar */}
-                <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
-                    <div
-                        className="h-full bg-primary transition-all duration-150"
-                        style={{ width: `${readingProgress}%` }}
-                    />
-                </div>
+        <div className="max-w-6xl mx-auto">
+            {/* Reading Progress Bar */}
+            <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
+                <div 
+                    className="h-full bg-primary transition-all duration-150"
+                    style={{ width: `${readingProgress}%` }}
+                />
+            </div>
 
             <div className="grid lg:grid-cols-4 gap-8">
                 {/* Main Content */}
@@ -199,9 +199,9 @@ export default function BlogPostPage() {
                         </div>
 
                         <div className="relative aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
-                            <Image
-                                src={post.imageUrl}
-                                alt={post.title}
+                            <Image 
+                                src={post.imageUrl} 
+                                alt={post.title} 
                                 fill
                                 className="object-cover"
                                 data-ai-hint={post.imageHint}
