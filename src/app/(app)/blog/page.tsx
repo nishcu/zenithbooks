@@ -18,7 +18,7 @@ export const samplePosts = [
         author: "Strategic Team, ZenithBooks",
         date: "2024-09-29",
         category: "Vision",
-        imageUrl: "https://images.unsplash.com/photo-1623979047394-a3c9b74d4b23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBwb2xpdGljaWFufGVufDB8fHx8MTc1ODkyMDQ0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+        imageUrl: "https://images.unsplash.com/photo-1623979047394-a3c9b74d4b23?w=800&h=400&fit=crop&crop=center",
         imageHint: "indian leader",
         shareUrl: "/blog/4",
         content: [
@@ -34,7 +34,7 @@ export const samplePosts = [
         author: "Team ZenithBooks",
         date: "2024-09-29",
         category: "Our Mission",
-        imageUrl: "https://images.unsplash.com/photo-1521737852577-68489a10811c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9mZXNzaW9uYWwlMjBuZXR3b3JrfGVufDB8fHx8MTc1ODkzNzY5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+        imageUrl: "https://images.unsplash.com/photo-1521737852577-68489a10811c?w=800&h=400&fit=crop&crop=center",
         imageHint: "professional network",
         shareUrl: "/blog/5",
         content: [
@@ -50,7 +50,7 @@ export const samplePosts = [
         author: "Priya Mehta, CA",
         date: "2024-07-28",
         category: "GST",
-        imageUrl: "https://images.unsplash.com/photo-1554224155-1696413565d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmaW5hbmNpYWwlMjBkb2N1bWVudHN8ZW58MHx8fHwxNzU4ODgxMTM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+        imageUrl: "https://images.unsplash.com/photo-1554224155-1696413565d3?w=800&h=400&fit=crop&crop=center",
         imageHint: "financial documents",
         shareUrl: "/blog/1",
         content: [
@@ -66,7 +66,7 @@ export const samplePosts = [
         author: "Rohan Sharma, CS",
         date: "2024-07-25",
         category: "Business Registration",
-        imageUrl: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHN0cmF0ZWd5JTIwbWVldGluZ3xlbnwwfHx8fDE3NTg4ODE0ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+        imageUrl: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=400&fit=crop&crop=center",
         imageHint: "business strategy meeting",
         shareUrl: "/blog/2",
         content: [
@@ -84,7 +84,7 @@ export const samplePosts = [
         author: "Anjali Singh, Tax Consultant",
         date: "2024-07-22",
         category: "Income Tax",
-        imageUrl: "https://images.unsplash.com/photo-1589949692098-26d0d752de8f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0YXglMjBjYWxjdWxhdG9yfGVufDB8fHx8MTc1ODg4MTQ4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+        imageUrl: "https://images.unsplash.com/photo-1589949692098-26d0d752de8f?w=800&h=400&fit=crop&crop=center",
         imageHint: "tax calculator",
         shareUrl: "/blog/3",
         content: [
