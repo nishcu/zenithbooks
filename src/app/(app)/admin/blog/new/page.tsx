@@ -28,6 +28,9 @@ import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "
 import { useToast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { uploadBlogImage } from '@/lib/storage';
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
@@ -78,19 +81,48 @@ export default function NewBlogPostPage() {
         }
     };
     
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
-        console.log(values);
-        // Simulate API call to save blog post
-        setTimeout(() => {
-            setIsLoading(false);
+
+        try {
+            // First upload the image to Firebase Storage
+            const imageUrl = await uploadBlogImage(values.image);
+
+            // Create blog post data
+            const blogPostData = {
+                title: values.title,
+                authorName: values.authorName,
+                authorTitle: values.authorTitle,
+                category: values.category,
+                imageUrl: imageUrl,
+                contentBlocks: values.contentBlocks,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                published: true,
+                slug: values.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+            };
+
+            // Save to Firebase
+            await addDoc(collection(db, 'blogPosts'), blogPostData);
+
             toast({
                 title: "Blog Post Published!",
-                description: "Your new blog post is now live.",
+                description: "Your new blog post has been created and published successfully.",
             });
+
             form.reset();
             setImagePreview(null);
-        }, 1500);
+
+        } catch (error: any) {
+            console.error('Blog creation error:', error);
+            toast({
+                variant: "destructive",
+                title: "Upload Failed",
+                description: error.message || "Failed to upload image. Please try again.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (

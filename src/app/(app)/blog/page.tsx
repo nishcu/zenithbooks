@@ -10,6 +10,8 @@ import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter, RefreshC
 import Image from 'next/image';
 import Link from 'next/link';
 import { migrateBlogPostsImages } from '@/lib/storage';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 export const samplePosts = [
     {
@@ -166,43 +168,67 @@ async function migrateBlogImages() {
 export default function BlogPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [blogPosts, setBlogPosts] = useState(() => getStoredBlogPosts());
+    const [blogPosts, setBlogPosts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Update posts when localStorage changes (for edit persistence)
+    // Load blog posts from Firebase
     useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === BLOG_POSTS_STORAGE_KEY) {
-                console.log('Blog posts updated in localStorage, refreshing...');
-                const updatedPosts = getStoredBlogPosts();
-                setBlogPosts(updatedPosts);
+        const loadBlogPosts = async () => {
+            try {
+                console.log('Loading blog posts from Firebase...');
+                const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
+                const querySnapshot = await getDocs(q);
+
+                const posts: any[] = [];
+                querySnapshot.forEach((doc) => {
+                    posts.push({
+                        id: doc.id,
+                        ...doc.data(),
+                        // Convert Firestore timestamp to date string if needed
+                        date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
+                    });
+                });
+
+                console.log('Loaded blog posts from Firebase:', posts.length, 'posts');
+
+                // If no posts in Firebase, fall back to sample posts
+                if (posts.length === 0) {
+                    console.log('No posts in Firebase, using sample posts');
+                    setBlogPosts(samplePosts);
+                } else {
+                    setBlogPosts(posts);
+                }
+            } catch (error) {
+                console.error('Error loading blog posts from Firebase:', error);
+                // Fall back to sample posts on error
+                setBlogPosts(samplePosts);
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        // Listen for storage changes
-        window.addEventListener('storage', handleStorageChange);
-
-        // Also check on mount and focus (for when user comes back to tab)
-        const handleFocus = () => {
-            const currentPosts = getStoredBlogPosts();
-            if (JSON.stringify(currentPosts) !== JSON.stringify(blogPosts)) {
-                console.log('Blog posts changed while away, refreshing...');
-                setBlogPosts(currentPosts);
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('focus', handleFocus);
-        };
-    }, [blogPosts]);
+        loadBlogPosts();
+    }, []);
 
     // Get unique categories
     const categories = useMemo(() => {
         const cats = new Set(blogPosts.map(post => post.category));
         return Array.from(cats);
     }, [blogPosts]);
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="text-center">
+                        <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                        <p className="text-muted-foreground">Loading blog posts...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // Sort posts by date (latest first)
     const sortedPosts = useMemo(() => {

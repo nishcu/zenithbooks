@@ -30,6 +30,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { samplePosts } from "@/app/(app)/blog/page";
 import { uploadBlogImage, deleteBlogImage, validateBlogImage } from "@/lib/storage";
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 // Storage key for blog posts
 const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
