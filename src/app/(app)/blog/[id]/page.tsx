@@ -199,14 +199,20 @@ export default function BlogPostPage() {
                         </div>
 
                         <div className="relative aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
-                            <Image 
-                                src={post.imageUrl} 
-                                alt={post.title} 
+                            <Image
+                                src={post.imageUrl}
+                                alt={post.title}
                                 fill
                                 className="object-cover"
                                 data-ai-hint={post.imageHint}
                                 priority
                                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 768px, 1200px"
+                                onError={(e) => {
+                                    console.error('Failed to load blog post image:', post.imageUrl);
+                                    // Fallback to a default image
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop&crop=center';
+                                }}
                             />
                         </div>
 

@@ -29,6 +29,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { samplePosts } from "@/app/(app)/blog/page";
+import { uploadBlogImage, deleteBlogImage, validateBlogImage } from "@/lib/storage";
 
 // Storage key for blog posts
 const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
@@ -74,6 +75,21 @@ function updateSamplePost(postId: string, updatedData: any) {
             .filter((block: any) => block.value.trim() !== '')
             .map((block: any) => block.value);
 
+        // Handle image updates - prefer Firebase Storage URLs over data URLs
+        let finalImageUrl = posts[postIndex].imageUrl;
+
+        // If a new Firebase Storage URL is provided, use it
+        if (updatedData.firebaseImageUrl) {
+            // Delete old Firebase Storage image if it exists
+            if (posts[postIndex].imageUrl &&
+                posts[postIndex].imageUrl.includes('firebasestorage.googleapis.com')) {
+                deleteBlogImage(posts[postIndex].imageUrl);
+            }
+            finalImageUrl = updatedData.firebaseImageUrl;
+        }
+        // Keep existing image if no new image provided
+        // Don't use base64 data URLs anymore as they're stored in Firebase
+
         // Update the post with new data
         const updatedPost = {
             ...posts[postIndex],
@@ -82,10 +98,8 @@ function updateSamplePost(postId: string, updatedData: any) {
             authorTitle: updatedData.authorTitle,
             category: updatedData.category,
             content: content,
-            // Handle image - if a new image was uploaded, use the data URL
-            // Otherwise keep the existing imageUrl
-            imageUrl: updatedData.imageDataUrl || posts[postIndex].imageUrl,
-            image: updatedData.imageDataUrl || posts[postIndex].imageUrl,
+            imageUrl: finalImageUrl,
+            image: finalImageUrl, // Keep both for compatibility
         };
 
         posts[postIndex] = updatedPost;
@@ -128,6 +142,8 @@ export default function EditBlogPostPage() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -201,6 +217,22 @@ export default function EditBlogPostPage() {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validate the image file
+            const validation = validateBlogImage(file);
+            if (!validation.valid) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid Image",
+                    description: validation.error,
+                });
+                // Clear the input
+                if (imageInputRef.current) {
+                    imageInputRef.current.value = '';
+                }
+                return;
+            }
+
+            // Show preview
             form.setValue("image", file);
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result as string);
@@ -210,7 +242,34 @@ export default function EditBlogPostPage() {
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setIsSaving(true);
+        let firebaseImageUrl: string | undefined;
+
         try {
+            // If a new image was selected, upload it to Firebase Storage
+            if (values.image && values.image instanceof File) {
+                setIsUploading(true);
+                setUploadProgress(0);
+
+                try {
+                    firebaseImageUrl = await uploadBlogImage(values.image, (progress) => {
+                        setUploadProgress(progress);
+                    });
+
+                    console.log('Image uploaded successfully:', firebaseImageUrl);
+                } catch (uploadError) {
+                    console.error('Image upload failed:', uploadError);
+                    toast({
+                        variant: "destructive",
+                        title: "Upload Failed",
+                        description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
+                    });
+                    return;
+                } finally {
+                    setIsUploading(false);
+                    setUploadProgress(0);
+                }
+            }
+
             // Prepare the data for saving
             const postData = {
                 title: values.title,
@@ -218,15 +277,12 @@ export default function EditBlogPostPage() {
                 authorTitle: values.authorTitle,
                 category: values.category,
                 contentBlocks: values.contentBlocks,
-                // If a new image was uploaded (imagePreview exists), use the data URL
-                imageDataUrl: imagePreview || undefined,
+                // Use Firebase Storage URL instead of data URL
+                firebaseImageUrl: firebaseImageUrl,
             };
 
             // Update the blog post in the samplePosts array
             updateSamplePost(postId, postData);
-
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
 
             toast({
                 title: "Blog Post Updated!",
@@ -245,6 +301,8 @@ export default function EditBlogPostPage() {
             });
         } finally {
             setIsSaving(false);
+            setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -451,8 +509,13 @@ export default function EditBlogPostPage() {
                             </Button>
                         </CardContent>
                         <CardFooter>
-                            <Button type="submit" disabled={isSaving} className="w-full">
-                                {isSaving ? (
+                            <Button type="submit" disabled={isSaving || isUploading} className="w-full">
+                                {isUploading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Uploading Image... {Math.round(uploadProgress)}%
+                                    </>
+                                ) : isSaving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Updating Post...

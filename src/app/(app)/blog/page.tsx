@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter, RefreshCw } from "lucide-react";
+import { ArrowRight, User, Calendar, Search, Clock, TrendingUp, Filter, RefreshCw, CloudUpload } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
+import { migrateBlogPostsImages } from '@/lib/storage';
 
 export const samplePosts = [
     {
@@ -141,6 +142,27 @@ function saveBlogPostsDebug(posts: any[]) {
     }
 }
 
+// Function to migrate base64 images to Firebase Storage
+async function migrateBlogImages() {
+    if (typeof window === 'undefined') return;
+
+    try {
+        console.log('Starting image migration to Firebase Storage...');
+        const posts = getStoredBlogPosts();
+        const migratedPosts = await migrateBlogPostsImages(posts);
+
+        // Save migrated posts back to localStorage
+        localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(migratedPosts));
+        console.log('Image migration completed successfully');
+
+        // Update state
+        window.location.reload(); // Simple way to refresh and show migrated images
+    } catch (error) {
+        console.error('Error during image migration:', error);
+        alert('Failed to migrate images. Check console for details.');
+    }
+}
+
 export default function BlogPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -253,6 +275,16 @@ export default function BlogPage() {
                     >
                         <RefreshCw className="h-4 w-4" />
                     </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={migrateBlogImages}
+                        title="Migrate images to Firebase Storage"
+                        className="ml-2"
+                    >
+                        <CloudUpload className="h-4 w-4 mr-1" />
+                        Migrate Images
+                    </Button>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2">
@@ -343,13 +375,19 @@ export default function BlogPage() {
                         >
                             <Link href={`/blog/${post.id}`} className="flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
                                 <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                                    <Image 
-                                        src={post.imageUrl} 
-                                        alt={post.title} 
+                                    <Image
+                                        src={post.imageUrl}
+                                        alt={post.title}
                                         fill
                                         className="object-cover hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                        onError={(e) => {
+                                            console.error('Failed to load blog image:', post.imageUrl);
+                                            // Fallback to a default image
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop&crop=center';
+                                        }}
                                     />
                                 </div>
                                 <CardHeader className="flex-grow">
