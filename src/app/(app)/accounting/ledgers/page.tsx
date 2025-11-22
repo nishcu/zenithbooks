@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DateRangeSelector } from '@/components/date-range-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { allAccounts, Account } from '@/lib/accounts';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { formatCurrency } from '@/lib/utils';
@@ -190,14 +191,19 @@ export default function LedgersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Select Account</p>
-            <Select onValueChange={setSelectedAccount} value={selectedAccount || ''}>
-              <SelectTrigger>
-                <SelectValue placeholder="Search for an account..." />
-              </SelectTrigger>
-              <SelectContent className="max-h-96">
-                {accounts.map(acc => <SelectItem key={acc.code} value={acc.code}>{acc.name} ({acc.code})</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={accounts.map(acc => ({
+                value: acc.code,
+                label: `${acc.name} (${acc.code})`,
+                group: acc.type
+              }))}
+              value={selectedAccount || ''}
+              onValueChange={setSelectedAccount}
+              placeholder="Search for an account..."
+              searchPlaceholder="Type to search accounts..."
+              emptyMessage="No accounts found."
+              groupBy={true}
+            />
           </div>
           <div className="flex items-end">
             <Button onClick={handleExportPdf} disabled={!selectedAccount || loading} className="w-full">

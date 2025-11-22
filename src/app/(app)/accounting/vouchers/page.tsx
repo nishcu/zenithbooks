@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchableSelect, SelectOption } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -357,22 +358,15 @@ export default function VouchersPage() {
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>{dialogType === 'receipt' ? 'Received From' : 'Paid To'}</Label>
-                            <Select>
-                                <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(combinedAccounts.reduce((acc, curr) => {
-                                        if (!acc[curr.group]) acc[curr.group] = [];
-                                        acc[curr.group].push(curr);
-                                        return acc;
-                                    }, {} as Record<string, any[]>)).map(([group, accounts]) => (
-                                        <div key={group}>
-                                            <p className="px-2 py-1.5 text-sm font-semibold capitalize">{group}</p>
-                                            {accounts.map(acc => <SelectItem key={acc.value} value={acc.value}>{acc.label}</SelectItem>)}
-                                            <Separator className="my-2" />
-                                        </div>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={combinedAccounts}
+                                value={selectedAccount}
+                                onValueChange={setSelectedAccount}
+                                placeholder="Search and select account..."
+                                searchPlaceholder="Type to search accounts..."
+                                emptyMessage="No accounts found."
+                                groupBy={true}
+                            />
                         </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

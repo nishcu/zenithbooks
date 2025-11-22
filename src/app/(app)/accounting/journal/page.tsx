@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -377,34 +378,15 @@ export default function JournalVoucherPage() {
                         return (
                           <TableRow key={index}>
                             <TableCell>
-                              <Select value={line.account} onValueChange={(value: string) => handleLineChange(index, "account", value)}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select an account" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(
-                                    combinedAccounts.reduce((acc: Record<string, any[]>, curr: any) => {
-                                      const group = curr.group || "Other";
-                                      if (!acc[group]) acc[group] = [];
-                                      acc[group].push(curr);
-                                      return acc;
-                                    }, {} as Record<string, any[]>)
-                                  ).map(([group, accounts]) => {
-                                    const accountsArray = accounts as any[];
-                                    return (
-                                      <React.Fragment key={group}>
-                                        <p className="px-2 py-1.5 text-sm font-semibold">{group}</p>
-                                        {accountsArray.map((account: any) => (
-                                          <SelectItem key={account.value} value={account.value}>
-                                            {account.label}
-                                          </SelectItem>
-                                        ))}
-                                        <Separator className="my-2" />
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
+                              <SearchableSelect
+                                options={combinedAccounts}
+                                value={line.account}
+                                onValueChange={(value: string) => handleLineChange(index, "account", value)}
+                                placeholder="Select account..."
+                                searchPlaceholder="Search accounts..."
+                                emptyMessage="No accounts found."
+                                groupBy={true}
+                              />
                             </TableCell>
                             <TableCell>
                               {showCostCentre && (
