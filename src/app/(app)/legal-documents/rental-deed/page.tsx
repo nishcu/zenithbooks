@@ -36,6 +36,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   landlordName: z.string().min(3, "Lessor name is required."),
@@ -73,6 +79,13 @@ export default function RentalDeedPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'rental_deed'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -99,6 +112,15 @@ export default function RentalDeedPage() {
       allowSubletting: false,
     },
   });
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const processStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -326,6 +348,51 @@ export default function RentalDeedPage() {
           {renderStep()}
         </form>
       </Form>
+
+      {step === 4 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your Rental Agreement professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal experts will review your rental agreement for compliance with local laws, ensure all necessary clauses are included, and provide certification for legal validity.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'rental_deed')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'rental_deed')?.price || 0}
+                planId="rental_deed_certification"
+                planName="Rental Agreement Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "Rental Agreement Certification",
+                    clientName: form.getValues("tenantName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

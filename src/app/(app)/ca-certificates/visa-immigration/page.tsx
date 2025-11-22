@@ -21,6 +21,9 @@ import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 const assetSchema = z.object({
   description: z.string().min(3, "Description is required."),
@@ -58,6 +61,12 @@ export default function VisaImmigrationCertificatePage() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'visa_immigration'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -105,6 +114,15 @@ export default function VisaImmigrationCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const { fields: immovableFields, append: appendImmovable, remove: removeImmovable } = useFieldArray({ control: form.control, name: "immovableProperties" });
   const { fields: liquidFields, append: appendLiquid, remove: removeLiquid } = useFieldArray({ control: form.control, name: "liquidAssets" });
@@ -409,10 +427,35 @@ export default function VisaImmigrationCertificatePage() {
                                 fileName={`Financial_Questionnaire_${formData.studentName}`}
                                 whatsappMessage={whatsappMessage}
                              />
-                             <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                                Request Certification
-                            </Button>
+                             {pricing && pricing.ca_certs?.find(s => s.id === 'visa_immigration')?.price > 0 ? (
+                                <RazorpayCheckout
+                                    amount={pricing.ca_certs.find(s => s.id === 'visa_immigration')?.price || 0}
+                                    planId="visa_immigration_cert"
+                                    planName="Visa & Immigration Financials"
+                                    userId={user?.uid || ''}
+                                    userEmail={user?.email || ''}
+                                    userName={user?.displayName || ''}
+                                    onSuccess={(paymentId) => {
+                                        handlePaymentSuccess(paymentId, {
+                                            reportType: "Visa & Immigration Financials",
+                                            clientName: form.getValues("studentName"),
+                                            formData: form.getValues(),
+                                        });
+                                    }}
+                                    onFailure={() => {
+                                        toast({
+                                            variant: "destructive",
+                                            title: "Payment Failed",
+                                            description: "Payment was not completed. Please try again."
+                                        });
+                                    }}
+                                />
+                            ) : (
+                                <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                    Request Certification
+                                </Button>
+                            )}
                          </div>
                     </CardFooter>
                 </Card>

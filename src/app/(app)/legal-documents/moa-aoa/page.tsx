@@ -24,10 +24,18 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wand2, ArrowLeft } from "lucide-react";
+import { Loader2, Wand2, ArrowLeft, FileSignature } from "lucide-react";
 import { generateMoaObjectsAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect, useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
@@ -41,6 +49,14 @@ export default function MoaAoaPage() {
     const [result, setResult] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const printRef = useRef<HTMLDivElement>(null);
+    const [user] = useAuthState(auth);
+    const [pricing, setPricing] = useState(null);
+
+    const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+      pricing,
+      serviceId: 'moa_aoa'
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -49,6 +65,15 @@ export default function MoaAoaPage() {
             businessDescription: "",
         },
     });
+
+    // Load pricing data
+    useEffect(() => {
+      getServicePricing().then(pricingData => {
+        setPricing(pricingData);
+      }).catch(error => {
+        console.error('Error loading pricing:', error);
+      });
+    }, []);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
@@ -117,6 +142,49 @@ export default function MoaAoaPage() {
                 </AlertDescription>
             </Alert>
           </CardContent>
+        </Card>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your MOA & AOA professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal experts will review your Memorandum and Articles of Association for compliance with Companies Act, ensure all necessary clauses are included (business objects, share structure, director powers, etc.), and provide certification for incorporation and legal validity.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'moa_aoa')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'moa_aoa')?.price || 0}
+                planId="moa_aoa_certification"
+                planName="MOA & AOA Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "MOA & AOA Certification",
+                    clientName: form.getValues("companyName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
         </Card>
       )}
     </div>

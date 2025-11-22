@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel, FormDescription } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, FileDown, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, Save, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import html2pdf from "html2pdf.js";
@@ -19,6 +19,10 @@ import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
@@ -41,6 +45,12 @@ export default function EsopPolicy() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'esop_policy'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -78,6 +88,15 @@ export default function EsopPolicy() {
       loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handleSaveDraft = async () => {
     if (!user) {
@@ -223,6 +242,51 @@ export default function EsopPolicy() {
           {renderStep()}
         </form>
       </Form>
+
+      {step === 2 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your ESOP Policy professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal and financial experts will review your Employee Stock Option Plan for compliance with SEBI regulations, ensure all necessary clauses are included (vesting terms, exercise provisions, tax implications, etc.), and provide certification for legal validity and regulatory compliance.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'esop_policy')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'esop_policy')?.price || 0}
+                planId="esop_policy_certification"
+                planName="ESOP Policy Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "ESOP Policy Certification",
+                    clientName: form.getValues("companyName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

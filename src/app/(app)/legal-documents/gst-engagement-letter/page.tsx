@@ -22,12 +22,21 @@ import {
   ArrowRight,
   FileDown,
   Printer,
+  FileSignature,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const services = [
@@ -69,6 +78,13 @@ export default function GstEngagementLetterPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'gst_engagement_letter'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -87,6 +103,15 @@ export default function GstEngagementLetterPage() {
       termAndTermination: "This engagement will be effective from the date of signing and will continue until terminated by either party with a written notice of 30 days. All outstanding fees must be settled upon termination.",
     },
   });
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
@@ -331,6 +356,51 @@ export default function GstEngagementLetterPage() {
           {renderStep()}
         </form>
       </Form>
+
+      {step === 4 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your GST Engagement Letter professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal and tax experts will review your GST engagement letter for compliance with professional standards, ensure all necessary clauses are included (scope of services, responsibilities, fee structure, etc.), and provide certification for legal validity and professional standards.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'gst_engagement_letter')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'gst_engagement_letter')?.price || 0}
+                planId="gst_engagement_letter_certification"
+                planName="GST Engagement Letter Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "GST Engagement Letter Certification",
+                    clientName: form.getValues("clientName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

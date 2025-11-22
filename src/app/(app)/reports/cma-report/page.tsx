@@ -81,6 +81,10 @@ import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { getServicePricing, ServicePricing } from "@/lib/pricing-service";
 import { applyExcelFormatting } from "@/lib/export-utils";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 const initialAssets: FixedAsset[] = [
   { id: 1, name: "Plant & Machinery", cost: 1000000, depreciationRate: 15, additionYear: 0 },
@@ -107,6 +111,12 @@ export default function CmaReportGeneratorPage() {
   const [aiObservations, setAiObservations] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [user] = useAuthState(auth);
+
+  const { handlePaymentSuccess } = useCertificationRequest({
+    pricing,
+    serviceId: 'cma_report'
+  });
 
   const reportPrintRef = useRef(null);
 
@@ -521,10 +531,43 @@ export default function CmaReportGeneratorPage() {
                     </Button>
                 </CardContent>
                  <CardFooter className="flex justify-center">
-                    <Button size="lg" onClick={handleGenerateReport} disabled={isGenerating || !cmaReportPrice}>
-                        {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : null}
-                        Generate Report {cmaReportPrice ? `- ₹${cmaReportPrice}` : ''}
-                    </Button>
+                    {cmaReportPrice && cmaReportPrice > 0 ? (
+                        <RazorpayCheckout
+                            amount={cmaReportPrice}
+                            planId="cma_report_generation"
+                            planName="CMA Report Generation"
+                            userId={user?.uid || ''}
+                            userEmail={user?.email || ''}
+                            userName={user?.displayName || ''}
+                            onSuccess={(paymentId) => {
+                                handlePaymentSuccess(paymentId, {
+                                    reportType: "CMA Report",
+                                    clientName: "CMA Report Generation",
+                                    formData: {
+                                        numProjectedYears,
+                                        revenueGrowth,
+                                        expenseChange,
+                                        loanAssumptions,
+                                        fixedAssets
+                                    },
+                                });
+                                // After successful payment, generate the report
+                                handleGenerateReport();
+                            }}
+                            onFailure={() => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Payment Failed",
+                                    description: "Payment was not completed. Please try again."
+                                });
+                            }}
+                        />
+                    ) : (
+                        <Button size="lg" onClick={handleGenerateReport} disabled={isGenerating}>
+                            {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : null}
+                            Generate Report
+                        </Button>
+                    )}
                 </CardFooter>
             </Card>
           </div>

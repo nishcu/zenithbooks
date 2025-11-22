@@ -17,12 +17,18 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, FileDown, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, Printer, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 const formSchema = z.object({
   franchisorName: z.string().min(3, "Franchisor name is required."),
@@ -53,6 +59,13 @@ export default function FranchiseAgreementPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'franchise_agreement'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -76,6 +89,15 @@ export default function FranchiseAgreementPage() {
       agreementDate: new Date().toISOString().split("T")[0],
     });
   }, [form]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
@@ -249,6 +271,51 @@ export default function FranchiseAgreementPage() {
           {renderStep()}
         </form>
       </Form>
+
+      {step === 3 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your Franchise Agreement professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal experts will review your franchise agreement for compliance with franchise laws, ensure all necessary clauses are included (territory rights, royalty structure, termination terms, etc.), and provide certification for legal validity and enforceability.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'franchise_agreement')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'franchise_agreement')?.price || 0}
+                planId="franchise_agreement_certification"
+                planName="Franchise Agreement Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "Franchise Agreement Certification",
+                    clientName: form.getValues("franchisorName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

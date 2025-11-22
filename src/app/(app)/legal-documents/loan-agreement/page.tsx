@@ -21,12 +21,21 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel, FormDes
 import {
   ArrowLeft,
   ArrowRight,
-  FileDown
+  FileDown,
+  FileSignature,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect, useRef } from "react";
 
 const formSchema = z.object({
   borrowerName: z.string().min(3, "Company/LLP name is required."),
@@ -76,6 +85,14 @@ const numberToWords = (num: number): string => {
 export default function LoanAgreementPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'loan_agreement'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -98,6 +115,15 @@ export default function LoanAgreementPage() {
       jurisdictionCity: "",
     },
   });
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const processStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -320,6 +346,51 @@ export default function LoanAgreementPage() {
           {renderStep()}
         </form>
       </Form>
+
+      {step === 4 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Professional Certification Service</CardTitle>
+            <CardDescription>Get your Loan Agreement professionally reviewed and certified by a qualified legal expert.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Our legal experts will review your loan agreement for legal compliance, ensure all necessary clauses are included (interest rates, repayment terms, security details, etc.), and provide certification for legal validity and enforceability.
+            </p>
+          </CardContent>
+          <CardFooter>
+            {pricing && pricing.legal_docs?.find(s => s.id === 'loan_agreement')?.price > 0 ? (
+              <RazorpayCheckout
+                amount={pricing.legal_docs.find(s => s.id === 'loan_agreement')?.price || 0}
+                planId="loan_agreement_certification"
+                planName="Loan Agreement Professional Certification"
+                userId={user?.uid || ''}
+                userEmail={user?.email || ''}
+                userName={user?.displayName || ''}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess(paymentId, {
+                    reportType: "Loan Agreement Certification",
+                    clientName: form.getValues("borrowerName"),
+                    formData: form.getValues(),
+                  });
+                }}
+                onFailure={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Payment Failed",
+                    description: "Payment was not completed. Please try again."
+                  });
+                }}
+              />
+            ) : (
+              <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                Request Professional Certification
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

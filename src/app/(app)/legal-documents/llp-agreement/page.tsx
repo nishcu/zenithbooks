@@ -24,10 +24,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, PlusCircle, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, PlusCircle, Printer, Trash2, FileSignature, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -65,6 +72,13 @@ export default function LlpAgreementPage() {
     const [generatedAgreement, setGeneratedAgreement] = useState<string | null>(null);
     const { toast } = useToast();
     const printRef = useRef<HTMLDivElement>(null);
+    const [user] = useAuthState(auth);
+    const [pricing, setPricing] = useState(null);
+
+    const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+      pricing,
+      serviceId: 'llp_agreement'
+    });
 
     const form = useForm<LlpAgreementFormValues>({
         resolver: zodResolver(llpAgreementSchema),
@@ -83,6 +97,15 @@ export default function LlpAgreementPage() {
         control: form.control,
         name: "partners",
     });
+
+    // Load pricing data
+    useEffect(() => {
+      getServicePricing().then(pricingData => {
+        setPricing(pricingData);
+      }).catch(error => {
+        console.error('Error loading pricing:', error);
+      });
+    }, []);
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
@@ -264,6 +287,49 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
                             <pre className="whitespace-pre-wrap font-sans text-sm">{generatedAgreement}</pre>
                         </div>
                     </CardContent>
+                </Card>
+
+                <Card className="mt-8">
+                    <CardHeader>
+                        <CardTitle>Professional Certification Service</CardTitle>
+                        <CardDescription>Get your LLP Agreement professionally reviewed and certified by a qualified legal expert.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                            Our legal experts will review your LLP agreement for compliance with LLP Act, ensure all necessary clauses are included (partner rights, profit sharing, dissolution terms, etc.), and provide certification for registration and legal validity.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                        {pricing && pricing.legal_docs?.find(s => s.id === 'llp_agreement')?.price > 0 ? (
+                            <RazorpayCheckout
+                                amount={pricing.legal_docs.find(s => s.id === 'llp_agreement')?.price || 0}
+                                planId="llp_agreement_certification"
+                                planName="LLP Agreement Professional Certification"
+                                userId={user?.uid || ''}
+                                userEmail={user?.email || ''}
+                                userName={user?.displayName || ''}
+                                onSuccess={(paymentId) => {
+                                    handlePaymentSuccess(paymentId, {
+                                        reportType: "LLP Agreement Certification",
+                                        clientName: form.getValues("llpName"),
+                                        formData: form.getValues(),
+                                    });
+                                }}
+                                onFailure={() => {
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Payment Failed",
+                                        description: "Payment was not completed. Please try again."
+                                    });
+                                }}
+                            />
+                        ) : (
+                            <Button type="button" onClick={handleCertificationRequest} disabled={isCertifying}>
+                                {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                Request Professional Certification
+                            </Button>
+                        )}
+                    </CardFooter>
                 </Card>
             )}
         </div>

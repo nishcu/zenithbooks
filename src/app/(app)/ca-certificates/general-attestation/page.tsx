@@ -19,6 +19,9 @@ import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
 const formSchema = z.object({
@@ -44,6 +47,12 @@ export default function GeneralAttestationPage() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'general_attestation'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -83,6 +92,15 @@ export default function GeneralAttestationPage() {
       loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handleSaveDraft = async () => {
     if (!user) {
@@ -235,10 +253,35 @@ export default function GeneralAttestationPage() {
                 fileName={`Certificate_${formData.subject}`}
                 whatsappMessage={whatsappMessage}
               />
-              <Button type="button" className="ml-2" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <FileSignature className="mr-2" />}
-                Request Certification
-              </Button>
+              {pricing && pricing.ca_certs?.find(s => s.id === 'general_attestation')?.price > 0 ? (
+                <RazorpayCheckout
+                  amount={pricing.ca_certs.find(s => s.id === 'general_attestation')?.price || 0}
+                  planId="general_attestation_cert"
+                  planName="General Attestation Certificate"
+                  userId={user?.uid || ''}
+                  userEmail={user?.email || ''}
+                  userName={user?.displayName || ''}
+                  onSuccess={(paymentId) => {
+                    handlePaymentSuccess(paymentId, {
+                      reportType: "General Attestation Certificate",
+                      clientName: form.getValues("clientName"),
+                      formData: form.getValues(),
+                    });
+                  }}
+                  onFailure={() => {
+                    toast({
+                      variant: "destructive",
+                      title: "Payment Failed",
+                      description: "Payment was not completed. Please try again."
+                    });
+                  }}
+                />
+              ) : (
+                <Button type="button" className="ml-2" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <FileSignature className="mr-2" />}
+                  Request Certification
+                </Button>
+              )}
             </div>
           </CardFooter>
         </Card>

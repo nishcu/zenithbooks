@@ -36,6 +36,8 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
 const noticeSchema = z.object({
@@ -52,6 +54,11 @@ export default function NoticesPage() {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
+
+    const { handlePaymentSuccess } = useCertificationRequest({
+        pricing,
+        serviceId: form.watch("noticeType").toLowerCase()
+    });
 
     useEffect(() => {
         getServicePricing().then(setPricing);
@@ -160,13 +167,44 @@ export default function NoticesPage() {
                     )}/>
                 </CardContent>
                 <CardFooter className="flex-col items-start gap-4">
-                    <Button type="submit" size="lg">
-                        <Send className="mr-2" />
-                        Request Professional Opinion
-                        {servicePrice > 0 && <span className="ml-2 font-semibold">(Starts at ₹{servicePrice})</span>}
-                    </Button>
+                    {servicePrice > 0 ? (
+                        <RazorpayCheckout
+                            amount={servicePrice}
+                            planId={`notice_reply_${form.watch("noticeType").toLowerCase()}`}
+                            planName={`Notice Reply - ${selectedService?.name || 'Professional Consultation'}`}
+                            userId={user?.uid || ''}
+                            userEmail={user?.email || ''}
+                            userName={user?.displayName || ''}
+                            onSuccess={(paymentId) => {
+                                // After successful payment, submit the form
+                                handlePaymentSuccess(paymentId, {
+                                    reportType: "Notice Reply",
+                                    clientName: "Notice Reply Service",
+                                    formData: form.getValues(),
+                                });
+                                // Now submit the form
+                                form.handleSubmit((values) => handleSubmit(values))();
+                            }}
+                            onFailure={() => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Payment Failed",
+                                    description: "Payment was not completed. Please try again."
+                                });
+                            }}
+                        />
+                    ) : (
+                        <Button type="submit" size="lg">
+                            <Send className="mr-2" />
+                            Request Professional Opinion
+                            {servicePrice > 0 && <span className="ml-2 font-semibold">(Starts at ₹{servicePrice})</span>}
+                        </Button>
+                    )}
                     <p className="text-xs text-muted-foreground">
-                        By submitting, you agree to our terms of service. A professional will contact you to confirm the final scope and fees before proceeding.
+                        {servicePrice > 0
+                            ? "By proceeding with payment, you agree to our terms of service. A professional will contact you after payment to provide the notice reply."
+                            : "By submitting, you agree to our terms of service. A professional will contact you to confirm the final scope and fees before proceeding."
+                        }
                     </p>
                 </CardFooter>
             </Card>

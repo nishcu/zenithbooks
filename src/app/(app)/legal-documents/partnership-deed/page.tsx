@@ -49,6 +49,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as TableFoot } from "@/components/ui/table";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
 const partnerSchema = z.object({
@@ -353,6 +356,12 @@ export default function PartnershipDeedPage() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'partnership_deed'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -419,6 +428,15 @@ export default function PartnershipDeedPage() {
         setDeponentId(partners[0].name);
     }
   }, [form, deponentId]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const formData = form.watch();
   
@@ -826,6 +844,49 @@ export default function PartnershipDeedPage() {
                         <AffidavitToPrint ref={printRefAffidavit} formData={formData} deponent={deponent} />
                     </CardContent>
                     <CardFooter><Button onClick={() => handleDownloadPdf(printRefAffidavit, `Affidavit_${deponent?.name}`)}><Printer className="mr-2"/> Download PDF</Button></CardFooter>
+                </Card>
+
+                <Card className="mt-8">
+                    <CardHeader>
+                        <CardTitle>Professional Certification Service</CardTitle>
+                        <CardDescription>Get your Partnership Deed professionally reviewed and certified by a qualified Chartered Accountant.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                            Our experts will review your partnership deed for legal compliance, ensure all necessary clauses are included, and provide certification for registration purposes.
+                        </p>
+                    </CardContent>
+                    <CardFooter>
+                        {pricing && pricing.legal_docs?.find(s => s.id === 'partnership_deed')?.price > 0 ? (
+                            <RazorpayCheckout
+                                amount={pricing.legal_docs.find(s => s.id === 'partnership_deed')?.price || 0}
+                                planId="partnership_deed_certification"
+                                planName="Partnership Deed Professional Certification"
+                                userId={user?.uid || ''}
+                                userEmail={user?.email || ''}
+                                userName={user?.displayName || ''}
+                                onSuccess={(paymentId) => {
+                                    handlePaymentSuccess(paymentId, {
+                                        reportType: "Partnership Deed Certification",
+                                        clientName: form.getValues("firmName"),
+                                        formData: form.getValues(),
+                                    });
+                                }}
+                                onFailure={() => {
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Payment Failed",
+                                        description: "Payment was not completed. Please try again."
+                                    });
+                                }}
+                            />
+                        ) : (
+                            <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                Request Professional Certification
+                            </Button>
+                        )}
+                    </CardFooter>
                 </Card>
             </div>
         );

@@ -19,6 +19,9 @@ import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
@@ -47,6 +50,12 @@ export default function ForeignRemittancePage() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'foreign_remittance'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,7 +99,16 @@ export default function ForeignRemittancePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
-  
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
+
   const handlePreview = async () => {
     const isValid = await form.trigger();
     if(isValid) {
@@ -272,10 +290,35 @@ export default function ForeignRemittancePage() {
                             fileName={`Form15CB_${formData.remitterName}`}
                             whatsappMessage={whatsappMessage}
                         />
-                        <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                            Request Certification
-                        </Button>
+                        {pricing && pricing.ca_certs?.find(s => s.id === 'foreign_remittance')?.price > 0 ? (
+                            <RazorpayCheckout
+                                amount={pricing.ca_certs.find(s => s.id === 'foreign_remittance')?.price || 0}
+                                planId="foreign_remittance_cert"
+                                planName="Form 15CB (Foreign Remittance)"
+                                userId={user?.uid || ''}
+                                userEmail={user?.email || ''}
+                                userName={user?.displayName || ''}
+                                onSuccess={(paymentId) => {
+                                    handlePaymentSuccess(paymentId, {
+                                        reportType: "Form 15CB (Foreign Remittance)",
+                                        clientName: form.getValues("remitterName"),
+                                        formData: form.getValues(),
+                                    });
+                                }}
+                                onFailure={() => {
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Payment Failed",
+                                        description: "Payment was not completed. Please try again."
+                                    });
+                                }}
+                            />
+                        ) : (
+                            <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                Request Certification
+                            </Button>
+                        )}
                      </div>
                 </CardFooter>
             </Card>

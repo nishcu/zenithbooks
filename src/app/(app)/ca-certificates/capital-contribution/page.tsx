@@ -20,6 +20,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
 const formSchema = z.object({
@@ -64,6 +67,12 @@ export default function CapitalContributionCertificatePage() {
   const [user, authLoading] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'capital_contribution'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -106,6 +115,15 @@ export default function CapitalContributionCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handlePreview = async () => {
     const isValid = await form.trigger();
@@ -267,10 +285,35 @@ export default function CapitalContributionCertificatePage() {
                             fileName={`Capital_Contribution_${formData.entityName}`}
                             whatsappMessage={whatsappMessage}
                         />
-                        <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                            Request Certification
-                        </Button>
+                        {pricing && pricing.ca_certs?.find(s => s.id === 'capital_contribution')?.price > 0 ? (
+                            <RazorpayCheckout
+                                amount={pricing.ca_certs.find(s => s.id === 'capital_contribution')?.price || 0}
+                                planId="capital_contribution_cert"
+                                planName="Capital Contribution Certificate"
+                                userId={user?.uid || ''}
+                                userEmail={user?.email || ''}
+                                userName={user?.displayName || ''}
+                                onSuccess={(paymentId) => {
+                                    handlePaymentSuccess(paymentId, {
+                                        reportType: "Capital Contribution Certificate",
+                                        clientName: form.getValues("contributorName"),
+                                        formData: form.getValues(),
+                                    });
+                                }}
+                                onFailure={() => {
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Payment Failed",
+                                        description: "Payment was not completed. Please try again."
+                                    });
+                                }}
+                            />
+                        ) : (
+                            <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                Request Certification
+                            </Button>
+                        )}
                      </div>
                 </CardFooter>
             </Card>
