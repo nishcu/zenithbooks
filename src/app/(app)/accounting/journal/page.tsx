@@ -377,17 +377,19 @@ export default function JournalVoucherPage() {
                         const showCostCentre = accountDetails && ["Revenue", "Expense"].includes(accountDetails.type);
                         return (
                           <TableRow key={index}>
-                            <TableCell className="min-w-[250px]">
-                              <SearchableSelect
-                                options={combinedAccounts}
-                                value={line.account}
-                                onValueChange={(value: string) => handleLineChange(index, "account", value)}
-                                placeholder="Select account..."
-                                searchPlaceholder="Search accounts..."
-                                emptyMessage="No accounts found."
-                                groupBy={true}
-                                className="w-full"
-                              />
+                            <TableCell className="min-w-[280px] relative">
+                              <div className="relative">
+                                <SearchableSelect
+                                  options={combinedAccounts}
+                                  value={line.account}
+                                  onValueChange={(value: string) => handleLineChange(index, "account", value)}
+                                  placeholder="Select account..."
+                                  searchPlaceholder="Search accounts..."
+                                  emptyMessage="No accounts found."
+                                  groupBy={true}
+                                  className="w-full"
+                                />
+                              </div>
                             </TableCell>
                             <TableCell>
                               {showCostCentre && (
