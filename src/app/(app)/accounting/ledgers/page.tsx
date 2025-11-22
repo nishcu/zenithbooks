@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DateRangeSelector } from '@/components/date-range-selector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { ResponsiveTable, ResponsiveTableColumn } from '@/components/ui/responsive-table';
 import { allAccounts, Account } from '@/lib/accounts';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { formatCurrency } from '@/lib/utils';
@@ -235,17 +236,60 @@ export default function LedgersPage() {
                 <StatCard key="stat-credit" title="Total Credits" value={formatCurrency(balances.totalCredits)} icon={FileText} loading={loading} />
                 <StatCard key="stat-close" title="Closing Balance" value={formatCurrency(balances.closing)} icon={FileText} loading={loading} />
             </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead><TableHead>Particulars</TableHead><TableHead>Vch Type</TableHead>
-                    <TableHead className="text-right">Debit</TableHead><TableHead className="text-right">Credit</TableHead><TableHead className="text-right">Balance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>{tableContent}</TableBody>
-              </Table>
-            </div>
+            <ResponsiveTable
+              data={ledgerEntries}
+              columns={[
+                {
+                  key: 'date',
+                  header: 'Date',
+                  accessor: (entry: any) => entry.date,
+                  priority: 'high',
+                  mobileLabel: 'Date',
+                },
+                {
+                  key: 'particulars',
+                  header: 'Particulars',
+                  accessor: (entry: any) => entry.particulars,
+                  priority: 'high',
+                  mobileLabel: 'Description',
+                },
+                {
+                  key: 'vchType',
+                  header: 'Vch Type',
+                  accessor: (entry: any) => entry.type,
+                  priority: 'medium',
+                  mobileLabel: 'Type',
+                },
+                {
+                  key: 'debit',
+                  header: 'Debit',
+                  accessor: (entry: any) => entry.debit > 0 ? formatCurrency(entry.debit) : '-',
+                  className: 'text-right',
+                  priority: 'high',
+                  mobileLabel: 'Debit',
+                },
+                {
+                  key: 'credit',
+                  header: 'Credit',
+                  accessor: (entry: any) => entry.credit > 0 ? formatCurrency(entry.credit) : '-',
+                  className: 'text-right',
+                  priority: 'high',
+                  mobileLabel: 'Credit',
+                },
+                {
+                  key: 'balance',
+                  header: 'Balance',
+                  accessor: (entry: any) => formatCurrency(entry.balance),
+                  className: 'text-right',
+                  priority: 'high',
+                  mobileLabel: 'Balance',
+                },
+              ]}
+              mobileCardTitle={(entry: any) => entry.particulars}
+              mobileCardSubtitle={(entry: any) => entry.date}
+              loading={loading}
+              emptyMessage="No ledger entries found for the selected period"
+            />
           </CardContent>
         </Card>
       )}
