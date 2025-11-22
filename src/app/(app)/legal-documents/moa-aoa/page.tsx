@@ -1,7 +1,6 @@
 
 "use client";
 
-import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,7 +36,6 @@ import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useRef } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const formSchema = z.object({
@@ -94,7 +92,5 @@ export default function MoaAoaPage() {
             setIsLoading(false);
         }
     }
-  return (
-    <div>Test</div>
-    );
+  return "test";
 }

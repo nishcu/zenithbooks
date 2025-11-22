@@ -275,9 +275,9 @@ export default function ServiceAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'service_agreement')?.price > 0 ? (
+            {pricing && pricing.agreements?.find(s => s.id === 'service_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'service_agreement')?.price || 0}
+                amount={pricing.agreements.find(s => s.id === 'service_agreement')?.price || 0}
                 planId="service_agreement_certification"
                 planName="Service Agreement Professional Certification"
                 userId={user?.uid || ''}

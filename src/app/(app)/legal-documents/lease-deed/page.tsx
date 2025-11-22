@@ -368,9 +368,9 @@ export default function LeaseDeedPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'lease_deed')?.price > 0 ? (
+                        {pricing && pricing.registration_deeds?.find(s => s.id === 'lease_deed')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'lease_deed')?.price || 0}
+                                amount={pricing.registration_deeds.find(s => s.id === 'lease_deed')?.price || 0}
                 planId="lease_deed_certification"
                 planName="Lease Deed Professional Certification"
                 userId={user?.uid || ''}

@@ -1,7 +1,6 @@
 
 "use client";
 
-import * as React from "react";
 import { useState, useRef } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -178,7 +177,5 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
         }
     }
 
-    return (
-        <div>Test</div>
-    );
+    return "test";
 }

@@ -250,9 +250,9 @@ export default function InternshipAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'internship_agreement')?.price > 0 ? (
+            {pricing && pricing.hr_documents?.find(s => s.id === 'internship_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'internship_agreement')?.price || 0}
+                amount={pricing.hr_documents.find(s => s.id === 'internship_agreement')?.price || 0}
                 planId="internship_agreement_certification"
                 planName="Internship Agreement Professional Certification"
                 userId={user?.uid || ''}

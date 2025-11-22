@@ -306,9 +306,9 @@ export default function ConsultantAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'consultant_agreement')?.price > 0 ? (
+            {pricing && pricing.agreements?.find(s => s.id === 'consultant_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'consultant_agreement')?.price || 0}
+                amount={pricing.agreements.find(s => s.id === 'consultant_agreement')?.price || 0}
                 planId="consultant_agreement_certification"
                 planName="Consultant Agreement Professional Certification"
                 userId={user?.uid || ''}

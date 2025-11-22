@@ -293,9 +293,9 @@ export default function ShareholdersAgreement() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'shareholders_agreement')?.price > 0 ? (
+            {pricing && pricing.founder_startup?.find(s => s.id === 'shareholders_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'shareholders_agreement')?.price || 0}
+                amount={pricing.founder_startup.find(s => s.id === 'shareholders_agreement')?.price || 0}
                 planId="shareholders_agreement_certification"
                 planName="Shareholders' Agreement Professional Certification"
                 userId={user?.uid || ''}

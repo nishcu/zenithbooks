@@ -373,9 +373,9 @@ export default function AccountingEngagementLetterPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'accounting_engagement_letter')?.price > 0 ? (
+                        {pricing && pricing.accounting_documents?.find(s => s.id === 'accounting_engagement_letter')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'accounting_engagement_letter')?.price || 0}
+                                amount={pricing.accounting_documents.find(s => s.id === 'accounting_engagement_letter')?.price || 0}
                 planId="accounting_engagement_letter_certification"
                 planName="Accounting Engagement Letter Professional Certification"
                 userId={user?.uid || ''}

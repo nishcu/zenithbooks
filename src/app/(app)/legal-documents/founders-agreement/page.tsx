@@ -369,9 +369,9 @@ export default function FoundersAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'founders_agreement')?.price > 0 ? (
+            {pricing && pricing.founder_startup?.find(s => s.id === 'founders_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'founders_agreement')?.price || 0}
+                amount={pricing.founder_startup.find(s => s.id === 'founders_agreement')?.price || 0}
                 planId="founders_agreement_certification"
                 planName="Founders' Agreement Professional Certification"
                 userId={user?.uid || ''}

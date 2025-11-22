@@ -270,9 +270,9 @@ export default function NdaPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'nda')?.price > 0 ? (
+            {pricing && pricing.agreements?.find(s => s.id === 'nda')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'nda')?.price || 0}
+                amount={pricing.agreements.find(s => s.id === 'nda')?.price || 0}
                 planId="nda_certification"
                 planName="NDA Professional Certification"
                 userId={user?.uid || ''}

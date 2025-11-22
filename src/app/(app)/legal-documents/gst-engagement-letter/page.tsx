@@ -369,9 +369,9 @@ export default function GstEngagementLetterPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'gst_engagement_letter')?.price > 0 ? (
+                        {pricing && pricing.gst_documents?.find(s => s.id === 'gst_engagement_letter')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'gst_engagement_letter')?.price || 0}
+                                amount={pricing.gst_documents.find(s => s.id === 'gst_engagement_letter')?.price || 0}
                 planId="gst_engagement_letter_certification"
                 planName="GST Engagement Letter Professional Certification"
                 userId={user?.uid || ''}

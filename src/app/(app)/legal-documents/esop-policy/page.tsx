@@ -255,9 +255,9 @@ export default function EsopPolicy() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'esop_policy')?.price > 0 ? (
+            {pricing && pricing.founder_startup?.find(s => s.id === 'esop_policy')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'esop_policy')?.price || 0}
+                amount={pricing.founder_startup.find(s => s.id === 'esop_policy')?.price || 0}
                 planId="esop_policy_certification"
                 planName="ESOP Policy Professional Certification"
                 userId={user?.uid || ''}

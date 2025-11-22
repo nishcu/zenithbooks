@@ -255,9 +255,9 @@ export default function AppointmentLetterPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'appointment_letter')?.price > 0 ? (
+                        {pricing && pricing.hr_documents?.find(s => s.id === 'appointment_letter')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'appointment_letter')?.price || 0}
+                                amount={pricing.hr_documents.find(s => s.id === 'appointment_letter')?.price || 0}
                 planId="appointment_letter_certification"
                 planName="Appointment Letter Professional Certification"
                 userId={user?.uid || ''}

@@ -272,9 +272,9 @@ export default function VendorAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'vendor_agreement')?.price > 0 ? (
+                        {pricing && pricing.agreements?.find(s => s.id === 'vendor_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'vendor_agreement')?.price || 0}
+                                amount={pricing.agreements.find(s => s.id === 'vendor_agreement')?.price || 0}
                 planId="vendor_agreement_certification"
                 planName="Vendor Agreement Professional Certification"
                 userId={user?.uid || ''}

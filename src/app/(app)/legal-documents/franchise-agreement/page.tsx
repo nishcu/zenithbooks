@@ -284,9 +284,9 @@ export default function FranchiseAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'franchise_agreement')?.price > 0 ? (
+                        {pricing && pricing.agreements?.find(s => s.id === 'franchise_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'franchise_agreement')?.price || 0}
+                                amount={pricing.agreements.find(s => s.id === 'franchise_agreement')?.price || 0}
                 planId="franchise_agreement_certification"
                 planName="Franchise Agreement Professional Certification"
                 userId={user?.uid || ''}

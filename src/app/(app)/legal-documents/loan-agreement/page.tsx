@@ -359,9 +359,9 @@ export default function LoanAgreementPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'loan_agreement')?.price > 0 ? (
+                        {pricing && pricing.agreements?.find(s => s.id === 'loan_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'loan_agreement')?.price || 0}
+                                amount={pricing.agreements.find(s => s.id === 'loan_agreement')?.price || 0}
                 planId="loan_agreement_certification"
                 planName="Loan Agreement Professional Certification"
                 userId={user?.uid || ''}

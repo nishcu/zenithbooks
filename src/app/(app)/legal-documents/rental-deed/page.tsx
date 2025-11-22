@@ -361,9 +361,9 @@ export default function RentalDeedPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'rental_deed')?.price > 0 ? (
+            {pricing && pricing.registration_deeds?.find(s => s.id === 'rental_deed')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'rental_deed')?.price || 0}
+                amount={pricing.registration_deeds.find(s => s.id === 'rental_deed')?.price || 0}
                 planId="rental_deed_certification"
                 planName="Rental Agreement Professional Certification"
                 userId={user?.uid || ''}

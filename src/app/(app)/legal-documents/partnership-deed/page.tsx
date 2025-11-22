@@ -857,9 +857,9 @@ export default function PartnershipDeedPage() {
                         </p>
                     </CardContent>
                     <CardFooter>
-                        {pricing && pricing.legal_docs?.find(s => s.id === 'partnership_deed')?.price > 0 ? (
+                        {pricing && pricing.registration_deeds?.find(s => s.id === 'partnership_deed')?.price > 0 ? (
                             <RazorpayCheckout
-                                amount={pricing.legal_docs.find(s => s.id === 'partnership_deed')?.price || 0}
+                                amount={pricing.registration_deeds.find(s => s.id === 'partnership_deed')?.price || 0}
                                 planId="partnership_deed_certification"
                                 planName="Partnership Deed Professional Certification"
                                 userId={user?.uid || ''}

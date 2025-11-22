@@ -198,9 +198,9 @@ export default function OfferLetterPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'offer_letter')?.price > 0 ? (
+            {pricing && pricing.hr_documents?.find(s => s.id === 'offer_letter')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'offer_letter')?.price || 0}
+                amount={pricing.hr_documents.find(s => s.id === 'offer_letter')?.price || 0}
                 planId="offer_letter_certification"
                 planName="Offer Letter Professional Certification"
                 userId={user?.uid || ''}

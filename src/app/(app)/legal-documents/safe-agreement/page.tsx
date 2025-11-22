@@ -179,9 +179,9 @@ export default function SafeAgreement() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.legal_docs?.find(s => s.id === 'safe_agreement')?.price > 0 ? (
+            {pricing && pricing.founder_startup?.find(s => s.id === 'safe_agreement')?.price > 0 ? (
               <RazorpayCheckout
-                amount={pricing.legal_docs.find(s => s.id === 'safe_agreement')?.price || 0}
+                amount={pricing.founder_startup.find(s => s.id === 'safe_agreement')?.price || 0}
                 planId="safe_agreement_certification"
                 planName="SAFE Agreement Professional Certification"
                 userId={user?.uid || ''}
