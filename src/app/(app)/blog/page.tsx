@@ -173,11 +173,15 @@ export default function BlogPage() {
 
     // Load blog posts from Firebase
     useEffect(() => {
+        let isMounted = true;
+
         const loadBlogPosts = async () => {
             try {
                 console.log('Loading blog posts from Firebase...');
                 const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
                 const querySnapshot = await getDocs(q);
+
+                if (!isMounted) return;
 
                 const posts: any[] = [];
                 querySnapshot.forEach((doc) => {
@@ -191,23 +195,27 @@ export default function BlogPage() {
 
                 console.log('Loaded blog posts from Firebase:', posts.length, 'posts');
 
-                // If no posts in Firebase, fall back to sample posts
-                if (posts.length === 0) {
-                    console.log('No posts in Firebase, using sample posts');
-                    setBlogPosts(samplePosts);
-                } else {
-                    setBlogPosts(posts);
-                }
+                // Always show posts from Firebase, or sample posts if empty
+                const finalPosts = posts.length > 0 ? posts : samplePosts;
+                setBlogPosts(finalPosts);
             } catch (error) {
                 console.error('Error loading blog posts from Firebase:', error);
-                // Fall back to sample posts on error
-                setBlogPosts(samplePosts);
+                if (isMounted) {
+                    // Fall back to sample posts on error
+                    setBlogPosts(samplePosts);
+                }
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         loadBlogPosts();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // Get unique categories
