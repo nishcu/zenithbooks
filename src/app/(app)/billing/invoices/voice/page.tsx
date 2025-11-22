@@ -289,86 +289,241 @@ export default function VoiceInvoiceEntryPage() {
   // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Check if we're on HTTPS (required for speech recognition)
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+
+      if (!isSecure) {
+        toast({
+          variant: "destructive",
+          title: "HTTPS Required",
+          description: "Speech recognition requires a secure connection (HTTPS).",
+        });
+        return;
+      }
+
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      
+
       if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition();
-        recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = true;
-        recognitionInstance.lang = 'en-IN'; // Indian English
-        
-        recognitionInstance.onresult = (event: any) => {
-          let interimTranscript = '';
-          let finalTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript + ' ';
-            } else {
-              interimTranscript += transcript;
+        try {
+          const recognitionInstance = new SpeechRecognition();
+
+          // Mobile-friendly settings
+          recognitionInstance.continuous = false;
+          recognitionInstance.interimResults = false; // Disable interim results for better mobile performance
+          recognitionInstance.lang = 'en-US'; // Use US English for better mobile compatibility
+          recognitionInstance.maxAlternatives = 1;
+
+          recognitionInstance.onstart = () => {
+            console.log('Speech recognition started');
+            setIsListening(true);
+          };
+
+          recognitionInstance.onresult = (event: any) => {
+            try {
+              const result = event.results[0];
+              if (result && result[0]) {
+                const transcript = result[0].transcript.trim();
+                console.log('Speech recognition result:', transcript);
+                setTranscript(transcript);
+
+                // Auto-stop after successful recognition
+                setTimeout(() => {
+                  setIsListening(false);
+                }, 500);
+              }
+            } catch (error) {
+              console.error('Error processing speech result:', error);
             }
+          };
+
+          recognitionInstance.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error, event);
+
+            let errorMessage = "An error occurred with speech recognition.";
+            let errorTitle = "Speech Recognition Error";
+
+            switch (event.error) {
+              case 'no-speech':
+                errorMessage = "No speech detected. Please speak clearly and try again.";
+                break;
+              case 'audio-capture':
+                errorMessage = "No microphone found. Please check your microphone settings.";
+                break;
+              case 'not-allowed':
+                errorMessage = "Microphone access denied. Please allow microphone access and try again.";
+                errorTitle = "Permission Denied";
+                break;
+              case 'network':
+                errorMessage = "Network error occurred. Please check your connection.";
+                break;
+              case 'service-not-allowed':
+                errorMessage = "Speech recognition service not available. Please try again later.";
+                break;
+              case 'bad-grammar':
+                errorMessage = "Speech recognition grammar error. Please try again.";
+                break;
+              case 'language-not-supported':
+                errorMessage = "The selected language is not supported.";
+                break;
+              default:
+                errorMessage = `Speech recognition error: ${event.error}. Please try again.`;
+            }
+
+            setIsListening(false);
+            toast({
+              variant: "destructive",
+              title: errorTitle,
+              description: errorMessage,
+            });
+          };
+
+          recognitionInstance.onend = () => {
+            console.log('Speech recognition ended');
+            setIsListening(false);
+          };
+
+          // Check if microphone permission is available
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(() => {
+                console.log('Microphone permission granted');
+                setRecognition(recognitionInstance);
+              })
+              .catch((error) => {
+                console.error('Microphone permission denied:', error);
+                toast({
+                  variant: "destructive",
+                  title: "Microphone Access Required",
+                  description: "Please allow microphone access to use voice-to-invoice feature.",
+                });
+              });
+          } else {
+            // Fallback for older browsers
+            setRecognition(recognitionInstance);
           }
-          
-          setTranscript(finalTranscript || interimTranscript);
-        };
-        
-        recognitionInstance.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
+
+        } catch (error) {
+          console.error('Error initializing speech recognition:', error);
           toast({
             variant: "destructive",
-            title: "Speech Recognition Error",
-            description: event.error === 'no-speech' 
-              ? "No speech detected. Please try again."
-              : "An error occurred with speech recognition. Please try again.",
+            title: "Speech Recognition Unavailable",
+            description: "Speech recognition could not be initialized. Please try a different browser.",
           });
-        };
-        
-        recognitionInstance.onend = () => {
-          setIsListening(false);
-        };
-        
-        setRecognition(recognitionInstance);
+        }
       } else {
         toast({
           variant: "destructive",
           title: "Browser Not Supported",
-          description: "Your browser does not support speech recognition. Please use Chrome, Edge, or Safari.",
+          description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.",
         });
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (recognition) {
+        try {
+          recognition.stop();
+          recognition.abort();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    };
   }, [toast]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognition && isListening) {
+        try {
+          recognition.stop();
+          recognition.abort();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    };
+  }, [recognition, isListening]);
 
   const startListening = () => {
     if (!recognition) {
       toast({
         variant: "destructive",
         title: "Speech Recognition Not Available",
-        description: "Speech recognition is not available in your browser.",
+        description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.",
       });
       return;
     }
-    
+
+    // Check if already listening
+    if (isListening) {
+      console.log('Already listening, stopping first');
+      stopListening();
+      return;
+    }
+
     setTranscript("");
     setParsedData(null);
     setIsListening(true);
-    
+
     try {
-      recognition.start();
-      toast({
-        title: "Listening...",
-        description: "Speak now: Customer name, Product name, and Quantity",
-      });
+      // Stop any existing recognition first
+      recognition.abort();
+
+      // Small delay for mobile devices
+      setTimeout(() => {
+        try {
+          recognition.start();
+          console.log('Speech recognition started successfully');
+          toast({
+            title: "🎤 Listening...",
+            description: "Speak clearly: 'Customer name, Product name, Quantity'",
+          });
+        } catch (error) {
+          console.error('Error starting recognition after delay:', error);
+          setIsListening(false);
+          toast({
+            variant: "destructive",
+            title: "Speech Recognition Failed",
+            description: "Could not start speech recognition. Please try again.",
+          });
+        }
+      }, 100);
+
     } catch (error) {
       console.error('Error starting recognition:', error);
       setIsListening(false);
+
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.name === 'InvalidStateError') {
+          toast({
+            variant: "destructive",
+            title: "Recognition Busy",
+            description: "Speech recognition is already running. Please wait.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Speech Recognition Error",
+            description: error.message || "Failed to start speech recognition.",
+          });
+        }
+      }
     }
   };
 
   const stopListening = () => {
-    if (recognition) {
-      recognition.stop();
+    if (recognition && isListening) {
+      try {
+        recognition.stop();
+        console.log('Speech recognition stopped');
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+        // Force stop listening state
+        recognition.abort();
+      }
     }
     setIsListening(false);
   };
@@ -566,25 +721,28 @@ export default function VoiceInvoiceEntryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
             <Button
               type="button"
               size="lg"
               onClick={isListening ? stopListening : startListening}
               disabled={isProcessing || !recognition}
-              className={`w-20 h-20 rounded-full ${isListening ? 'bg-destructive hover:bg-destructive/90 animate-pulse' : 'bg-primary hover:bg-primary/90'}`}
+              className={`w-24 h-24 rounded-full touch-manipulation ${isListening ? 'bg-destructive hover:bg-destructive/90 animate-pulse shadow-lg' : 'bg-primary hover:bg-primary/90 shadow-md'} sm:w-20 sm:h-20`}
             >
               {isListening ? (
-                <MicOff className="h-8 w-8" />
+                <MicOff className="h-10 w-10 sm:h-8 sm:w-8" />
               ) : (
-                <Mic className="h-8 w-8" />
+                <Mic className="h-10 w-10 sm:h-8 sm:w-8" />
               )}
             </Button>
-            <div className="flex-1">
+            <div className="flex-1 w-full sm:w-auto">
               {isListening && (
-                <Alert>
-                  <AlertTitle>Listening...</AlertTitle>
-                  <AlertDescription>Speak now. Click the microphone again to stop.</AlertDescription>
+                <Alert className="w-full">
+                  <AlertTitle className="flex items-center gap-2">
+                    <Volume2 className="h-4 w-4 animate-pulse" />
+                    Listening...
+                  </AlertTitle>
+                  <AlertDescription>Speak clearly: "Customer name, Product name, Quantity". Tap the microphone to stop.</AlertDescription>
                 </Alert>
               )}
               {transcript && !isListening && (
