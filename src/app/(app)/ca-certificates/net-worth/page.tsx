@@ -502,6 +502,18 @@ export default function NetWorthCertificatePage() {
                                 fileName={`Net_Worth_${formData.clientName}`}
                                 whatsappMessage={whatsappMessage}
                              />
+
+                             {/* Debug logging */}
+                             {(() => {
+                                 console.log('🔍 DEBUG - Rendering Razorpay condition:');
+                                 console.log('- pricing exists:', !!pricing);
+                                 console.log('- ca_certs exists:', !!pricing?.ca_certs);
+                                 console.log('- net_worth service:', pricing?.ca_certs?.find(s => s.id === 'net_worth'));
+                                 console.log('- price value:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price);
+                                 console.log('- price > 0:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price > 0);
+                                 return null;
+                             })()}
+
                              {pricing && pricing.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 ? (
                                 <RazorpayCheckout
                                     amount={pricing.ca_certs.find(s => s.id === 'net_worth')?.price || 0}
