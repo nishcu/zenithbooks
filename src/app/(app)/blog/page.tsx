@@ -170,9 +170,15 @@ export default function BlogPage() {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [blogPosts, setBlogPosts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasLoaded, setHasLoaded] = useState(false);
+
+    // Stable reference to sample posts
+    const defaultPosts = useMemo(() => [...samplePosts], []);
 
     // Load blog posts from Firebase
     useEffect(() => {
+        if (hasLoaded) return; // Prevent multiple loads
+
         let isMounted = true;
 
         const loadBlogPosts = async () => {
@@ -196,13 +202,15 @@ export default function BlogPage() {
                 console.log('Loaded blog posts from Firebase:', posts.length, 'posts');
 
                 // Always show posts from Firebase, or sample posts if empty
-                const finalPosts = posts.length > 0 ? posts : samplePosts;
+                const finalPosts = posts.length > 0 ? posts : defaultPosts;
                 setBlogPosts(finalPosts);
+                setHasLoaded(true);
             } catch (error) {
                 console.error('Error loading blog posts from Firebase:', error);
                 if (isMounted) {
                     // Fall back to sample posts on error
-                    setBlogPosts(samplePosts);
+                    setBlogPosts(defaultPosts);
+                    setHasLoaded(true);
                 }
             } finally {
                 if (isMounted) {
@@ -216,7 +224,7 @@ export default function BlogPage() {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [hasLoaded, defaultPosts]);
 
     // Get unique categories
     const categories = useMemo(() => {
