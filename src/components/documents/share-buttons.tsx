@@ -106,17 +106,91 @@ export function ShareButtons({
     }
   };
 
-  const handleWhatsAppShare = () => {
-    if (!whatsappMessage) {
-      toast({
-        variant: "destructive",
-        title: "No message",
-        description: "WhatsApp message not configured for this document.",
-      });
-      return;
+  const handleWhatsAppShare = async () => {
+    const message = whatsappMessage || `Check out this ${fileName}`;
+
+    // Try to use Web Share API with PDF attachment if supported
+    if (navigator.share && navigator.canShare) {
+      try {
+        // First generate the PDF blob
+        const element = contentRef.current;
+        if (!element) {
+          throw new Error("Content not found");
+        }
+
+        const opt = {
+          margin: [0.5, 0.5, 0.5, 0.5],
+          filename: fileName,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        // Check if we can share the file
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: shareTitle || fileName,
+            text: message,
+            files: [file]
+          });
+
+          toast({
+            title: "Shared successfully",
+            description: "Document shared with PDF attachment.",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Web Share API failed:', error);
+        // Fall back to regular WhatsApp sharing
+      }
     }
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+
+    // Fallback: Share via WhatsApp web with download link
+    try {
+      // Generate PDF and create a temporary download link
+      const element = contentRef.current;
+      if (!element) {
+        throw new Error("Content not found");
+      }
+
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(element).save(fileName);
+
+      toast({
+        title: "PDF Downloaded",
+        description: "PDF has been downloaded. Please attach it manually to WhatsApp.",
+      });
+
+      // Small delay to ensure download starts, then open WhatsApp
+      setTimeout(() => {
+        const encodedMessage = encodeURIComponent(`${message}\n\n(PDF downloaded - please attach manually)`);
+        window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+      }, 1000);
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+
+      // Final fallback: just share the message
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+
+      toast({
+        title: "WhatsApp opened",
+        description: "Please download the PDF and attach it manually.",
+      });
+    }
   };
 
   const handleEmailShare = () => {
