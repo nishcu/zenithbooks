@@ -50,8 +50,6 @@ function SimpleDropdown({
 
   if (!isOpen) return null;
 
-  console.log('Rendering dropdown, isOpen:', isOpen, 'options count:', options.length);
-
   return (
     <div
       className="absolute top-full left-0 z-[10000] mt-1 bg-white dark:bg-gray-900 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-hidden"
@@ -94,7 +92,6 @@ function SimpleDropdown({
                     value === option.value && "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
                   )}
                   onClick={() => {
-                    console.log('Selected option:', option.value, option.label);
                     onValueChange(option.value === value ? "" : option.value);
                     onClose();
                   }}
@@ -156,13 +153,10 @@ export function SearchableSelect({
   const selectedOption = options.find((option) => option.value === value);
 
   const handleButtonClick = () => {
-    console.log('SearchableSelect clicked, toggling dropdown. Current open state:', open);
-    console.log('Available options:', options.length);
     setOpen(!open);
   };
 
   const handleClose = () => {
-    console.log('SearchableSelect closing dropdown');
     setOpen(false);
   };
 
