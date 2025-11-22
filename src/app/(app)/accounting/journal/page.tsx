@@ -323,7 +323,7 @@ export default function JournalVoucherPage() {
                 New Journal Voucher
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-4xl overflow-visible">
               <DialogHeader>
                 <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
                 <DialogDescription>
