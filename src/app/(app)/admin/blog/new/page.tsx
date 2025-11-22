@@ -30,7 +30,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { uploadBlogImage } from '@/lib/storage';
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
@@ -85,8 +84,20 @@ export default function NewBlogPostPage() {
         setIsLoading(true);
 
         try {
-            // First upload the image to Firebase Storage
-            const imageUrl = await uploadBlogImage(values.image);
+            // First upload the image using local API
+            const formData = new FormData();
+            formData.append('file', values.image);
+
+            const uploadResponse = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const uploadData = await uploadResponse.json();
+
+            if (!uploadResponse.ok) {
+                throw new Error(uploadData.error || 'Failed to upload image');
+            }
 
             // Create blog post data
             const blogPostData = {
@@ -94,7 +105,7 @@ export default function NewBlogPostPage() {
                 authorName: values.authorName,
                 authorTitle: values.authorTitle,
                 category: values.category,
-                imageUrl: imageUrl,
+                imageUrl: uploadData.url,
                 contentBlocks: values.contentBlocks,
                 createdAt: new Date(),
                 updatedAt: new Date(),

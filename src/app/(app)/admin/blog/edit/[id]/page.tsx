@@ -29,7 +29,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { samplePosts } from "@/app/(app)/blog/page";
-import { uploadBlogImage, deleteBlogImage, validateBlogImage } from "@/lib/storage";
+import { deleteBlogImage, validateBlogImage } from "@/lib/storage";
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
@@ -247,16 +247,27 @@ export default function EditBlogPostPage() {
         let firebaseImageUrl: string | undefined;
 
         try {
-            // If a new image was selected, upload it to Firebase Storage
+            // If a new image was selected, upload it using local API
             if (values.image && values.image instanceof File) {
                 setIsUploading(true);
                 setUploadProgress(0);
 
                 try {
-                    firebaseImageUrl = await uploadBlogImage(values.image, (progress) => {
-                        setUploadProgress(progress);
+                    const formData = new FormData();
+                    formData.append('file', values.image);
+
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
                     });
 
+                    const uploadData = await uploadResponse.json();
+
+                    if (!uploadResponse.ok) {
+                        throw new Error(uploadData.error || 'Failed to upload image');
+                    }
+
+                    firebaseImageUrl = uploadData.url;
                     console.log('Image uploaded successfully:', firebaseImageUrl);
                 } catch (uploadError) {
                     console.error('Image upload failed:', uploadError);
