@@ -168,75 +168,45 @@ async function migrateBlogImages() {
 export default function BlogPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [blogPosts, setBlogPosts] = useState<any[]>([]);
+    const [blogPosts, setBlogPosts] = useState<any[]>(samplePosts); // Start with sample posts
     const [isLoading, setIsLoading] = useState(true);
-    const [hasLoaded, setHasLoaded] = useState(false);
 
-    // Stable reference to sample posts
-    const defaultPosts = useMemo(() => [...samplePosts], []);
-
-    // Load blog posts from Firebase
+    // Load blog posts from Firebase (simple version)
     useEffect(() => {
-        if (hasLoaded) return; // Prevent multiple loads
-
-        let isMounted = true;
-
         const loadBlogPosts = async () => {
             try {
                 console.log('Loading blog posts from Firebase...');
                 const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
                 const querySnapshot = await getDocs(q);
 
-                if (!isMounted) return;
-
                 const posts: any[] = [];
                 querySnapshot.forEach((doc) => {
                     posts.push({
                         id: doc.id,
                         ...doc.data(),
-                        // Convert Firestore timestamp to date string if needed
                         date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
                     });
                 });
 
                 console.log('Loaded blog posts from Firebase:', posts.length, 'posts');
 
-                // Always show posts from Firebase, or sample posts if empty
-                const finalPosts = posts.length > 0 ? posts : defaultPosts;
-                console.log('📝 SETTING BLOG POSTS:', finalPosts.length, 'posts');
-                setBlogPosts(finalPosts);
-                setHasLoaded(true);
+                // Set posts (use sample posts if empty)
+                setBlogPosts(posts.length > 0 ? posts : samplePosts);
             } catch (error) {
-                console.error('Error loading blog posts from Firebase:', error);
-                if (isMounted) {
-                    // Fall back to sample posts on error
-                    console.log('📝 FALLBACK: Setting default posts on error');
-                    setBlogPosts(defaultPosts);
-                    setHasLoaded(true);
-                }
+                console.error('Error loading blog posts:', error);
+                // Keep sample posts on error
             } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
+                setIsLoading(false);
             }
         };
 
         loadBlogPosts();
+    }, []); // Only run once
 
-        return () => {
-            isMounted = false;
-        };
-    }, [hasLoaded, defaultPosts]);
-
-    // Get unique categories
-    const categories = useMemo(() => {
-        console.log('🔄 BUILDING CATEGORIES from', blogPosts?.length || 0, 'posts');
-        if (!Array.isArray(blogPosts) || blogPosts.length === 0) {
-            return [];
-        }
-        const cats = new Set(blogPosts.map(post => post?.category).filter(Boolean));
-        return Array.from(cats);
-    }, [blogPosts]);
+    // Get unique categories (simple version)
+    const categories = Array.isArray(blogPosts) ?
+        Array.from(new Set(blogPosts.map(post => post?.category).filter(Boolean))) :
+        [];
 
     // Show loading state
     if (isLoading) {
@@ -252,30 +222,19 @@ export default function BlogPage() {
         );
     }
 
-    // Sort posts by date (latest first)
-    const sortedPosts = useMemo(() => {
-        console.log('🔄 SORTING POSTS:', blogPosts?.length || 0, 'posts');
-        if (!Array.isArray(blogPosts) || blogPosts.length === 0) {
-            return [];
-        }
-        return [...blogPosts].sort((a, b) =>
+    // Sort and filter posts (simple version)
+    const getFilteredPosts = () => {
+        if (!Array.isArray(blogPosts)) return [];
+
+        let posts = [...blogPosts].sort((a, b) =>
             new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime()
         );
-    }, [blogPosts]);
 
-    // Featured post (latest)
-    const featuredPost = sortedPosts?.[0] || null;
-
-    // Filter posts
-    const filteredPosts = useMemo(() => {
-        console.log('🔄 FILTERING POSTS:', sortedPosts?.length || 0, 'sorted posts');
-        let posts = sortedPosts || [];
-
-        if (selectedCategory && Array.isArray(posts)) {
+        if (selectedCategory) {
             posts = posts.filter(post => post?.category === selectedCategory);
         }
 
-        if (searchTerm && Array.isArray(posts)) {
+        if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             posts = posts.filter(post =>
                 post?.title?.toLowerCase().includes(searchLower) ||
@@ -285,8 +244,11 @@ export default function BlogPage() {
             );
         }
 
-        return Array.isArray(posts) ? posts : [];
-    }, [searchTerm, selectedCategory, sortedPosts]);
+        return posts;
+    };
+
+    const filteredPosts = getFilteredPosts();
+    const featuredPost = filteredPosts[0] || null;
 
     // Regular posts (excluding featured)
     const regularPosts = filteredPosts.filter(post => post.id !== featuredPost.id);
