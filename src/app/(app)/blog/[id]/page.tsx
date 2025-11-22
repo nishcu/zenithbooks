@@ -32,13 +32,31 @@ const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof sa
         .slice(0, limit);
 };
 
+// Storage key for blog posts
+const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
+
+// Function to get blog posts from localStorage
+function getStoredBlogPosts() {
+    if (typeof window === 'undefined') return samplePosts;
+
+    try {
+        const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : samplePosts;
+    } catch (error) {
+        console.error('Error loading blog posts from localStorage:', error);
+        return samplePosts;
+    }
+}
+
 export default function BlogPostPage() {
     const params = useParams();
     const { id } = params;
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [readingProgress, setReadingProgress] = useState(0);
 
-    const post = samplePosts.find(p => p.id === id);
+    // Get posts from localStorage or fallback to samplePosts
+    const blogPosts = getStoredBlogPosts();
+    const post = blogPosts.find(p => p.id === id);
 
     // Set dynamic meta tags for social sharing
     useEffect(() => {

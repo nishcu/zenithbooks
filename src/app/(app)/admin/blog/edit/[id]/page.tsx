@@ -30,9 +30,38 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { samplePosts } from "@/app/(app)/blog/page";
 
-// Function to update a blog post in the samplePosts array
+// Storage key for blog posts
+const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
+
+// Function to get blog posts from localStorage
+function getStoredBlogPosts() {
+    if (typeof window === 'undefined') return samplePosts;
+
+    try {
+        const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : samplePosts;
+    } catch (error) {
+        console.error('Error loading blog posts from localStorage:', error);
+        return samplePosts;
+    }
+}
+
+// Function to save blog posts to localStorage
+function saveBlogPosts(posts: any[]) {
+    if (typeof window === 'undefined') return;
+
+    try {
+        localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
+    } catch (error) {
+        console.error('Error saving blog posts to localStorage:', error);
+    }
+}
+
+// Function to update a blog post
 function updateSamplePost(postId: string, updatedData: any) {
-    const postIndex = samplePosts.findIndex(post => post.id === postId);
+    const posts = getStoredBlogPosts();
+    const postIndex = posts.findIndex((post: any) => post.id === postId);
+
     if (postIndex !== -1) {
         // Convert contentBlocks back to content array format
         const content = updatedData.contentBlocks
@@ -40,8 +69,8 @@ function updateSamplePost(postId: string, updatedData: any) {
             .map((block: any) => block.value);
 
         // Update the post with new data
-        samplePosts[postIndex] = {
-            ...samplePosts[postIndex],
+        posts[postIndex] = {
+            ...posts[postIndex],
             title: updatedData.title,
             author: updatedData.authorName,
             authorTitle: updatedData.authorTitle,
@@ -49,9 +78,18 @@ function updateSamplePost(postId: string, updatedData: any) {
             content: content,
             // Handle image - if a new image was uploaded, use the data URL
             // Otherwise keep the existing imageUrl
-            imageUrl: updatedData.imageDataUrl || samplePosts[postIndex].imageUrl,
-            image: updatedData.imageDataUrl || samplePosts[postIndex].imageUrl,
+            imageUrl: updatedData.imageDataUrl || posts[postIndex].imageUrl,
+            image: updatedData.imageDataUrl || posts[postIndex].imageUrl,
         };
+
+        // Save updated posts to localStorage
+        saveBlogPosts(posts);
+
+        // Update the global samplePosts array (for immediate updates)
+        const globalIndex = samplePosts.findIndex(p => p.id === postId);
+        if (globalIndex !== -1) {
+            samplePosts[globalIndex] = posts[postIndex];
+        }
     }
 }
 
@@ -100,8 +138,9 @@ export default function EditBlogPostPage() {
     useEffect(() => {
         const loadPost = async () => {
             try {
-                // Find the post by ID from sample data
-                const post = samplePosts.find(p => p.id === postId);
+                // Get posts from localStorage or fallback to samplePosts
+                const posts = getStoredBlogPosts();
+                const post = posts.find((p: any) => p.id === postId);
 
                 if (!post) {
                     toast({

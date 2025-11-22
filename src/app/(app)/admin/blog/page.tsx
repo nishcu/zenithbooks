@@ -32,8 +32,35 @@ import { format } from "date-fns";
 import { samplePosts } from "../../blog/page";
 import { useToast } from "@/hooks/use-toast";
 
+// Storage key for blog posts
+const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
+
+// Function to get blog posts from localStorage
+function getStoredBlogPosts() {
+    if (typeof window === 'undefined') return samplePosts;
+
+    try {
+        const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : samplePosts;
+    } catch (error) {
+        console.error('Error loading blog posts from localStorage:', error);
+        return samplePosts;
+    }
+}
+
+// Function to save blog posts to localStorage
+function saveBlogPosts(posts: any[]) {
+    if (typeof window === 'undefined') return;
+
+    try {
+        localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
+    } catch (error) {
+        console.error('Error saving blog posts to localStorage:', error);
+    }
+}
+
 export default function AdminBlog() {
-  const [posts, setPosts] = useState(samplePosts);
+  const [posts, setPosts] = useState<typeof samplePosts>(() => getStoredBlogPosts());
   const [selectedPost, setSelectedPost] = useState<typeof samplePosts[0] | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -48,7 +75,9 @@ export default function AdminBlog() {
     if (!selectedPost) return;
     setIsLoading('delete');
     await new Promise(resolve => setTimeout(resolve, 800));
-    setPosts(posts.filter(p => p.id !== selectedPost.id));
+    const updatedPosts = posts.filter(p => p.id !== selectedPost.id);
+    setPosts(updatedPosts);
+    saveBlogPosts(updatedPosts);
     toast({
       title: "Post Deleted",
       description: `Blog post "${selectedPost.title}" has been deleted.`,
