@@ -60,8 +60,21 @@ function SimpleDropdown({
         minWidth: '350px',
         boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25), 0 8px 16px rgba(0, 0, 0, 0.15)',
         // Position the dropdown relative to the viewport to avoid clipping
-        top: containerRef.current ? containerRef.current.getBoundingClientRect().bottom + 4 : '100px',
-        left: containerRef.current ? Math.max(16, containerRef.current.getBoundingClientRect().left) : '16px',
+        top: containerRef.current ? (() => {
+          try {
+            return containerRef.current!.getBoundingClientRect().bottom + 4;
+          } catch {
+            return 100;
+          }
+        })() : '100px',
+        left: containerRef.current ? (() => {
+          try {
+            return Math.max(16, containerRef.current!.getBoundingClientRect().left);
+          } catch {
+            return 16;
+          }
+        })() : '16px',
+        right: '16px',
         maxWidth: 'calc(100vw - 32px)'
       }}
     >

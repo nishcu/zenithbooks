@@ -31,6 +31,11 @@ import { useToast } from "@/hooks/use-toast";
 import { tdsSections } from "@/lib/tds-rates";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { useRef } from "react";
+import { useAccountingContext } from "@/context/accounting-context";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 type ReportRow = {
     deductee: string;
@@ -71,48 +76,152 @@ export default function TdsReturns() {
   const [quarter, setQuarter] = useState("q1");
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState("");
+  const [user] = useAuthState(auth);
+  const { journalVouchers } = useAccountingContext();
 
   const financialYears = getFinancialYears();
 
-  const generateReport = () => {
+  const generateReport = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to generate reports."
+      });
+      return;
+    }
+
+    setReportData([]); // Clear previous data
     toast({
         title: "Generating Report...",
-        description: "Simulating data fetch for the selected period."
+        description: "Analyzing journal entries for the selected period."
     });
-    
-    // Simulate fetching data based on selection
-    const generatedData: ReportRow[] = [
-      {
-        deductee: "Global Tech Inc.",
-        pan: "ABCDE1234F",
-        invoiceId: "INV-001",
-        invoiceDate: "2024-05-15",
-        invoiceAmount: 25000.0,
-        tdsSection: "194J",
-        tdsRate: 10,
-        tdsAmount: 2500.0,
-      },
-      {
-        deductee: "Innovate Solutions",
-        pan: "FGHIJ5678K",
-        invoiceId: "INV-002",
-        invoiceDate: "2024-05-20",
-        invoiceAmount: 15000.0,
-        tdsSection: "194C",
-        tdsRate: 1,
-        tdsAmount: 150.0,
-      },
-    ];
-    setReportData(generatedData);
-    
-    let periodLabel = "";
-    if (period === 'monthly') {
-        const monthLabel = months.find(m => m.value === month)?.label;
-        periodLabel = `${monthLabel} ${financialYear.split('-')[0]}`;
-    } else {
-        periodLabel = `${quarter.toUpperCase()}, ${financialYear}`;
+
+    try {
+      // Determine the date range for the report
+      const startYear = parseInt(financialYear.split('-')[0]);
+      const endYear = parseInt(financialYear.split('-')[1]);
+
+      let startDate: Date;
+      let endDate: Date;
+
+      if (period === 'monthly') {
+        const monthNum = parseInt(month);
+        startDate = new Date(startYear, monthNum - 1, 1);
+        endDate = new Date(startYear, monthNum, 0); // Last day of the month
+      } else {
+        // Quarterly
+        const quarterNum = parseInt(quarter.replace('q', ''));
+        const startMonth = (quarterNum - 1) * 3;
+        startDate = new Date(startYear, startMonth, 1);
+        endDate = new Date(startYear, startMonth + 3, 0); // Last day of the quarter
+      }
+
+      console.log('Date range:', startDate.toISOString(), 'to', endDate.toISOString());
+
+      // Filter journal vouchers by date range
+      const relevantVouchers = journalVouchers.filter(voucher => {
+        const voucherDate = new Date(voucher.date);
+        return voucherDate >= startDate && voucherDate <= endDate;
+      });
+
+      console.log('Relevant vouchers:', relevantVouchers.length);
+
+      const generatedData: ReportRow[] = [];
+
+      // Process each voucher for TDS/TCS transactions
+      for (const voucher of relevantVouchers) {
+        // Find TDS/TCS related lines
+        const tdsLines = voucher.lines.filter(line =>
+          reportType === "tds" ? line.account === "1460" && parseFloat(line.debit) > 0 :
+          reportType === "tcs" ? line.account === "2423" && parseFloat(line.credit) > 0 : false
+        );
+
+        for (const tdsLine of tdsLines) {
+          // Find the related expense/revenue line to get the transaction amount
+          const relatedLines = voucher.lines.filter(line =>
+            line.account !== tdsLine.account && (parseFloat(line.debit) > 0 || parseFloat(line.credit) > 0)
+          );
+
+          if (relatedLines.length > 0) {
+            const relatedLine = relatedLines[0]; // Take the first related line
+            const transactionAmount = reportType === "tds" ?
+              parseFloat(relatedLine.debit || '0') :
+              parseFloat(relatedLine.credit || '0');
+
+            if (transactionAmount > 0) {
+              // Get vendor/customer information if available
+              let deducteeName = "Unknown";
+              let deducteePAN = "PANNOTAVBL";
+
+              if (voucher.vendorId) {
+                // Query vendor information
+                const vendorQuery = query(collection(db, "vendors"), where("__name__", "==", voucher.vendorId));
+                const vendorSnapshot = await getDocs(vendorQuery);
+                if (!vendorSnapshot.empty) {
+                  const vendorData = vendorSnapshot.docs[0].data();
+                  deducteeName = vendorData.name || "Unknown Vendor";
+                  deducteePAN = vendorData.pan || "PANNOTAVBL";
+                }
+              } else if (voucher.customerId) {
+                // Query customer information for TCS
+                const customerQuery = query(collection(db, "parties"), where("__name__", "==", voucher.customerId));
+                const customerSnapshot = await getDocs(customerQuery);
+                if (!customerSnapshot.empty) {
+                  const customerData = customerSnapshot.docs[0].data();
+                  deducteeName = customerData.name || "Unknown Customer";
+                  deducteePAN = customerData.pan || "PANNOTAVBL";
+                }
+              }
+
+              // Determine TDS/TCS section based on transaction amount and type
+              let tdsSection = reportType === "tds" ? "194J" : "206C"; // Default sections
+              let tdsRate = reportType === "tds" ? 10.0 : 0.1; // Default rates
+
+              // Calculate TDS/TCS amount
+              const tdsAmount = parseFloat(tdsLine.debit || tdsLine.credit || '0');
+
+              generatedData.push({
+                deductee: deducteeName,
+                pan: deducteePAN,
+                invoiceId: `JV-${voucher.id}`,
+                invoiceDate: voucher.date,
+                invoiceAmount: transactionAmount,
+                tdsSection: tdsSection,
+                tdsRate: tdsRate,
+                tdsAmount: tdsAmount,
+              });
+            }
+          }
+        }
+      }
+
+      let periodLabel = "";
+      if (period === 'monthly') {
+          const monthLabel = months.find(m => m.value === month)?.label;
+          periodLabel = `${monthLabel} ${financialYear.split('-')[0]}`;
+      } else {
+          periodLabel = `${quarter.toUpperCase()}, ${financialYear}`;
+      }
+
+      setReportData(generatedData);
+      setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
+
+      console.log("Report generated with real data:", generatedData);
+
+      toast({
+          title: "Report Generated",
+          description: `Found ${generatedData.length} ${reportType.toUpperCase()} transactions for ${periodLabel}.`
+      });
+
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast({
+        variant: "destructive",
+        title: "Report Generation Failed",
+        description: "An error occurred while generating the report. Please try again."
+      });
     }
-    setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
   };
 
   const monthLabel = months.find(m => m.value === month)?.label;
