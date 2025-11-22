@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Search, Command } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -27,6 +28,52 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+
+// Enhanced navigation features
+type NavigationItem = {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  href?: string;
+  badge?: string | number;
+  children?: NavigationItem[];
+  shortcut?: string;
+};
+
+// Sidebar Search Component
+function SidebarSearch({
+  onSearch,
+  placeholder = "Search navigation...",
+}: {
+  onSearch?: (query: string) => void;
+  placeholder?: string;
+}) {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  React.useEffect(() => {
+    onSearch?.(searchQuery);
+  }, [searchQuery, onSearch]);
+
+  return (
+    <div className="px-3 py-2">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder={placeholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-8 pl-9 bg-sidebar-accent/50 border-sidebar-border focus:bg-sidebar-accent"
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <Command className="h-3 w-3" />
+            <span>K</span>
+          </kbd>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type SidebarContext = {
   state: "expanded" | "collapsed"

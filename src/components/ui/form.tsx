@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 
 const Form = FormProvider
 
@@ -88,17 +89,28 @@ FormItem.displayName = "FormItem"
 
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & {
+    required?: boolean;
+    optional?: boolean;
+  }
+>(({ className, required, optional, children, ...props }, ref) => {
   const { error, formItemId } = useFormField()
 
   return (
     <Label
       ref={ref}
-      className={cn(error && "text-destructive", className)}
+      className={cn(
+        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        error && "text-destructive",
+        className
+      )}
       htmlFor={formItemId}
       {...props}
-    />
+    >
+      {children}
+      {required && <span className="text-destructive ml-1">*</span>}
+      {optional && <span className="text-muted-foreground ml-1">(optional)</span>}
+    </Label>
   )
 })
 FormLabel.displayName = "FormLabel"
@@ -106,13 +118,23 @@ FormLabel.displayName = "FormLabel"
 const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
   React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+>(({ className, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
   return (
     <Slot
       ref={ref}
       id={formItemId}
+      className={cn(
+        // Base styles
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+
+        // Error state
+        error && "border-destructive focus-visible:ring-destructive",
+
+        // Custom className
+        className
+      )}
       aria-describedby={
         !error
           ? `${formDescriptionId}`
@@ -142,6 +164,35 @@ const FormDescription = React.forwardRef<
 })
 FormDescription.displayName = "FormDescription"
 
+// Form Field Status Indicator
+const FormFieldStatus = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { error, isDirty, isValid, isValidating } = useFormField()
+
+  if (!isDirty && !error) return null
+
+  return (
+    <div
+      ref={ref}
+      className={cn("flex items-center gap-1 mt-1", className)}
+      {...props}
+    >
+      {isValidating && (
+        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+      )}
+      {!isValidating && error && (
+        <AlertCircle className="h-3 w-3 text-destructive" />
+      )}
+      {!isValidating && !error && isValid && (
+        <CheckCircle2 className="h-3 w-3 text-green-600" />
+      )}
+    </div>
+  )
+})
+FormFieldStatus.displayName = "FormFieldStatus"
+
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -154,14 +205,20 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <p
-      ref={ref}
-      id={formMessageId}
-      className={cn("text-[0.8rem] font-medium text-destructive", className)}
-      {...props}
-    >
-      {body}
-    </p>
+    <div className="flex items-center gap-2 mt-1">
+      <p
+        ref={ref}
+        id={formMessageId}
+        className={cn(
+          "text-[0.8rem] font-medium text-destructive flex items-center gap-1",
+          className
+        )}
+        {...props}
+      >
+        <AlertCircle className="h-3 w-3 flex-shrink-0" />
+        {body}
+      </p>
+    </div>
   )
 })
 FormMessage.displayName = "FormMessage"
@@ -175,4 +232,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  FormFieldStatus,
 }
