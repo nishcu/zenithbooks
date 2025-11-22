@@ -37,7 +37,6 @@ import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { ShareButtons } from "@/components/documents/share-buttons";
 
 
 const formSchema = z.object({

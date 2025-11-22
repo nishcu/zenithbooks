@@ -167,7 +167,7 @@ export default function CapitalContributionCertificatePage() {
       }
   }
   
-  const handleCertificationRequest = async () => {
+  const handleLocalCertificationRequest = async () => {
       if (!user) {
           toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
           return;
@@ -309,7 +309,7 @@ export default function CapitalContributionCertificatePage() {
                                 }}
                             />
                         ) : (
-                            <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                            <Button type="button" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
                                 {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
                                 Request Certification
                             </Button>
