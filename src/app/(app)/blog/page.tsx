@@ -199,7 +199,7 @@ export default function BlogPage() {
             {!searchTerm && selectedCategory === null && featuredPost && (
                 <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
                     <div className="grid md:grid-cols-2 gap-0">
-                        <div className="relative aspect-video md:aspect-auto">
+                        <div className="relative aspect-video md:aspect-auto bg-muted">
                             <Image
                                 src={featuredPost.imageUrl}
                                 alt={featuredPost.title}
@@ -208,6 +208,25 @@ export default function BlogPage() {
                                 data-ai-hint={featuredPost.imageHint}
                                 priority
                                 sizes="(max-width: 768px) 100vw, 50vw"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                        parent.innerHTML = `
+                                            <div class="flex items-center justify-center h-full bg-muted text-muted-foreground text-sm">
+                                                <div class="text-center p-4">
+                                                    <div class="w-12 h-12 mx-auto mb-2 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                    </div>
+                                                    Image not available
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                }}
                             />
                             <div className="absolute top-4 left-4">
                                 <Badge className="bg-primary text-primary-foreground">
@@ -260,7 +279,7 @@ export default function BlogPage() {
                             className="flex flex-col overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                         >
                             <Link href={`/blog/${post.id}`} className="flex flex-col h-full">
-                                <div className="relative aspect-video overflow-hidden">
+                                <div className="relative aspect-video overflow-hidden bg-muted">
                                     <Image
                                         src={post.imageUrl}
                                         alt={post.title}
@@ -268,6 +287,25 @@ export default function BlogPage() {
                                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `
+                                                    <div class="flex items-center justify-center h-full bg-muted text-muted-foreground text-xs">
+                                                        <div class="text-center p-2">
+                                                            <div class="w-8 h-8 mx-auto mb-1 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                                                </svg>
+                                                            </div>
+                                                            Image
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }
+                                        }}
                                     />
                                 </div>
                                 <CardHeader className="flex-grow">

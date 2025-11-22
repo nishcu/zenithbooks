@@ -237,14 +237,35 @@ export default function BlogPostPage() {
                             </div>
                         </div>
 
-                        <div className="relative aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
-                            <Image 
-                                src={post.imageUrl} 
-                                alt={post.title} 
+                        <div className="relative aspect-video my-8 rounded-lg overflow-hidden shadow-lg bg-muted">
+                            <Image
+                                src={post.imageUrl}
+                                alt={post.title}
                                 fill
                                 className="object-cover"
                                 data-ai-hint={post.imageHint}
                                 priority
+                                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 768px, 1200px"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                        parent.innerHTML = `
+                                            <div class="flex items-center justify-center h-full bg-muted text-muted-foreground rounded-lg">
+                                                <div class="text-center p-8">
+                                                    <div class="w-16 h-16 mx-auto mb-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                    </div>
+                                                    <h3 class="font-semibold mb-2">Image Not Available</h3>
+                                                    <p class="text-sm">The blog image could not be loaded at this time.</p>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                }}
                             />
                         </div>
 
