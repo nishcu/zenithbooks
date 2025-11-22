@@ -52,6 +52,24 @@ export function SearchableSelect({
 
   const selectedOption = options.find((option) => option.value === value);
 
+  const handleButtonClick = () => {
+    setOpen(true);
+  };
+
+  // Auto-focus search input when dropdown opens
+  React.useEffect(() => {
+    if (open) {
+      // Small delay to ensure the input is rendered
+      const timer = setTimeout(() => {
+        const input = document.querySelector('[cmdk-input]') as HTMLInputElement;
+        if (input) {
+          input.focus();
+        }
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   // Group options if groupBy is true
   const groupedOptions = React.useMemo(() => {
     if (!groupBy) return { "": options };
@@ -73,6 +91,7 @@ export function SearchableSelect({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
           disabled={disabled}
+          onClick={handleButtonClick}
         >
           <span className="truncate">
             {selectedOption ? selectedOption.label : placeholder}
@@ -92,7 +111,8 @@ export function SearchableSelect({
                   {groupOptions.map((option) => (
                     <CommandItem
                       key={option.value}
-                      value={`${option.label} ${option.value}`}
+                      value={option.label}
+                      keywords={[option.value]}
                       onSelect={() => {
                         onValueChange(option.value === value ? "" : option.value);
                         setOpen(false);
@@ -120,7 +140,8 @@ export function SearchableSelect({
                 {options.map((option) => (
                   <CommandItem
                     key={option.value}
-                    value={`${option.label} ${option.value}`}
+                    value={option.label}
+                    keywords={[option.value]}
                     onSelect={() => {
                       onValueChange(option.value === value ? "" : option.value);
                       setOpen(false);
