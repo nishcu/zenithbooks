@@ -83,23 +83,24 @@ export function SearchableSelect({
   }, [options, groupBy]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-          disabled={disabled}
-          onClick={handleButtonClick}
-        >
-          <span className="truncate">
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn("w-full justify-between", className)}
+            disabled={disabled}
+            onClick={handleButtonClick}
+          >
+            <span className="truncate">
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0 z-50" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} className="h-9" />
           <CommandList>
@@ -167,5 +168,6 @@ export function SearchableSelect({
         </Command>
       </PopoverContent>
     </Popover>
+    </div>
   );
 }

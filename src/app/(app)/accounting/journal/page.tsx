@@ -377,7 +377,7 @@ export default function JournalVoucherPage() {
                         const showCostCentre = accountDetails && ["Revenue", "Expense"].includes(accountDetails.type);
                         return (
                           <TableRow key={index}>
-                            <TableCell>
+                            <TableCell className="min-w-[250px]">
                               <SearchableSelect
                                 options={combinedAccounts}
                                 value={line.account}
@@ -386,6 +386,7 @@ export default function JournalVoucherPage() {
                                 searchPlaceholder="Search accounts..."
                                 emptyMessage="No accounts found."
                                 groupBy={true}
+                                className="w-full"
                               />
                             </TableCell>
                             <TableCell>
