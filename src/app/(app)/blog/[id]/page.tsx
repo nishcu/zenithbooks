@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { SocialShareButtons } from '@/components/social-share-buttons';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Metadata } from 'next';
 import Head from 'next/head';
 
 // Calculate reading time
@@ -32,62 +31,6 @@ const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof sa
         )
         .slice(0, limit);
 };
-
-// Generate metadata for SEO and social sharing
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const post = samplePosts.find(p => p.id === params.id);
-
-  if (!post) {
-    return {
-      title: 'Blog Post Not Found',
-      description: 'The requested blog post could not be found.',
-    };
-  }
-
-  // Use a default base URL or get from environment
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://zenithbooks.in';
-  const postUrl = `${baseUrl}/blog/${post.id}`;
-
-  return {
-    title: `${post.title} | ZenithBooks`,
-    description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
-    authors: [{ name: post.author }],
-    keywords: [post.category, 'accounting', 'GST', 'tax', 'finance', 'CA', 'chartered accountant'],
-    openGraph: {
-      title: post.title,
-      description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
-      url: postUrl,
-      siteName: 'ZenithBooks',
-      images: [
-        {
-          url: post.imageUrl,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-          type: 'image/jpeg',
-        },
-      ],
-      locale: 'en_US',
-      type: 'article',
-      publishedTime: new Date(post.date).toISOString(),
-      authors: [post.author],
-      tags: [post.category],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description: post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description,
-      images: [post.imageUrl],
-      creator: '@zenithbooks',
-    },
-    other: {
-      'article:author': post.author,
-      'article:published_time': new Date(post.date).toISOString(),
-      'article:section': post.category,
-      'article:tag': post.category,
-    },
-  };
-}
 
 export default function BlogPostPage() {
     const params = useParams();

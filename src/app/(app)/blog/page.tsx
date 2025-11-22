@@ -214,14 +214,15 @@ export default function BlogPage() {
                                     const parent = target.parentElement;
                                     if (parent) {
                                         parent.innerHTML = `
-                                            <div class="flex items-center justify-center h-full bg-muted text-muted-foreground text-sm">
-                                                <div class="text-center p-4">
-                                                    <div class="w-12 h-12 mx-auto mb-2 bg-muted-foreground/20 rounded-full flex items-center justify-center">
-                                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                            <div class="flex items-center justify-center h-full bg-muted text-muted-foreground">
+                                                <div class="text-center p-8">
+                                                    <div class="w-16 h-16 mx-auto mb-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                                                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
                                                         </svg>
                                                     </div>
-                                                    Image not available
+                                                    <h3 class="font-semibold mb-2">Featured Image Unavailable</h3>
+                                                    <p class="text-sm">The featured blog image could not be loaded.</p>
                                                 </div>
                                             </div>
                                         `;
@@ -293,14 +294,12 @@ export default function BlogPage() {
                                             const parent = target.parentElement;
                                             if (parent) {
                                                 parent.innerHTML = `
-                                                    <div class="flex items-center justify-center h-full bg-muted text-muted-foreground text-xs">
-                                                        <div class="text-center p-2">
-                                                            <div class="w-8 h-8 mx-auto mb-1 bg-muted-foreground/20 rounded-full flex items-center justify-center">
-                                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-                                                                </svg>
-                                                            </div>
-                                                            Image
+                                                    <div class="flex items-center justify-center h-full bg-muted text-muted-foreground">
+                                                        <div class="text-center p-4">
+                                                            <svg class="w-8 h-8 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            <p class="text-xs">Image unavailable</p>
                                                         </div>
                                                     </div>
                                                 `;
