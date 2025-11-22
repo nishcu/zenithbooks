@@ -52,15 +52,6 @@ export async function deleteImage(imageUrl: string): Promise<void> {
   }
 }
 
-/**
- * Check if a URL is from Firebase Storage
- * @param url - The URL to check
- * @returns boolean
- */
-export function isFirebaseStorageUrl(url: string): boolean {
-  return url.includes('firebasestorage.googleapis.com') ||
-         url.includes('zenithbooks-1c818.firebasestorage.app');
-}
 
 /**
  * Extract Firebase Storage path from download URL

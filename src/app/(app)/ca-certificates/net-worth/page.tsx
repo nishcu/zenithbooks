@@ -17,8 +17,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
@@ -281,8 +284,13 @@ export default function NetWorthCertificatePage() {
   const [step, setStep] = useState(1);
   const printRef = useRef<HTMLDivElement>(null);
   const [user, authLoading] = useAuthState(auth);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
+    pricing,
+    serviceId: 'net_worth'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -323,6 +331,15 @@ export default function NetWorthCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({ control: form.control, name: "assets" });
   const { fields: liabilityFields, append: appendLiability, remove: removeLiability } = useFieldArray({ control: form.control, name: "liabilities" });
@@ -376,34 +393,20 @@ export default function NetWorthCertificatePage() {
       }
   }
 
-  const handleCertificationRequest = async () => {
-      if (!user) {
-          toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
-          return;
-      }
-      setIsSubmitting(true);
-      try {
-        await addDoc(collection(db, "certificationRequests"), {
-            reportType: "Net Worth Certificate",
-            clientName: form.getValues("clientName"),
-            requestedBy: user.displayName || user.email,
-            userId: user.uid,
-            requestDate: new Date(),
-            status: "Pending",
-            draftUrl: "#", 
-            signedDocumentUrl: null,
-            formData: form.getValues(),
-        });
-        toast({
-            title: "Request Sent",
-            description: "Your certification request has been sent to the admin for review and signature."
-        });
-      } catch (error) {
-          console.error("Error sending request:", error);
-          toast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
-      } finally {
-          setIsSubmitting(false);
-      }
+  const handleCertificationRequestWrapper = async () => {
+    const result = await handleCertificationRequest({
+      reportType: "Net Worth Certificate",
+      clientName: form.getValues("clientName"),
+      formData: form.getValues(),
+    });
+
+    // If result is an object with requiresPayment, it means payment is needed
+    if (result && typeof result === 'object' && result.requiresPayment) {
+      toast({
+        title: "Payment Required",
+        description: `This service costs ₹${result.price}. Please complete the payment to proceed.`,
+      });
+    }
   }
 
   const renderStepContent = () => {
@@ -499,10 +502,35 @@ export default function NetWorthCertificatePage() {
                                 fileName={`Net_Worth_${formData.clientName}`}
                                 whatsappMessage={whatsappMessage}
                              />
-                             <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                                Request Certification
-                            </Button>
+                             {pricing && pricing.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 ? (
+                                <RazorpayCheckout
+                                    amount={pricing.ca_certs.find(s => s.id === 'net_worth')?.price || 0}
+                                    planId="net_worth_cert"
+                                    planName="Net Worth Certificate"
+                                    userId={user?.uid || ''}
+                                    userEmail={user?.email || ''}
+                                    userName={user?.displayName || ''}
+                                    onSuccess={(paymentId) => {
+                                        handlePaymentSuccess(paymentId, {
+                                            reportType: "Net Worth Certificate",
+                                            clientName: form.getValues("clientName"),
+                                            formData: form.getValues(),
+                                        });
+                                    }}
+                                    onFailure={() => {
+                                        toast({
+                                            variant: "destructive",
+                                            title: "Payment Failed",
+                                            description: "Payment was not completed. Please try again."
+                                        });
+                                    }}
+                                />
+                            ) : (
+                                <Button type="button" onClick={handleCertificationRequestWrapper} disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                    Request Certification
+                                </Button>
+                            )}
                          </div>
                     </CardFooter>
                 </Card>

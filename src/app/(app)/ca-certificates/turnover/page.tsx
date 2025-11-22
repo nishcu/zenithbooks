@@ -14,8 +14,11 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
@@ -58,8 +61,13 @@ export default function TurnoverCertificatePage() {
   const [step, setStep] = useState(1);
   const printRef = useRef<HTMLDivElement>(null);
   const [user, authLoading] = useAuthState(auth);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
+  const [pricing, setPricing] = useState(null);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
+    pricing,
+    serviceId: 'turnover'
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -100,6 +108,15 @@ export default function TurnoverCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+  }, []);
 
   const handlePreview = async () => {
     const isValid = await form.trigger();
@@ -148,28 +165,49 @@ export default function TurnoverCertificatePage() {
           toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
           return;
       }
-      setIsSubmitting(true);
-      try {
-        await addDoc(collection(db, "certificationRequests"), {
-            reportType: "Turnover Certificate",
-            clientName: form.getValues("entityName"),
-            requestedBy: user.displayName || user.email,
-            userId: user.uid,
-            requestDate: new Date(),
-            status: "Pending",
-            draftUrl: "#",
-            signedDocumentUrl: null,
-            formData: form.getValues(),
-        });
-        toast({
-            title: "Request Sent",
-            description: "Your certification request has been sent to the admin for review and signature."
-        });
-      } catch (error) {
-          console.error("Error sending request:", error);
-          toast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
-      } finally {
-          setIsSubmitting(false);
+
+      // Check if pricing is loaded
+      if (!pricing) {
+          toast({ variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." });
+          return;
+      }
+
+      // Get the price for Turnover Certificate
+      const price = pricing.ca_certs?.find(s => s.id === 'turnover')?.price || 0;
+
+      if (price === 0) {
+          // Free certificate - proceed directly
+          setIsSubmitting(true);
+          try {
+            await addDoc(collection(db, "certificationRequests"), {
+                reportType: "Turnover Certificate",
+                clientName: form.getValues("entityName"),
+                requestedBy: user.displayName || user.email,
+                userId: user.uid,
+                requestDate: new Date(),
+                status: "Pending",
+                draftUrl: "#",
+                signedDocumentUrl: null,
+                formData: form.getValues(),
+                amount: 0, // Free
+            });
+            toast({
+                title: "Request Sent",
+                description: "Your certification request has been sent to the admin for review and signature."
+            });
+          } catch (error) {
+              console.error("Error sending request:", error);
+              toast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+          } finally {
+              setIsSubmitting(false);
+          }
+      } else {
+          // Paid certificate - show payment modal or redirect to payment
+          toast({
+              title: "Payment Required",
+              description: `This service costs ₹${price}. Please complete the payment to proceed.`,
+          });
+          // Payment will be handled by the RazorpayCheckout component
       }
   }
 
@@ -279,10 +317,61 @@ export default function TurnoverCertificatePage() {
                             fileName={`Turnover_Certificate_${formData.entityName}`}
                             whatsappMessage={whatsappMessage}
                         />
-                        <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
-                           {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                           Request Certification
-                        </Button>
+                        {pricing && pricing.ca_certs?.find(s => s.id === 'turnover')?.price > 0 ? (
+                           <RazorpayCheckout
+                               amount={pricing.ca_certs.find(s => s.id === 'turnover')?.price || 0}
+                               planId="turnover_cert"
+                               planName="Turnover Certificate"
+                               userId={user?.uid || ''}
+                               userEmail={user?.email || ''}
+                               userName={user?.displayName || ''}
+                               onSuccess={async (paymentId) => {
+                                   // After successful payment, create the certification request
+                                   setIsSubmitting(true);
+                                   try {
+                                       const price = pricing.ca_certs.find(s => s.id === 'turnover')?.price || 0;
+                                       await addDoc(collection(db, "certificationRequests"), {
+                                           reportType: "Turnover Certificate",
+                                           clientName: form.getValues("entityName"),
+                                           requestedBy: user?.displayName || user?.email,
+                                           userId: user?.uid,
+                                           requestDate: new Date(),
+                                           status: "Pending",
+                                           draftUrl: "#",
+                                           signedDocumentUrl: null,
+                                           formData: form.getValues(),
+                                           amount: price,
+                                           paymentId: paymentId,
+                                       });
+                                       toast({
+                                           title: "Payment Successful & Request Sent",
+                                           description: "Your payment has been processed and certification request sent to admin."
+                                       });
+                                   } catch (error) {
+                                       console.error("Error sending request:", error);
+                                       toast({
+                                           variant: "destructive",
+                                           title: "Request Failed",
+                                           description: "Payment was successful but request submission failed. Please contact support."
+                                       });
+                                   } finally {
+                                       setIsSubmitting(false);
+                                   }
+                               }}
+                               onFailure={() => {
+                                   toast({
+                                       variant: "destructive",
+                                       title: "Payment Failed",
+                                       description: "Payment was not completed. Please try again."
+                                   });
+                               }}
+                           />
+                       ) : (
+                           <Button type="button" onClick={handleCertificationRequest} disabled={isSubmitting}>
+                              {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                              Request Certification
+                           </Button>
+                       )}
                      </div>
                 </CardFooter>
             </Card>
