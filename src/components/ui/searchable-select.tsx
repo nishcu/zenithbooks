@@ -52,11 +52,15 @@ function SimpleDropdown({
 
   return (
     <div
-      className="absolute top-full left-0 z-[10000] mt-1 bg-white dark:bg-gray-900 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-hidden"
+      className="fixed z-[10000] bg-white dark:bg-gray-900 border-2 border-blue-500 dark:border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-hidden"
       style={{
         width: '400px',
         minWidth: '350px',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25), 0 8px 16px rgba(0, 0, 0, 0.15)'
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25), 0 8px 16px rgba(0, 0, 0, 0.15)',
+        // Position the dropdown relative to the viewport to avoid clipping
+        top: containerRef.current ? containerRef.current.getBoundingClientRect().bottom + 4 : '100px',
+        left: containerRef.current ? Math.max(16, containerRef.current.getBoundingClientRect().left) : '16px',
+        maxWidth: 'calc(100vw - 32px)'
       }}
     >
       {/* Search Input */}
