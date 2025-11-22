@@ -69,6 +69,8 @@ export default function CapitalContributionCertificatePage() {
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
 
+  console.log('👤 User auth status:', { user: !!user, authLoading, userId: user?.uid });
+
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'capital_contribution'
@@ -118,10 +120,14 @@ export default function CapitalContributionCertificatePage() {
 
   // Load pricing data
   useEffect(() => {
+    console.log('🔍 Loading pricing for capital contribution...');
     getServicePricing().then(pricingData => {
+      console.log('✅ Pricing loaded:', pricingData);
+      console.log('🎯 CA certs pricing:', pricingData?.ca_certs);
+      console.log('💰 Capital contribution price:', pricingData?.ca_certs?.find(s => s.id === 'capital_contribution')?.price);
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error('❌ Error loading pricing:', error);
     });
   }, []);
 
