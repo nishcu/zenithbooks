@@ -95,8 +95,7 @@ export default function MoaAoaPage() {
             setIsLoading(false);
         }
     }
-  return (
-     <div className="space-y-8 max-w-4xl mx-auto">
+  return "test";
         <Link href="/legal-documents" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" />
             Back to Document Selection
