@@ -21,6 +21,16 @@ export const metadata: Metadata = {
   title: 'ZenithBooks',
   description: 'Your Business at its Peak.',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon-192x192.png',
+    shortcut: '/favicon.ico',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ZenithBooks',
+  },
 };
 
 export default function RootLayout({
