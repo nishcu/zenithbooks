@@ -21,7 +21,7 @@ export const samplePosts = [
         author: "Strategic Team, ZenithBooks",
         date: "2024-09-29",
         category: "Vision",
-        imageUrl: "https://images.unsplash.com/photo-1623979047394-a3c9b74d4b23?w=800&h=400&fit=crop&crop=center",
+        imageUrl: "https://picsum.photos/800/400?random=1",
         imageHint: "indian leader",
         shareUrl: "/blog/4",
         content: [
@@ -37,7 +37,7 @@ export const samplePosts = [
         author: "Team ZenithBooks",
         date: "2024-09-29",
         category: "Our Mission",
-        imageUrl: "https://images.unsplash.com/photo-1521737852577-68489a10811c?w=800&h=400&fit=crop&crop=center",
+        imageUrl: "https://picsum.photos/800/400?random=2",
         imageHint: "professional network",
         shareUrl: "/blog/5",
         content: [
@@ -53,7 +53,7 @@ export const samplePosts = [
         author: "Priya Mehta, CA",
         date: "2024-07-28",
         category: "GST",
-        imageUrl: "https://images.unsplash.com/photo-1554224155-1696413565d3?w=800&h=400&fit=crop&crop=center",
+        imageUrl: "https://picsum.photos/800/400?random=3",
         imageHint: "financial documents",
         shareUrl: "/blog/1",
         content: [
@@ -69,7 +69,7 @@ export const samplePosts = [
         author: "Rohan Sharma, CS",
         date: "2024-07-25",
         category: "Business Registration",
-        imageUrl: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=400&fit=crop&crop=center",
+        imageUrl: "https://picsum.photos/800/400?random=4",
         imageHint: "business strategy meeting",
         shareUrl: "/blog/2",
         content: [
@@ -87,7 +87,7 @@ export const samplePosts = [
         author: "Anjali Singh, Tax Consultant",
         date: "2024-07-22",
         category: "Income Tax",
-        imageUrl: "https://images.unsplash.com/photo-1589949692098-26d0d752de8f?w=800&h=400&fit=crop&crop=center",
+        imageUrl: "https://picsum.photos/800/400?random=5",
         imageHint: "tax calculator",
         shareUrl: "/blog/3",
         content: [
@@ -401,7 +401,7 @@ export default function BlogPage() {
                                             console.error('Failed to load blog image:', post.imageUrl);
                                             // Fallback to a default image
                                             const target = e.target as HTMLImageElement;
-                                            target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop&crop=center';
+                                            target.src = 'https://picsum.photos/800/400?random=fallback';
                                         }}
                                     />
                                 </div>
