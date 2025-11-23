@@ -88,6 +88,11 @@ export default function NewBlogPostPage() {
             // Upload the image to Firebase Storage (now that rules are deployed)
             const imageUrl = await uploadBlogImage(values.image);
 
+            // Convert contentBlocks to content array for display
+            const content = values.contentBlocks
+                .filter((block: any) => block.value.trim() !== '')
+                .map((block: any) => block.value);
+
             // Create blog post data
             const blogPostData = {
                 title: values.title,
@@ -95,7 +100,8 @@ export default function NewBlogPostPage() {
                 authorTitle: values.authorTitle,
                 category: values.category,
                 imageUrl: imageUrl,
-                contentBlocks: values.contentBlocks,
+                contentBlocks: values.contentBlocks, // Keep original for editing
+                content: content, // Add flattened content for display
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 published: true,

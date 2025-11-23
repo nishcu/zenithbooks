@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -31,19 +31,27 @@ import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react"
 import { format } from "date-fns";
 import { samplePosts } from "../../blog/page";
 import { useToast } from "@/hooks/use-toast";
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 
-// Storage key for blog posts
-const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
-
-// Function to get blog posts from localStorage
-function getStoredBlogPosts() {
-    if (typeof window === 'undefined') return samplePosts;
-
+// Function to load blog posts from Firebase
+async function loadBlogPosts() {
     try {
-        const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : samplePosts;
+        const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+
+        const posts: any[] = [];
+        querySnapshot.forEach((doc) => {
+            posts.push({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
+            });
+        });
+
+        return posts.length > 0 ? posts : samplePosts;
     } catch (error) {
-        console.error('Error loading blog posts from localStorage:', error);
+        console.error('Error loading blog posts from Firebase:', error);
         return samplePosts;
     }
 }
@@ -60,11 +68,22 @@ function saveBlogPosts(posts: any[]) {
 }
 
 export default function AdminBlog() {
-  const [posts, setPosts] = useState<typeof samplePosts>(() => getStoredBlogPosts());
+  const [posts, setPosts] = useState<typeof samplePosts>(samplePosts);
   const [selectedPost, setSelectedPost] = useState<typeof samplePosts[0] | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { toast } = useToast();
+
+  // Load posts from Firebase on component mount
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const loadedPosts = await loadBlogPosts();
+      setPosts(loadedPosts);
+      setIsInitialLoading(false);
+    };
+    fetchPosts();
+  }, []);
 
   const handleEdit = (post: typeof samplePosts[0]) => {
     // Navigate to edit page
@@ -74,19 +93,45 @@ export default function AdminBlog() {
   const handleDelete = async () => {
     if (!selectedPost) return;
     setIsLoading('delete');
-    await new Promise(resolve => setTimeout(resolve, 800));
-    const updatedPosts = posts.filter(p => p.id !== selectedPost.id);
-    setPosts(updatedPosts);
-    saveBlogPosts(updatedPosts);
-    toast({
-      title: "Post Deleted",
-      description: `Blog post "${selectedPost.title}" has been deleted.`,
-      variant: "destructive",
-    });
-    setIsDeleteDialogOpen(false);
-    setSelectedPost(null);
-    setIsLoading(null);
+
+    try {
+      // Delete from Firebase
+      await deleteDoc(doc(db, 'blogPosts', selectedPost.id));
+
+      // Reload posts from Firebase
+      const updatedPosts = await loadBlogPosts();
+      setPosts(updatedPosts);
+
+      toast({
+        title: "Post deleted",
+        description: "The blog post has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete the blog post.",
+      });
+    } finally {
+      setIsLoading(null);
+      setSelectedPost(null);
+      setIsDeleteDialogOpen(false);
+    }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading blog posts...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
