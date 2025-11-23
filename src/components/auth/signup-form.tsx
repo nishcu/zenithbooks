@@ -260,26 +260,27 @@ export function SignupForm() {
                 )}
               />
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <FormField
                   control={form.control}
                   name="acceptTerms"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm font-normal">
+                      <div className="leading-tight">
+                        <FormLabel className="text-xs font-normal text-muted-foreground">
                           I accept the{" "}
-                          <Link href="/contact" className="text-primary underline">
+                          <Link href="/contact" className="text-primary underline text-xs">
                             Terms & Conditions
                           </Link>
                         </FormLabel>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </div>
                     </FormItem>
                   )}
@@ -289,21 +290,22 @@ export function SignupForm() {
                   control={form.control}
                   name="acceptRefunds"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          className="mt-0.5"
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm font-normal">
+                      <div className="leading-tight">
+                        <FormLabel className="text-xs font-normal text-muted-foreground">
                           I accept the{" "}
-                          <Link href="/contact" className="text-primary underline">
+                          <Link href="/contact" className="text-primary underline text-xs">
                             Cancellation & Refund Policy
                           </Link>
                         </FormLabel>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </div>
                     </FormItem>
                   )}
