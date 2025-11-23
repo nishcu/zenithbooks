@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { ZenithBooksLogo } from "../icons"
 import { useRouter } from "next/navigation";
@@ -52,6 +53,12 @@ import {
 const formSchema = z.object({
   email: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
   password: z.string().min(6, { message: VALIDATION_MESSAGES.PASSWORD_MIN }),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: "You must accept the Terms & Conditions"
+  }),
+  acceptRefunds: z.boolean().refine(val => val === true, {
+    message: "You must accept the Cancellation & Refund Policy"
+  }),
 });
 
 const passwordResetSchema = z.object({
@@ -72,6 +79,8 @@ export function LoginForm() {
     defaultValues: {
       email: "",
       password: "",
+      acceptTerms: false,
+      acceptRefunds: false,
     },
   });
 
@@ -225,10 +234,10 @@ export function LoginForm() {
                             <FormItem>
                                 <div className="flex items-center">
                                     <FormLabel htmlFor="password">Password</FormLabel>
-                                    <Button 
-                                        variant="link" 
-                                        type="button" 
-                                        onClick={() => setIsForgotPasswordOpen(true)} 
+                                    <Button
+                                        variant="link"
+                                        type="button"
+                                        onClick={() => setIsForgotPasswordOpen(true)}
                                         className="ml-auto inline-block text-sm underline"
                                         aria-label="Forgot password"
                                     >
@@ -236,18 +245,69 @@ export function LoginForm() {
                                     </Button>
                                 </div>
                                 <FormControl>
-                                <Input 
+                                <Input
                                     id="password"
-                                    type="password" 
+                                    type="password"
                                     aria-label="Password"
                                     aria-required="true"
-                                    {...field} 
+                                    {...field}
                                 />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
                         />
+
+                        <div className="space-y-3">
+                            <FormField
+                                control={form.control}
+                                name="acceptTerms"
+                                render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel className="text-sm font-normal">
+                                            I accept the{" "}
+                                            <Link href="/contact" className="text-primary underline">
+                                                Terms & Conditions
+                                            </Link>
+                                        </FormLabel>
+                                        <FormMessage />
+                                    </div>
+                                </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="acceptRefunds"
+                                render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel className="text-sm font-normal">
+                                            I accept the{" "}
+                                            <Link href="/contact" className="text-primary underline">
+                                                Cancellation & Refund Policy
+                                            </Link>
+                                        </FormLabel>
+                                        <FormMessage />
+                                    </div>
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <Button 
                             type="submit" 
                             className="w-full" 

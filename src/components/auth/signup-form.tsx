@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { ZenithBooksLogo } from "../icons"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -45,6 +46,12 @@ const formSchema = z.object({
   companyName: z.string().min(2, { message: VALIDATION_MESSAGES.REQUIRED }),
   email: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
   password: z.string().min(6, { message: VALIDATION_MESSAGES.PASSWORD_MIN }),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: "You must accept the Terms & Conditions"
+  }),
+  acceptRefunds: z.boolean().refine(val => val === true, {
+    message: "You must accept the Cancellation & Refund Policy"
+  }),
 });
 
 export function SignupForm() {
@@ -61,6 +68,8 @@ export function SignupForm() {
         companyName: "",
         email: "",
         password: "",
+        acceptTerms: false,
+        acceptRefunds: false,
     }
   });
 
@@ -250,6 +259,57 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="acceptTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal">
+                          I accept the{" "}
+                          <Link href="/contact" className="text-primary underline">
+                            Terms & Conditions
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="acceptRefunds"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal">
+                          I accept the{" "}
+                          <Link href="/contact" className="text-primary underline">
+                            Cancellation & Refund Policy
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create an account
