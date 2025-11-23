@@ -276,9 +276,13 @@ export function SignupForm() {
                       <div className="leading-tight">
                         <FormLabel className="text-[10px] font-normal text-muted-foreground">
                           I accept the{" "}
-                          <a href="/contact" className="text-primary underline text-[10px] hover:text-primary/80">
+                          <button
+                            type="button"
+                            onClick={() => window.location.href = '/contact'}
+                            className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
+                          >
                             Terms & Conditions
-                          </a>
+                          </button>
                         </FormLabel>
                         <FormMessage className="text-[10px]" />
                       </div>
@@ -301,9 +305,13 @@ export function SignupForm() {
                       <div className="leading-tight">
                         <FormLabel className="text-[10px] font-normal text-muted-foreground">
                           I accept the{" "}
-                          <a href="/contact" className="text-primary underline text-[10px] hover:text-primary/80">
+                          <button
+                            type="button"
+                            onClick={() => window.location.href = '/contact'}
+                            className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
+                          >
                             Cancellation & Refund Policy
-                          </a>
+                          </button>
                         </FormLabel>
                         <FormMessage className="text-[10px]" />
                       </div>
