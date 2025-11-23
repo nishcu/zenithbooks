@@ -28,26 +28,26 @@ import { useToast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { samplePosts } from "@/app/(app)/blog/page";
+// samplePosts removed from blog page
 import { uploadBlogImage, deleteBlogImage, validateBlogImage } from "@/lib/storage";
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 // Storage key for blog posts
 const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
 
 // Function to get blog posts from localStorage
 function getStoredBlogPosts() {
-    if (typeof window === 'undefined') return samplePosts;
+    if (typeof window === 'undefined') return [];
 
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        const posts = stored ? JSON.parse(stored) : samplePosts;
+        const posts = stored ? JSON.parse(stored) : [];
         console.log('Loaded blog posts from storage:', posts.length, 'posts');
         return posts;
     } catch (error) {
         console.error('Error loading blog posts from localStorage:', error);
-        return samplePosts;
+        return [];
     }
 }
 
@@ -62,41 +62,55 @@ function saveBlogPosts(posts: any[]) {
     }
 }
 
-// Function to update a blog post
-function updateSamplePost(postId: string, updatedData: any) {
-    console.log('Updating blog post:', postId, updatedData);
-    const posts = getStoredBlogPosts();
-    console.log('Current posts from storage:', posts.length);
+// Function to update a blog post in Firebase
+async function updateBlogPost(postId: string, updatedData: any) {
+    console.log('Updating blog post in Firebase:', postId, updatedData);
 
-    const postIndex = posts.findIndex((post: any) => post.id === postId);
-    console.log('Post index found:', postIndex);
-
-    if (postIndex !== -1) {
+    try {
         // Convert contentBlocks back to content array format
         const content = updatedData.contentBlocks
             .filter((block: any) => block.value.trim() !== '')
             .map((block: any) => block.value);
 
-        // Handle image updates - prefer Firebase Storage URLs over data URLs
-        let finalImageUrl = posts[postIndex].imageUrl;
-
-        // If a new Firebase Storage URL is provided, use it
-        if (updatedData.firebaseImageUrl) {
-            // Delete old Firebase Storage image if it exists
-            if (posts[postIndex].imageUrl &&
-                posts[postIndex].imageUrl.includes('firebasestorage.googleapis.com')) {
-                deleteBlogImage(posts[postIndex].imageUrl);
-            }
-            finalImageUrl = updatedData.firebaseImageUrl;
-        }
-        // Keep existing image if no new image provided
-        // Don't use base64 data URLs anymore as they're stored in Firebase
-
-        // Update the post with new data
-        const updatedPost = {
-            ...posts[postIndex],
+        // Prepare update data for Firebase
+        const updateData: any = {
             title: updatedData.title,
             author: updatedData.authorName,
+            authorTitle: updatedData.authorTitle,
+            category: updatedData.category,
+            content: content,
+            updatedAt: new Date(),
+        };
+
+        // Handle image updates - prefer Firebase Storage URLs over data URLs
+        if (updatedData.firebaseImageUrl) {
+            // Get current post to check for old image
+            const docRef = doc(db, 'blogPosts', postId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const currentData = docSnap.data();
+                // Delete old Firebase Storage image if it exists
+                if (currentData.imageUrl &&
+                    currentData.imageUrl.includes('firebasestorage.googleapis.com')) {
+                    deleteBlogImage(currentData.imageUrl);
+                }
+            }
+            updateData.imageUrl = updatedData.firebaseImageUrl;
+            updateData.imageHint = updatedData.imageHint || 'blog post';
+        }
+
+        // Update the post in Firebase
+        const docRef = doc(db, 'blogPosts', postId);
+        await updateDoc(docRef, updateData);
+
+        console.log('Blog post updated successfully in Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error updating blog post:', error);
+        return false;
+    }
+}
             authorTitle: updatedData.authorTitle,
             category: updatedData.category,
             content: content,
@@ -169,11 +183,11 @@ export default function EditBlogPostPage() {
     useEffect(() => {
         const loadPost = async () => {
             try {
-                // Get posts from localStorage or fallback to samplePosts
-                const posts = getStoredBlogPosts();
-                const post = posts.find((p: any) => p.id === postId);
+                // Load post from Firebase
+                const docRef = doc(db, 'blogPosts', postId);
+                const docSnap = await getDoc(docRef);
 
-                if (!post) {
+                if (!docSnap.exists()) {
                     toast({
                         variant: "destructive",
                         title: "Post Not Found",
@@ -182,6 +196,12 @@ export default function EditBlogPostPage() {
                     router.push('/admin/blog');
                     return;
                 }
+
+                const post = {
+                    id: docSnap.id,
+                    ...docSnap.data(),
+                    date: docSnap.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
+                };
 
                 // Convert content array to contentBlocks format
                 const contentBlocks = post.content.map(content => ({ value: content }));
@@ -283,8 +303,17 @@ export default function EditBlogPostPage() {
                 firebaseImageUrl: firebaseImageUrl,
             };
 
-            // Update the blog post in the samplePosts array
-            updateSamplePost(postId, postData);
+            // Update the blog post in Firebase
+            const success = await updateBlogPost(postId, postData);
+
+            if (!success) {
+                toast({
+                    variant: "destructive",
+                    title: "Update Failed",
+                    description: "Failed to update the blog post. Please try again.",
+                });
+                return;
+            }
 
             toast({
                 title: "Blog Post Updated!",

@@ -29,10 +29,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { samplePosts } from "../../blog/page";
+// samplePosts removed from blog page
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+
+// Storage key for blog posts
+const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
 
 // Function to load blog posts from Firebase
 async function loadBlogPosts() {
@@ -49,10 +52,10 @@ async function loadBlogPosts() {
             });
         });
 
-        return posts.length > 0 ? posts : samplePosts;
+        return posts;
     } catch (error) {
         console.error('Error loading blog posts from Firebase:', error);
-        return samplePosts;
+        return [];
     }
 }
 
@@ -68,8 +71,8 @@ function saveBlogPosts(posts: any[]) {
 }
 
 export default function AdminBlog() {
-  const [posts, setPosts] = useState<typeof samplePosts>(samplePosts);
-  const [selectedPost, setSelectedPost] = useState<typeof samplePosts[0] | null>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -85,7 +88,7 @@ export default function AdminBlog() {
     fetchPosts();
   }, []);
 
-  const handleEdit = (post: typeof samplePosts[0]) => {
+  const handleEdit = (post: any) => {
     // Navigate to edit page
     window.location.href = `/admin/blog/edit/${post.id}`;
   };
