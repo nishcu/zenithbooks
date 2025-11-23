@@ -69,48 +69,12 @@ export default function BlogPostPage() {
         }
     }, [id]);
 
-    // Set dynamic meta tags for social sharing
+    // Update document title dynamically
     useEffect(() => {
         if (post && typeof window !== 'undefined') {
-            const baseUrl = window.location.origin;
-            const postUrl = `${baseUrl}/blog/${post.id}`;
-
-            // Update document title
             document.title = `${post.title || 'Blog Post'} | ZenithBooks`;
-
-            // Create or update meta tags
-            const updateMetaTag = (property: string, content: string) => {
-                let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
-                if (!meta) {
-                    meta = document.createElement('meta');
-                    meta.setAttribute('property', property);
-                    document.head.appendChild(meta);
-                }
-                meta.setAttribute('content', content);
-            };
-
-            // Open Graph tags
-            updateMetaTag('og:title', post.title);
-            updateMetaTag('og:description', post.description);
-            updateMetaTag('og:url', postUrl);
-            updateMetaTag('og:image', post.imageUrl);
-            updateMetaTag('og:image:width', '1200');
-            updateMetaTag('og:image:height', '630');
-            updateMetaTag('og:type', 'article');
-            updateMetaTag('og:site_name', 'ZenithBooks');
-
-            // Twitter Card tags
-            updateMetaTag('twitter:card', 'summary_large_image');
-            updateMetaTag('twitter:title', post.title);
-            updateMetaTag('twitter:description', post.description);
-            updateMetaTag('twitter:image', post.imageUrl);
-
-            // Article specific tags
-            updateMetaTag('article:author', post.author);
-            updateMetaTag('article:published_time', post.date);
-            updateMetaTag('article:section', post.category);
         }
-    }, [post, id]);
+    }, [post]);
 
     // Reading progress indicator
     useEffect(() => {
@@ -161,21 +125,16 @@ export default function BlogPostPage() {
                 <meta name="description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
 
                 {/* Open Graph / Facebook */}
-                <meta property="og:type" content="article" />
-                <meta property="og:site_name" content="ZenithBooks" />
                 <meta property="og:title" content={post?.title || 'Blog Post'} />
-                <meta property="og:description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
-                <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/blog/${id}` : `/blog/${id}`} />
-                {post && <meta property="og:image" content={post.imageUrl} />}
-                {post && <meta property="og:image:width" content="1200" />}
-                {post && <meta property="og:image:height" content="630" />}
-                {post && <meta property="og:image:alt" content={post.title} />}
+                <meta property="og:description" content={post?.description || 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                <meta property="og:image" content="https://www.zenithbooks.in/assets/zenith-preview.png" />
+                <meta property="og:url" content={`https://www.zenithbooks.in/blog/${post?.slug || id}`} />
+                <meta property="og:type" content="article" />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
 
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={post?.title || 'Blog Post'} />
-                <meta name="twitter:description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
-                {post && <meta name="twitter:image" content={post.imageUrl} />}
 
                 {/* Article specific */}
                 {post && <meta property="article:author" content={post.author} />}
