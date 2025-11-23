@@ -53,11 +53,8 @@ import {
 const formSchema = z.object({
   email: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
   password: z.string().min(6, { message: VALIDATION_MESSAGES.PASSWORD_MIN }),
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: "You must accept the Terms & Conditions"
-  }),
-  acceptRefunds: z.boolean().refine(val => val === true, {
-    message: "You must accept the Cancellation & Refund Policy"
+  acceptPolicies: z.boolean().refine(val => val === true, {
+    message: "You must accept the Terms & Conditions and Cancellation & Refund Policy"
   }),
 });
 
@@ -79,8 +76,7 @@ export function LoginForm() {
     defaultValues: {
       email: "",
       password: "",
-      acceptTerms: false,
-      acceptRefunds: false,
+      acceptPolicies: false,
     },
   });
 
@@ -258,65 +254,34 @@ export function LoginForm() {
                             )}
                         />
 
-                        <div className="space-y-1.5">
-                            <FormField
-                                control={form.control}
-                                name="acceptTerms"
-                                render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            className="mt-0.5 h-3 w-3"
-                                        />
-                                    </FormControl>
-                                    <div className="leading-tight">
-                                        <FormLabel className="text-[10px] font-normal text-muted-foreground">
-                                            I accept the{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() => window.location.href = '/contact'}
-                                                className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
-                                            >
-                                                Terms & Conditions
-                                            </button>
-                                        </FormLabel>
-                                        <FormMessage className="text-[10px]" />
-                                    </div>
-                                </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="acceptRefunds"
-                                render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            className="mt-0.5 h-3 w-3"
-                                        />
-                                    </FormControl>
-                                    <div className="leading-tight">
-                                        <FormLabel className="text-[10px] font-normal text-muted-foreground">
-                                            I accept the{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() => window.location.href = '/contact'}
-                                                className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
-                                            >
-                                                Cancellation & Refund Policy
-                                            </button>
-                                        </FormLabel>
-                                        <FormMessage className="text-[10px]" />
-                                    </div>
-                                </FormItem>
-                                )}
-                            />
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="acceptPolicies"
+                            render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        className="mt-0.5 h-3 w-3"
+                                    />
+                                </FormControl>
+                                <div className="leading-tight">
+                                    <FormLabel className="text-[10px] font-normal text-muted-foreground">
+                                        I accept the{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => window.location.href = '/contact'}
+                                            className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
+                                        >
+                                            Terms & Conditions and Cancellation & Refund Policy
+                                        </button>
+                                    </FormLabel>
+                                    <FormMessage className="text-[10px]" />
+                                </div>
+                            </FormItem>
+                            )}
+                        />
 
                         <Button 
                             type="submit" 
