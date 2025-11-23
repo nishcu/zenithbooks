@@ -100,10 +100,11 @@ export default function BlogPage() {
 
                 const posts: any[] = [];
                 querySnapshot.forEach((doc) => {
+                    const data = doc.data();
                     posts.push({
                         id: doc.id,
-                        ...doc.data(),
-                        date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
+                        ...data,
+                        date: data.createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
                     });
                 });
 
@@ -310,14 +311,14 @@ export default function BlogPage() {
                             <Link href={`/blog/${post.id}`} className="flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
                                 <div className="relative aspect-video overflow-hidden rounded-t-lg">
                                     <Image
-                                        src={post.imageUrl}
+                                        src={post.imageUrl || 'https://picsum.photos/800/400?random=default'}
                                         alt={post.title}
                                         fill
                                         className="object-cover hover:scale-105 transition-transform duration-300"
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         onError={(e) => {
-                                            console.error('Failed to load blog image:', post.imageUrl);
+                                            console.error('Failed to load blog image:', post.imageUrl, 'for post:', post.id);
                                             // Fallback to a default image
                                             const target = e.target as HTMLImageElement;
                                             target.src = 'https://picsum.photos/800/400?random=fallback';

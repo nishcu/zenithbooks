@@ -126,6 +126,7 @@ export async function uploadBlogImage(
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
       console.log('Blog image uploaded successfully:', downloadURL);
+      console.log('Storage ref path:', storageRef.fullPath);
       return downloadURL;
     }
   } catch (error) {
