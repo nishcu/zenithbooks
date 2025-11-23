@@ -3,6 +3,8 @@
 
 import { useParams } from 'next/navigation';
 // Import removed - no longer using sample posts
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, ArrowLeft, Clock, TrendingUp } from 'lucide-react';
@@ -24,31 +26,47 @@ const getRelatedPosts = (currentPost: any, allPosts: any[], limit: number = 3) =
     return []; // Return empty array since we removed all posts
 };
 
-// Storage key for blog posts
-const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
-
-// Function to get blog posts from localStorage
-function getStoredBlogPosts() {
-    if (typeof window === 'undefined') return [];
-
-    try {
-        const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-        console.error('Error loading blog posts from localStorage:', error);
-        return [];
-    }
-}
+// Blog posts now loaded directly from Firebase
 
 export default function BlogPostPage() {
     const params = useParams();
     const { id } = params;
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [readingProgress, setReadingProgress] = useState(0);
+    const [post, setPost] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Get posts from localStorage or fallback to samplePosts
-    const blogPosts = getStoredBlogPosts();
-    const post = blogPosts.find(p => p.id === id);
+    // Load post from Firebase
+    useEffect(() => {
+        const loadPost = async () => {
+            try {
+                console.log('Loading blog post from Firebase:', id);
+                const docRef = doc(db, 'blogPosts', id as string);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const postData = docSnap.data();
+                    setPost({
+                        id: docSnap.id,
+                        ...postData,
+                        date: postData.createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
+                    });
+                } else {
+                    console.log('Post not found in Firebase');
+                    setPost(null);
+                }
+            } catch (error) {
+                console.error('Error loading blog post:', error);
+                setPost(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (id) {
+            loadPost();
+        }
+    }, [id]);
 
     // Set dynamic meta tags for social sharing
     useEffect(() => {
@@ -108,6 +126,17 @@ export default function BlogPostPage() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-4 text-muted-foreground">Loading blog post...</p>
+            </div>
+        );
+    }
+
+    // Post not found
     if (!post) {
         return (
             <div className="text-center py-12">
@@ -122,7 +151,7 @@ export default function BlogPostPage() {
         );
     }
     
-    const relatedPosts = getRelatedPosts(post, []); // No related posts available
+    const relatedPosts = getRelatedPosts(post, []); // Related posts disabled for now
 
     return (
         <>
