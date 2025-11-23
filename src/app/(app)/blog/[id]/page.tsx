@@ -2,7 +2,7 @@
 "use client";
 
 import { useParams } from 'next/navigation';
-import { samplePosts } from '../page';
+// Import removed - no longer using sample posts
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, ArrowLeft, Clock, TrendingUp } from 'lucide-react';
@@ -19,17 +19,9 @@ const calculateReadingTime = (content: string[]): number => {
     return Math.ceil(words / 200);
 };
 
-// Get related posts
-const getRelatedPosts = (currentPost: typeof samplePosts[0], allPosts: typeof samplePosts, limit: number = 3) => {
-    return allPosts
-        .filter(post => 
-            post.id !== currentPost.id && 
-            (post.category === currentPost.category || 
-             post.title.toLowerCase().split(' ').some(word => 
-                currentPost.title.toLowerCase().includes(word) && word.length > 4
-             ))
-        )
-        .slice(0, limit);
+// Get related posts (currently disabled - no posts available)
+const getRelatedPosts = (currentPost: any, allPosts: any[], limit: number = 3) => {
+    return []; // Return empty array since we removed all posts
 };
 
 // Storage key for blog posts
@@ -37,14 +29,14 @@ const BLOG_POSTS_STORAGE_KEY = "zenithbooks_blog_posts";
 
 // Function to get blog posts from localStorage
 function getStoredBlogPosts() {
-    if (typeof window === 'undefined') return samplePosts;
+    if (typeof window === 'undefined') return [];
 
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : samplePosts;
+        return stored ? JSON.parse(stored) : [];
     } catch (error) {
         console.error('Error loading blog posts from localStorage:', error);
-        return samplePosts;
+        return [];
     }
 }
 
@@ -130,7 +122,7 @@ export default function BlogPostPage() {
         );
     }
     
-    const relatedPosts = getRelatedPosts(post, samplePosts);
+    const relatedPosts = getRelatedPosts(post, []); // No related posts available
 
     return (
         <>
