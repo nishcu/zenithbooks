@@ -16,7 +16,8 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
 // Calculate reading time
-const calculateReadingTime = (content: string[]): number => {
+const calculateReadingTime = (content: string[] | undefined): number => {
+    if (!content || !Array.isArray(content)) return 0;
     const words = content.join(' ').split(/\s+/).length;
     return Math.ceil(words / 200);
 };
@@ -75,7 +76,7 @@ export default function BlogPostPage() {
             const postUrl = `${baseUrl}/blog/${post.id}`;
 
             // Update document title
-            document.title = `${post.title} | ZenithBooks`;
+            document.title = `${post.title || 'Blog Post'} | ZenithBooks`;
 
             // Create or update meta tags
             const updateMetaTag = (property: string, content: string) => {
@@ -157,13 +158,13 @@ export default function BlogPostPage() {
         <>
             <Head>
                 <title>{post ? `${post.title} | ZenithBooks` : 'Blog Post | ZenithBooks'}</title>
-                <meta name="description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                <meta name="description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
 
                 {/* Open Graph / Facebook */}
                 <meta property="og:type" content="article" />
                 <meta property="og:site_name" content="ZenithBooks" />
                 <meta property="og:title" content={post?.title || 'Blog Post'} />
-                <meta property="og:description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                <meta property="og:description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
                 <meta property="og:url" content={typeof window !== 'undefined' ? `${window.location.origin}/blog/${id}` : `/blog/${id}`} />
                 {post && <meta property="og:image" content={post.imageUrl} />}
                 {post && <meta property="og:image:width" content="1200" />}
@@ -173,7 +174,7 @@ export default function BlogPostPage() {
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={post?.title || 'Blog Post'} />
-                <meta name="twitter:description" content={post ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
+                <meta name="twitter:description" content={post && post.description ? (post.description.length > 160 ? post.description.substring(0, 157) + '...' : post.description) : 'Read our latest blog posts on accounting, GST, and financial management.'} />
                 {post && <meta name="twitter:image" content={post.imageUrl} />}
 
                 {/* Article specific */}
@@ -201,16 +202,16 @@ export default function BlogPostPage() {
 
                     <article ref={contentRef} className="prose dark:prose-invert max-w-none bg-card p-6 sm:p-8 lg:p-12 rounded-lg shadow-sm">
                         <div className="space-y-4 not-prose mb-8">
-                            <Badge variant="secondary" className="text-sm">{post.category}</Badge>
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{post.title}</h1>
+                            <Badge variant="secondary" className="text-sm">{post.category || 'General'}</Badge>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">{post.title || 'Untitled Post'}</h1>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2">
                                 <div className="flex items-center gap-2">
                                     <User className="h-4 w-4"/>
-                                    <span>{post.author}</span>
+                                    <span>{post.author || 'Anonymous'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4"/>
-                                    <span>{new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'})}</span>
+                                    <span>{post.date ? new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric'}) : 'Unknown date'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4"/>
@@ -221,8 +222,8 @@ export default function BlogPostPage() {
 
                         <div className="relative aspect-video my-8 rounded-lg overflow-hidden shadow-lg">
                             <Image
-                                src={post.imageUrl}
-                                alt={post.title}
+                                src={post.imageUrl || 'https://picsum.photos/800/400?random=default'}
+                                alt={post.title || 'Blog post'}
                                 fill
                                 className="object-cover"
                                 data-ai-hint={post.imageHint}
@@ -238,9 +239,13 @@ export default function BlogPostPage() {
                         </div>
 
                         <div className="space-y-4">
-                            {post.content.map((paragraph, index) => (
-                                <p key={index} className="text-base leading-7">{paragraph}</p>
-                            ))}
+                            {post.content && Array.isArray(post.content) ? (
+                                post.content.map((paragraph, index) => (
+                                    <p key={index} className="text-base leading-7">{paragraph}</p>
+                                ))
+                            ) : (
+                                <p className="text-muted-foreground">No content available for this post.</p>
+                            )}
                         </div>
                     </article>
 
@@ -252,7 +257,7 @@ export default function BlogPostPage() {
                                     <h3 className="font-semibold text-lg mb-1">Enjoyed this article?</h3>
                                     <p className="text-sm text-muted-foreground">Share it with your network</p>
                                 </div>
-                                <SocialShareButtons url={post.shareUrl} title={post.title} />
+                                <SocialShareButtons url={post.shareUrl || `${typeof window !== 'undefined' ? window.location.origin : ''}/blog/${post.id}`} title={post.title || 'Blog Post'} />
                             </div>
                         </CardContent>
                     </Card>
