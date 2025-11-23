@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
