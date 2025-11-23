@@ -111,30 +111,6 @@ async function updateBlogPost(postId: string, updatedData: any) {
         return false;
     }
 }
-            authorTitle: updatedData.authorTitle,
-            category: updatedData.category,
-            content: content,
-            imageUrl: finalImageUrl,
-            image: finalImageUrl, // Keep both for compatibility
-        };
-
-        posts[postIndex] = updatedPost;
-        console.log('Updated post:', updatedPost);
-
-        // Save updated posts to localStorage
-        saveBlogPosts(posts);
-        console.log('Saved to localStorage');
-
-        // Update the global samplePosts array (for immediate updates)
-        const globalIndex = samplePosts.findIndex(p => p.id === postId);
-        if (globalIndex !== -1) {
-            samplePosts[globalIndex] = updatedPost;
-            console.log('Updated global samplePosts');
-        }
-    } else {
-        console.error('Post not found for updating:', postId);
-    }
-}
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
