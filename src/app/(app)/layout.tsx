@@ -340,7 +340,11 @@ function MainLayout({
   useHotkeys(hotkeys);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // Temporarily disable auth for payment gateway testing
+    // Remove this check after payment gateway verification is complete
+    const disableAuth = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
+
+    if (!authLoading && !user && !disableAuth) {
       router.push("/login");
     }
   }, [user, authLoading, router]);
