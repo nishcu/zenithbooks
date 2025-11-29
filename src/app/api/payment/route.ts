@@ -44,6 +44,9 @@ const baseUrl = isLive
   ? 'https://api.cashfree.com/pg'
   : 'https://sandbox.cashfree.com/pg';
 
+// Debug: Verify NEXT_PUBLIC_APP_URL is loaded
+console.log('APP URL:', process.env.NEXT_PUBLIC_APP_URL);
+
 // --- BUILD CASHFREE REQUEST BODY ---
 const orderId = `order_${Date.now()}`;
 
@@ -58,8 +61,8 @@ const cashfreeBody = {
     customer_name: customerName || 'User',
   },
   order_meta: {
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?order_id={order_id}`,
-    notify_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/webhook`,
+    return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/payment/success?order_id={order_id}`,
+    notify_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/api/payment/webhook`,
     payment_methods: 'cc,dc,nb,upi',
   },
   order_tags: planId
