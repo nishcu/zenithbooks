@@ -133,81 +133,33 @@ export function CashfreeCheckout({
 
       console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
 
-      // Wait for Cashfree SDK to be fully loaded and initialized
-      // Check that window.Cashfree exists AND checkout is a function
-      // Also verify the script tag exists in the DOM and check for CSP errors
-      console.log('Checking for Cashfree SDK...');
-      console.log('window.Cashfree exists:', !!window.Cashfree);
-      console.log('window.Cashfree type:', typeof window.Cashfree);
-      
-      // Check if script tag exists and if it loaded successfully
-      const scriptTag = document.querySelector('script[src*="cashfree"]') as HTMLScriptElement;
-      console.log('Cashfree script tag in DOM:', !!scriptTag);
-      if (scriptTag) {
-        console.log('Script src:', scriptTag.src);
-        console.log('Script async:', scriptTag.async);
-        console.log('Script defer:', scriptTag.defer);
-      }
-      
-      // Check browser console for CSP violations
-      // CSP violations would show in console as: "Refused to load script..."
-      console.log('💡 Tip: Check browser console for CSP violation errors');
-      console.log('💡 Look for: "Refused to load script" or "Content Security Policy" errors');
-      
-      // Cashfree SDK loads as a constructor function
-      // Check if it's available and has checkout method (static or instance)
-      let retries = 0;
-      const maxRetries = 100; // 10 seconds max wait (100 * 100ms)
-      
-      while (retries < maxRetries) {
-        // Check if Cashfree is a function and has checkout as static method
-        if (window.Cashfree && typeof window.Cashfree === 'function') {
-          // Try to check if checkout exists as static method
-          if (typeof window.Cashfree.checkout === 'function') {
-            console.log('✅ Cashfree SDK is fully ready (static method)');
-            break;
-          }
-          // Or try to instantiate and check instance method
-          try {
-            const testInstance = new window.Cashfree();
-            if (typeof testInstance.checkout === 'function') {
-              console.log('✅ Cashfree SDK is fully ready (instance method)');
-              break;
-            }
-          } catch (e) {
-            // Constructor might need parameters, that's ok
-          }
-        }
-        
-        // Log progress every 2 seconds
-        if (retries % 20 === 0 && retries > 0) {
-          console.log(`⏳ Still waiting for Cashfree SDK... (${retries * 100}ms elapsed)`);
-          console.log('window.Cashfree:', window.Cashfree);
-          console.log('typeof window.Cashfree:', typeof window.Cashfree);
-          if (window.Cashfree) {
-            console.log('window.Cashfree.checkout exists:', typeof window.Cashfree.checkout);
-            console.log('window.Cashfree prototype:', Object.getPrototypeOf(window.Cashfree));
-          }
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-        retries++;
-      }
-
-      // Verify SDK is ready - window.Cashfree is a constructor function
-      if (!window.Cashfree || typeof window.Cashfree !== 'function') {
-        console.error('❌ Cashfree SDK not available after waiting');
+      // Load Cashfree SDK dynamically (CSP-safe approach)
+      let Cashfree;
+      try {
+        Cashfree = await loadCashfree();
+        console.log('✅ Cashfree SDK loaded and ready');
+      } catch (error) {
+        console.error('❌ Failed to load Cashfree SDK:', error);
         toast({
           variant: 'destructive',
           title: 'Payment Gateway Error',
-          description: 'Payment gateway script failed to load. Please refresh the page and try again.',
+          description: 'Failed to load payment gateway. Please refresh the page and try again.',
         });
         onFailure?.();
         return;
       }
 
-      // Cashfree SDK v3 - window.Cashfree IS the function, not an object with .checkout()
-      // Call window.Cashfree directly with options (not window.Cashfree.checkout())
+      // Verify SDK is ready
+      if (!Cashfree || typeof Cashfree !== 'function') {
+        console.error('❌ Cashfree SDK is not a function');
+        toast({
+          variant: 'destructive',
+          title: 'Payment Gateway Error',
+          description: 'Payment gateway is not properly initialized. Please try again.',
+        });
+        onFailure?.();
+        return;
+      }
       
       // Determine mode from API response
       // API returns mode: 'LIVE' or 'TEST' based on Cashfree keys
