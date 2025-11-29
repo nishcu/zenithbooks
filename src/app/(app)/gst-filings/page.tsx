@@ -52,8 +52,28 @@ const months = [
 
 export default function GstFilings() {
     const { journalVouchers, loading } = useContext(AccountingContext)!;
+    const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
     const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
     const [month, setMonth] = useState(new Date().getMonth().toString().padStart(2, '0'));
+
+    // Show upgrade alert for freemium users
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">GST Filings</h1>
+                <UpgradeRequiredAlert
+                    featureName="GST Compliance Tools"
+                    description="File GST returns, generate GST reports, and access reconciliation tools with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     const { gstr1Summary, gstr3bSummary, netGstPayable } = useMemo(() => {
         // Exclude cancelled invoices from regular invoices

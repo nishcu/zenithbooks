@@ -35,7 +35,10 @@ import { useAccountingContext } from "@/context/accounting-context";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 type ReportRow = {
     deductee: string;
@@ -68,7 +71,27 @@ const months = [
 
 export default function TdsReturns() {
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">TDS & TCS Returns</h1>
+        <UpgradeRequiredAlert
+          featureName="Income Tax Tools"
+          description="File TDS/TCS returns, generate Form 16, and access advance tax calculations with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   const [reportType, setReportType] = useState("tds");
   const [period, setPeriod] = useState("monthly");
   const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);

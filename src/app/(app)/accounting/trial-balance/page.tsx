@@ -47,9 +47,11 @@ import { format } from "date-fns";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import * as XLSX from 'xlsx';
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { applyExcelFormatting } from "@/lib/export-utils";
@@ -61,11 +63,30 @@ export default function TrialBalancePage() {
     const router = useRouter();
     const { journalVouchers } = useContext(AccountingContext)!;
     const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [isMismatchDialogOpen, setIsMismatchDialogOpen] = useState(false);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const reportRef = useRef<HTMLDivElement>(null);
+
+    // Show upgrade alert for freemium users
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Trial Balance</h1>
+                <UpgradeRequiredAlert
+                    featureName="Trial Balance"
+                    description="Access comprehensive accounting features including trial balance, financial statements, and full accounting suite with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
