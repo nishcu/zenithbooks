@@ -30,6 +30,11 @@ import { AlertCircle, ArrowRight, FileSpreadsheet, GitCompareArrows } from "luci
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { AccountingContext } from "@/context/accounting-context";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 // Generates a list of financial years
 const getFinancialYears = () => {
