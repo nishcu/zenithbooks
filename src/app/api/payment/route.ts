@@ -218,18 +218,43 @@ export async function POST(request: NextRequest) {
         customerDetailsKeys: Object.keys(orderData.customer_details || {}),
       });
       
-      // Ensure we're sending the exact format Cashfree expects
-      const cashfreeRequestBody = {
-        order_id: orderData.order_id,
-        order_amount: parseFloat(amount), // Send as number, not string
-        order_currency: orderData.order_currency,
-        customer_details: orderData.customer_details,
-        order_meta: orderData.order_meta,
-        ...(planId && orderData.order_tags ? { order_tags: orderData.order_tags } : {}),
+      // Build Cashfree payload with EXACT field names Cashfree requires
+      // Cashfree API only accepts: order_amount, order_currency, customer_details, order_id (optional), order_meta
+      const cashfreeRequestBody: any = {
+        order_amount: parseFloat(amount), // Must be number, not string
+        order_currency: currency, // Must be 'INR' or other valid currency
+        customer_details: {
+          customer_id: customerDetailsObj.customer_id,
+          customer_email: customerDetailsObj.customer_email,
+          customer_phone: customerDetailsObj.customer_phone,
+        },
+        order_meta: {
+          return_url: orderMeta?.return_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?order_id={order_id}`,
+          notify_url: orderMeta?.notify_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/webhook`,
+          payment_methods: orderMeta?.payment_methods || 'cc,dc,nb,upi',
+        },
       };
 
-      // Final debug log before sending
+      // Add optional fields only if they exist
+      if (orderData.order_id) {
+        cashfreeRequestBody.order_id = orderData.order_id;
+      }
+      
+      if (customerDetailsObj.customer_name) {
+        cashfreeRequestBody.customer_details.customer_name = customerDetailsObj.customer_name;
+      }
+
+      // Final debug log before sending - shows EXACT format
       console.log('DEBUG SENT TO CASHFREE:', JSON.stringify(cashfreeRequestBody, null, 2));
+      console.log('DEBUG - Field verification:', {
+        hasOrderAmount: 'order_amount' in cashfreeRequestBody,
+        hasOrderCurrency: 'order_currency' in cashfreeRequestBody,
+        hasCustomerDetails: 'customer_details' in cashfreeRequestBody,
+        hasOrderMeta: 'order_meta' in cashfreeRequestBody,
+        orderAmountType: typeof cashfreeRequestBody.order_amount,
+        orderAmountValue: cashfreeRequestBody.order_amount,
+        customerDetailsKeys: Object.keys(cashfreeRequestBody.customer_details),
+      });
       
       const cashfreeResponse = await fetch(requestUrl, {
         method: 'POST',
