@@ -51,6 +51,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { InvoicePreview } from "@/components/billing/invoice-preview";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { QuickInvoiceDialog } from "@/components/billing/quick-invoice-dialog";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { doc } from "firebase/firestore";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 type Invoice = {
   id: string;
@@ -330,12 +333,14 @@ export default function InvoicesPage() {
                     Voice Invoice
                 </Button>
             </Link>
-            <Link href="/billing/invoices/bulk" passHref>
-                <Button variant="default" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                    <FileSpreadsheet className="mr-2"/>
-                    Bulk Upload
-                </Button>
-            </Link>
+            {canUseBulkInvoice ? (
+                <Link href="/billing/invoices/bulk" passHref>
+                    <Button variant="default" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                        <FileSpreadsheet className="mr-2"/>
+                        Bulk Upload
+                    </Button>
+                </Link>
+            ) : null}
             <Link href="/billing/invoices/rapid" passHref>
                 <Button variant="outline">
                     <Zap className="mr-2"/>

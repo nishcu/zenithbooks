@@ -45,6 +45,11 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import * as XLSX from 'xlsx';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { applyExcelFormatting } from "@/lib/export-utils";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { doc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Lock } from "lucide-react";
 
 interface BulkInvoiceRow {
   customerName: string;
@@ -79,6 +84,24 @@ export default function BulkInvoicePage() {
   const { toast } = useToast();
   const router = useRouter();
   const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  
+  // Get user subscription plan - default to freemium if not set
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+  
+  // Redirect freemium users or show upgrade message
+  useEffect(() => {
+    if (user && isFreemium) {
+      toast({
+        variant: "destructive",
+        title: "Bulk Invoice Feature Unavailable",
+        description: "Bulk invoice upload is available for Business and Professional plans. Please upgrade to access this feature.",
+      });
+      router.push('/billing/invoices');
+    }
+  }, [user, isFreemium, router, toast]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);

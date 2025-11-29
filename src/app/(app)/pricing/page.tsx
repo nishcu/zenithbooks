@@ -49,6 +49,9 @@ const initialTiers = [
     description: "For businesses needing comprehensive accounting, financial reporting, and tax compliance.",
     features: [
       { text: "Unlimited Invoices & Purchases", included: true },
+      { text: "Voice to Invoice", included: true },
+      { text: "Rapid Invoice Entry", included: true },
+      { text: "Bulk Invoice Upload", included: true },
       { text: "Full Accounting Suite", included: true },
       { text: "Financial Statement Generation", included: true },
       { text: "Basic GST Reporting", included: true },
