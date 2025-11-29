@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
     const isSecretKeyTest = secretKey && (secretKey.startsWith('TEST_') || secretKey.startsWith('CFTEST_'));
     const isProductionKey = appId && !isAppIdTest;
     
+    console.log('Payment verification request:', {
+      orderId,
+      paymentId,
+      userId,
+      planId,
+      isProductionKey,
+    });
+    
     // Warn if keys appear to be from different environments
     if (isAppIdTest !== isSecretKeyTest) {
       console.warn('⚠️ WARNING: APP_ID and SECRET_KEY appear to be from different environments!');
@@ -107,19 +115,31 @@ export async function POST(request: NextRequest) {
       console.log('Cashfree order verification:', {
         orderId: orderId,
         orderStatus: orderStatus,
+        paymentStatus: paymentStatus,
         hasData: !!orderDetails.data,
         directStatus: orderDetails.order_status,
         nestedStatus: orderDetails.data?.order_status,
+        paymentsCount: payments?.length || 0,
+        fullResponse: JSON.stringify(orderDetails, null, 2).substring(0, 500), // First 500 chars
       });
 
       // Check if payment was successful
-      if (orderStatus !== 'PAID') {
-        console.warn('Payment not PAID, status:', orderStatus);
+      // Cashfree order_status can be: ACTIVE, PAID, EXPIRED, CANCELLED
+      // Payment status in payments array can be: SUCCESS, PENDING, FAILED
+      const isPaid = orderStatus === 'PAID' || paymentStatus === 'SUCCESS';
+      
+      if (!isPaid) {
+        console.warn('Payment not successful:', {
+          orderStatus,
+          paymentStatus,
+          message: `Order status: ${orderStatus}, Payment status: ${paymentStatus || 'N/A'}`,
+        });
         return NextResponse.json(
           { 
             error: 'Payment not completed successfully',
             orderStatus: orderStatus,
-            message: `Payment status: ${orderStatus}. Payment may still be processing.`,
+            paymentStatus: paymentStatus,
+            message: `Payment status: ${orderStatus || paymentStatus || 'UNKNOWN'}. Payment may still be processing or failed.`,
           },
           { status: 400 }
         );
