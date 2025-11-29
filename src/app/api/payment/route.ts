@@ -21,9 +21,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if environment variables are set
+    console.log('🔍 Checking Cashfree environment variables...');
+    console.log('All env vars with CASHFREE:', Object.keys(process.env).filter(key => key.includes('CASHFREE')));
+    console.log('CASHFREE_APP_ID:', process.env.CASHFREE_APP_ID);
+    console.log('CASHFREE_SECRET_KEY exists:', !!process.env.CASHFREE_SECRET_KEY);
+    console.log('CASHFREE_APP_ID length:', process.env.CASHFREE_APP_ID?.length || 0);
+    console.log('CASHFREE_SECRET_KEY length:', process.env.CASHFREE_SECRET_KEY?.length || 0);
+
     const hasValidKeys = process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY &&
                         process.env.CASHFREE_APP_ID.length > 10 &&
                         process.env.CASHFREE_SECRET_KEY.length > 20;
+
+    console.log('hasValidKeys result:', hasValidKeys);
 
     if (!hasValidKeys) {
       console.error('❌ Cashfree environment variables not properly set:', {
@@ -42,7 +51,17 @@ export async function POST(request: NextRequest) {
         amount: amount,
         currency: 'INR',
         demoMode: true,
-        message: 'Demo mode - configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.'
+        message: 'Demo mode - configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
+        debug: {
+          appIdExists: !!process.env.CASHFREE_APP_ID,
+          secretKeyExists: !!process.env.CASHFREE_SECRET_KEY,
+          appIdLength: process.env.CASHFREE_APP_ID?.length || 0,
+          secretKeyLength: process.env.CASHFREE_SECRET_KEY?.length || 0,
+          hasValidKeys: hasValidKeys,
+          appIdValue: process.env.CASHFREE_APP_ID?.substring(0, 10) + '...',
+          secretKeyValue: process.env.CASHFREE_SECRET_KEY?.substring(0, 10) + '...',
+          allEnvKeys: Object.keys(process.env).filter(key => key.includes('CASHFREE'))
+        }
       });
     }
 
