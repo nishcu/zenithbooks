@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Cashfree for verification
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID || 'TEST_APP_ID'; // Use test credentials if not set
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || 'TEST_SECRET_KEY'; // Use test credentials if not set
     Cashfree.XEnvironment = process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'TEST';
 
     // Verify payment using Cashfree order status API

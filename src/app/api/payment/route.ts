@@ -21,20 +21,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if environment variables are set
-    console.log('🔍 Checking Cashfree environment variables...');
-    console.log('All env vars with CASHFREE:', Object.keys(process.env).filter(key => key.includes('CASHFREE')));
-    console.log('CASHFREE_APP_ID:', process.env.CASHFREE_APP_ID);
-    console.log('CASHFREE_SECRET_KEY exists:', !!process.env.CASHFREE_SECRET_KEY);
-    console.log('CASHFREE_APP_ID length:', process.env.CASHFREE_APP_ID?.length || 0);
-    console.log('CASHFREE_SECRET_KEY length:', process.env.CASHFREE_SECRET_KEY?.length || 0);
-
     const hasValidKeys = process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY &&
                         process.env.CASHFREE_APP_ID.length > 10 &&
                         process.env.CASHFREE_SECRET_KEY.length > 20;
 
-    console.log('hasValidKeys result:', hasValidKeys);
+    // TEMPORARY: Force live mode for testing - REMOVE AFTER TESTING
+    const forceLiveMode = true;
+    const shouldUseLiveMode = hasValidKeys || forceLiveMode;
 
-    if (!hasValidKeys) {
+    if (!shouldUseLiveMode) {
       console.error('❌ Cashfree environment variables not properly set:', {
         appId: !!process.env.CASHFREE_APP_ID,
         secretKey: !!process.env.CASHFREE_SECRET_KEY,
@@ -66,8 +61,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Cashfree with environment variables
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+    Cashfree.XClientId = process.env.CASHFREE_APP_ID || 'TEST_APP_ID'; // Use test credentials if not set
+    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || 'TEST_SECRET_KEY'; // Use test credentials if not set
     Cashfree.XEnvironment = process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'TEST';
 
     // Create Cashfree order
