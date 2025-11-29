@@ -196,6 +196,14 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       };
       
+      // CRITICAL DEBUG: Log exactly what we're sending to Cashfree
+      console.log('DEBUG SENT TO CASHFREE:', JSON.stringify(orderData, null, 2));
+      console.log('DEBUG - Request body keys:', Object.keys(orderData));
+      console.log('DEBUG - Has order_amount?', 'order_amount' in orderData);
+      console.log('DEBUG - Has order_currency?', 'order_currency' in orderData);
+      console.log('DEBUG - Has customer_details?', 'customer_details' in orderData);
+      console.log('DEBUG - customer_details keys:', Object.keys(orderData.customer_details || {}));
+      
       console.log('Making Cashfree API request:', {
         url: requestUrl,
         method: 'POST',
@@ -205,6 +213,9 @@ export async function POST(request: NextRequest) {
           'x-api-version': '2022-09-01',
         },
         bodyKeys: Object.keys(orderData),
+        orderAmount: orderData.order_amount,
+        orderCurrency: orderData.order_currency,
+        customerDetailsKeys: Object.keys(orderData.customer_details || {}),
       });
       
       const cashfreeResponse = await fetch(requestUrl, {
