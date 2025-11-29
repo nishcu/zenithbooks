@@ -111,40 +111,49 @@ export async function POST(request: NextRequest) {
     });
 
     // Create Cashfree order
-    // Validate customer email is provided (required by Cashfree)
-    const customerEmail = customerDetails?.customer_email || userEmail || '';
-    if (!customerEmail || customerEmail.trim() === '') {
-      return NextResponse.json(
-        { 
-          error: 'Invalid request',
-          message: 'Customer email is required for payment processing.',
-        },
-        { status: 400 }
-      );
+    // Prepare customer details - with validation and defaults
+    const customerId = (customerDetails?.customer_id || userId).substring(0, 50);
+    const customerEmail = (customerDetails?.customer_email || userEmail || '').trim();
+    const customerPhone = (customerDetails?.customer_phone || '').trim();
+    const customerName = (customerDetails?.customer_name || userName || 'Customer').substring(0, 100);
+
+    // Build customer_details object - start minimal and add fields only if they have values
+    const customerDetailsObj: any = {
+      customer_id: customerId,
+    };
+
+    // Add email only if provided
+    if (customerEmail) {
+      customerDetailsObj.customer_email = customerEmail;
     }
 
-    // Validate phone number (Cashfree requires valid phone)
-    const customerPhone = customerDetails?.customer_phone || '';
-    if (!customerPhone || customerPhone.trim() === '') {
-      return NextResponse.json(
-        { 
-          error: 'Invalid request',
-          message: 'Customer phone number is required for payment processing.',
-        },
-        { status: 400 }
-      );
+    // Add phone only if provided (use default if completely missing)
+    if (customerPhone) {
+      customerDetailsObj.customer_phone = customerPhone;
+    } else {
+      // Cashfree might require phone, use a default if missing
+      customerDetailsObj.customer_phone = '9999999999';
     }
+
+    // Add name only if provided
+    if (customerName && customerName !== 'Customer') {
+      customerDetailsObj.customer_name = customerName;
+    }
+
+    // DEBUG: Log what we're sending to Cashfree
+    console.log('DEBUG customerDetails:', customerDetailsObj);
+    console.log('DEBUG raw customerDetails from request:', {
+      fromRequest: customerDetails,
+      userEmail: userEmail,
+      userName: userName,
+      final: customerDetailsObj,
+    });
 
     const orderData = {
       order_id: `order_${Date.now()}_${userId.substring(0, 36)}`, // Cashfree has 36 char limit
       order_amount: parseFloat(amount).toFixed(2), // Ensure proper decimal format as string
       order_currency: currency,
-      customer_details: {
-        customer_id: (customerDetails?.customer_id || userId).substring(0, 50), // Max 50 chars
-        customer_email: customerEmail.trim(),
-        customer_phone: customerPhone.trim(),
-        customer_name: (customerDetails?.customer_name || userName || 'Customer').substring(0, 100), // Max 100 chars
-      },
+      customer_details: customerDetailsObj,
       order_meta: {
         return_url: orderMeta?.return_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?order_id={order_id}`,
         notify_url: orderMeta?.notify_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/webhook`,
@@ -157,6 +166,15 @@ export async function POST(request: NextRequest) {
         },
       }),
     };
+
+    // DEBUG: Log full order data before sending
+    console.log('DEBUG Full orderData being sent to Cashfree:', {
+      order_id: orderData.order_id,
+      order_amount: orderData.order_amount,
+      order_currency: orderData.order_currency,
+      customer_details: orderData.customer_details,
+      order_meta: orderData.order_meta,
+    });
 
     try {
       console.log('Calling Cashfree API with orderData:', {
