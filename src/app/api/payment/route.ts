@@ -8,7 +8,9 @@ export async function POST(request: NextRequest) {
       userId,
       planId,
       customerDetails,
-      orderMeta
+      orderMeta,
+      userEmail, // Also accept userEmail from request body
+      userName,  // Also accept userName from request body
     } = await request.json();
 
     // Validate required fields
@@ -109,25 +111,51 @@ export async function POST(request: NextRequest) {
     });
 
     // Create Cashfree order
+    // Validate customer email is provided (required by Cashfree)
+    const customerEmail = customerDetails?.customer_email || userEmail || '';
+    if (!customerEmail || customerEmail.trim() === '') {
+      return NextResponse.json(
+        { 
+          error: 'Invalid request',
+          message: 'Customer email is required for payment processing.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate phone number (Cashfree requires valid phone)
+    const customerPhone = customerDetails?.customer_phone || '';
+    if (!customerPhone || customerPhone.trim() === '') {
+      return NextResponse.json(
+        { 
+          error: 'Invalid request',
+          message: 'Customer phone number is required for payment processing.',
+        },
+        { status: 400 }
+      );
+    }
+
     const orderData = {
-      order_id: `order_${Date.now()}_${userId}`,
-      order_amount: amount,
+      order_id: `order_${Date.now()}_${userId.substring(0, 36)}`, // Cashfree has 36 char limit
+      order_amount: parseFloat(amount).toFixed(2), // Ensure proper decimal format as string
       order_currency: currency,
       customer_details: {
-        customer_id: customerDetails?.customer_id || userId,
-        customer_email: customerDetails?.customer_email || '',
-        customer_phone: customerDetails?.customer_phone || '',
-        customer_name: customerDetails?.customer_name || '',
+        customer_id: (customerDetails?.customer_id || userId).substring(0, 50), // Max 50 chars
+        customer_email: customerEmail.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_name: (customerDetails?.customer_name || userName || 'Customer').substring(0, 100), // Max 100 chars
       },
       order_meta: {
         return_url: orderMeta?.return_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?order_id={order_id}`,
         notify_url: orderMeta?.notify_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/webhook`,
         payment_methods: orderMeta?.payment_methods || 'cc,dc,nb,upi,wallet',
       },
-      order_tags: {
-        userId,
-        planId,
-      },
+      ...(planId && {
+        order_tags: {
+          userId: userId.substring(0, 100),
+          planId: planId.substring(0, 100),
+        },
+      }),
     };
 
     try {
@@ -183,7 +211,17 @@ export async function POST(request: NextRequest) {
           statusText: cashfreeResponse.statusText,
           headers: Object.fromEntries(cashfreeResponse.headers.entries()),
           body: errorData || responseText,
+          requestUrl: requestUrl,
+          requestBody: orderData,
         });
+        
+        // Extract more detailed error message from Cashfree response
+        let errorMessage = errorData?.message || errorData?.error?.message || errorData?.msg || `Cashfree API returned ${cashfreeResponse.status}: ${cashfreeResponse.statusText}`;
+        
+        // If there are validation errors, include them
+        if (errorData?.details || errorData?.errors) {
+          errorMessage += ` - ${JSON.stringify(errorData.details || errorData.errors)}`;
+        }
         
         throw {
           response: {
@@ -192,7 +230,7 @@ export async function POST(request: NextRequest) {
             data: errorData,
             rawBody: responseText,
           },
-          message: errorData?.message || errorData?.error?.message || `Cashfree API returned ${cashfreeResponse.status}: ${cashfreeResponse.statusText}`,
+          message: errorMessage,
         };
       }
 
