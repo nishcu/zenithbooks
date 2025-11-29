@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       const requestUrl = `${cashfreeBaseUrl}/orders`;
       const requestHeaders = {
         'x-client-id': appId!,
-        'x-secret-key': secretKey!,
+        'x-client-secret': secretKey!,
         'x-api-version': '2022-09-01',
         'Content-Type': 'application/json',
       };
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'x-client-id': appId!.substring(0, 10) + '...',
-          'x-secret-key': '***' + secretKey!.substring(secretKey!.length - 4),
+          'x-client-secret': '***' + secretKey!.substring(secretKey!.length - 4),
           'x-api-version': '2022-09-01',
         },
         bodyKeys: Object.keys(orderData),

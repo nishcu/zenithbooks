@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         method: 'GET',
         headers: {
           'x-client-id': appId!,
-          'x-secret-key': secretKey!,
+          'x-client-secret': secretKey!,
           'x-api-version': '2022-09-01',
           'Content-Type': 'application/json',
         },
