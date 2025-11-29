@@ -46,6 +46,27 @@ export const useAccountingContext = () => {
 export const AccountingProvider = ({ children }: { children: ReactNode }) => {
     const [user] = useAuthState(auth);
 
+    /**
+     * IMPORTANT: Journal Vouchers & Subscription History
+     * 
+     * All invoices, purchases, and journal entries are stored in the same `journalVouchers` collection
+     * regardless of subscription plan (freemium, business, professional).
+     * 
+     * This means:
+     * - Invoices created during freemium period are stored with the same structure as paid period invoices
+     * - When a user upgrades from freemium to paid plan, ALL historical invoices automatically appear
+     *   in accounting reports, GST filings, and financial statements
+     * - Reports query by userId and date range only - NOT by subscription status
+     * - This ensures data continuity and no loss of historical transaction data
+     * 
+     * Example: If a freemium user creates 120 invoices over 5 months, then upgrades to Business plan,
+     * all 120 invoices will be visible in:
+     * - Trial Balance, Balance Sheet, Profit & Loss
+     * - General Ledger reports
+     * - GST Filings (GSTR-1, GSTR-3B)
+     * - TDS/TCS Reports
+     * - All accounting reports for the selected date ranges
+     */
     const journalVouchersRef = collection(db, "journalVouchers");
     const journalVouchersQuery = user ? query(journalVouchersRef, where("userId", "==", user.uid), orderBy("date", "desc")) : null;
     const [journalVouchersSnapshot, loading, error] = useCollection(journalVouchersQuery);
