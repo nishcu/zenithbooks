@@ -3,6 +3,11 @@
 "use client";
 
 import { useState, useContext, useMemo, useEffect, useRef } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Card,
   CardContent,
@@ -64,6 +69,26 @@ type Customer = {
 };
 
 export default function Gstr1Wizard() {
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">GSTR-1 Filing</h1>
+        <UpgradeRequiredAlert
+          featureName="GSTR-1 Filing"
+          description="File GSTR-1 returns and access GST compliance tools with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [user] = useAuthState(auth);
