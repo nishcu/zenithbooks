@@ -64,11 +64,12 @@ export async function POST(request: NextRequest) {
     // Verify payment using Cashfree order status API
     try {
       // Make direct API call to Cashfree with proper headers
+      // Use correct header names: x-client-id and x-secret-key
       const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders/${orderId}`, {
         method: 'GET',
         headers: {
           'x-client-id': appId!,
-          'x-client-secret': secretKey!,
+          'x-secret-key': secretKey!, // Correct header name
           'x-api-version': '2022-09-01',
           'Content-Type': 'application/json',
         },
@@ -85,12 +86,41 @@ export async function POST(request: NextRequest) {
         };
       }
 
-      const orderDetails = await cashfreeResponse.json();
+      const responseText = await cashfreeResponse.text();
+      let orderDetails;
+      
+      try {
+        orderDetails = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse Cashfree verification response:', responseText);
+        throw new Error('Invalid response from Cashfree API');
+      }
+
+      // Cashfree returns data directly (not nested in data object)
+      // Check both possible structures: direct or nested
+      const orderStatus = orderDetails.order_status || orderDetails.data?.order_status;
+      
+      // Also check payments array for payment status
+      const payments = orderDetails.payments || orderDetails.data?.payments;
+      const paymentStatus = payments && payments.length > 0 ? payments[0]?.payment_status : null;
+      
+      console.log('Cashfree order verification:', {
+        orderId: orderId,
+        orderStatus: orderStatus,
+        hasData: !!orderDetails.data,
+        directStatus: orderDetails.order_status,
+        nestedStatus: orderDetails.data?.order_status,
+      });
 
       // Check if payment was successful
-      if (orderDetails.data.order_status !== 'PAID') {
+      if (orderStatus !== 'PAID') {
+        console.warn('Payment not PAID, status:', orderStatus);
         return NextResponse.json(
-          { error: 'Payment not completed successfully' },
+          { 
+            error: 'Payment not completed successfully',
+            orderStatus: orderStatus,
+            message: `Payment status: ${orderStatus}. Payment may still be processing.`,
+          },
           { status: 400 }
         );
       }
@@ -128,7 +158,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Payment verified successfully',
         paymentId: paymentId,
-        orderStatus: orderDetails.data.order_status,
+        orderStatus: orderStatus,
       });
 
     } catch (cashfreeError) {

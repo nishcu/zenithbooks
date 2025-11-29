@@ -52,6 +52,9 @@ export function CashfreeCheckout({
       }
 
       console.log('Creating payment order for:', { amount, planId, userId, userEmail, userName });
+      
+      // Store planId in localStorage for payment success page
+      localStorage.setItem('pending_plan_id', planId);
 
       // Prepare customer details
       const customerDetailsPayload = {
