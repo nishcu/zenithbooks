@@ -50,7 +50,37 @@ export function CashfreeCheckout({
         return;
       }
 
-      console.log('Creating payment order for:', { amount, planId, userId });
+      console.log('Creating payment order for:', { amount, planId, userId, userEmail, userName });
+
+      // Prepare customer details
+      const customerDetailsPayload = {
+        customer_id: userId,
+        customer_email: userEmail || '',
+        customer_phone: '9999999999', // Default phone - update with user phone if available
+        customer_name: userName || '',
+      };
+
+      // DEBUG: Log what we're sending to the API
+      console.log('DEBUG - customerDetails being sent to API:', customerDetailsPayload);
+      console.log('DEBUG - userEmail value:', userEmail);
+      console.log('DEBUG - userName value:', userName);
+
+      const requestBody = {
+        amount,
+        currency: 'INR',
+        userId,
+        planId,
+        customerDetails: customerDetailsPayload,
+        orderMeta: {
+          return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
+          notify_url: `${window.location.origin}/api/payment/webhook`,
+          payment_methods: 'cc,dc,nb,upi,wallet',
+        },
+        userEmail: userEmail, // Pass as fallback
+        userName: userName,   // Pass as fallback
+      };
+
+      console.log('DEBUG - Full request body:', requestBody);
 
       // Create order on server
       const response = await fetch('/api/payment', {
@@ -58,25 +88,7 @@ export function CashfreeCheckout({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          amount,
-          currency: 'INR',
-          userId,
-          planId,
-          customerDetails: {
-            customer_id: userId,
-            customer_email: userEmail || '',
-            customer_phone: '9999999999', // Default phone - update with user phone if available
-            customer_name: userName || '',
-          },
-          userEmail: userEmail, // Pass as fallback
-          userName: userName,   // Pass as fallback
-          orderMeta: {
-            return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
-            notify_url: `${window.location.origin}/api/payment/webhook`,
-            payment_methods: 'cc,dc,nb,upi,wallet',
-          },
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const orderData = await response.json();
