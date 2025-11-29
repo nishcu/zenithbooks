@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'x-client-id': appId!,
-          'x-client-secret': secretKey!,
+          'x-secret-key': secretKey!,
           'x-api-version': '2022-09-01',
           'Content-Type': 'application/json',
         },
