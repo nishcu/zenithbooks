@@ -142,31 +142,70 @@ export async function POST(request: NextRequest) {
       });
       
       // Make direct API call to Cashfree with proper headers
-      const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders`, {
+      const requestUrl = `${cashfreeBaseUrl}/orders`;
+      const requestHeaders = {
+        'x-client-id': appId!,
+        'x-secret-key': secretKey!,
+        'x-api-version': '2022-09-01',
+        'Content-Type': 'application/json',
+      };
+      
+      console.log('Making Cashfree API request:', {
+        url: requestUrl,
         method: 'POST',
         headers: {
-          'x-client-id': appId!,
-          'x-secret-key': secretKey!,
+          'x-client-id': appId!.substring(0, 10) + '...',
+          'x-secret-key': '***' + secretKey!.substring(secretKey!.length - 4),
           'x-api-version': '2022-09-01',
-          'Content-Type': 'application/json',
         },
+        bodyKeys: Object.keys(orderData),
+      });
+      
+      const cashfreeResponse = await fetch(requestUrl, {
+        method: 'POST',
+        headers: requestHeaders,
         body: JSON.stringify(orderData),
       });
 
+      const responseText = await cashfreeResponse.text();
+      let errorData = {};
+      
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        // Response is not JSON
+        console.error('Cashfree API returned non-JSON response:', responseText);
+      }
+
       if (!cashfreeResponse.ok) {
-        const errorData = await cashfreeResponse.json().catch(() => ({}));
+        console.error('Cashfree API error response:', {
+          status: cashfreeResponse.status,
+          statusText: cashfreeResponse.statusText,
+          headers: Object.fromEntries(cashfreeResponse.headers.entries()),
+          body: errorData || responseText,
+        });
+        
         throw {
           response: {
             status: cashfreeResponse.status,
+            statusText: cashfreeResponse.statusText,
             data: errorData,
+            rawBody: responseText,
           },
-          message: errorData.message || `Cashfree API returned ${cashfreeResponse.status}`,
+          message: errorData?.message || errorData?.error?.message || `Cashfree API returned ${cashfreeResponse.status}: ${cashfreeResponse.statusText}`,
         };
       }
 
-      const order = await cashfreeResponse.json();
+      let order;
+      try {
+        order = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse Cashfree response as JSON:', responseText);
+        throw new Error('Invalid JSON response from Cashfree API');
+      }
 
       if (!order || !order.data) {
+        console.error('Cashfree response missing data:', order);
         throw new Error('Invalid response from Cashfree API - no order data received');
       }
       
