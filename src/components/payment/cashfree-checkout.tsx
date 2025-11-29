@@ -132,28 +132,31 @@ export function CashfreeCheckout({
 
       console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
 
-      // Wait for Cashfree SDK to be available (it's loaded via <script> tag in layout)
-      // The SDK should already be loaded, but wait a bit if it's still loading
+      // Wait for Cashfree SDK to be fully loaded and initialized
+      // Check that window.Cashfree exists AND checkout is a function
       let retries = 0;
       const maxRetries = 50; // 5 seconds max wait (50 * 100ms)
       
-      while (!window.Cashfree && retries < maxRetries) {
+      while (retries < maxRetries) {
+        if (window.Cashfree && typeof window.Cashfree.checkout === 'function') {
+          console.log('✅ Cashfree SDK is fully ready');
+          break;
+        }
         await new Promise(resolve => setTimeout(resolve, 100));
         retries++;
       }
 
-      if (!window.Cashfree) {
-        console.error('❌ Cashfree SDK not available after waiting');
+      // Verify SDK is fully ready
+      if (!window.Cashfree || typeof window.Cashfree.checkout !== 'function') {
+        console.error('❌ Cashfree SDK checkout method not available after waiting');
         toast({
           variant: 'destructive',
           title: 'Payment Gateway Error',
-          description: 'Payment gateway script failed to load. Please refresh the page and try again.',
+          description: 'Payment gateway is not ready. Please refresh the page and try again.',
         });
         onFailure?.();
         return;
       }
-
-      console.log('✅ Cashfree SDK is available');
 
       // Determine mode from API response
       // API returns mode: 'LIVE' or 'TEST' based on Cashfree keys
@@ -185,9 +188,9 @@ export function CashfreeCheckout({
       });
 
       try {
-        // Double-check that Cashfree is available
-        if (!window.Cashfree) {
-          throw new Error('Cashfree is not available after script loading');
+        // Verify checkout method is available before calling
+        if (!window.Cashfree || typeof window.Cashfree.checkout !== 'function') {
+          throw new Error('Cashfree checkout method is not available');
         }
 
         // Call checkout directly - Cashfree SDK handles it internally
