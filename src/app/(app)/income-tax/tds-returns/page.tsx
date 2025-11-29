@@ -98,7 +98,6 @@ export default function TdsReturns() {
   const [quarter, setQuarter] = useState("q1");
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportTitle, setReportTitle] = useState("");
-  const [user] = useAuthState(auth);
   const { journalVouchers } = useAccountingContext();
 
   const financialYears = getFinancialYears();
