@@ -218,10 +218,23 @@ export async function POST(request: NextRequest) {
         customerDetailsKeys: Object.keys(orderData.customer_details || {}),
       });
       
+      // Ensure we're sending the exact format Cashfree expects
+      const cashfreeRequestBody = {
+        order_id: orderData.order_id,
+        order_amount: parseFloat(amount), // Send as number, not string
+        order_currency: orderData.order_currency,
+        customer_details: orderData.customer_details,
+        order_meta: orderData.order_meta,
+        ...(planId && orderData.order_tags ? { order_tags: orderData.order_tags } : {}),
+      };
+
+      // Final debug log before sending
+      console.log('DEBUG SENT TO CASHFREE:', JSON.stringify(cashfreeRequestBody, null, 2));
+      
       const cashfreeResponse = await fetch(requestUrl, {
         method: 'POST',
         headers: requestHeaders,
-        body: JSON.stringify(orderData),
+        body: JSON.stringify(cashfreeRequestBody),
       });
 
       const responseText = await cashfreeResponse.text();
