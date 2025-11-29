@@ -32,9 +32,11 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useAccountingContext } from "@/context/accounting-context";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 type ReportRow = {
     deductee: string;
@@ -66,6 +68,26 @@ const months = [
 ];
 
 export default function TdsTcsReportsPage() {
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">TDS & TCS Reports</h1>
+        <UpgradeRequiredAlert
+          featureName="TDS & TCS Reports"
+          description="Generate comprehensive TDS and TCS reports with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
   const [reportType, setReportType] = useState("tds");

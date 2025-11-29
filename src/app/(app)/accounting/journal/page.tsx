@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useState, useContext, useEffect, useMemo } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import Link from "next/link";
 import {
   Table,
@@ -70,6 +75,26 @@ import { collection, query, where } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function JournalVoucherPage() {
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Journal Vouchers</h1>
+        <UpgradeRequiredAlert
+          featureName="Journal Vouchers"
+          description="Create and manage journal entries for accounting adjustments with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   const accountingContext = useContext(AccountingContext);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<JournalVoucher | null>(null);
