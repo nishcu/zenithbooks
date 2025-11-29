@@ -85,12 +85,19 @@ export function CashfreeCheckout({
         let errorMessage = 'Failed to create payment order';
         
         if (response.status === 400) {
-          errorMessage = orderData.error || 'Invalid payment request. Please check your information and try again.';
+          errorMessage = orderData.message || orderData.error || 'Invalid payment request. Please check your information and try again.';
         } else if (response.status === 401 || response.status === 403) {
-          errorMessage = 'Authentication required. Please log in and try again.';
-        } else if (response.status === 500) {
-          errorMessage = orderData.message || orderData.error || 'Payment service temporarily unavailable. Please try again later.';
+          // 401/403 from our API means user auth issue
+          errorMessage = orderData.message || 'Authentication required. Please log in and try again.';
+        } else if (response.status === 500 || response.status === 503) {
+          // 500/503 means Cashfree API or server error
+          errorMessage = orderData.message || orderData.error || 'Payment gateway error. Please try again later or contact support.';
           console.error('Payment API error details:', orderData);
+          
+          // Log additional details for debugging
+          if (orderData.details && process.env.NODE_ENV === 'development') {
+            console.error('Cashfree API error details:', orderData.details);
+          }
         } else {
           errorMessage = orderData.message || orderData.error || `Payment error (${response.status}). Please try again.`;
         }
