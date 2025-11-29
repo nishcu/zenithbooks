@@ -136,10 +136,9 @@ export function CashfreeCheckout({
 
       console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
 
-      // Load Cashfree SDK dynamically (CSP-safe approach)
-      let Cashfree;
+      // Load Cashfree SDK dynamically
       try {
-        Cashfree = await loadCashfree();
+        await loadCashfree();
         console.log('✅ Cashfree SDK loaded and ready');
       } catch (error) {
         console.error('❌ Failed to load Cashfree SDK:', error);
@@ -148,18 +147,20 @@ export function CashfreeCheckout({
           title: 'Payment Gateway Error',
           description: 'Failed to load payment gateway. Please refresh the page and try again.',
         });
+        setIsLoading(false);
         onFailure?.();
         return;
       }
 
       // Verify SDK is ready
-      if (!Cashfree || typeof Cashfree !== 'function') {
-        console.error('❌ Cashfree SDK is not a function');
+      if (!window.Cashfree) {
+        console.error('❌ Cashfree SDK not available on window object');
         toast({
           variant: 'destructive',
           title: 'Payment Gateway Error',
           description: 'Payment gateway is not properly initialized. Please try again.',
         });
+        setIsLoading(false);
         onFailure?.();
         return;
       }
@@ -176,13 +177,14 @@ export function CashfreeCheckout({
           title: 'Payment Error',
           description: 'Payment configuration error. Please try again.',
         });
+        setIsLoading(false);
         onFailure?.();
         return;
       }
 
-      // Cashfree SDK v3 API:
-      // 1. First initialize with mode: const cashfree = Cashfree({ mode: "sandbox" })
-      // 2. Then call checkout: cashfree.checkout({ paymentSessionId: "..." })
+      // Cashfree SDK v3 API pattern:
+      // 1. window.Cashfree.init({ mode: 'production' | 'sandbox' })
+      // 2. window.Cashfree.checkout({ paymentSessionId, redirectTarget })
       
       const modeValue = mode === 'LIVE' ? 'production' : 'sandbox';
       
@@ -190,46 +192,44 @@ export function CashfreeCheckout({
       
       try {
         // Step 1: Initialize Cashfree SDK with mode
-        const cashfree = Cashfree({
-          mode: modeValue, // 'sandbox' or 'production'
-        });
+        if (typeof window.Cashfree.init !== 'function') {
+          throw new Error('Cashfree.init method not available');
+        }
         
-        console.log('Cashfree SDK initialized:', cashfree);
+        window.Cashfree.init({ mode: modeValue });
+        console.log('✅ Cashfree SDK initialized with mode:', modeValue);
         
         // Step 2: Verify checkout method exists
-        if (!cashfree || typeof cashfree.checkout !== 'function') {
-          throw new Error('Cashfree checkout method not available');
+        if (typeof window.Cashfree.checkout !== 'function') {
+          throw new Error('Cashfree.checkout method not available');
         }
         
         console.log('Opening Cashfree checkout with paymentSessionId:', orderData.paymentSessionId.substring(0, 40) + '...');
         
-        // Step 3: Call checkout method with paymentSessionId
-        cashfree.checkout({
+        // Step 3: Launch checkout
+        window.Cashfree.checkout({
           paymentSessionId: orderData.paymentSessionId,
-          redirectTarget: "_self",
+          redirectTarget: '_self',
         });
         
-        console.log('✅ Cashfree checkout opened successfully');
-        // Checkout should now redirect or show modal
-        
-        // Don't reset loading immediately - allow redirect to happen
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 2000);
+        console.log('✅ Cashfree checkout initiated successfully');
+        // Checkout will redirect - don't reset loading state as user is being redirected
 
       } catch (cashfreeError) {
-        console.error('Cashfree initialization error:', cashfreeError);
+        console.error('❌ Cashfree checkout error:', cashfreeError);
 
         let errorMessage = 'Failed to initialize payment gateway.';
         let errorTitle = 'Payment Gateway Error';
 
         if (cashfreeError instanceof Error) {
-          if (cashfreeError.message.includes('Invalid')) {
+          if (cashfreeError.message.includes('Invalid') || cashfreeError.message.includes('not available')) {
             errorTitle = 'Invalid Configuration';
             errorMessage = 'The Cashfree configuration is invalid. Please check your setup.';
           } else if (cashfreeError.message.includes('Network')) {
             errorTitle = 'Network Error';
             errorMessage = 'Network connectivity issue. Please check your internet connection.';
+          } else {
+            errorMessage = cashfreeError.message;
           }
         }
 
@@ -238,6 +238,7 @@ export function CashfreeCheckout({
           title: errorTitle,
           description: errorMessage,
         });
+        setIsLoading(false);
         onFailure?.();
       }
 
