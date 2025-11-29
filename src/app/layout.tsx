@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Source_Code_Pro } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
@@ -53,6 +54,17 @@ export default function RootLayout({
           fontSourceCodePro.variable
         )}
       >
+        {/* Cashfree SDK - Load directly to avoid CORS issues */}
+        <Script
+          src="https://sdk.cashfree.com/js/v3/cashfree.js"
+          strategy="lazyOnload"
+          onLoad={() => {
+            console.log('✅ Cashfree SDK loaded successfully');
+          }}
+          onError={() => {
+            console.error('❌ Failed to load Cashfree SDK');
+          }}
+        />
         <ClientOnly>
           <ThemeProvider
             attribute="class"

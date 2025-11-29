@@ -120,7 +120,6 @@ export function CashfreeCheckout({
       }
 
       // Check if this is demo mode (no real API keys configured)
-      // Only show demo mode toast if explicitly set to true
       if (orderData.demoMode === true) {
         console.log('Running in demo mode - payment UI will show but transactions won\'t process');
         toast({
@@ -128,148 +127,33 @@ export function CashfreeCheckout({
           description: 'Payment gateway is in demo mode. Configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
           duration: 5000,
         });
-      } else {
-        console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
-      }
-
-      // Load Cashfree SDK if not already loaded
-      if (!window.Cashfree) {
-        console.log('🔄 Loading Cashfree SDK...');
-
-        // Check if script is already in the DOM (from previous attempts)
-        const existingScript = document.querySelector('script[data-cashfree-script]');
-        if (existingScript) {
-          console.log('ℹ️ Cashfree script already exists in DOM, waiting for it to load...');
-          // Wait for existing script to load
-          await new Promise((resolve, reject) => {
-            if (window.Cashfree) {
-              console.log('✅ Cashfree already available');
-              resolve(void 0);
-              return;
-            }
-
-            const checkLoaded = () => {
-              if (window.Cashfree) {
-                console.log('✅ Cashfree loaded from existing script');
-                resolve(void 0);
-              } else {
-                setTimeout(checkLoaded, 100);
-              }
-            };
-
-            // Timeout after 20 seconds
-            setTimeout(() => {
-              if (window.Cashfree) {
-                console.log('✅ Cashfree loaded within timeout');
-                resolve(void 0);
-              } else {
-                console.warn('⚠️ Cashfree script failed to load within 20 seconds, continuing with demo mode');
-                // Don't reject - allow demo mode fallback
-                resolve(void 0);
-              }
-            }, 20000);
-
-            checkLoaded();
-          });
-        } else {
-          // Load new script with better error handling
-          console.log('📦 Creating new Cashfree script element...');
-
-          const loadScript = (src: string, attempt = 1): Promise<boolean> => {
-            return new Promise((resolve) => {
-              const script = document.createElement('script');
-              script.src = src;
-              script.async = true;
-              script.setAttribute('data-cashfree-script', 'true');
-              script.crossOrigin = 'anonymous';
-
-              let timeoutId: NodeJS.Timeout;
-
-              script.onload = () => {
-                clearTimeout(timeoutId);
-                console.log(`✅ Cashfree script loaded successfully (attempt ${attempt})`);
-                resolve(true);
-              };
-
-              script.onerror = (event) => {
-                clearTimeout(timeoutId);
-                const errorDetails = {
-                  src,
-                  attempt,
-                  eventType: event.type,
-                  timeStamp: event.timeStamp
-                };
-                console.warn(`⚠️ Cashfree script loading failed (attempt ${attempt}):`, errorDetails);
-
-                // Try again with different approach or resolve with false for demo mode
-                if (attempt < 3) {
-                  console.log(`🔄 Retrying Cashfree script loading (attempt ${attempt + 1})...`);
-                  setTimeout(() => {
-                    loadScript(src, attempt + 1).then(resolve);
-                  }, 2000); // Wait 2 seconds before retry
-                } else {
-                  console.warn('❌ All Cashfree script loading attempts failed, falling back to demo mode');
-                  resolve(false); // Resolve with false to indicate demo mode
-                }
-              };
-
-              // Set a timeout for each attempt (15 seconds per attempt)
-              timeoutId = setTimeout(() => {
-                console.warn(`⏰ Cashfree script loading timeout (attempt ${attempt}), trying next approach...`);
-                script.remove(); // Remove the script element
-
-                if (attempt < 3) {
-                  loadScript(src, attempt + 1).then(resolve);
-                } else {
-                  console.warn('❌ Cashfree script loading timed out after all attempts, using demo mode');
-                  resolve(false);
-                }
-              }, 15000);
-
-              console.log(`🔗 Loading Cashfree script (attempt ${attempt}): ${src}`);
-              document.head.appendChild(script);
-            });
-          };
-
-          // Try to load Cashfree script
-          let scriptLoaded = false;
-
-          // Primary source
-          scriptLoaded = await loadScript('https://sdk.cashfree.com/js/v3/cashfree.js');
-
-          if (!scriptLoaded) {
-            console.log('🎭 All Cashfree script loading attempts failed, proceeding with demo mode');
-            // Force demo mode by modifying orderData
-            orderData.demoMode = true;
-          }
-        }
-      } else {
-        console.log('✅ Cashfree SDK already loaded and available');
-      }
-
-      console.log('🔧 Initializing Cashfree with options:', {
-        orderToken: orderData.orderToken,
-        demoMode: orderData.demoMode
-      });
-
-      // Check if we should use demo mode (either from API or script loading failure)
-      if (orderData.demoMode || !window.Cashfree) {
-        const isScriptFailure = !window.Cashfree && !orderData.demoMode;
-        console.log(`🎭 Running in demo mode${isScriptFailure ? ' (script loading failed)' : ''} - simulating payment success`);
-
-        toast({
-          title: isScriptFailure ? 'Payment Gateway Unavailable' : 'Demo Payment',
-          description: isScriptFailure
-            ? 'Payment gateway temporarily unavailable. Using demo mode for testing.'
-            : 'Demo mode: Payment simulated successfully!',
-          duration: 5000,
-        });
-
-        setTimeout(() => {
-          onSuccess?.('demo_payment_' + Date.now());
-        }, 2000); // Slightly longer delay for demo mode
         return;
       }
+
+      console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
+
+      // Wait for Cashfree SDK to be available (it's loaded via <script> tag in layout)
+      // The SDK should already be loaded, but wait a bit if it's still loading
+      let retries = 0;
+      const maxRetries = 50; // 5 seconds max wait (50 * 100ms)
+      
+      while (!window.Cashfree && retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+
+      if (!window.Cashfree) {
+        console.error('❌ Cashfree SDK not available after waiting');
+        toast({
+          variant: 'destructive',
+          title: 'Payment Gateway Error',
+          description: 'Payment gateway script failed to load. Please refresh the page and try again.',
+        });
+        onFailure?.();
+        return;
+      }
+
+      console.log('✅ Cashfree SDK is available');
 
       // Initialize Cashfree
       const cashfree = new window.Cashfree();
