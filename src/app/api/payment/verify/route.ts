@@ -15,9 +15,13 @@ export async function POST(request: NextRequest) {
       amount
     } = await request.json();
 
-    // For demo mode, skip verification
-    if (!process.env.CASHFREE_APP_ID || !process.env.CASHFREE_SECRET_KEY) {
-      console.log('Demo mode: Skipping payment verification');
+    // Initialize Cashfree for verification
+    const appId = process.env.CASHFREE_APP_ID?.trim();
+    const secretKey = process.env.CASHFREE_SECRET_KEY?.trim();
+    
+    // For demo mode, skip verification if keys are not configured
+    if (!appId || !secretKey) {
+      console.log('Demo mode: Skipping payment verification - missing Cashfree credentials');
 
       // Update user's subscription status in Firestore for demo
       if (userId) {
@@ -36,13 +40,40 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Demo payment verified successfully',
         paymentId: paymentId || `demo_${Date.now()}`,
+        demoMode: true,
+      });
+    }
+    
+    if (!appId || !secretKey) {
+      console.log('Demo mode: Missing Cashfree credentials for verification');
+      // Return demo mode response
+      if (userId) {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          subscriptionStatus: 'active',
+          subscriptionPlan: planId,
+          lastPaymentDate: serverTimestamp(),
+          demoPaymentId: paymentId || `demo_${Date.now()}`,
+          demoOrderId: orderId || `demo_order_${Date.now()}`,
+          paymentAmount: amount,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Demo payment verified successfully',
+        paymentId: paymentId || `demo_${Date.now()}`,
+        demoMode: true,
       });
     }
 
-    // Initialize Cashfree for verification
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID || 'TEST_APP_ID'; // Use test credentials if not set
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || 'TEST_SECRET_KEY'; // Use test credentials if not set
-    Cashfree.XEnvironment = process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'TEST';
+    // Determine if we should use production environment
+    const isProductionKey = appId && !appId.startsWith('TEST_') && !appId.startsWith('CFTEST_');
+    
+    Cashfree.XClientId = appId;
+    Cashfree.XClientSecret = secretKey;
+    // Use PRODUCTION environment if production keys are detected, otherwise TEST
+    Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
 
     // Verify payment using Cashfree order status API
     try {

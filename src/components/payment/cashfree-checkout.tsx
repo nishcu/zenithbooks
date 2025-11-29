@@ -70,17 +70,21 @@ export function CashfreeCheckout({
       console.log('Payment order response:', orderData);
 
       if (!response.ok) {
-        throw new Error(orderData.error || 'Failed to create payment order');
+        const errorMessage = orderData.message || orderData.error || 'Failed to create payment order';
+        throw new Error(errorMessage);
       }
 
       // Check if this is demo mode (no real API keys configured)
-      if (orderData.demoMode) {
+      // Only show demo mode toast if explicitly set to true
+      if (orderData.demoMode === true) {
         console.log('Running in demo mode - payment UI will show but transactions won\'t process');
         toast({
           title: 'Demo Mode',
           description: 'Payment gateway is in demo mode. Configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
           duration: 5000,
         });
+      } else {
+        console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
       }
 
       // Load Cashfree SDK if not already loaded

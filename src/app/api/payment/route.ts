@@ -20,23 +20,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if environment variables are set
-    const hasValidKeys = process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET_KEY &&
-                        process.env.CASHFREE_APP_ID.length > 10 &&
-                        process.env.CASHFREE_SECRET_KEY.length > 20;
+    // Check if environment variables are set and valid
+    const appId = process.env.CASHFREE_APP_ID?.trim();
+    const secretKey = process.env.CASHFREE_SECRET_KEY?.trim();
+    
+    const hasValidKeys = appId && secretKey && 
+                        appId.length > 10 && 
+                        secretKey.length > 20;
 
-    // TEMPORARY: Force live mode for testing - REMOVE AFTER TESTING
-    const forceLiveMode = true;
-    const shouldUseLiveMode = hasValidKeys || forceLiveMode;
-
-    if (!shouldUseLiveMode) {
+    // Determine if we should use production environment
+    // Production keys typically don't start with 'TEST_' or 'CFTEST_'
+    const isProductionKey = appId && !appId.startsWith('TEST_') && !appId.startsWith('CFTEST_');
+    
+    if (!hasValidKeys) {
       console.error('❌ Cashfree environment variables not properly set:', {
-        appId: !!process.env.CASHFREE_APP_ID,
-        secretKey: !!process.env.CASHFREE_SECRET_KEY,
-        appIdValid: (process.env.CASHFREE_APP_ID?.length || 0) > 10,
-        secretKeyValid: (process.env.CASHFREE_SECRET_KEY?.length || 0) > 20,
-        appIdValue: process.env.CASHFREE_APP_ID?.substring(0, 10) + '...',
-        secretKeyLength: process.env.CASHFREE_SECRET_KEY?.length || 0,
+        appIdExists: !!appId,
+        secretKeyExists: !!secretKey,
+        appIdLength: appId?.length || 0,
+        secretKeyLength: secretKey?.length || 0,
+        appIdValue: appId ? appId.substring(0, 10) + '...' : 'MISSING',
+        allEnvKeys: Object.keys(process.env).filter(key => key.includes('CASHFREE'))
       });
 
       // Return a demo response for testing - this will show the payment UI but won't process real payments
@@ -48,22 +51,20 @@ export async function POST(request: NextRequest) {
         demoMode: true,
         message: 'Demo mode - configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
         debug: {
-          appIdExists: !!process.env.CASHFREE_APP_ID,
-          secretKeyExists: !!process.env.CASHFREE_SECRET_KEY,
-          appIdLength: process.env.CASHFREE_APP_ID?.length || 0,
-          secretKeyLength: process.env.CASHFREE_SECRET_KEY?.length || 0,
+          appIdExists: !!appId,
+          secretKeyExists: !!secretKey,
+          appIdLength: appId?.length || 0,
+          secretKeyLength: secretKey?.length || 0,
           hasValidKeys: hasValidKeys,
-          appIdValue: process.env.CASHFREE_APP_ID?.substring(0, 10) + '...',
-          secretKeyValue: process.env.CASHFREE_SECRET_KEY?.substring(0, 10) + '...',
-          allEnvKeys: Object.keys(process.env).filter(key => key.includes('CASHFREE'))
         }
       });
     }
 
     // Initialize Cashfree with environment variables
-    Cashfree.XClientId = process.env.CASHFREE_APP_ID || 'TEST_APP_ID'; // Use test credentials if not set
-    Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY || 'TEST_SECRET_KEY'; // Use test credentials if not set
-    Cashfree.XEnvironment = process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'TEST';
+    Cashfree.XClientId = appId;
+    Cashfree.XClientSecret = secretKey;
+    // Use PRODUCTION environment if production keys are detected, otherwise TEST
+    Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
 
     // Create Cashfree order
     const orderData = {
@@ -90,16 +91,47 @@ export async function POST(request: NextRequest) {
     try {
       const order = await Cashfree.PGCreateOrder('2023-08-01', orderData);
 
+      if (!order || !order.data) {
+        throw new Error('Invalid response from Cashfree API');
+      }
+
       return NextResponse.json({
         paymentSessionId: order.data.payment_session_id,
         orderId: order.data.order_id,
         amount: order.data.order_amount,
         currency: order.data.order_currency,
+        demoMode: false, // Explicitly set to false for live payments
       });
-    } catch (cashfreeError) {
+    } catch (cashfreeError: any) {
       console.error('Cashfree order creation error:', cashfreeError);
+      
+      // If we have valid keys, don't fall back to demo mode - return proper error
+      if (hasValidKeys) {
+        const errorMessage = cashfreeError?.response?.data?.message || 
+                            cashfreeError?.message || 
+                            'Failed to create payment order with Cashfree';
+        
+        console.error('Cashfree API error details:', {
+          error: errorMessage,
+          status: cashfreeError?.response?.status,
+          environment: Cashfree.XEnvironment,
+          appIdPrefix: appId?.substring(0, 10) + '...',
+        });
 
-      // Return demo mode response if Cashfree API fails
+        return NextResponse.json(
+          { 
+            error: 'Payment gateway error',
+            message: errorMessage,
+            details: process.env.NODE_ENV === 'development' ? {
+              cashfreeError: errorMessage,
+              environment: Cashfree.XEnvironment,
+            } : undefined
+          },
+          { status: 500 }
+        );
+      }
+
+      // Only return demo mode if keys are not configured
       return NextResponse.json({
         paymentSessionId: `demo_session_${Date.now()}`,
         orderId: `demo_order_${Date.now()}`,
