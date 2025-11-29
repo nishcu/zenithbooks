@@ -211,11 +211,40 @@ export function CashfreeCheckout({
         // Cashfree SDK v3: Call Cashfree directly with options
         // window.Cashfree IS the function - no .checkout() method in v3
         // Use the loaded Cashfree function
-        Cashfree(checkoutOptions);
+        console.log('Calling Cashfree with options:', {
+          paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 40) + '...',
+          mode: checkoutOptions.mode,
+          redirectTarget: checkoutOptions.redirectTarget,
+        });
         
-        console.log('✅ Cashfree checkout initiated successfully');
-        // Payment will redirect or show modal - Cashfree SDK handles it
-        setIsLoading(false); // SDK handles redirect, but reset loading state
+        const result = Cashfree(checkoutOptions);
+        console.log('Cashfree function returned:', result);
+        
+        // Cashfree might return a promise or immediately show the checkout
+        if (result && typeof result.then === 'function') {
+          // If it returns a promise, handle it
+          result
+            .then((data: any) => {
+              console.log('✅ Cashfree checkout promise resolved:', data);
+            })
+            .catch((error: any) => {
+              console.error('❌ Cashfree checkout promise rejected:', error);
+              toast({
+                variant: 'destructive',
+                title: 'Payment Failed',
+                description: error?.message || 'Payment could not be initialized. Please try again.',
+              });
+              onFailure?.();
+            });
+        } else {
+          console.log('✅ Cashfree checkout initiated (no promise returned)');
+        }
+        
+        // Don't reset loading state immediately - wait a bit to see if checkout opens
+        // If checkout opens, user will be redirected or modal will show
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
 
       } catch (cashfreeError) {
         console.error('Cashfree initialization error:', cashfreeError);
