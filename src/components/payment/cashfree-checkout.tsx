@@ -158,10 +158,24 @@ export function CashfreeCheckout({
       // Initialize Cashfree
       const cashfree = new window.Cashfree();
 
+      // Determine mode - check if paymentSessionId indicates test mode
+      // In production, assume LIVE mode. You can also pass mode from API if needed
+      // Test session IDs might have different prefixes, or you can detect from API response
+      const isTestMode = orderData.paymentSessionId?.includes('test') || 
+                         orderData.paymentSessionId?.includes('sandbox') ||
+                         window.location.hostname === 'localhost';
+
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
+        mode: isTestMode ? 'TEST' : 'LIVE',
         redirectTarget: "_self",
       };
+
+      console.log('Cashfree checkout options:', {
+        paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 20) + '...',
+        mode: checkoutOptions.mode,
+        redirectTarget: checkoutOptions.redirectTarget,
+      });
 
       try {
         // Double-check that Cashfree is available
