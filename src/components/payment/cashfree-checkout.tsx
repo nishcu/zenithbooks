@@ -158,21 +158,30 @@ export function CashfreeCheckout({
       // Initialize Cashfree
       const cashfree = new window.Cashfree();
 
-      // Determine mode from API response, fallback to detection
+      // Determine mode from API response
       // API returns mode: 'LIVE' or 'TEST' based on Cashfree keys
-      const mode = orderData.mode || 
-                   (orderData.paymentSessionId?.includes('test') || 
-                    orderData.paymentSessionId?.includes('sandbox') ||
-                    window.location.hostname === 'localhost' ? 'TEST' : 'LIVE');
+      // IMPORTANT: Mode must match the environment that created the paymentSessionId
+      const mode = orderData.mode;
+      
+      if (!mode) {
+        console.error('Mode not provided in API response, cannot proceed with checkout');
+        toast({
+          variant: 'destructive',
+          title: 'Payment Error',
+          description: 'Payment configuration error. Please try again.',
+        });
+        onFailure?.();
+        return;
+      }
 
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
-        mode: mode, // Use mode from API or auto-detected
+        mode: mode, // Must match the environment: 'LIVE' for production, 'TEST' for sandbox
         redirectTarget: "_self",
       };
 
       console.log('Cashfree checkout options:', {
-        paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 20) + '...',
+        paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 30) + '...',
         mode: checkoutOptions.mode,
         redirectTarget: checkoutOptions.redirectTarget,
       });
