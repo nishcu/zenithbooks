@@ -58,12 +58,6 @@ export default function RootLayout({
         <Script
           src="https://sdk.cashfree.com/js/v3/cashfree.js"
           strategy="lazyOnload"
-          onLoad={() => {
-            console.log('✅ Cashfree SDK loaded successfully');
-          }}
-          onError={() => {
-            console.error('❌ Failed to load Cashfree SDK');
-          }}
         />
         <ClientOnly>
           <ThemeProvider
