@@ -192,21 +192,48 @@ export function CashfreeCheckout({
           throw new Error('Cashfree is not available after script loading');
         }
 
-        console.log('Creating Cashfree checkout with options:', checkoutOptions);
+        console.log('Creating Cashfree checkout with options:', {
+          paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 40) + '...',
+          mode: checkoutOptions.mode,
+          redirectTarget: checkoutOptions.redirectTarget,
+        });
 
         cashfree.checkout(checkoutOptions).then((result: any) => {
           if (result.error) {
             console.error('Cashfree checkout error:', result.error);
+            console.error('Error details:', {
+              error: result.error,
+              errorMessage: result.error?.message,
+              errorCode: result.error?.code,
+              fullResult: result,
+            });
+            
+            let errorMessage = 'Payment initialization failed.';
+            if (result.error?.message) {
+              errorMessage = result.error.message;
+            } else if (typeof result.error === 'string') {
+              errorMessage = result.error;
+            }
+            
             toast({
               variant: 'destructive',
               title: 'Payment Failed',
-              description: result.error.message || 'Payment initialization failed.',
+              description: errorMessage,
             });
             onFailure?.();
           } else {
-            console.log('Cashfree checkout initiated successfully');
+            console.log('✅ Cashfree checkout initiated successfully');
+            console.log('Checkout result:', result);
             // Payment will redirect or show modal
           }
+        }).catch((error: any) => {
+          console.error('Cashfree checkout promise rejection:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Payment Error',
+            description: error?.message || 'Failed to initialize payment. Please try again.',
+          });
+          onFailure?.();
         });
 
       } catch (cashfreeError) {
