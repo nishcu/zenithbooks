@@ -121,18 +121,16 @@ if (!response.ok) {
   );
 }
 
-// Cashfree API can return data in different structures:
-// Option 1: { data: { order_id, payment_session_id, ... } }
-// Option 2: { order_id, payment_session_id, ... } (direct fields)
-// Option 3: Success response with nested structure
-
+// Cashfree API returns data in direct structure (not nested in data object)
+// Response keys: order_id, payment_session_id, order_amount, etc. are at top level
 let orderData = null;
-if (data?.data) {
-  // Nested structure: data.data
-  orderData = data.data;
-} else if (data?.order_id) {
-  // Direct structure: data.order_id
+
+if (data?.order_id || data?.payment_session_id) {
+  // Direct structure: keys at top level (this is what Cashfree actually returns)
   orderData = data;
+} else if (data?.data) {
+  // Nested structure: data.data (fallback for some response formats)
+  orderData = data.data;
 } else {
   // Unknown structure - log and return error
   console.error('Invalid Cashfree response structure:', data);
@@ -144,6 +142,7 @@ if (data?.data) {
         hasData: !!data,
         hasDataData: !!(data && data.data),
         hasOrderId: !!(data && data.order_id),
+        hasPaymentSessionId: !!(data && data.payment_session_id),
         responseKeys: data ? Object.keys(data) : [],
         fullResponse: data,
       },
