@@ -3,12 +3,12 @@
  * Loads Cashfree SDK dynamically and ensures it's ready before use
  */
 
-export function loadCashfree(): Promise<typeof window.Cashfree> {
+export function loadCashfree(): Promise<void> {
   return new Promise((resolve, reject) => {
     // If already loaded, return immediately
-    if (window.Cashfree && typeof window.Cashfree === 'function') {
+    if (window.Cashfree) {
       console.log('✅ Cashfree SDK already loaded');
-      resolve(window.Cashfree);
+      resolve();
       return;
     }
 
@@ -18,11 +18,11 @@ export function loadCashfree(): Promise<typeof window.Cashfree> {
       console.log('⏳ Cashfree script already in DOM, waiting for load...');
       // Wait for existing script to load
       const checkLoaded = setInterval(() => {
-        if (window.Cashfree && typeof window.Cashfree === 'function') {
+        if (window.Cashfree) {
           clearInterval(checkLoaded);
           clearTimeout(timeout);
           console.log('✅ Cashfree SDK loaded from existing script');
-          resolve(window.Cashfree);
+          resolve();
         }
       }, 100);
 
@@ -45,10 +45,10 @@ export function loadCashfree(): Promise<typeof window.Cashfree> {
       console.log('✅ Cashfree SDK script loaded');
       // Give SDK a moment to initialize
       setTimeout(() => {
-        if (window.Cashfree && typeof window.Cashfree === 'function') {
-          resolve(window.Cashfree);
+        if (window.Cashfree) {
+          resolve();
         } else {
-          reject(new Error('Cashfree SDK loaded but not initialized'));
+          reject(new Error('Cashfree SDK loaded but window.Cashfree not available'));
         }
       }, 100);
     };
