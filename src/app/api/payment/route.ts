@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Cashfree } from 'cashfree-pg';
 
 export async function POST(request: NextRequest) {
   try {
@@ -89,17 +88,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Initialize Cashfree with environment variables
-    Cashfree.XClientId = appId;
-    Cashfree.XClientSecret = secretKey;
-    // Use PRODUCTION environment if production keys are detected, otherwise TEST
-    // CRITICAL: Environment must match your keys
+    // Determine Cashfree API base URL based on environment
     // TEST → Use Sandbox keys (starts with TEST_ or CFTEST_)
     // PRODUCTION → Use Live keys (does not start with TEST_)
-    Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
+    const cashfreeBaseUrl = isProductionKey 
+      ? 'https://api.cashfree.com/pg' 
+      : 'https://sandbox.cashfree.com/pg';
     
     console.log('Initializing Cashfree with:', {
-      environment: Cashfree.XEnvironment,
+      environment: isProductionKey ? 'PRODUCTION' : 'TEST',
+      baseUrl: cashfreeBaseUrl,
       appIdLength: appId?.length || 0,
       secretKeyLength: secretKey?.length || 0,
       appIdPrefix: appId ? appId.substring(0, 10) + '...' : 'MISSING',
@@ -133,17 +131,40 @@ export async function POST(request: NextRequest) {
     };
 
     try {
-      console.log('Calling Cashfree.PGCreateOrder with orderData:', {
+      console.log('Calling Cashfree API with orderData:', {
         order_id: orderData.order_id,
         order_amount: orderData.order_amount,
         order_currency: orderData.order_currency,
         customer_id: orderData.customer_details.customer_id,
-        environment: Cashfree.XEnvironment,
-        apiVersion: '2022-09-01', // Cashfree required API version
+        environment: isProductionKey ? 'PRODUCTION' : 'TEST',
+        apiVersion: '2022-09-01',
+        baseUrl: cashfreeBaseUrl,
       });
       
-      // Cashfree requires API version 2022-09-01
-      const order = await Cashfree.PGCreateOrder('2022-09-01', orderData);
+      // Make direct API call to Cashfree with proper headers
+      const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders`, {
+        method: 'POST',
+        headers: {
+          'x-client-id': appId!,
+          'x-client-secret': secretKey!,
+          'x-api-version': '2022-09-01',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!cashfreeResponse.ok) {
+        const errorData = await cashfreeResponse.json().catch(() => ({}));
+        throw {
+          response: {
+            status: cashfreeResponse.status,
+            data: errorData,
+          },
+          message: errorData.message || `Cashfree API returned ${cashfreeResponse.status}`,
+        };
+      }
+
+      const order = await cashfreeResponse.json();
 
       if (!order || !order.data) {
         throw new Error('Invalid response from Cashfree API - no order data received');
@@ -182,7 +203,8 @@ export async function POST(request: NextRequest) {
           error: errorMessage,
           errorCode: errorCode,
           cashfreeHttpStatus: cashfreeHttpStatus,
-          environment: Cashfree.XEnvironment,
+          environment: isProductionKey ? 'PRODUCTION' : 'TEST',
+          baseUrl: cashfreeBaseUrl,
           appIdPrefix: appId ? appId.substring(0, 10) + '...' : 'MISSING',
           hasAppId: !!appId,
           hasSecretKey: !!secretKey,
@@ -226,7 +248,8 @@ export async function POST(request: NextRequest) {
               cashfreeError: errorMessage,
               errorCode: errorCode,
               cashfreeHttpStatus: cashfreeHttpStatus,
-              environment: Cashfree.XEnvironment,
+              environment: isProductionKey ? 'PRODUCTION' : 'TEST',
+              baseUrl: cashfreeBaseUrl,
               appIdPrefix: appId ? appId.substring(0, 10) + '...' : 'MISSING',
             } : undefined
           },

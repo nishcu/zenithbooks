@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Cashfree } from 'cashfree-pg';
 
 export async function POST(request: NextRequest) {
   try {
