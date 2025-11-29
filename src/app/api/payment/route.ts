@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       order_meta: {
         return_url: orderMeta?.return_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/payment/success?order_id={order_id}`,
         notify_url: orderMeta?.notify_url || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/payment/webhook`,
-        payment_methods: orderMeta?.payment_methods || 'cc,dc,nb,upi,wallet',
+        payment_methods: orderMeta?.payment_methods || 'cc,dc,nb,upi', // Cashfree payment methods (no wallet)
       },
       ...(planId && {
         order_tags: {

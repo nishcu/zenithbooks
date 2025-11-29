@@ -71,11 +71,11 @@ export function CashfreeCheckout({
         userId,
         planId,
         customerDetails: customerDetailsPayload,
-        orderMeta: {
-          return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
-          notify_url: `${window.location.origin}/api/payment/webhook`,
-          payment_methods: 'cc,dc,nb,upi,wallet',
-        },
+          orderMeta: {
+            return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
+            notify_url: `${window.location.origin}/api/payment/webhook`,
+            payment_methods: 'cc,dc,nb,upi', // Cashfree payment methods
+          },
         userEmail: userEmail, // Pass as fallback
         userName: userName,   // Pass as fallback
       };
