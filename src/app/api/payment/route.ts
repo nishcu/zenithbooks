@@ -15,7 +15,25 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!amount || !userId) {
       return NextResponse.json(
-        { error: 'Amount and userId are required' },
+        { 
+          error: 'Invalid request',
+          message: !userId ? 'User authentication required. Please log in and try again.' : 'Payment amount is required.',
+          details: {
+            hasAmount: !!amount,
+            hasUserId: !!userId,
+          }
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate amount is positive
+    if (amount <= 0 || isNaN(amount)) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid amount',
+          message: 'Payment amount must be greater than zero.',
+        },
         { status: 400 }
       );
     }
@@ -107,27 +125,46 @@ export async function POST(request: NextRequest) {
       
       // If we have valid keys, don't fall back to demo mode - return proper error
       if (hasValidKeys) {
-        const errorMessage = cashfreeError?.response?.data?.message || 
+        // Extract detailed error information
+        const errorData = cashfreeError?.response?.data || cashfreeError?.response || {};
+        const errorMessage = errorData?.message || 
+                            errorData?.error?.message ||
                             cashfreeError?.message || 
                             'Failed to create payment order with Cashfree';
         
+        const errorCode = errorData?.code || errorData?.error?.code || cashfreeError?.code;
+        const httpStatus = errorData?.status || cashfreeError?.response?.status || 500;
+        
         console.error('Cashfree API error details:', {
           error: errorMessage,
-          status: cashfreeError?.response?.status,
+          errorCode: errorCode,
+          status: httpStatus,
           environment: Cashfree.XEnvironment,
-          appIdPrefix: appId?.substring(0, 10) + '...',
+          appIdPrefix: appId ? appId.substring(0, 10) + '...' : 'MISSING',
+          fullError: process.env.NODE_ENV === 'development' ? cashfreeError : undefined,
         });
+
+        // Provide user-friendly error message
+        let userMessage = errorMessage;
+        if (errorCode === 'UNAUTHORIZED' || httpStatus === 401) {
+          userMessage = 'Payment gateway authentication failed. Please check your Cashfree API credentials.';
+        } else if (errorCode === 'BAD_REQUEST' || httpStatus === 400) {
+          userMessage = 'Invalid payment request. Please check the payment details and try again.';
+        } else if (httpStatus === 503 || errorMessage.includes('service unavailable')) {
+          userMessage = 'Payment service is temporarily unavailable. Please try again in a few minutes.';
+        }
 
         return NextResponse.json(
           { 
             error: 'Payment gateway error',
-            message: errorMessage,
+            message: userMessage,
             details: process.env.NODE_ENV === 'development' ? {
               cashfreeError: errorMessage,
+              errorCode: errorCode,
               environment: Cashfree.XEnvironment,
             } : undefined
           },
-          { status: 500 }
+          { status: httpStatus >= 400 && httpStatus < 600 ? httpStatus : 500 }
         );
       }
 

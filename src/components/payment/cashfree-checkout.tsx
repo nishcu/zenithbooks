@@ -39,6 +39,17 @@ export function CashfreeCheckout({
     setIsLoading(true);
 
     try {
+      // Validate user is authenticated
+      if (!userId || !userEmail) {
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Required',
+          description: 'Please log in to proceed with payment.',
+        });
+        setIsLoading(false);
+        return;
+      }
+
       console.log('Creating payment order for:', { amount, planId, userId });
 
       // Create order on server
@@ -70,7 +81,20 @@ export function CashfreeCheckout({
       console.log('Payment order response:', orderData);
 
       if (!response.ok) {
-        const errorMessage = orderData.message || orderData.error || 'Failed to create payment order';
+        // Provide more specific error messages
+        let errorMessage = 'Failed to create payment order';
+        
+        if (response.status === 400) {
+          errorMessage = orderData.error || 'Invalid payment request. Please check your information and try again.';
+        } else if (response.status === 401 || response.status === 403) {
+          errorMessage = 'Authentication required. Please log in and try again.';
+        } else if (response.status === 500) {
+          errorMessage = orderData.message || orderData.error || 'Payment service temporarily unavailable. Please try again later.';
+          console.error('Payment API error details:', orderData);
+        } else {
+          errorMessage = orderData.message || orderData.error || `Payment error (${response.status}). Please try again.`;
+        }
+        
         throw new Error(errorMessage);
       }
 
@@ -285,17 +309,28 @@ export function CashfreeCheckout({
       console.error('Payment initialization error:', error);
 
       let errorMessage = 'Failed to initialize payment. Please try again.';
+      let errorTitle = 'Payment Failed';
+      
       if (error instanceof Error) {
-        if (error.message.includes('Payment gateway not configured')) {
+        errorMessage = error.message || errorMessage;
+        
+        // Set specific titles based on error type
+        if (error.message.includes('Authentication required') || error.message.includes('log in')) {
+          errorTitle = 'Authentication Required';
+        } else if (error.message.includes('Payment gateway not configured')) {
+          errorTitle = 'Configuration Error';
           errorMessage = 'Payment gateway is not configured. Please contact support or set up your Cashfree keys.';
         } else if (error.message.includes('Failed to load Cashfree script')) {
+          errorTitle = 'Network Error';
           errorMessage = 'Failed to load payment gateway. Please check your internet connection and try again.';
+        } else if (error.message.includes('temporarily unavailable')) {
+          errorTitle = 'Service Unavailable';
         }
       }
 
       toast({
         variant: 'destructive',
-        title: 'Payment Failed',
+        title: errorTitle,
         description: errorMessage,
       });
       onFailure?.();

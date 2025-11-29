@@ -95,10 +95,28 @@ export function LoginForm() {
         }
       } catch (error: any) {
         console.error("Google Login Error:", error);
+        
+        // Provide user-friendly error messages
+        let errorMessage = "An unknown error occurred. Please try again.";
+        
+        if (error.code) {
+          if (error.code === 'auth/internal-error') {
+            errorMessage = "Authentication service error. Please try again or use email/password login.";
+          } else if (error.code === 'auth/popup-closed-by-user') {
+            errorMessage = "Login popup was closed. Please try again.";
+          } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = "Network error. Please check your internet connection and try again.";
+          } else if (error.code === 'auth/cancelled-popup-request') {
+            errorMessage = "Login was cancelled. Please try again.";
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toast({
           variant: "destructive",
           title: "Google Login Failed",
-          description: error.message || "An unknown error occurred.",
+          description: errorMessage,
         });
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
