@@ -165,9 +165,13 @@ export function CashfreeCheckout({
         return;
       }
 
-      // Verify paymentSessionId exists
-      if (!orderData.paymentSessionId) {
-        console.error('❌ Payment session ID not provided');
+      // Extract paymentSessionId - handle both camelCase and snake_case
+      // Backend returns snake_case (payment_session_id) but we need camelCase (paymentSessionId)
+      const paymentSessionId = orderData.paymentSessionId || orderData.payment_session_id;
+      
+      if (!paymentSessionId) {
+        console.error('❌ Payment session ID not provided. Response keys:', Object.keys(orderData));
+        console.error('Full response:', orderData);
         toast({
           variant: 'destructive',
           title: 'Payment Error',
@@ -178,17 +182,20 @@ export function CashfreeCheckout({
         return;
       }
 
-      // Cashfree SDK v3 API pattern (no init() needed):
-      // 1. new Cashfree(paymentSessionId) - creates instance
+      // Cashfree SDK v3 API pattern:
+      // 1. new Cashfree({ paymentSessionId: '...' }) - creates instance with options object
       // 2. await cashfree.checkout({ redirectTarget }) - launches checkout
       // Note: Mode is automatically determined from paymentSessionId
       
-      console.log('Creating Cashfree checkout instance with paymentSessionId:', orderData.paymentSessionId.substring(0, 40) + '...');
+      console.log('Creating Cashfree checkout instance with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
       
       try {
-        // Step 1: Create Cashfree instance with paymentSessionId
-        // In v3, mode is automatically determined from the paymentSessionId
-        const cashfree = new window.Cashfree(orderData.paymentSessionId);
+        // Step 1: Create Cashfree instance with options object
+        // In v3, the constructor takes an object with paymentSessionId property
+        // Mode is automatically determined from the paymentSessionId
+        const cashfree = new window.Cashfree({
+          paymentSessionId: paymentSessionId,
+        });
         console.log('✅ Cashfree instance created');
         
         // Step 2: Launch checkout (returns a promise)
