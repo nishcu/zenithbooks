@@ -106,6 +106,7 @@ try {
 console.log('Cashfree API Response:', JSON.stringify(data, null, 2));
 console.log('Response status:', response.status);
 console.log('Response ok:', response.ok);
+console.log('Response keys:', data ? Object.keys(data) : 'no data');
 
 // If Cashfree returns error
 if (!response.ok) {
@@ -120,17 +121,48 @@ if (!response.ok) {
   );
 }
 
-// Verify response structure
-if (!data || !data.data) {
+// Cashfree API can return data in different structures:
+// Option 1: { data: { order_id, payment_session_id, ... } }
+// Option 2: { order_id, payment_session_id, ... } (direct fields)
+// Option 3: Success response with nested structure
+
+let orderData = null;
+if (data?.data) {
+  // Nested structure: data.data
+  orderData = data.data;
+} else if (data?.order_id) {
+  // Direct structure: data.order_id
+  orderData = data;
+} else {
+  // Unknown structure - log and return error
   console.error('Invalid Cashfree response structure:', data);
   return NextResponse.json(
     {
       error: 'Invalid response structure',
-      message: 'Cashfree response missing expected data field',
+      message: 'Cashfree response format unexpected',
       details: {
         hasData: !!data,
         hasDataData: !!(data && data.data),
+        hasOrderId: !!(data && data.order_id),
         responseKeys: data ? Object.keys(data) : [],
+        fullResponse: data,
+      },
+    },
+    { status: 500 }
+  );
+}
+
+// Verify required fields exist
+if (!orderData.order_id || !orderData.payment_session_id) {
+  console.error('Cashfree response missing required fields:', orderData);
+  return NextResponse.json(
+    {
+      error: 'Incomplete response',
+      message: 'Cashfree response missing order_id or payment_session_id',
+      details: {
+        hasOrderId: !!orderData.order_id,
+        hasPaymentSessionId: !!orderData.payment_session_id,
+        orderDataKeys: Object.keys(orderData),
         fullResponse: data,
       },
     },
@@ -140,10 +172,10 @@ if (!data || !data.data) {
 
 // SUCCESS
 return NextResponse.json({
-  orderId: data.data.order_id,
-  paymentSessionId: data.data.payment_session_id,
-  amount: data.data.order_amount,
-  currency: data.data.order_currency,
+  orderId: orderData.order_id,
+  paymentSessionId: orderData.payment_session_id,
+  amount: orderData.order_amount || amount,
+  currency: orderData.order_currency || currency,
 });
 } catch (err) {
   console.error('Server error:', err);
