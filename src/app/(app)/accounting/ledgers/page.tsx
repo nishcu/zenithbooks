@@ -1,5 +1,8 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
+import { doc } from 'firebase/firestore';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { UpgradeRequiredAlert } from '@/components/upgrade-required-alert';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -39,6 +42,26 @@ const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime
 
 export default function LedgersPage() {
   const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">General Ledger</h1>
+        <UpgradeRequiredAlert
+          featureName="General Ledger"
+          description="Access detailed account-wise transaction history with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [fromDate, setFromDate] = useState<Date | undefined>();

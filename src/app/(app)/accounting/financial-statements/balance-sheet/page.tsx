@@ -62,6 +62,25 @@ export default function BalanceSheetPage() {
   const { toast } = useToast();
   const { journalVouchers } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Balance Sheet</h1>
+        <UpgradeRequiredAlert
+          featureName="Balance Sheet"
+          description="Generate comprehensive balance sheets and financial statements with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   const [isMismatchDialogOpen, setIsMismatchDialogOpen] = useState(false);
   const reportRef = useRef(null);
   const [date, setDate] = useState<Date | undefined>(new Date());

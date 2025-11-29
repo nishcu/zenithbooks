@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Card,
   CardContent,
@@ -18,6 +23,27 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 
 export default function Form16() {
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // Show upgrade alert for freemium users
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Form 16</h1>
+        <UpgradeRequiredAlert
+          featureName="Form 16 Generator"
+          description="Generate Form 16 certificates for your employees with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   const printRef = useRef(null);
   const reportRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
