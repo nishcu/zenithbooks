@@ -47,9 +47,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { applyExcelFormatting } from "@/lib/export-utils";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lock } from "lucide-react";
 
 interface BulkInvoiceRow {
   customerName: string;
