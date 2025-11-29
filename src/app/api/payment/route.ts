@@ -48,7 +48,18 @@ export async function POST(request: NextRequest) {
 
     // Determine if we should use production environment
     // Production keys typically don't start with 'TEST_' or 'CFTEST_'
-    const isProductionKey = appId && !appId.startsWith('TEST_') && !appId.startsWith('CFTEST_');
+    // IMPORTANT: APP_ID and SECRET_KEY must be from the SAME Cashfree project/environment
+    const isAppIdTest = appId && (appId.startsWith('TEST_') || appId.startsWith('CFTEST_'));
+    const isSecretKeyTest = secretKey && (secretKey.startsWith('TEST_') || secretKey.startsWith('CFTEST_'));
+    const isProductionKey = appId && !isAppIdTest;
+    
+    // Warn if keys appear to be from different environments
+    if (hasValidKeys && isAppIdTest !== isSecretKeyTest) {
+      console.warn('⚠️ WARNING: APP_ID and SECRET_KEY appear to be from different environments!');
+      console.warn('APP_ID is', isAppIdTest ? 'TEST' : 'PRODUCTION');
+      console.warn('SECRET_KEY is', isSecretKeyTest ? 'TEST' : 'PRODUCTION');
+      console.warn('Both keys must be from the same Cashfree project/environment.');
+    }
     
     if (!hasValidKeys) {
       console.error('❌ Cashfree environment variables not properly set:', {
@@ -82,6 +93,9 @@ export async function POST(request: NextRequest) {
     Cashfree.XClientId = appId;
     Cashfree.XClientSecret = secretKey;
     // Use PRODUCTION environment if production keys are detected, otherwise TEST
+    // CRITICAL: Environment must match your keys
+    // TEST → Use Sandbox keys (starts with TEST_ or CFTEST_)
+    // PRODUCTION → Use Live keys (does not start with TEST_)
     Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
     
     console.log('Initializing Cashfree with:', {
@@ -90,6 +104,10 @@ export async function POST(request: NextRequest) {
       secretKeyLength: secretKey?.length || 0,
       appIdPrefix: appId ? appId.substring(0, 10) + '...' : 'MISSING',
       isProductionKey: isProductionKey,
+      isAppIdTest: isAppIdTest,
+      isSecretKeyTest: isSecretKeyTest,
+      apiVersion: '2022-09-01',
+      warning: isAppIdTest !== isSecretKeyTest ? 'Keys may be from different environments!' : undefined,
     });
 
     // Create Cashfree order
@@ -121,9 +139,11 @@ export async function POST(request: NextRequest) {
         order_currency: orderData.order_currency,
         customer_id: orderData.customer_details.customer_id,
         environment: Cashfree.XEnvironment,
+        apiVersion: '2022-09-01', // Cashfree required API version
       });
       
-      const order = await Cashfree.PGCreateOrder('2023-08-01', orderData);
+      // Cashfree requires API version 2022-09-01
+      const order = await Cashfree.PGCreateOrder('2022-09-01', orderData);
 
       if (!order || !order.data) {
         throw new Error('Invalid response from Cashfree API - no order data received');

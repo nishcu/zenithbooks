@@ -43,41 +43,32 @@ export async function POST(request: NextRequest) {
         demoMode: true,
       });
     }
-    
-    if (!appId || !secretKey) {
-      console.log('Demo mode: Missing Cashfree credentials for verification');
-      // Return demo mode response
-      if (userId) {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-          subscriptionStatus: 'active',
-          subscriptionPlan: planId,
-          lastPaymentDate: serverTimestamp(),
-          demoPaymentId: paymentId || `demo_${Date.now()}`,
-          demoOrderId: orderId || `demo_order_${Date.now()}`,
-          paymentAmount: amount,
-        });
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Demo payment verified successfully',
-        paymentId: paymentId || `demo_${Date.now()}`,
-        demoMode: true,
-      });
-    }
 
     // Determine if we should use production environment
-    const isProductionKey = appId && !appId.startsWith('TEST_') && !appId.startsWith('CFTEST_');
+    // IMPORTANT: APP_ID and SECRET_KEY must be from the SAME Cashfree project/environment
+    const isAppIdTest = appId && (appId.startsWith('TEST_') || appId.startsWith('CFTEST_'));
+    const isSecretKeyTest = secretKey && (secretKey.startsWith('TEST_') || secretKey.startsWith('CFTEST_'));
+    const isProductionKey = appId && !isAppIdTest;
+    
+    // Warn if keys appear to be from different environments
+    if (isAppIdTest !== isSecretKeyTest) {
+      console.warn('⚠️ WARNING: APP_ID and SECRET_KEY appear to be from different environments!');
+      console.warn('APP_ID is', isAppIdTest ? 'TEST' : 'PRODUCTION');
+      console.warn('SECRET_KEY is', isSecretKeyTest ? 'TEST' : 'PRODUCTION');
+    }
     
     Cashfree.XClientId = appId;
     Cashfree.XClientSecret = secretKey;
     // Use PRODUCTION environment if production keys are detected, otherwise TEST
+    // CRITICAL: Environment must match your keys
+    // TEST → Use Sandbox keys (starts with TEST_ or CFTEST_)
+    // PRODUCTION → Use Live keys (does not start with TEST_)
     Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
 
     // Verify payment using Cashfree order status API
     try {
-      const orderDetails = await Cashfree.PGFetchOrder('2023-08-01', orderId);
+      // Cashfree requires API version 2022-09-01
+      const orderDetails = await Cashfree.PGFetchOrder('2022-09-01', orderId);
 
       // Check if payment was successful
       if (orderDetails.data.order_status !== 'PAID') {
