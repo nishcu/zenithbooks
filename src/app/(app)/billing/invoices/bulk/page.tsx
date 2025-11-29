@@ -88,17 +88,15 @@ export default function BulkInvoicePage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
   
-  // Redirect freemium users or show upgrade message
+  // Show friendly upgrade message for freemium users
   useEffect(() => {
     if (user && isFreemium) {
       toast({
-        variant: "destructive",
-        title: "Bulk Invoice Feature Unavailable",
-        description: "Bulk invoice upload is available for Business and Professional plans. Please upgrade to access this feature.",
+        title: "Upgrade Required",
+        description: "Bulk invoice upload is a premium feature. Upgrade to Business or Professional plan to access it!",
       });
-      router.push('/billing/invoices');
     }
-  }, [user, isFreemium, router, toast]);
+  }, [user, isFreemium, toast]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -106,6 +104,43 @@ export default function BulkInvoicePage() {
   const [invoiceDate, setInvoiceDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [defaultTaxRate, setDefaultTaxRate] = useState<number>(18);
   const [startingInvoiceNumber, setStartingInvoiceNumber] = useState<string>("");
+
+  // Show upgrade alert if freemium user
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <div className="flex items-center gap-4">
+          <Link href="/billing/invoices">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Bulk Invoice Upload</h1>
+        </div>
+        
+        <Alert className="border-primary bg-primary/5">
+          <AlertCircle className="h-4 w-4 text-primary" />
+          <AlertTitle className="text-lg font-semibold">Upgrade Required</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="mb-4">
+              Bulk invoice upload is a premium feature available for <strong>Business</strong> and <strong>Professional</strong> plans.
+            </p>
+            <p className="mb-4">
+              With a paid plan, you can upload multiple invoices at once using Excel/CSV files, saving you time and effort.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={() => router.push('/pricing')} className="bg-primary hover:bg-primary/90">
+                View Pricing Plans
+              </Button>
+              <Button variant="outline" onClick={() => router.push('/billing/invoices')}>
+                Back to Invoices
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
