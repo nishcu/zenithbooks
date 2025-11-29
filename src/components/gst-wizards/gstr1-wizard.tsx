@@ -87,7 +87,6 @@ export default function Gstr1Wizard() {
   }
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [user] = useAuthState(auth);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const { journalVouchers } = useContext(AccountingContext)!;
