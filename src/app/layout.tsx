@@ -57,7 +57,13 @@ export default function RootLayout({
         {/* Cashfree SDK - Load before interactive to ensure it's available */}
         <Script
           src="https://sdk.cashfree.com/js/v3/cashfree.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
+          onLoad={() => {
+            console.log('✅ Cashfree SDK script loaded');
+          }}
+          onError={() => {
+            console.error('❌ Failed to load Cashfree SDK script');
+          }}
         />
         <ClientOnly>
           <ThemeProvider

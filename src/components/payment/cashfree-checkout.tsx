@@ -134,14 +134,31 @@ export function CashfreeCheckout({
 
       // Wait for Cashfree SDK to be fully loaded and initialized
       // Check that window.Cashfree exists AND checkout is a function
+      // Also verify the script tag exists in the DOM
+      console.log('Checking for Cashfree SDK...');
+      console.log('window.Cashfree exists:', !!window.Cashfree);
+      console.log('window.Cashfree type:', typeof window.Cashfree);
+      
+      // Check if script tag exists
+      const scriptTag = document.querySelector('script[src*="cashfree"]');
+      console.log('Cashfree script tag in DOM:', !!scriptTag);
+      
       let retries = 0;
-      const maxRetries = 50; // 5 seconds max wait (50 * 100ms)
+      const maxRetries = 100; // 10 seconds max wait (100 * 100ms)
       
       while (retries < maxRetries) {
         if (window.Cashfree && typeof window.Cashfree.checkout === 'function') {
           console.log('✅ Cashfree SDK is fully ready');
           break;
         }
+        
+        // Log progress every 2 seconds
+        if (retries % 20 === 0 && retries > 0) {
+          console.log(`⏳ Still waiting for Cashfree SDK... (${retries * 100}ms elapsed)`);
+          console.log('window.Cashfree:', window.Cashfree);
+          console.log('typeof window.Cashfree:', typeof window.Cashfree);
+        }
+        
         await new Promise(resolve => setTimeout(resolve, 100));
         retries++;
       }
@@ -149,10 +166,14 @@ export function CashfreeCheckout({
       // Verify SDK is fully ready
       if (!window.Cashfree || typeof window.Cashfree.checkout !== 'function') {
         console.error('❌ Cashfree SDK checkout method not available after waiting');
+        console.error('Final check - window.Cashfree:', window.Cashfree);
+        console.error('Final check - typeof window.Cashfree:', typeof window.Cashfree);
+        console.error('Script tag exists:', !!document.querySelector('script[src*="cashfree"]'));
+        
         toast({
           variant: 'destructive',
           title: 'Payment Gateway Error',
-          description: 'Payment gateway is not ready. Please refresh the page and try again.',
+          description: 'Payment gateway script failed to load. Please refresh the page and try again.',
         });
         onFailure?.();
         return;
