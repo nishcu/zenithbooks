@@ -134,14 +134,24 @@ export function CashfreeCheckout({
 
       // Wait for Cashfree SDK to be fully loaded and initialized
       // Check that window.Cashfree exists AND checkout is a function
-      // Also verify the script tag exists in the DOM
+      // Also verify the script tag exists in the DOM and check for CSP errors
       console.log('Checking for Cashfree SDK...');
       console.log('window.Cashfree exists:', !!window.Cashfree);
       console.log('window.Cashfree type:', typeof window.Cashfree);
       
-      // Check if script tag exists
-      const scriptTag = document.querySelector('script[src*="cashfree"]');
+      // Check if script tag exists and if it loaded successfully
+      const scriptTag = document.querySelector('script[src*="cashfree"]') as HTMLScriptElement;
       console.log('Cashfree script tag in DOM:', !!scriptTag);
+      if (scriptTag) {
+        console.log('Script src:', scriptTag.src);
+        console.log('Script async:', scriptTag.async);
+        console.log('Script defer:', scriptTag.defer);
+      }
+      
+      // Check browser console for CSP violations
+      // CSP violations would show in console as: "Refused to load script..."
+      console.log('💡 Tip: Check browser console for CSP violation errors');
+      console.log('💡 Look for: "Refused to load script" or "Content Security Policy" errors');
       
       let retries = 0;
       const maxRetries = 100; // 10 seconds max wait (100 * 100ms)

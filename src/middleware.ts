@@ -14,9 +14,18 @@ export function middleware(request: NextRequest) {
   // Note: X-Frame-Options removed - CSP frame-src handles iframe policy
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // CSP: Ensure Cashfree SDK can load
+  // Next.js Script component needs 'unsafe-inline' for dynamically injected scripts
+  // Also allow 'unsafe-eval' for SDK initialization
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; frame-src 'self' https://sdk.cashfree.com; connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com;"
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://vercel.live; " + // Added vercel.live for Next.js
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; " +
+    "frame-src 'self' https://sdk.cashfree.com; " +
+    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com;"
   );
 
   // Rate limiting for API routes
