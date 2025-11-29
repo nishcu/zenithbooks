@@ -1,11 +1,15 @@
-
 "use client";
 
+// React imports
 import { useState, useContext, useMemo } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
+
+// Firebase imports - consolidated in one block
 import { auth, db } from "@/lib/firebase";
 import { doc, collection, query, where } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData, useCollection } from "react-firebase-hooks/firestore";
+
+// Component imports
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Table,
