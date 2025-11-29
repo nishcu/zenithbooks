@@ -170,12 +170,13 @@ if (!orderData.order_id || !orderData.payment_session_id) {
   );
 }
 
-// SUCCESS
+// SUCCESS - Include mode so frontend knows if it's TEST or LIVE
 return NextResponse.json({
   orderId: orderData.order_id,
   paymentSessionId: orderData.payment_session_id,
   amount: orderData.order_amount || amount,
   currency: orderData.order_currency || currency,
+  mode: isLive ? 'LIVE' : 'TEST', // Pass mode to frontend
 });
 } catch (err) {
   console.error('Server error:', err);
