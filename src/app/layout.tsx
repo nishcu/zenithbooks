@@ -54,11 +54,8 @@ export default function RootLayout({
           fontSourceCodePro.variable
         )}
       >
-        {/* Cashfree SDK - Load after interactive (better for App Router) */}
-        <Script
-          src="https://sdk.cashfree.com/js/v3/cashfree.js"
-          strategy="afterInteractive"
-        />
+        {/* Cashfree SDK - Loaded dynamically in checkout component for CSP safety */}
+        {/* Script removed from here - using dynamic loader instead */}
         <ClientOnly>
           <ThemeProvider
             attribute="class"

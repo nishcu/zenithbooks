@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
     "img-src 'self' data: https:; " +
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; " +
     "frame-src 'self' https://sdk.cashfree.com; " +
-    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com;"
+    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com https://sdk.cashfree.com;"
   );
 
   // Rate limiting for API routes

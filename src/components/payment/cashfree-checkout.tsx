@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { loadCashfree } from '@/lib/cashfree';
 
 interface CashfreeCheckoutProps {
   amount: number;
@@ -255,14 +256,9 @@ export function CashfreeCheckout({
       });
 
       try {
-        // Verify Cashfree function is available
-        if (!window.Cashfree || typeof window.Cashfree !== 'function') {
-          throw new Error('Cashfree SDK is not available');
-        }
-
-        // Cashfree SDK v3: Call window.Cashfree directly with options
-        // This is different from v2 where you'd call window.Cashfree.checkout()
-        window.Cashfree(checkoutOptions);
+        // Cashfree SDK v3: Call Cashfree directly with options
+        // window.Cashfree IS the function - no .checkout() method in v3
+        Cashfree(checkoutOptions);
         
         console.log('✅ Cashfree checkout initiated successfully');
         // Payment will redirect or show modal - Cashfree SDK handles it
