@@ -186,23 +186,31 @@ export function CashfreeCheckout({
       }
 
       // Cashfree SDK v3 API pattern:
-      // 1. new Cashfree({ paymentSessionId: "..." }) - MUST pass object with paymentSessionId key
-      // 2. await cashfree.checkout() - launches checkout
-      // Note: Mode is automatically determined from paymentSessionId
+      // 1. window.Cashfree({ mode: "production" | "sandbox" }) - factory function (NOT constructor)
+      // 2. cashfree.checkout({ paymentSessionId: "..." }) - launches checkout
+      // Note: Determine mode from API response
+      
+      // Determine mode from API response (LIVE = production, TEST = sandbox)
+      const mode = data.mode === 'LIVE' ? 'production' : 'sandbox';
+      console.log('Initializing Cashfree SDK with mode:', mode);
       
       try {
-        // Step 1: Create Cashfree instance with options object
-        // MUST pass object: { paymentSessionId: "..." }
-        // NOT: new Cashfree(paymentSessionId)
-        // NOT: new Cashfree({ payment_session_id })
-        const cashfree = new window.Cashfree({
+        // Step 1: Initialize Cashfree SDK with mode
+        // window.Cashfree is a factory function, NOT a constructor
+        // DO NOT use: new Cashfree()
+        // DO use: window.Cashfree({ mode: "production" })
+        const cashfreeSDK = await loadCashfree();
+        const cashfree = cashfreeSDK({
+          mode: mode,
+        });
+        console.log('✅ Cashfree SDK initialized');
+        
+        // Step 2: Launch checkout with paymentSessionId
+        // checkout() method receives { paymentSessionId: "..." }
+        console.log('Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
+        const result = await cashfree.checkout({
           paymentSessionId: paymentSessionId,
         });
-        console.log('✅ Cashfree instance created');
-        
-        // Step 2: Launch checkout (returns a promise)
-        console.log('Launching Cashfree checkout...');
-        const result = await cashfree.checkout();
         
         console.log('✅ Cashfree checkout completed:', result);
         // Checkout will redirect - don't reset loading state as user is being redirected
