@@ -54,10 +54,10 @@ export default function RootLayout({
           fontSourceCodePro.variable
         )}
       >
-        {/* Cashfree SDK - Load directly to avoid CORS issues */}
+        {/* Cashfree SDK - Load before interactive to ensure it's available */}
         <Script
           src="https://sdk.cashfree.com/js/v3/cashfree.js"
-          strategy="lazyOnload"
+          strategy="beforeInteractive"
         />
         <ClientOnly>
           <ThemeProvider

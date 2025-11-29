@@ -155,9 +155,6 @@ export function CashfreeCheckout({
 
       console.log('✅ Cashfree SDK is available');
 
-      // Initialize Cashfree
-      const cashfree = new window.Cashfree();
-
       // Determine mode from API response
       // API returns mode: 'LIVE' or 'TEST' based on Cashfree keys
       // IMPORTANT: Mode must match the environment that created the paymentSessionId
@@ -174,19 +171,17 @@ export function CashfreeCheckout({
         return;
       }
 
-      // Build checkout options - Cashfree requires returnUrl in checkout options
+      // Build checkout options - Match Cashfree SDK reference implementation
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
         mode: mode, // Must match the environment: 'LIVE' for production, 'TEST' for sandbox
         redirectTarget: "_self",
-        returnUrl: `${window.location.origin}/payment/success?order_id=${orderData.orderId}`,
       };
 
-      console.log('Cashfree checkout options:', {
+      console.log('Creating Cashfree checkout with options:', {
         paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 30) + '...',
         mode: checkoutOptions.mode,
         redirectTarget: checkoutOptions.redirectTarget,
-        returnUrl: checkoutOptions.returnUrl,
       });
 
       try {
@@ -195,49 +190,12 @@ export function CashfreeCheckout({
           throw new Error('Cashfree is not available after script loading');
         }
 
-        console.log('Creating Cashfree checkout with options:', {
-          paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 40) + '...',
-          mode: checkoutOptions.mode,
-          redirectTarget: checkoutOptions.redirectTarget,
-        });
-
-        cashfree.checkout(checkoutOptions).then((result: any) => {
-          if (result.error) {
-            console.error('Cashfree checkout error:', result.error);
-            console.error('Error details:', {
-              error: result.error,
-              errorMessage: result.error?.message,
-              errorCode: result.error?.code,
-              fullResult: result,
-            });
-            
-            let errorMessage = 'Payment initialization failed.';
-            if (result.error?.message) {
-              errorMessage = result.error.message;
-            } else if (typeof result.error === 'string') {
-              errorMessage = result.error;
-            }
-            
-            toast({
-              variant: 'destructive',
-              title: 'Payment Failed',
-              description: errorMessage,
-            });
-            onFailure?.();
-          } else {
-            console.log('✅ Cashfree checkout initiated successfully');
-            console.log('Checkout result:', result);
-            // Payment will redirect or show modal
-          }
-        }).catch((error: any) => {
-          console.error('Cashfree checkout promise rejection:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Payment Error',
-            description: error?.message || 'Failed to initialize payment. Please try again.',
-          });
-          onFailure?.();
-        });
+        // Call checkout directly - Cashfree SDK handles it internally
+        // Reference implementation shows calling window.Cashfree.checkout() directly
+        window.Cashfree.checkout(checkoutOptions);
+        
+        console.log('✅ Cashfree checkout initiated successfully');
+        // Payment will redirect or show modal - no need to handle promise
 
       } catch (cashfreeError) {
         console.error('Cashfree initialization error:', cashfreeError);
