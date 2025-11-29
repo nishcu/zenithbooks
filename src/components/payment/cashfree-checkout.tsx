@@ -258,10 +258,12 @@ export function CashfreeCheckout({
       try {
         // Cashfree SDK v3: Call Cashfree directly with options
         // window.Cashfree IS the function - no .checkout() method in v3
+        // Use the loaded Cashfree function
         Cashfree(checkoutOptions);
         
         console.log('✅ Cashfree checkout initiated successfully');
         // Payment will redirect or show modal - Cashfree SDK handles it
+        setIsLoading(false); // SDK handles redirect, but reset loading state
 
       } catch (cashfreeError) {
         console.error('Cashfree initialization error:', cashfreeError);
