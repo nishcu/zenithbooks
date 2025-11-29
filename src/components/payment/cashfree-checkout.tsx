@@ -164,72 +164,57 @@ export function CashfreeCheckout({
         onFailure?.();
         return;
       }
-      
-      // Determine mode from API response
-      // API returns mode: 'LIVE' or 'TEST' based on Cashfree keys
-      // IMPORTANT: Mode must match the environment that created the paymentSessionId
-      const mode = orderData.mode;
-      
-      if (!mode) {
-        console.error('Mode not provided in API response, cannot proceed with checkout');
+
+      // Verify paymentSessionId exists
+      if (!orderData.paymentSessionId) {
+        console.error('❌ Payment session ID not provided');
         toast({
           variant: 'destructive',
           title: 'Payment Error',
-          description: 'Payment configuration error. Please try again.',
+          description: 'Payment session ID is missing. Please try again.',
         });
         setIsLoading(false);
         onFailure?.();
         return;
       }
 
-      // Cashfree SDK v3 API pattern:
-      // 1. window.Cashfree.init({ mode: 'production' | 'sandbox' })
-      // 2. window.Cashfree.checkout({ paymentSessionId, redirectTarget })
+      // Cashfree SDK v3 API pattern (no init() needed):
+      // 1. new Cashfree(paymentSessionId) - creates instance
+      // 2. await cashfree.checkout({ redirectTarget }) - launches checkout
+      // Note: Mode is automatically determined from paymentSessionId
       
-      const modeValue = mode === 'LIVE' ? 'production' : 'sandbox';
-      
-      console.log('Initializing Cashfree SDK with mode:', modeValue);
+      console.log('Creating Cashfree checkout instance with paymentSessionId:', orderData.paymentSessionId.substring(0, 40) + '...');
       
       try {
-        // Step 1: Initialize Cashfree SDK with mode
-        if (typeof window.Cashfree.init !== 'function') {
-          throw new Error('Cashfree.init method not available');
-        }
+        // Step 1: Create Cashfree instance with paymentSessionId
+        // In v3, mode is automatically determined from the paymentSessionId
+        const cashfree = new window.Cashfree(orderData.paymentSessionId);
+        console.log('✅ Cashfree instance created');
         
-        window.Cashfree.init({ mode: modeValue });
-        console.log('✅ Cashfree SDK initialized with mode:', modeValue);
-        
-        // Step 2: Verify checkout method exists
-        if (typeof window.Cashfree.checkout !== 'function') {
-          throw new Error('Cashfree.checkout method not available');
-        }
-        
-        console.log('Opening Cashfree checkout with paymentSessionId:', orderData.paymentSessionId.substring(0, 40) + '...');
-        
-        // Step 3: Launch checkout
-        window.Cashfree.checkout({
-          paymentSessionId: orderData.paymentSessionId,
+        // Step 2: Launch checkout (returns a promise)
+        console.log('Launching Cashfree checkout...');
+        const result = await cashfree.checkout({
           redirectTarget: '_self',
         });
         
-        console.log('✅ Cashfree checkout initiated successfully');
+        console.log('✅ Cashfree checkout completed:', result);
         // Checkout will redirect - don't reset loading state as user is being redirected
 
       } catch (cashfreeError) {
         console.error('❌ Cashfree checkout error:', cashfreeError);
 
-        let errorMessage = 'Failed to initialize payment gateway.';
-        let errorTitle = 'Payment Gateway Error';
+        let errorMessage = 'Failed to process payment. Please try again.';
+        let errorTitle = 'Payment Error';
 
         if (cashfreeError instanceof Error) {
-          if (cashfreeError.message.includes('Invalid') || cashfreeError.message.includes('not available')) {
-            errorTitle = 'Invalid Configuration';
-            errorMessage = 'The Cashfree configuration is invalid. Please check your setup.';
+          if (cashfreeError.message.includes('Invalid') || cashfreeError.message.includes('session')) {
+            errorTitle = 'Invalid Payment Session';
+            errorMessage = 'The payment session is invalid or expired. Please try again.';
           } else if (cashfreeError.message.includes('Network')) {
             errorTitle = 'Network Error';
             errorMessage = 'Network connectivity issue. Please check your internet connection.';
           } else {
-            errorMessage = cashfreeError.message;
+            errorMessage = cashfreeError.message || errorMessage;
           }
         }
 
