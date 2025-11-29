@@ -93,14 +93,14 @@ export default function VouchersPage() {
       </div>
     );
   }
-    const accountingContext = useContext(AccountingContext);
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [dialogType, setDialogType] = useState<'receipt' | 'payment'>('receipt');
-    const [transactionType, setTransactionType] = useState<string>("on_account");
-    const [selectedAccount, setSelectedAccount] = useState<string>("");
-    const [date, setDate] = useState<Date | undefined>(new Date());
-    const { toast } = useToast();
-    const [user] = useAuthState(auth);
+
+  const accountingContext = useContext(AccountingContext);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<'receipt' | 'payment'>('receipt');
+  const [transactionType, setTransactionType] = useState<string>("on_account");
+  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const { toast } = useToast();
 
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
