@@ -66,9 +66,11 @@ export function CashfreeCheckout({
           customerDetails: {
             customer_id: userId,
             customer_email: userEmail || '',
-            customer_phone: '', // Can be added later if needed
+            customer_phone: '9999999999', // Default phone - update with user phone if available
             customer_name: userName || '',
           },
+          userEmail: userEmail, // Pass as fallback
+          userName: userName,   // Pass as fallback
           orderMeta: {
             return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
             notify_url: `${window.location.origin}/api/payment/webhook`,
