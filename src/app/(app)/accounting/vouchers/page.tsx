@@ -4,8 +4,8 @@
 import { useState, useContext, useMemo } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc } from "firebase/firestore";
-import { useDocumentData } from "react-firebase-hooks/firestore";
+import { doc, collection, query, where } from "firebase/firestore";
+import { useDocumentData, useCollection } from "react-firebase-hooks/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Table,
@@ -69,10 +69,6 @@ import { Separator } from "@/components/ui/separator";
 import { AccountingContext } from "@/context/accounting-context";
 import { Badge } from "@/components/ui/badge";
 import { allAccounts } from "@/lib/accounts";
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, where } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
-import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 
 
