@@ -56,18 +56,36 @@ export async function POST(request: NextRequest) {
       console.warn('SECRET_KEY is', isSecretKeyTest ? 'TEST' : 'PRODUCTION');
     }
     
-    Cashfree.XClientId = appId;
-    Cashfree.XClientSecret = secretKey;
-    // Use PRODUCTION environment if production keys are detected, otherwise TEST
-    // CRITICAL: Environment must match your keys
-    // TEST → Use Sandbox keys (starts with TEST_ or CFTEST_)
-    // PRODUCTION → Use Live keys (does not start with TEST_)
-    Cashfree.XEnvironment = isProductionKey ? 'PRODUCTION' : 'TEST';
+    // Determine Cashfree API base URL based on environment
+    const cashfreeBaseUrl = isProductionKey 
+      ? 'https://api.cashfree.com/pg' 
+      : 'https://sandbox.cashfree.com/pg';
 
     // Verify payment using Cashfree order status API
     try {
-      // Cashfree requires API version 2022-09-01
-      const orderDetails = await Cashfree.PGFetchOrder('2022-09-01', orderId);
+      // Make direct API call to Cashfree with proper headers
+      const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'x-client-id': appId!,
+          'x-client-secret': secretKey!,
+          'x-api-version': '2022-09-01',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!cashfreeResponse.ok) {
+        const errorData = await cashfreeResponse.json().catch(() => ({}));
+        throw {
+          response: {
+            status: cashfreeResponse.status,
+            data: errorData,
+          },
+          message: errorData.message || `Cashfree API returned ${cashfreeResponse.status}`,
+        };
+      }
+
+      const orderDetails = await cashfreeResponse.json();
 
       // Check if payment was successful
       if (orderDetails.data.order_status !== 'PAID') {
