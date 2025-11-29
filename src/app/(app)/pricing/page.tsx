@@ -31,7 +31,8 @@ const initialTiers = [
     priceAnnual: 0,
     description: "For individuals and small businesses just getting started with billing.",
     features: [
-      { text: "Up to 20 Invoices/Purchases per month", included: true },
+      { text: "Unlimited Invoices & Purchases", included: true },
+      { text: "Unlimited Items & Parties Management", included: true },
       { text: "Customer & Vendor Management", included: true },
       { text: "Basic Billing Reports", included: true },
       { text: "Financial Statements", included: false },

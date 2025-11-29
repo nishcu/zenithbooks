@@ -62,33 +62,33 @@ const allMenuItems = [
   {
     label: "Billing",
     icon: Receipt,
-    roles: ['business', 'professional'],
+    roles: ['freemium', 'business', 'professional'],
     subItems: [
-      { href: "/billing/invoices", label: "Invoices", icon: Receipt, roles: ['business', 'professional'] },
-      { href: "/billing/sales-orders", label: "Sales Orders", icon: ShoppingBag, roles: ['business', 'professional'] },
-      { href: "/billing/credit-notes", label: "Credit Notes", icon: FilePlus, roles: ['business', 'professional'] },
-      { href: "/billing/debit-notes", label: "Debit Notes", icon: FileMinus, roles: ['business', 'professional'] },
+      { href: "/billing/invoices", label: "Invoices", icon: Receipt, roles: ['freemium', 'business', 'professional'] },
+      { href: "/billing/sales-orders", label: "Sales Orders", icon: ShoppingBag, roles: ['freemium', 'business', 'professional'] },
+      { href: "/billing/credit-notes", label: "Credit Notes", icon: FilePlus, roles: ['freemium', 'business', 'professional'] },
+      { href: "/billing/debit-notes", label: "Debit Notes", icon: FileMinus, roles: ['freemium', 'business', 'professional'] },
     ],
   },
   {
     label: "Purchases",
     icon: ShoppingCart,
-    roles: ['business', 'professional'],
+    roles: ['freemium', 'business', 'professional'],
     subItems: [
-        { href: "/purchases", label: "Purchase Bills", icon: ShoppingCart, roles: ['business', 'professional'] },
-        { href: "/purchases/purchase-orders", label: "Purchase Orders", icon: ShoppingCart, roles: ['business', 'professional'] },
+        { href: "/purchases", label: "Purchase Bills", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
+        { href: "/purchases/purchase-orders", label: "Purchase Orders", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
     ],
   },
-  { href: "/parties", label: "Parties", icon: Users, roles: ['business', 'professional'] },
+  { href: "/parties", label: "Parties", icon: Users, roles: ['freemium', 'business', 'professional'] },
   {
     label: "Items",
     icon: Warehouse,
-    roles: ['business', 'professional'],
+    roles: ['freemium', 'business', 'professional'],
     subItems: [
-        { href: "/items", label: "Stock Items", icon: Warehouse, roles: ['business', 'professional'] },
-        { href: "/items/stock-groups", label: "Stock Groups", icon: Boxes, roles: ['business', 'professional'] },
-        { href: "/items/units", label: "Units of Measure", icon: Weight, roles: ['business', 'professional'] },
-        { href: "/items/godowns", label: "Godowns / Locations", icon: Building, roles: ['business', 'professional'] },
+        { href: "/items", label: "Stock Items", icon: Warehouse, roles: ['freemium', 'business', 'professional'] },
+        { href: "/items/stock-groups", label: "Stock Groups", icon: Boxes, roles: ['freemium', 'business', 'professional'] },
+        { href: "/items/units", label: "Units of Measure", icon: Weight, roles: ['freemium', 'business', 'professional'] },
+        { href: "/items/godowns", label: "Godowns / Locations", icon: Building, roles: ['freemium', 'business', 'professional'] },
     ]
   },
   {
