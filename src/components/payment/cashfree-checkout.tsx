@@ -177,74 +177,42 @@ export function CashfreeCheckout({
         return;
       }
 
-      // Build checkout options for Cashfree SDK v3
-      // In v3, window.Cashfree is the function you call directly
-      const checkoutOptions = {
-        paymentSessionId: orderData.paymentSessionId,
-        mode: mode, // Must match the environment: 'LIVE' for production, 'TEST' for sandbox
-        redirectTarget: "_self",
-        onSuccess: (data: any) => {
-          console.log('✅ Cashfree payment success:', data);
-          // Payment successful - Cashfree will redirect, but we can also handle it here
-          if (onSuccess) {
-            onSuccess(data.payment_id || data.order_id || 'payment_success');
-          }
-        },
-        onFailure: (error: any) => {
-          console.error('❌ Cashfree payment failed:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Payment Failed',
-            description: error?.message || 'Payment could not be processed. Please try again.',
-          });
-          onFailure?.();
-        },
-      };
-
-      console.log('Initializing Cashfree checkout (v3 API):', {
-        paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 30) + '...',
-        mode: checkoutOptions.mode,
-        redirectTarget: checkoutOptions.redirectTarget,
-      });
-
+      // Cashfree SDK v3 API:
+      // 1. First initialize with mode: const cashfree = Cashfree({ mode: "sandbox" })
+      // 2. Then call checkout: cashfree.checkout({ paymentSessionId: "..." })
+      
+      const modeValue = mode === 'LIVE' ? 'production' : 'sandbox';
+      
+      console.log('Initializing Cashfree SDK with mode:', modeValue);
+      
       try {
-        // Cashfree SDK v3: Call Cashfree directly with options
-        // window.Cashfree IS the function - no .checkout() method in v3
-        // Use the loaded Cashfree function
-        console.log('Calling Cashfree with options:', {
-          paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 40) + '...',
-          mode: checkoutOptions.mode,
-          redirectTarget: checkoutOptions.redirectTarget,
+        // Step 1: Initialize Cashfree SDK with mode
+        const cashfree = Cashfree({
+          mode: modeValue, // 'sandbox' or 'production'
         });
         
-        const result = Cashfree(checkoutOptions);
-        console.log('Cashfree function returned:', result);
+        console.log('Cashfree SDK initialized:', cashfree);
         
-        // Cashfree might return a promise or immediately show the checkout
-        if (result && typeof result.then === 'function') {
-          // If it returns a promise, handle it
-          result
-            .then((data: any) => {
-              console.log('✅ Cashfree checkout promise resolved:', data);
-            })
-            .catch((error: any) => {
-              console.error('❌ Cashfree checkout promise rejected:', error);
-              toast({
-                variant: 'destructive',
-                title: 'Payment Failed',
-                description: error?.message || 'Payment could not be initialized. Please try again.',
-              });
-              onFailure?.();
-            });
-        } else {
-          console.log('✅ Cashfree checkout initiated (no promise returned)');
+        // Step 2: Verify checkout method exists
+        if (!cashfree || typeof cashfree.checkout !== 'function') {
+          throw new Error('Cashfree checkout method not available');
         }
         
-        // Don't reset loading state immediately - wait a bit to see if checkout opens
-        // If checkout opens, user will be redirected or modal will show
+        console.log('Opening Cashfree checkout with paymentSessionId:', orderData.paymentSessionId.substring(0, 40) + '...');
+        
+        // Step 3: Call checkout method with paymentSessionId
+        cashfree.checkout({
+          paymentSessionId: orderData.paymentSessionId,
+          redirectTarget: "_self",
+        });
+        
+        console.log('✅ Cashfree checkout opened successfully');
+        // Checkout should now redirect or show modal
+        
+        // Don't reset loading immediately - allow redirect to happen
         setTimeout(() => {
           setIsLoading(false);
-        }, 1000);
+        }, 2000);
 
       } catch (cashfreeError) {
         console.error('Cashfree initialization error:', cashfreeError);
