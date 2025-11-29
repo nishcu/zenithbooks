@@ -152,6 +152,13 @@ export default function InvoicesPage() {
   const [isQuickInvoiceOpen, setIsQuickInvoiceOpen] = useState(false);
 
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
+  
+  // Get user subscription plan - default to freemium if not set
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+  const canUseBulkInvoice = !isFreemium; // Bulk invoice restricted from freemium
 
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);

@@ -33,8 +33,11 @@ const initialTiers = [
     features: [
       { text: "Unlimited Invoices & Purchases", included: true },
       { text: "Unlimited Items & Parties Management", included: true },
+      { text: "Voice to Invoice", included: true },
+      { text: "Rapid Invoice Entry", included: true },
       { text: "Customer & Vendor Management", included: true },
       { text: "Basic Billing Reports", included: true },
+      { text: "Bulk Invoice Upload", included: false },
       { text: "Financial Statements", included: false },
       { text: "GST & TDS Compliance Tools", included: false },
       { text: "Admin Panel / Client Management", included: false },
