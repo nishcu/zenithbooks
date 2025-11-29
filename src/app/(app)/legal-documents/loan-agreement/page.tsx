@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -360,7 +360,7 @@ export default function LoanAgreementPage() {
           </CardContent>
           <CardFooter>
                         {pricing && pricing.agreements?.find(s => s.id === 'loan_agreement')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                                 amount={pricing.agreements.find(s => s.id === 'loan_agreement')?.price || 0}
                 planId="loan_agreement_certification"
                 planName="Loan Agreement Professional Certification"

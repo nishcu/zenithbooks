@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRoleSimulator } from "@/context/role-simulator-context";
 import { Badge } from "@/components/ui/badge";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 
@@ -235,7 +235,7 @@ export default function PricingPage() {
                   ) : (
                     // Paid plans
                     user ? (
-                      <RazorpayCheckout
+                      <CashfreeCheckout
                         amount={billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual}
                         planId={tier.id}
                         planName={tier.name}

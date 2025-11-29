@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
@@ -207,7 +207,7 @@ export default function TurnoverCertificatePage() {
               title: "Payment Required",
               description: `This service costs ₹${price}. Please complete the payment to proceed.`,
           });
-          // Payment will be handled by the RazorpayCheckout component
+          // Payment will be handled by the CashfreeCheckout component
       }
   }
 
@@ -318,7 +318,7 @@ export default function TurnoverCertificatePage() {
                             whatsappMessage={whatsappMessage}
                         />
                         {pricing && pricing.ca_certs?.find(s => s.id === 'turnover')?.price > 0 ? (
-                           <RazorpayCheckout
+                           <CashfreeCheckout
                                amount={pricing.ca_certs.find(s => s.id === 'turnover')?.price || 0}
                                planId="turnover_cert"
                                planName="Turnover Certificate"

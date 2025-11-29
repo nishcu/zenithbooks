@@ -31,7 +31,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -370,7 +370,7 @@ export default function FoundersAgreementPage() {
           </CardContent>
           <CardFooter>
             {pricing && pricing.founder_startup?.find(s => s.id === 'founders_agreement')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                 amount={pricing.founder_startup.find(s => s.id === 'founders_agreement')?.price || 0}
                 planId="founders_agreement_certification"
                 planName="Founders' Agreement Professional Certification"

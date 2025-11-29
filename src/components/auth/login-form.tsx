@@ -231,10 +231,10 @@ export function LoginForm() {
                             <FormItem>
                                 <div className="flex items-center">
                                     <FormLabel htmlFor="password">Password</FormLabel>
-                                    <Button
-                                        variant="link"
-                                        type="button"
-                                        onClick={() => setIsForgotPasswordOpen(true)}
+                                    <Button 
+                                        variant="link" 
+                                        type="button" 
+                                        onClick={() => setIsForgotPasswordOpen(true)} 
                                         className="ml-auto inline-block text-sm underline"
                                         aria-label="Forgot password"
                                     >
@@ -242,12 +242,12 @@ export function LoginForm() {
                                     </Button>
                                 </div>
                                 <FormControl>
-                                <Input
+                                <Input 
                                     id="password"
-                                    type="password"
+                                    type="password" 
                                     aria-label="Password"
                                     aria-required="true"
-                                    {...field}
+                                    {...field} 
                                 />
                                 </FormControl>
                                 <FormMessage />

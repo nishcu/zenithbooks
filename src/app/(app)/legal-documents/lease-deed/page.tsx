@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -369,7 +369,7 @@ export default function LeaseDeedPage() {
           </CardContent>
           <CardFooter>
                         {pricing && pricing.registration_deeds?.find(s => s.id === 'lease_deed')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                                 amount={pricing.registration_deeds.find(s => s.id === 'lease_deed')?.price || 0}
                 planId="lease_deed_certification"
                 planName="Lease Deed Professional Certification"

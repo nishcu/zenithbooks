@@ -36,7 +36,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
@@ -168,7 +168,7 @@ export default function NoticesPage() {
                 </CardContent>
                 <CardFooter className="flex-col items-start gap-4">
                     {servicePrice > 0 ? (
-                        <RazorpayCheckout
+                        <CashfreeCheckout
                             amount={servicePrice}
                             planId={`notice_reply_${form.watch("noticeType").toLowerCase()}`}
                             planName={`Notice Reply - ${selectedService?.name || 'Professional Consultation'}`}

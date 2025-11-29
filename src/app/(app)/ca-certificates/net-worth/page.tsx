@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
@@ -528,7 +528,7 @@ export default function NetWorthCertificatePage() {
                              })()}
 
                              {pricing && pricing.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 ? (
-                                <RazorpayCheckout
+                                <CashfreeCheckout
                                     amount={pricing.ca_certs.find(s => s.id === 'net_worth')?.price || 0}
                                     planId="net_worth_cert"
                                     planName="Net Worth Certificate"

@@ -20,7 +20,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
@@ -292,7 +292,7 @@ export default function CapitalContributionCertificatePage() {
                             whatsappMessage={whatsappMessage}
                         />
                         {pricing && pricing.ca_certs?.find(s => s.id === 'capital_contribution')?.price > 0 ? (
-                            <RazorpayCheckout
+                            <CashfreeCheckout
                                 amount={pricing.ca_certs.find(s => s.id === 'capital_contribution')?.price || 0}
                                 planId="capital_contribution_cert"
                                 planName="Capital Contribution Certificate"

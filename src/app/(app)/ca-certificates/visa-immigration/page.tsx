@@ -21,7 +21,7 @@ import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
@@ -428,7 +428,7 @@ export default function VisaImmigrationCertificatePage() {
                                 whatsappMessage={whatsappMessage}
                              />
                              {pricing && pricing.ca_certs?.find(s => s.id === 'visa_immigration')?.price > 0 ? (
-                                <RazorpayCheckout
+                                <CashfreeCheckout
                                     amount={pricing.ca_certs.find(s => s.id === 'visa_immigration')?.price || 0}
                                     planId="visa_immigration_cert"
                                     planName="Visa & Immigration Financials"

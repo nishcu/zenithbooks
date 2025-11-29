@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -273,7 +273,7 @@ export default function VendorAgreementPage() {
           </CardContent>
           <CardFooter>
                         {pricing && pricing.agreements?.find(s => s.id === 'vendor_agreement')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                                 amount={pricing.agreements.find(s => s.id === 'vendor_agreement')?.price || 0}
                 planId="vendor_agreement_certification"
                 planName="Vendor Agreement Professional Certification"

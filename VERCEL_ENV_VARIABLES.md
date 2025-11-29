@@ -75,9 +75,9 @@ This document lists all the environment variables that need to be configured in 
 
 ---
 
-### 4. `RAZORPAY_KEY_ID` ⚠️ **REQUIRED for Payments**
+### 4. `CASHFREE_APP_ID` ⚠️ **REQUIRED for Payments**
 
-**Purpose**: Razorpay API Key ID for payment processing
+**Purpose**: Cashfree Application ID for payment processing
 
 **Used For**:
 - Payment gateway integration
@@ -85,43 +85,44 @@ This document lists all the environment variables that need to be configured in 
 - Processing subscriptions and one-time payments
 
 **How to Get**:
-1. Visit [Razorpay Dashboard](https://dashboard.razorpay.com/)
-2. Go to Settings → API Keys
-3. Generate Test API Key (for testing) or Live API Key (for production)
-4. Copy the "Key ID"
+1. Visit [Cashfree Dashboard](https://merchant.cashfree.com/)
+2. Go to Developers → API Keys
+3. Create a new application or use existing one
+4. Copy the "App ID"
 
 **How to Add in Vercel**:
 1. Go to your Vercel dashboard: https://vercel.com/dashboard
 2. Select your project: `zenithbooks`
 3. Go to **Settings** → **Environment Variables**
 4. Click **Add New**
-5. Name: `RAZORPAY_KEY_ID`
-6. Value: Paste your Razorpay Key ID (starts with `rzp_test_` or `rzp_live_`)
+5. Name: `CASHFREE_APP_ID`
+6. Value: Paste your Cashfree App ID
 7. Select environments: **Production**, **Preview**, and **Development**
 8. Click **Save**
 
-### 5. `RAZORPAY_KEY_SECRET` ⚠️ **REQUIRED for Payments**
+### 5. `CASHFREE_SECRET_KEY` ⚠️ **REQUIRED for Payments**
 
-**Purpose**: Razorpay API Key Secret for server-side payment verification
+**Purpose**: Cashfree Secret Key for server-side payment verification
 
 **Used For**:
 - Verifying payment signatures
 - Creating payment orders server-side
 - Handling webhooks
+- Order status verification
 
 **How to Get**:
-1. Visit [Razorpay Dashboard](https://dashboard.razorpay.com/)
-2. Go to Settings → API Keys
-3. Copy the "Key Secret" (shown only once when generated)
+1. Visit [Cashfree Dashboard](https://merchant.cashfree.com/)
+2. Go to Developers → API Keys
+3. Copy the "Secret Key" for your application
 
 **How to Add in Vercel**:
 1. Settings → Environment Variables
-2. Name: `RAZORPAY_KEY_SECRET`
-3. Value: Paste your Razorpay Key Secret
+2. Name: `CASHFREE_SECRET_KEY`
+3. Value: Paste your Cashfree Secret Key
 4. Select environments: **Production** (⚠️ Never add to Preview/Development for security)
 5. Click **Save**
 
-**Security Note**: Key Secret should only be in Production environment. Use test keys for development.
+**Security Note**: Secret Key should only be in Production environment. Use test credentials for development.
 
 ---
 

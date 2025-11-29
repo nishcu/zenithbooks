@@ -31,7 +31,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -370,7 +370,7 @@ export default function GstEngagementLetterPage() {
           </CardContent>
           <CardFooter>
                         {pricing && pricing.gst_documents?.find(s => s.id === 'gst_engagement_letter')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                                 amount={pricing.gst_documents.find(s => s.id === 'gst_engagement_letter')?.price || 0}
                 planId="gst_engagement_letter_certification"
                 planName="GST Engagement Letter Professional Certification"

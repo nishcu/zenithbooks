@@ -19,7 +19,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
@@ -291,7 +291,7 @@ export default function ForeignRemittancePage() {
                             whatsappMessage={whatsappMessage}
                         />
                         {pricing && pricing.ca_certs?.find(s => s.id === 'foreign_remittance')?.price > 0 ? (
-                            <RazorpayCheckout
+                            <CashfreeCheckout
                                 amount={pricing.ca_certs.find(s => s.id === 'foreign_remittance')?.price || 0}
                                 planId="foreign_remittance_cert"
                                 planName="Form 15CB (Foreign Remittance)"

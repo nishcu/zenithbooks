@@ -22,7 +22,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
@@ -294,7 +294,7 @@ export default function ShareholdersAgreement() {
           </CardContent>
           <CardFooter>
             {pricing && pricing.founder_startup?.find(s => s.id === 'shareholders_agreement')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                 amount={pricing.founder_startup.find(s => s.id === 'shareholders_agreement')?.price || 0}
                 planId="shareholders_agreement_certification"
                 planName="Shareholders' Agreement Professional Certification"

@@ -49,7 +49,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as TableFoot } from "@/components/ui/table";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
@@ -858,7 +858,7 @@ export default function PartnershipDeedPage() {
                     </CardContent>
                     <CardFooter>
                         {pricing && pricing.registration_deeds?.find(s => s.id === 'partnership_deed')?.price > 0 ? (
-                            <RazorpayCheckout
+                            <CashfreeCheckout
                                 amount={pricing.registration_deeds.find(s => s.id === 'partnership_deed')?.price || 0}
                                 planId="partnership_deed_certification"
                                 planName="Partnership Deed Professional Certification"

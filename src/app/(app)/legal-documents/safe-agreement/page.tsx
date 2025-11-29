@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -180,7 +180,7 @@ export default function SafeAgreement() {
           </CardContent>
           <CardFooter>
             {pricing && pricing.founder_startup?.find(s => s.id === 'safe_agreement')?.price > 0 ? (
-              <RazorpayCheckout
+              <CashfreeCheckout
                 amount={pricing.founder_startup.find(s => s.id === 'safe_agreement')?.price || 0}
                 planId="safe_agreement_certification"
                 planName="SAFE Agreement Professional Certification"

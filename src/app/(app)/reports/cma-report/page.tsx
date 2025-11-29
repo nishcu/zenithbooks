@@ -81,7 +81,7 @@ import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { getServicePricing, ServicePricing } from "@/lib/pricing-service";
 import { applyExcelFormatting } from "@/lib/export-utils";
-import { RazorpayCheckout } from "@/components/payment/razorpay-checkout";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -532,7 +532,7 @@ export default function CmaReportGeneratorPage() {
                 </CardContent>
                  <CardFooter className="flex justify-center">
                     {cmaReportPrice && cmaReportPrice > 0 ? (
-                        <RazorpayCheckout
+                        <CashfreeCheckout
                             amount={cmaReportPrice}
                             planId="cma_report_generation"
                             planName="CMA Report Generation"
