@@ -85,7 +85,27 @@ const response = await fetch(`${baseUrl}/orders`, {
   body: JSON.stringify(cashfreeBody),
 });
 
-const data = await response.json();
+const responseText = await response.text();
+let data;
+
+try {
+  data = JSON.parse(responseText);
+} catch (e) {
+  console.error('Failed to parse Cashfree response as JSON:', responseText);
+  return NextResponse.json(
+    {
+      error: 'Invalid response',
+      message: 'Cashfree returned invalid JSON response',
+      details: responseText.substring(0, 500), // First 500 chars for debugging
+    },
+    { status: 500 }
+  );
+}
+
+// Debug: Log the full response structure
+console.log('Cashfree API Response:', JSON.stringify(data, null, 2));
+console.log('Response status:', response.status);
+console.log('Response ok:', response.ok);
 
 // If Cashfree returns error
 if (!response.ok) {
@@ -93,8 +113,26 @@ if (!response.ok) {
   return NextResponse.json(
     {
       error: 'Cashfree Error',
-      message: data?.message || 'Payment creation failed',
+      message: data?.message || data?.error?.message || 'Payment creation failed',
       details: data,
+    },
+    { status: 500 }
+  );
+}
+
+// Verify response structure
+if (!data || !data.data) {
+  console.error('Invalid Cashfree response structure:', data);
+  return NextResponse.json(
+    {
+      error: 'Invalid response structure',
+      message: 'Cashfree response missing expected data field',
+      details: {
+        hasData: !!data,
+        hasDataData: !!(data && data.data),
+        responseKeys: data ? Object.keys(data) : [],
+        fullResponse: data,
+      },
     },
     { status: 500 }
   );
