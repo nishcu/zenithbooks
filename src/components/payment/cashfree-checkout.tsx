@@ -174,16 +174,19 @@ export function CashfreeCheckout({
         return;
       }
 
+      // Build checkout options - Cashfree requires returnUrl in checkout options
       const checkoutOptions = {
         paymentSessionId: orderData.paymentSessionId,
         mode: mode, // Must match the environment: 'LIVE' for production, 'TEST' for sandbox
         redirectTarget: "_self",
+        returnUrl: `${window.location.origin}/payment/success?order_id=${orderData.orderId}`,
       };
 
       console.log('Cashfree checkout options:', {
         paymentSessionId: checkoutOptions.paymentSessionId.substring(0, 30) + '...',
         mode: checkoutOptions.mode,
         redirectTarget: checkoutOptions.redirectTarget,
+        returnUrl: checkoutOptions.returnUrl,
       });
 
       try {
