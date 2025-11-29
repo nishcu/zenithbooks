@@ -169,10 +169,11 @@ if (!orderData.order_id || !orderData.payment_session_id) {
   );
 }
 
-// SUCCESS - Include mode so frontend knows if it's TEST or LIVE
+// SUCCESS - Return payment_session_id exactly as Cashfree provides it
+// Frontend will convert to paymentSessionId when passing to SDK
 return NextResponse.json({
   orderId: orderData.order_id,
-  paymentSessionId: orderData.payment_session_id,
+  payment_session_id: orderData.payment_session_id, // Keep snake_case to match backend
   amount: orderData.order_amount || amount,
   currency: orderData.order_currency || currency,
   mode: isLive ? 'LIVE' : 'TEST', // Pass mode to frontend

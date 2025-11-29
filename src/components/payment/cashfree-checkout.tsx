@@ -95,36 +95,36 @@ export function CashfreeCheckout({
         body: JSON.stringify(requestBody),
       });
 
-      const orderData = await response.json();
-      console.log('Payment order response:', orderData);
+      const data = await response.json();
+      console.log('PAYMENT API DATA:', data);
 
       if (!response.ok) {
         // Provide more specific error messages
         let errorMessage = 'Failed to create payment order';
         
         if (response.status === 400) {
-          errorMessage = orderData.message || orderData.error || 'Invalid payment request. Please check your information and try again.';
+          errorMessage = data.message || data.error || 'Invalid payment request. Please check your information and try again.';
         } else if (response.status === 401 || response.status === 403) {
           // 401/403 from our API means user auth issue
-          errorMessage = orderData.message || 'Authentication required. Please log in and try again.';
+          errorMessage = data.message || 'Authentication required. Please log in and try again.';
         } else if (response.status === 500 || response.status === 503) {
           // 500/503 means Cashfree API or server error
-          errorMessage = orderData.message || orderData.error || 'Payment gateway error. Please try again later or contact support.';
-          console.error('Payment API error details:', orderData);
+          errorMessage = data.message || data.error || 'Payment gateway error. Please try again later or contact support.';
+          console.error('Payment API error details:', data);
           
           // Log additional details for debugging
-          if (orderData.details && process.env.NODE_ENV === 'development') {
-            console.error('Cashfree API error details:', orderData.details);
+          if (data.details && process.env.NODE_ENV === 'development') {
+            console.error('Cashfree API error details:', data.details);
           }
         } else {
-          errorMessage = orderData.message || orderData.error || `Payment error (${response.status}). Please try again.`;
+          errorMessage = data.message || data.error || `Payment error (${response.status}). Please try again.`;
         }
         
         throw new Error(errorMessage);
       }
 
       // Check if this is demo mode (no real API keys configured)
-      if (orderData.demoMode === true) {
+      if (data.demoMode === true) {
         console.log('Running in demo mode - payment UI will show but transactions won\'t process');
         toast({
           title: 'Demo Mode',
@@ -135,6 +135,26 @@ export function CashfreeCheckout({
       }
 
       console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
+
+      // Extract paymentSessionId from backend response
+      // Backend returns payment_session_id (snake_case) - MUST match backend exactly
+      const paymentSessionId = data.payment_session_id;
+      
+      if (!paymentSessionId) {
+        console.error('❌ paymentSessionId missing from BACKEND');
+        console.error('Response keys:', Object.keys(data));
+        console.error('Full response:', data);
+        toast({
+          variant: 'destructive',
+          title: 'Payment Error',
+          description: 'Payment session ID is missing from server response. Please try again.',
+        });
+        setIsLoading(false);
+        onFailure?.();
+        return;
+      }
+
+      console.log('SDK LOADED - paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
 
       // Load Cashfree SDK dynamically
       try {
@@ -165,34 +185,16 @@ export function CashfreeCheckout({
         return;
       }
 
-      // Extract paymentSessionId - handle both camelCase and snake_case
-      // Backend returns snake_case (payment_session_id) but we need camelCase (paymentSessionId)
-      const paymentSessionId = orderData.paymentSessionId || orderData.payment_session_id;
-      
-      if (!paymentSessionId) {
-        console.error('❌ Payment session ID not provided. Response keys:', Object.keys(orderData));
-        console.error('Full response:', orderData);
-        toast({
-          variant: 'destructive',
-          title: 'Payment Error',
-          description: 'Payment session ID is missing. Please try again.',
-        });
-        setIsLoading(false);
-        onFailure?.();
-        return;
-      }
-
       // Cashfree SDK v3 API pattern:
-      // 1. new Cashfree({ paymentSessionId: '...' }) - creates instance with options object
-      // 2. await cashfree.checkout({ redirectTarget }) - launches checkout
+      // 1. new Cashfree({ paymentSessionId: "..." }) - MUST pass object with paymentSessionId key
+      // 2. await cashfree.checkout() - launches checkout
       // Note: Mode is automatically determined from paymentSessionId
-      
-      console.log('Creating Cashfree checkout instance with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
       
       try {
         // Step 1: Create Cashfree instance with options object
-        // In v3, the constructor takes an object with paymentSessionId property
-        // Mode is automatically determined from the paymentSessionId
+        // MUST pass object: { paymentSessionId: "..." }
+        // NOT: new Cashfree(paymentSessionId)
+        // NOT: new Cashfree({ payment_session_id })
         const cashfree = new window.Cashfree({
           paymentSessionId: paymentSessionId,
         });
@@ -200,9 +202,7 @@ export function CashfreeCheckout({
         
         // Step 2: Launch checkout (returns a promise)
         console.log('Launching Cashfree checkout...');
-        const result = await cashfree.checkout({
-          redirectTarget: '_self',
-        });
+        const result = await cashfree.checkout();
         
         console.log('✅ Cashfree checkout completed:', result);
         // Checkout will redirect - don't reset loading state as user is being redirected
