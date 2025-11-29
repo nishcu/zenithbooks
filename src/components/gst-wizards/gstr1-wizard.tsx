@@ -45,8 +45,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { AccountingContext } from "@/context/accounting-context";
-import { collection, query, where } from "firebase/firestore";
-import { useCollection } from 'react-firebase-hooks/firestore';
 
 
 const states = [
