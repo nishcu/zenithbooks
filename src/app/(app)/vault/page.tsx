@@ -340,11 +340,11 @@ export default function VaultPage() {
                             <div
                               className="h-1.5 rounded-full bg-primary transition-all"
                               style={{ width: `${categoryPercentage}%` }}
-        />
-      </div>
-    </VaultErrorBoundary>
-  );
-})}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}
