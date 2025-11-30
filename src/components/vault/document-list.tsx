@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db, storage } from "@/lib/firebase";
+import { doc, deleteDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, FileText, MoreVertical, Trash2, Edit, Eye } from "lucide-react";
+import { Download, FileText, MoreVertical, Trash2, Edit, Eye, History, Upload } from "lucide-react";
+import { DocumentVersionHistory } from "./document-version-history";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +28,8 @@ import { format } from "date-fns";
 import { formatBytes } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { DocumentEditDialog } from "./document-edit-dialog";
+import { DocumentVersionDialog } from "./document-version-dialog";
 
 interface Document {
   id: string;
@@ -45,10 +52,18 @@ interface Document {
 
 interface DocumentListProps {
   documents: Document[];
+  onRefresh?: () => void;
 }
 
-export function DocumentList({ documents }: DocumentListProps) {
+export function DocumentList({ documents, onRefresh }: DocumentListProps) {
+  const [user] = useAuthState(auth);
   const { toast } = useToast();
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [versioningDocument, setVersioningDocument] = useState<Document | null>(null);
+  const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
+  const [historyDocument, setHistoryDocument] = useState<Document | null>(null);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
 
   const handleDownload = async (document: Document) => {
     try {
@@ -93,20 +108,84 @@ export function DocumentList({ documents }: DocumentListProps) {
     window.open(latestVersion.fileUrl, '_blank');
   };
 
-  const handleDelete = async (documentId: string) => {
-    // TODO: Implement delete functionality in Phase 2
-    toast({
-      title: "Coming Soon",
-      description: "Delete functionality will be available in Phase 2.",
-    });
+  const handleDelete = async (document: Document) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User not authenticated.",
+      });
+      return;
+    }
+
+    try {
+      // Delete all versions from Storage
+      if (document.versions) {
+        const deletePromises = Object.entries(document.versions).map(async ([version, versionData]) => {
+          try {
+            // Extract storage path from fileUrl
+            // File URL format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media
+            const url = new URL(versionData.fileUrl);
+            const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+            if (pathMatch) {
+              const storagePath = decodeURIComponent(pathMatch[1]);
+              const fileRef = ref(storage, storagePath);
+              await deleteObject(fileRef);
+            }
+          } catch (error) {
+            console.error(`Error deleting version ${version} file:`, error);
+            // Continue even if file deletion fails
+          }
+        });
+        await Promise.all(deletePromises);
+      }
+
+      // Calculate total file size to update storage usage
+      const totalSize = document.versions
+        ? Object.values(document.versions).reduce((sum, v) => sum + (v.fileSize || 0), 0)
+        : document.fileSize || 0;
+
+      // Delete document from Firestore
+      const documentRef = doc(db, "vaultDocuments", document.id);
+      await deleteDoc(documentRef);
+
+      // Update storage settings
+      const settingsRef = doc(db, "vaultSettings", user.uid);
+      const settingsDoc = await getDoc(settingsRef);
+      if (settingsDoc.exists()) {
+        const currentStorageUsed = settingsDoc.data().currentStorageUsed || 0;
+        await updateDoc(settingsRef, {
+          currentStorageUsed: Math.max(0, currentStorageUsed - totalSize),
+          lastUpdated: serverTimestamp(),
+        });
+      }
+
+      toast({
+        title: "Document Deleted",
+        description: `"${document.fileName}" has been deleted successfully.`,
+      });
+
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: "Failed to delete document. Please try again.",
+      });
+    }
   };
 
-  const handleEdit = (documentId: string) => {
-    // TODO: Implement edit functionality in Phase 2
-    toast({
-      title: "Coming Soon",
-      description: "Edit functionality will be available in Phase 2.",
-    });
+  const handleEdit = (document: Document) => {
+    setEditingDocument(document);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUploadVersion = (document: Document) => {
+    setVersioningDocument(document);
+    setIsVersionDialogOpen(true);
   };
 
   if (documents.length === 0) {
@@ -151,7 +230,24 @@ export function DocumentList({ documents }: DocumentListProps) {
                   <Badge variant="secondary">{document.category}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">v{document.currentVersion}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">v{document.currentVersion}</Badge>
+                    {document.versions && Object.keys(document.versions).length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          setHistoryDocument(document);
+                          setIsHistoryDialogOpen(true);
+                        }}
+                        title="View version history"
+                      >
+                        <History className="h-3 w-3 mr-1" />
+                        History
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>{formatBytes(document.fileSize)}</TableCell>
                 <TableCell>
@@ -182,9 +278,13 @@ export function DocumentList({ documents }: DocumentListProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(document.id)}>
+                        <DropdownMenuItem onClick={() => handleUploadVersion(document)}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload New Version
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(document)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          Edit Metadata
                         </DropdownMenuItem>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -200,13 +300,13 @@ export function DocumentList({ documents }: DocumentListProps) {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Document</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{document.fileName}"? This action cannot be undone.
+                                Are you sure you want to delete "{document.fileName}"? This will delete all versions and cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(document.id)}
+                                onClick={() => handleDelete(document)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
                                 Delete
@@ -223,6 +323,33 @@ export function DocumentList({ documents }: DocumentListProps) {
           })}
         </TableBody>
       </Table>
+
+      {/* Edit Dialog */}
+      <DocumentEditDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        document={editingDocument}
+        onSave={() => {
+          if (onRefresh) onRefresh();
+        }}
+      />
+
+      {/* Version Upload Dialog */}
+      <DocumentVersionDialog
+        open={isVersionDialogOpen}
+        onOpenChange={setIsVersionDialogOpen}
+        document={versioningDocument}
+        onUploadSuccess={() => {
+          if (onRefresh) onRefresh();
+        }}
+      />
+
+      {/* Version History Dialog */}
+      <DocumentVersionHistory
+        open={isHistoryDialogOpen}
+        onOpenChange={setIsHistoryDialogOpen}
+        document={historyDocument}
+      />
     </Card>
   );
 }
