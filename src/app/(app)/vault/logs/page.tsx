@@ -501,7 +501,7 @@ export default function VaultAccessLogsPage() {
                           <Badge variant={log.action === "download" ? "default" : "secondary"}>
                             {log.action === "download" ? (
                               <>
-                                <Download className="mr-1 h-3 w-3" />
+                                <DownloadIcon className="mr-1 h-3 w-3" />
                                 Download
                               </>
                             ) : (
@@ -562,7 +562,7 @@ export default function VaultAccessLogsPage() {
                           <Badge variant={log.action === "download" ? "default" : "secondary"}>
                             {log.action === "download" ? (
                               <>
-                                <Download className="mr-1 h-3 w-3" />
+                                <DownloadIcon className="mr-1 h-3 w-3" />
                                 Downloaded
                               </>
                             ) : (
