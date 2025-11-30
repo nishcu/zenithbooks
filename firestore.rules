@@ -8,10 +8,11 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Allow all operations for testing (temporary - make more restrictive later)
-    match /{document=**} {
-      allow read, write: if true;
-    }
+    // NOTE: Production rules are now more restrictive
+    // Uncomment below only for local testing/development
+    // match /{document=**} {
+    //   allow read, write: if true;
+    // }
 
     // Users can only read and write their own user document
     match /users/{userId} {
