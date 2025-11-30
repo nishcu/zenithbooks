@@ -279,7 +279,7 @@ export function ShareCodeDialog({
                   </Button>
                 </div>
                 <div className="text-xs text-green-700 dark:text-green-300">
-                  Share this code with third parties. They can use it at /vault/access
+                  Share this code with third parties. They can use it at {typeof window !== 'undefined' ? window.location.origin : ''}/vault/access
                 </div>
               </AlertDescription>
             </Alert>
