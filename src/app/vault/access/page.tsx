@@ -187,19 +187,19 @@ export default function VaultAccessPage() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
+        <header className="text-center space-y-2">
           <h1 className="text-4xl font-bold">Document Vault Access</h1>
           <p className="text-muted-foreground">
             Enter your share code to access shared documents
           </p>
-        </div>
+        </header>
 
         {/* Code Entry (if not validated) */}
         {!validated && (
-          <Card className="max-w-md mx-auto">
+          <Card className="max-w-md mx-auto" role="main" aria-label="Share code entry form">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5" />
+                <Key className="h-5 w-5" aria-hidden="true" />
                 Enter Share Code
               </CardTitle>
               <CardDescription>
@@ -208,8 +208,8 @@ export default function VaultAccessPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
+                <Alert variant="destructive" role="alert">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   <AlertTitle>Error</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -222,26 +222,32 @@ export default function VaultAccessPage() {
                   onChange={(e) => setShareCode(e.target.value.toUpperCase())}
                   placeholder="Enter share code"
                   className="font-mono text-lg"
+                  aria-label="Enter share code"
+                  aria-describedby="shareCode-help"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleValidate();
                     }
                   }}
                 />
+                <p id="shareCode-help" className="text-xs text-muted-foreground">
+                  The share code is case-sensitive and provided by the document owner.
+                </p>
               </div>
               <Button 
                 onClick={handleValidate} 
                 disabled={validating || !shareCode.trim()}
                 className="w-full"
+                aria-label={validating ? "Validating share code" : "Access documents"}
               >
                 {validating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                     Validating...
                   </>
                 ) : (
                   <>
-                    <Key className="mr-2 h-4 w-4" />
+                    <Key className="mr-2 h-4 w-4" aria-hidden="true" />
                     Access Documents
                   </>
                 )}

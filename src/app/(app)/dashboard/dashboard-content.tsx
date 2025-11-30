@@ -28,6 +28,7 @@ import { ClientList } from "@/components/admin/client-list";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
+import { VaultStatistics } from "@/components/dashboard/vault-statistics";
 
 
 function DashboardContent() {
