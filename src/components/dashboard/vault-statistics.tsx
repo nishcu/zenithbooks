@@ -33,27 +33,44 @@ export function VaultStatistics() {
 
     // Fetch documents count and recent documents
     const documentsRef = collection(db, "vaultDocuments");
-    const documentsQuery = query(
+    
+    // Get total count
+    const countQuery = query(
+      documentsRef,
+      where("userId", "==", user.uid)
+    );
+    
+    // Get recent documents for preview
+    const recentQuery = query(
       documentsRef,
       where("userId", "==", user.uid),
       orderBy("uploadedAt", "desc"),
       firestoreLimit(5)
     );
 
-    const unsubscribeDocuments = onSnapshot(
-      documentsQuery,
+    const unsubscribeCount = onSnapshot(
+      countQuery,
+      (snapshot) => {
+        setDocumentsCount(snapshot.size);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching document count:", error);
+        setLoading(false);
+      }
+    );
+
+    const unsubscribeRecent = onSnapshot(
+      recentQuery,
       (snapshot) => {
         const docs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as VaultDocument[];
         setRecentDocuments(docs);
-        setDocumentsCount(snapshot.size);
-        setLoading(false);
       },
       (error) => {
-        console.error("Error fetching documents:", error);
-        setLoading(false);
+        console.error("Error fetching recent documents:", error);
       }
     );
 
@@ -92,7 +109,8 @@ export function VaultStatistics() {
     fetchStorage();
 
     return () => {
-      unsubscribeDocuments();
+      unsubscribeCount();
+      unsubscribeRecent();
       unsubscribeShareCodes();
     };
   }, [user]);
