@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Calendar, Filter, FileText, Key, Loader2, Search } from "lucide-react";
+import { Download as DownloadIcon, Eye, Calendar, Filter, FileText, Key, Loader2, Search, AlertTriangle } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Table,
@@ -27,8 +27,6 @@ import { PaginatedList } from "@/components/vault/paginated-list";
 import { OnboardingHint } from "@/components/vault/onboarding-hint";
 import { VaultErrorBoundary } from "@/components/vault/error-boundary";
 import { TooltipHelp } from "@/components/vault/tooltip-help";
-import { Download as DownloadIcon, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface AccessLog {
   id: string;
