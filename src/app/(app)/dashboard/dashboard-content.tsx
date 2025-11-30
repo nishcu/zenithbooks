@@ -378,8 +378,11 @@ function DashboardContent() {
           </Card>
         </div>
         <div className="space-y-8 lg:col-span-1">
-            <ShortcutGuide />
-            <ComplianceCalendar />
+          {(displayRole === 'business' || displayRole === 'professional') && (
+            <VaultStatistics />
+          )}
+          <ShortcutGuide />
+          <ComplianceCalendar />
         </div>
       </div>
       <QuickInvoiceDialog open={isQuickInvoiceOpen} onOpenChange={setIsQuickInvoiceOpen} />
