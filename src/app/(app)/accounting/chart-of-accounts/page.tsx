@@ -47,8 +47,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { collection, addDoc, query, where, orderBy } from "firebase/firestore";
-import { useCollection } from 'react-firebase-hooks/firestore';
 import { allAccounts } from "@/lib/accounts";
 
 interface Account {
@@ -109,7 +107,7 @@ export default function ChartOfAccountsPage() {
       </div>
     );
   }
-  const [user] = useAuthState(auth);
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   
@@ -118,7 +116,7 @@ export default function ChartOfAccountsPage() {
   const [userAccountsSnapshot, loading] = useCollection(userAccountsQuery);
   
   const userAccounts: Account[] = useMemo(() => 
-      userAccountsSnapshot?.docs.map(doc => {
+      userAccountsSnapshot?.docs.map((doc: any) => {
           const data = doc.data();
           return {
               id: doc.id,
@@ -236,9 +234,9 @@ export default function ChartOfAccountsPage() {
                         </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Account Name</FormLabel><FormControl><Input placeholder="e.g. Special Project Revenue" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                             <FormField control={form.control} name="name" render={({ field }: { field: any }) => ( <FormItem><FormLabel>Account Name</FormLabel><FormControl><Input placeholder="e.g. Special Project Revenue" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                             <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="type" render={({ field }) => ( <FormItem><FormLabel>Account Type</FormLabel>
+                                <FormField control={form.control} name="type" render={({ field }: { field: any }) => ( <FormItem><FormLabel>Account Type</FormLabel>
                                     <Select onValueChange={handleTypeChange} value={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a type" /></SelectTrigger></FormControl>
                                         <SelectContent position="popper" className="z-[250] max-h-64 overflow-auto">
@@ -254,7 +252,7 @@ export default function ChartOfAccountsPage() {
                                         </SelectContent>
                                     </Select>
                                 <FormMessage /></FormItem> )}/>
-                                 <FormField control={form.control} name="code" render={({ field }) => ( <FormItem><FormLabel>Account Code (Auto)</FormLabel><FormControl><Input placeholder="Auto-generated" {...field} readOnly /></FormControl><FormMessage /></FormItem> )}/>
+                                 <FormField control={form.control} name="code" render={({ field }: { field: any }) => ( <FormItem><FormLabel>Account Code (Auto)</FormLabel><FormControl><Input placeholder="Auto-generated" {...field} readOnly /></FormControl><FormMessage /></FormItem> )}/>
                             </div>
                         </div>
                         <DialogFooter>
