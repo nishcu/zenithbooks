@@ -24,12 +24,12 @@ export const TOAST_MESSAGES = {
     SUBMIT: { title: 'Submitted', description: 'Your request has been submitted successfully.' },
   },
   ERROR: {
-    LOGIN: { title: 'Login Failed', description: 'Invalid credentials. Please try again.' },
-    SIGNUP: { title: 'Sign Up Failed', description: 'An error occurred during signup. Please try again.' },
-    AUTH: { title: 'Authentication Error', description: 'You must be logged in to perform this action.' },
-    NETWORK: { title: 'Network Error', description: 'Please check your internet connection and try again.' },
-    GENERIC: { title: 'Error', description: 'An unexpected error occurred. Please try again.' },
-    VALIDATION: { title: 'Validation Error', description: 'Please check your input and try again.' },
+    LOGIN: { title: 'Unable to Sign In', description: 'The email or password you entered doesn\'t match our records. Please check and try again.' },
+    SIGNUP: { title: 'Sign Up Issue', description: 'We couldn\'t create your account. Please check your information and try again.' },
+    AUTH: { title: 'Sign In Required', description: 'Please sign in to continue.' },
+    NETWORK: { title: 'Connection Issue', description: 'Looks like there\'s a network problem. Please check your internet connection and try again.' },
+    GENERIC: { title: 'Something Went Wrong', description: 'We encountered an unexpected issue. Please try again in a moment.' },
+    VALIDATION: { title: 'Please Check Your Input', description: 'Some information needs attention. Please review and correct the highlighted fields.' },
   },
   INFO: {
     LOADING: { title: 'Loading...', description: 'Please wait while we process your request.' },

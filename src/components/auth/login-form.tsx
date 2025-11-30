@@ -114,8 +114,8 @@ export function LoginForm() {
         }
         
         toast({
-          variant: "destructive",
-          title: "Google Login Failed",
+          variant: "default",
+          title: "Couldn't Sign In with Google",
           description: errorMessage,
         });
         setIsCheckingRedirect(false);
@@ -137,8 +137,8 @@ export function LoginForm() {
       if (isAccountLocked(loginId)) {
         toast({
           variant: "destructive",
-          title: "Account Locked",
-          description: "Too many failed login attempts. Please try again later.",
+          title: "Account Temporarily Locked",
+          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
         });
         setIsEmailLoading(false);
         return;
@@ -159,16 +159,16 @@ export function LoginForm() {
       if (attemptResult.locked) {
         toast({
           variant: "destructive",
-          title: "Account Locked",
-          description: "Too many failed login attempts. Your account has been locked for 15 minutes.",
+          title: "Account Temporarily Locked",
+          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
         });
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {
           toast({
-            variant: "destructive",
-            title: "Warning",
-            description: `${attemptResult.remainingAttempts} login attempts remaining before account lockout.`,
+            variant: "default",
+            title: "Login Attempts Remaining",
+            description: `You have ${attemptResult.remainingAttempts} attempt${attemptResult.remainingAttempts === 1 ? '' : 's'} remaining before your account is temporarily locked.`,
           });
         }
       }
@@ -185,7 +185,7 @@ export function LoginForm() {
 
   async function handlePasswordReset() {
       if (!resetEmail) {
-          toast({ variant: "destructive", title: VALIDATION_MESSAGES.REQUIRED, description: "Please enter your email address." });
+          toast({ variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." });
           return;
       }
       try {

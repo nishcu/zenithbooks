@@ -31,49 +31,49 @@ export function handleError(error: unknown, context?: string): AppError {
       if (codeStr.includes("user-not-found") || errorMessage.includes("user-not-found")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: "Invalid email or password. Please check your credentials and try again.",
+          message: "We couldn't find an account with this email. Please check your email or sign up for a new account.",
         };
       } else if (codeStr.includes("wrong-password") || codeStr.includes("invalid-credential") || 
                  errorMessage.includes("wrong-password") || errorMessage.includes("invalid-credential")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: "Invalid email or password. Please enter the correct password.",
+          message: "The password you entered is incorrect. Please try again or use 'Forgot Password' to reset it.",
         };
       } else if (codeStr.includes("email-already-in-use") || errorMessage.includes("email-already-in-use")) {
         appError = {
           code: ERROR_CODES.VALIDATION_ERROR,
-          message: "This email is already registered. Please use a different email or try logging in.",
+          message: "This email is already registered! Please sign in instead, or use a different email address.",
         };
       } else if (codeStr.includes("invalid-email") || errorMessage.includes("invalid-email")) {
         appError = {
           code: ERROR_CODES.VALIDATION_ERROR,
-          message: "Please enter a valid email address.",
+          message: "Please enter a valid email address (e.g., yourname@example.com).",
         };
       } else if (codeStr.includes("weak-password") || errorMessage.includes("weak-password")) {
         appError = {
           code: ERROR_CODES.VALIDATION_ERROR,
-          message: "Password is too weak. Please use a stronger password.",
+          message: "Your password needs to be stronger. Please use at least 8 characters with a mix of letters and numbers.",
         };
       } else if (codeStr.includes("user-disabled") || errorMessage.includes("user-disabled")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: "This account has been disabled. Please contact support.",
+          message: "This account has been temporarily disabled. Please contact our support team for assistance.",
         };
       } else if (codeStr.includes("too-many-requests") || errorMessage.includes("too-many-requests")) {
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: "Too many login attempts. Please try again later.",
+          message: "Too many attempts! Please wait a few minutes before trying again.",
         };
       } else if (codeStr.includes("network-request-failed") || errorMessage.includes("network-request-failed")) {
         appError = {
           code: ERROR_CODES.NETWORK_ERROR,
-          message: "Network error. Please check your internet connection and try again.",
+          message: "Looks like there's a connection issue. Please check your internet and try again.",
         };
       } else {
         // Generic auth error - don't expose Firebase details
         appError = {
           code: ERROR_CODES.AUTH_REQUIRED,
-          message: "Invalid email or password. Please check your credentials and try again.",
+          message: "We couldn't sign you in. Please check your email and password, or try again in a moment.",
         };
       }
     }
@@ -110,13 +110,18 @@ export function handleError(error: unknown, context?: string): AppError {
 }
 
 /**
- * Show error toast notification
+ * Show error toast notification (friendly, non-destructive for user errors)
  */
 export function showErrorToast(error: unknown, context?: string) {
   const appError = handleError(error, context);
+  // Only use destructive variant for security-critical errors
+  const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED && 
+                     (appError.message.includes('disabled') || 
+                      appError.message.includes('locked'));
+  
   toast({
-    variant: "destructive",
-    title: "Error",
+    variant: isCritical ? "destructive" : "default",
+    title: isCritical ? "Security Alert" : "Oops!",
     description: appError.message,
   });
 }

@@ -110,9 +110,9 @@ export function SignupForm() {
       } catch (error: any) {
         console.error("Google Signup Error:", error);
         toast({
-          variant: "destructive",
-          title: "Google Signup Failed",
-          description: error.message || "An unknown error occurred.",
+          variant: "default",
+          title: "Couldn't Sign Up with Google",
+          description: error.message || "Something went wrong. Please try again or sign up with email.",
         });
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
@@ -132,9 +132,9 @@ export function SignupForm() {
       const passwordCheck = checkPasswordStrength(values.password);
       if (!passwordCheck.valid) {
         toast({
-          variant: "destructive",
-          title: "Weak Password",
-          description: passwordCheck.feedback.join(". "),
+          variant: "default",
+          title: "Password Needs to be Stronger",
+          description: passwordCheck.feedback.join(" ") + " Please create a stronger password to keep your account secure.",
         });
         setIsLoading(false);
         return;

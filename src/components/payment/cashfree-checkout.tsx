@@ -43,9 +43,9 @@ export function CashfreeCheckout({
       // Validate user is authenticated
       if (!userId || !userEmail) {
         toast({
-          variant: 'destructive',
-          title: 'Authentication Required',
-          description: 'Please log in to proceed with payment.',
+          variant: 'default',
+          title: 'Please Sign In',
+          description: 'You need to sign in to your account to proceed with payment.',
         });
         setIsLoading(false);
         return;
@@ -145,9 +145,9 @@ export function CashfreeCheckout({
         console.error('Response keys:', Object.keys(data));
         console.error('Full response:', data);
         toast({
-          variant: 'destructive',
-          title: 'Payment Error',
-          description: 'Payment session ID is missing from server response. Please try again.',
+          variant: 'default',
+          title: 'Payment Setup Issue',
+          description: 'We couldn\'t set up your payment session. Please refresh the page and try again.',
         });
         setIsLoading(false);
         onFailure?.();
@@ -163,9 +163,9 @@ export function CashfreeCheckout({
       } catch (error) {
         console.error('❌ Failed to load Cashfree SDK:', error);
         toast({
-          variant: 'destructive',
-          title: 'Payment Gateway Error',
-          description: 'Failed to load payment gateway. Please refresh the page and try again.',
+          variant: 'default',
+          title: 'Payment Gateway Loading',
+          description: 'The payment gateway is taking a moment to load. Please refresh the page and try again.',
         });
         setIsLoading(false);
         onFailure?.();
@@ -176,9 +176,9 @@ export function CashfreeCheckout({
       if (!window.Cashfree) {
         console.error('❌ Cashfree SDK not available on window object');
         toast({
-          variant: 'destructive',
-          title: 'Payment Gateway Error',
-          description: 'Payment gateway is not properly initialized. Please try again.',
+          variant: 'default',
+          title: 'Payment Gateway Not Ready',
+          description: 'The payment gateway needs a moment to initialize. Please wait a second and try again.',
         });
         setIsLoading(false);
         onFailure?.();
@@ -218,23 +218,23 @@ export function CashfreeCheckout({
       } catch (cashfreeError) {
         console.error('❌ Cashfree checkout error:', cashfreeError);
 
-        let errorMessage = 'Failed to process payment. Please try again.';
-        let errorTitle = 'Payment Error';
+        let errorMessage = 'We couldn\'t process your payment right now. Please try again.';
+        let errorTitle = 'Payment Issue';
 
         if (cashfreeError instanceof Error) {
           if (cashfreeError.message.includes('Invalid') || cashfreeError.message.includes('session')) {
-            errorTitle = 'Invalid Payment Session';
-            errorMessage = 'The payment session is invalid or expired. Please try again.';
+            errorTitle = 'Payment Session Expired';
+            errorMessage = 'Your payment session has expired. Please start the payment process again.';
           } else if (cashfreeError.message.includes('Network')) {
-            errorTitle = 'Network Error';
-            errorMessage = 'Network connectivity issue. Please check your internet connection.';
+            errorTitle = 'Connection Issue';
+            errorMessage = 'There seems to be a network issue. Please check your internet connection and try again.';
           } else {
             errorMessage = cashfreeError.message || errorMessage;
           }
         }
 
         toast({
-          variant: 'destructive',
+          variant: 'default',
           title: errorTitle,
           description: errorMessage,
         });
@@ -245,28 +245,30 @@ export function CashfreeCheckout({
     } catch (error) {
       console.error('Payment initialization error:', error);
 
-      let errorMessage = 'Failed to initialize payment. Please try again.';
-      let errorTitle = 'Payment Failed';
+      let errorMessage = 'We couldn\'t start your payment right now. Please try again in a moment.';
+      let errorTitle = 'Payment Setup Issue';
       
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
         
         // Set specific titles based on error type
         if (error.message.includes('Authentication required') || error.message.includes('log in')) {
-          errorTitle = 'Authentication Required';
+          errorTitle = 'Please Sign In';
+          errorMessage = 'You need to sign in to your account to proceed with payment.';
         } else if (error.message.includes('Payment gateway not configured')) {
-          errorTitle = 'Configuration Error';
-          errorMessage = 'Payment gateway is not configured. Please contact support or set up your Cashfree keys.';
+          errorTitle = 'Payment Setup Required';
+          errorMessage = 'The payment system is currently being set up. Please contact our support team for assistance.';
         } else if (error.message.includes('Failed to load Cashfree script')) {
-          errorTitle = 'Network Error';
-          errorMessage = 'Failed to load payment gateway. Please check your internet connection and try again.';
+          errorTitle = 'Loading Issue';
+          errorMessage = 'The payment gateway is taking longer than usual to load. Please check your internet connection and try again.';
         } else if (error.message.includes('temporarily unavailable')) {
-          errorTitle = 'Service Unavailable';
+          errorTitle = 'Service Temporarily Unavailable';
+          errorMessage = 'Our payment service is temporarily unavailable. Please try again in a few minutes.';
         }
       }
 
       toast({
-        variant: 'destructive',
+        variant: 'default',
         title: errorTitle,
         description: errorMessage,
       });

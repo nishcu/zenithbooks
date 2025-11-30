@@ -258,9 +258,9 @@ export default function PricingPage() {
                         }}
                         onFailure={() => {
                           toast({
-                            variant: 'destructive',
-                            title: 'Payment Failed',
-                            description: 'Payment could not be processed. Please try again.',
+                            variant: 'default',
+                            title: 'Payment Couldn\'t Be Processed',
+                            description: 'We couldn\'t complete your payment. Please check your payment details and try again.',
                           });
                         }}
                       />

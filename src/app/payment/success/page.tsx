@@ -26,15 +26,15 @@ function PaymentSuccessContent() {
     setOrderId(orderIdParam);
     setPaymentId(paymentIdParam);
 
-    if (!orderIdParam) {
-      setStatus('failed');
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Payment',
-        description: 'Order ID not found in payment response.',
-      });
-      return;
-    }
+      if (!orderIdParam) {
+        setStatus('failed');
+        toast({
+          variant: 'default',
+          title: 'Payment Information Missing',
+          description: 'We couldn\'t find your order information. Please contact support with your payment details.',
+        });
+        return;
+      }
 
     // Verify payment with backend
     const verifyPayment = async () => {
@@ -76,18 +76,18 @@ function PaymentSuccessContent() {
         } else {
           setStatus('failed');
           toast({
-            variant: 'destructive',
-            title: 'Payment Verification Failed',
-            description: data.message || 'Could not verify payment. Please contact support.',
+            variant: 'default',
+            title: 'Payment Verification Pending',
+            description: data.message || 'We\'re having trouble verifying your payment. If you were charged, please contact our support team with your order details.',
           });
         }
       } catch (error) {
         console.error('Payment verification error:', error);
         setStatus('failed');
         toast({
-          variant: 'destructive',
-          title: 'Verification Error',
-          description: 'Failed to verify payment. Please contact support.',
+          variant: 'default',
+          title: 'Verification Issue',
+          description: 'We couldn\'t verify your payment right now. If you were charged, please contact our support team with your order ID.',
         });
       }
     };
