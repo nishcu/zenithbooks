@@ -59,5 +59,32 @@ service cloud.firestore {
       allow read, update, delete: if isOwner(resource.data.userId);
       allow create: if isOwner(request.resource.data.userId);
     }
+
+    // Document Vault Collections
+    match /vaultDocuments/{documentId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+    }
+
+    match /vaultShareCodes/{shareCodeId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      // Note: Public code validation will be handled server-side via API route
+    }
+
+    match /vaultAccessLogs/{logId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if request.resource.data.userId != null;
+    }
+
+    match /vaultNotifications/{notificationId} {
+      allow read, update, delete: if isOwner(resource.data.userId);
+      allow create: if request.resource.data.userId != null;
+    }
+
+    match /vaultSettings/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create: if isOwner(userId);
+    }
   }
 }

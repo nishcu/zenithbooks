@@ -186,6 +186,7 @@ const allMenuItems = [
     ],
   },
   { href: "/import-export", label: "Import & Export", icon: Download, roles: ['business', 'professional'] },
+  { href: "/vault", label: "Document Vault", icon: Shield, roles: ['business', 'professional'] },
   {
     label: "Resources",
     icon: Info,
