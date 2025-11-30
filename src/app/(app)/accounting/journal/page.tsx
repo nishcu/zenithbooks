@@ -103,7 +103,6 @@ export default function JournalVoucherPage() {
   const { toast } = useToast();
   const [selectedVoucher, setSelectedVoucher] = useState<JournalVoucher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [user] = useAuthState(auth);
 
   // Fetch customers and vendors to resolve names
   const customersQuery = user ? query(collection(db, "customers"), where("userId", "==", user.uid)) : null;
