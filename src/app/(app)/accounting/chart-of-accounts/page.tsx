@@ -4,8 +4,8 @@
 import { useState, useMemo } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc } from "firebase/firestore";
-import { useDocumentData } from "react-firebase-hooks/firestore";
+import { doc, collection, addDoc, query, where, orderBy } from "firebase/firestore";
+import { useDocumentData, useCollection } from "react-firebase-hooks/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Table,
@@ -47,10 +47,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { allAccounts } from "@/lib/accounts";
 
 interface Account {
