@@ -30,6 +30,7 @@ import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCat
 import { formatBytes } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { TooltipHelp } from "./tooltip-help";
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -263,7 +264,10 @@ export function DocumentUploadDialog({
 
           {/* File Selection */}
           <div className="space-y-2">
-            <Label htmlFor="file">Select File</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="file">Select File</Label>
+              <TooltipHelp content="Supported formats: PDF, Images (JPG, PNG), Office documents (Word, Excel). Maximum file size: 50MB." />
+            </div>
             <div className="flex items-center gap-2">
               <Input
                 id="file"
@@ -279,14 +283,15 @@ export function DocumentUploadDialog({
                   size="icon"
                   onClick={() => setSelectedFile(null)}
                   disabled={isUploading}
+                  title="Clear selection"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
             {selectedFile && (
-              <div className="text-sm text-muted-foreground">
-                <p>File: {selectedFile.name}</p>
+              <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md">
+                <p className="font-medium">File: {selectedFile.name}</p>
                 <p>Size: {formatBytes(selectedFile.size)}</p>
               </div>
             )}
@@ -294,7 +299,10 @@ export function DocumentUploadDialog({
 
           {/* Category Selection */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="category">Category</Label>
+              <TooltipHelp content="Select the appropriate category to organize your document. You can change this later if needed." />
+            </div>
             <Select
               value={category}
               onValueChange={(value) => setCategory(value as VaultCategory)}

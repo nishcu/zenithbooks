@@ -23,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { VAULT_CATEGORIES_LIST, VaultCategory } from "@/lib/vault-constants";
+import { PaginatedList } from "@/components/vault/paginated-list";
 
 interface AccessLog {
   id: string;
@@ -393,73 +394,117 @@ export default function VaultAccessLogsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Document</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Share Code</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Accessed At</TableHead>
-                    <TableHead>IP Address</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => {
-                    const accessedDate = log.accessedAt?.toDate 
-                      ? log.accessedAt.toDate() 
-                      : new Date(log.accessedAt);
-                    const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
+            <div className="space-y-4">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Document</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Share Code</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Accessed At</TableHead>
+                      <TableHead className="hidden lg:table-cell">IP Address</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.slice(0, 50).map((log) => {
+                      const accessedDate = log.accessedAt?.toDate 
+                        ? log.accessedAt.toDate() 
+                        : new Date(log.accessedAt);
+                      const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
 
-                    return (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-medium">
-                          {log.documentName}
-                        </TableCell>
-                        <TableCell>
+                      return (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium">
+                            {log.documentName}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{log.documentCategory}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Key className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm">{shareCodeName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={log.action === "download" ? "default" : "secondary"}>
+                              {log.action === "download" ? (
+                                <>
+                                  <Download className="mr-1 h-3 w-3" />
+                                  Download
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  View
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>{format(accessedDate, "dd MMM, yyyy")}</div>
+                              <div className="text-muted-foreground">
+                                {format(accessedDate, "HH:mm:ss")}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">
+                            {log.clientIp || "—"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {filteredLogs.slice(0, 50).map((log) => {
+                  const accessedDate = log.accessedAt?.toDate 
+                    ? log.accessedAt.toDate() 
+                    : new Date(log.accessedAt);
+                  const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
+
+                  return (
+                    <Card key={log.id}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="font-medium">{log.documentName}</div>
+                        <div className="flex flex-wrap gap-2">
                           <Badge variant="outline">{log.documentCategory}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Key className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm">{shareCodeName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
                           <Badge variant={log.action === "download" ? "default" : "secondary"}>
                             {log.action === "download" ? (
                               <>
                                 <Download className="mr-1 h-3 w-3" />
-                                Download
+                                Downloaded
                               </>
                             ) : (
                               <>
                                 <Eye className="mr-1 h-3 w-3" />
-                                View
+                                Viewed
                               </>
                             )}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{format(accessedDate, "dd MMM, yyyy")}</div>
-                            <div className="text-muted-foreground">
-                              {format(accessedDate, "HH:mm:ss")}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(accessedDate, { addSuffix: true })}
-                            </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Key className="h-3 w-3" />
+                            <span>{shareCodeName}</span>
                           </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {log.clientIp || "—"}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          <div>{format(accessedDate, "dd MMM, yyyy HH:mm")}</div>
+                          {log.clientIp && (
+                            <div className="font-mono text-xs">IP: {log.clientIp}</div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           )}
         </CardContent>

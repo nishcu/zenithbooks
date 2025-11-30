@@ -15,6 +15,7 @@ import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCat
 import { formatBytes } from "@/lib/utils";
 import { DocumentUploadDialog } from "@/components/vault/document-upload-dialog";
 import { DocumentList } from "@/components/vault/document-list";
+import { DocumentListSkeleton } from "@/components/vault/document-list-skeleton";
 import { Loader2 } from "lucide-react";
 
 interface VaultDocument {
@@ -190,8 +191,16 @@ export default function VaultPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Document Vault</h1>
+            <p className="text-muted-foreground mt-1">
+              Securely store and organize your important documents
+            </p>
+          </div>
+        </div>
+        <DocumentListSkeleton />
       </div>
     );
   }
