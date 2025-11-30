@@ -93,7 +93,6 @@ export default function ProfitAndLossPage() {
   const journalVouchers: JournalVoucher[] = context?.journalVouchers ?? [];
   const reportRef = useRef<HTMLDivElement>(null);
 
-  const [user] = useAuthState(auth);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
