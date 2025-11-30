@@ -16,6 +16,8 @@ import { formatBytes } from "@/lib/utils";
 import { DocumentUploadDialog } from "@/components/vault/document-upload-dialog";
 import { DocumentList } from "@/components/vault/document-list";
 import { DocumentListSkeleton } from "@/components/vault/document-list-skeleton";
+import { OnboardingHint } from "@/components/vault/onboarding-hint";
+import { VaultErrorBoundary } from "@/components/vault/error-boundary";
 import { Loader2 } from "lucide-react";
 
 interface VaultDocument {
@@ -206,20 +208,26 @@ export default function VaultPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Document Vault</h1>
-          <p className="text-muted-foreground mt-1">
-            Securely store and organize your important documents
-          </p>
+    <VaultErrorBoundary>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Document Vault</h1>
+            <p className="text-muted-foreground mt-1">
+              Securely store and organize your important documents
+            </p>
+          </div>
+          <Button onClick={() => setIsUploadDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
         </div>
-        <Button onClick={() => setIsUploadDialogOpen(true)}>
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Document
-        </Button>
-      </div>
+
+        {/* Onboarding Hint */}
+        {documents.length === 0 && (
+          <OnboardingHint type="upload" />
+        )}
 
       {/* Search and Filter */}
       <Card>
@@ -332,11 +340,11 @@ export default function VaultPage() {
                             <div
                               className="h-1.5 rounded-full bg-primary transition-all"
                               style={{ width: `${categoryPercentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+        />
+      </div>
+    </VaultErrorBoundary>
+  );
+})}
                 </div>
               </div>
             )}

@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { ShareCodeAccessLogs } from "@/components/vault/share-code-access-logs";
+import { OnboardingHint } from "@/components/vault/onboarding-hint";
+import { VaultErrorBoundary } from "@/components/vault/error-boundary";
+import { TooltipHelp } from "@/components/vault/tooltip-help";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface ShareCode {
@@ -162,15 +165,19 @@ export default function ShareCodeManagementPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Share Code Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Create and manage share codes to allow third parties to access your documents
-          </p>
-        </div>
+    <VaultErrorBoundary>
+      <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">Share Code Management</h1>
+              <TooltipHelp content="Share codes allow third parties to access specific document categories. Each code expires after 5 days for security." />
+            </div>
+            <p className="text-muted-foreground mt-1">
+              Create and manage share codes to allow third parties to access your documents
+            </p>
+          </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
             <Link href="/vault/logs">
@@ -208,24 +215,29 @@ export default function ShareCodeManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Share Codes List */}
-      {shareCodes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Key className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center mb-4">
-              No share codes yet. Create one to start sharing documents securely.
-            </p>
-            <Button onClick={() => {
-              setEditingCode(null);
-              setIsDialogOpen(true);
-            }}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Share Code
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
+        {/* Onboarding Hint */}
+        {shareCodes.length === 0 && (
+          <OnboardingHint type="share" />
+        )}
+
+        {/* Share Codes List */}
+        {shareCodes.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Key className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center mb-4">
+                No share codes yet. Create one to start sharing documents securely.
+              </p>
+              <Button onClick={() => {
+                setEditingCode(null);
+                setIsDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Share Code
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {shareCodes.map((code) => {
             const expiryStatus = getExpiryStatus(code);
@@ -360,7 +372,8 @@ export default function ShareCodeManagementPage() {
           onOpenChange={(open) => !open && setSelectedCodeForLogs(null)}
         />
       )}
-    </div>
+      </div>
+    </VaultErrorBoundary>
   );
 }
 

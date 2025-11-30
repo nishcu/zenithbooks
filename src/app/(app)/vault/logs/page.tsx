@@ -24,6 +24,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { VAULT_CATEGORIES_LIST, VaultCategory } from "@/lib/vault-constants";
 import { PaginatedList } from "@/components/vault/paginated-list";
+import { OnboardingHint } from "@/components/vault/onboarding-hint";
+import { VaultErrorBoundary } from "@/components/vault/error-boundary";
+import { TooltipHelp } from "@/components/vault/tooltip-help";
 
 interface AccessLog {
   id: string;
@@ -225,14 +228,23 @@ export default function VaultAccessLogsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Access Logs</h1>
-        <p className="text-muted-foreground mt-1">
-          Track all document access and download activities
-        </p>
-      </div>
+    <VaultErrorBoundary>
+      <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">Access Logs</h1>
+            <TooltipHelp content="View detailed logs of all document access and downloads. Filter by date, category, share code, or action type." />
+          </div>
+          <p className="text-muted-foreground mt-1">
+            Track all document access and download activities
+          </p>
+        </div>
+
+        {/* Onboarding Hint */}
+        {logs.length === 0 && (
+          <OnboardingHint type="logs" />
+        )}
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -509,7 +521,8 @@ export default function VaultAccessLogsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </VaultErrorBoundary>
   );
 }
 
