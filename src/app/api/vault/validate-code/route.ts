@@ -19,22 +19,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting check
+    // Get client IP for rate limiting
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || 
                      request.headers.get("x-real-ip") || 
                      request.ip || 
                      "unknown";
-    
-    const rateLimitCheck = await checkRateLimit(clientIp);
-    if (!rateLimitCheck.allowed) {
-      return NextResponse.json(
-        { 
-          error: "Too many failed attempts. Please try again later.",
-          lockoutUntil: rateLimitCheck.lockoutUntil?.toISOString(),
-        },
-        { status: 429 }
-      );
-    }
 
     // Hash the provided code using SHA-256 (same as client)
     const encoder = new TextEncoder();
@@ -49,6 +38,18 @@ export async function POST(request: NextRequest) {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
+      // Invalid code - check and apply rate limiting for FAILED attempts only
+      const rateLimitCheck = await checkRateLimit(clientIp);
+      if (!rateLimitCheck.allowed) {
+        return NextResponse.json(
+          { 
+            error: "Too many failed attempts. Please try again later.",
+            lockoutUntil: rateLimitCheck.lockoutUntil?.toISOString(),
+          },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
         { error: "Invalid or expired share code." },
         { status: 404 }
@@ -64,13 +65,25 @@ export async function POST(request: NextRequest) {
       : new Date(shareCodeData.expiresAt);
     
     if (expiresAt < new Date()) {
+      // Expired code - check and apply rate limiting for FAILED attempts only
+      const rateLimitCheck = await checkRateLimit(clientIp);
+      if (!rateLimitCheck.allowed) {
+        return NextResponse.json(
+          { 
+            error: "Too many failed attempts. Please try again later.",
+            lockoutUntil: rateLimitCheck.lockoutUntil?.toISOString(),
+          },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
         { error: "Share code has expired." },
         { status: 403 }
       );
     }
 
-    // Reset rate limit on successful validation
+    // Success! Reset rate limit on successful validation
     await resetRateLimit(clientIp);
     
     // Return share code info (without sensitive data)

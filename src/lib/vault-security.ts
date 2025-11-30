@@ -13,8 +13,8 @@ interface RateLimitRecord {
 }
 
 const RATE_LIMIT_CONFIG = {
-  MAX_ATTEMPTS: 5,
-  LOCKOUT_DURATION_MS: 15 * 60 * 1000, // 15 minutes
+  MAX_ATTEMPTS: 10, // Increased from 5 to 10 failed attempts
+  LOCKOUT_DURATION_MS: 10 * 60 * 1000, // Reduced to 10 minutes (from 15)
   WINDOW_MS: 60 * 60 * 1000, // 1 hour window
 };
 
