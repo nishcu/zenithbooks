@@ -73,8 +73,15 @@ export function DocumentVersionDialog({
 
     // Validate file type
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!VAULT_FILE_LIMITS.ALLOWED_EXTENSIONS.includes(fileExtension)) {
+    if (fileExtension && !VAULT_FILE_LIMITS.ALLOWED_EXTENSIONS.includes(fileExtension)) {
       setError(`File type not supported. Allowed types: ${VAULT_FILE_LIMITS.ALLOWED_EXTENSIONS.join(', ')}`);
+      setSelectedFile(null);
+      return;
+    }
+    
+    // Also validate MIME type
+    if (!VAULT_FILE_LIMITS.ALLOWED_FILE_TYPES.includes(file.type)) {
+      setError(`File type not supported. Please select a valid document file.`);
       setSelectedFile(null);
       return;
     }
