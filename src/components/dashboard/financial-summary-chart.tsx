@@ -49,78 +49,132 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
-  const { journalVouchers } = useContext(AccountingContext)!;
+  const accountingContext = useContext(AccountingContext);
+  
+  // Handle context not being available
+  if (!accountingContext) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Summary - Last 6 Months</CardTitle>
+          <CardDescription>A look at net sales, net purchases, and cash flow.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { journalVouchers, loading } = accountingContext;
 
   const chartData = useMemo(() => {
     const data: { [key: string]: { sales: number; purchases: number; month: string; sortOrder: number } } = {};
     const today = new Date();
     const sixMonthsAgo = startOfMonth(subMonths(today, 5));
-    const currentMonth = startOfMonth(today);
+    const currentMonthStart = startOfMonth(today);
+    const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
 
     // Initialize last 6 months
     for (let i = 0; i < 6; i++) {
         const monthDate = addMonths(sixMonthsAgo, i);
-        const month = format(monthDate, 'MMM');
+        const month = format(monthDate, 'MMM yyyy');
         const yearMonth = format(monthDate, 'yyyy-MM');
         data[yearMonth] = { month, sales: 0, purchases: 0, sortOrder: i };
     }
 
-    journalVouchers.forEach(voucher => {
-        if (!voucher || !voucher.id || !voucher.date || voucher.reverses) return;
-        
-        // Parse date - handle both ISO format and 'yyyy-MM-dd' format
-        let voucherDate: Date;
-        try {
-            if (voucher.date.includes('T')) {
-                voucherDate = parseISO(voucher.date);
-            } else {
-                // Handle 'yyyy-MM-dd' format
-                const [year, month, day] = voucher.date.split('-').map(Number);
-                voucherDate = new Date(year, month - 1, day);
-            }
-        } catch (e) {
-            console.warn('Invalid date format:', voucher.date);
-            return;
-        }
-        
-        if (isNaN(voucherDate.getTime())) {
-            return;
-        }
-        
-        // Check if date is within the last 6 months range
-        const monthStart = startOfMonth(voucherDate);
-        if (monthStart < sixMonthsAgo || monthStart > currentMonth) {
-            return;
-        }
-        
-        const yearMonth = format(monthStart, 'yyyy-MM');
-        
-        if (data[yearMonth]) {
-            const isInvoice = voucher.id.startsWith("INV-") && !voucher.id.startsWith("CANCEL-");
-            const isBill = voucher.id.startsWith("BILL-") && !voucher.id.startsWith("CANCEL-");
-            const isCreditNote = voucher.id.startsWith("CN-");
-            const isDebitNote = voucher.id.startsWith("DN-");
+    // Process vouchers if available
+    if (journalVouchers && Array.isArray(journalVouchers)) {
+      journalVouchers.forEach(voucher => {
+          if (!voucher || !voucher.id || !voucher.date || voucher.reverses) return;
+          
+          // Parse date - handle both ISO format and 'yyyy-MM-dd' format
+          let voucherDate: Date;
+          try {
+              if (typeof voucher.date === 'string') {
+                  if (voucher.date.includes('T')) {
+                      voucherDate = parseISO(voucher.date);
+                  } else {
+                      // Handle 'yyyy-MM-dd' format
+                      const [year, month, day] = voucher.date.split('-').map(Number);
+                      voucherDate = new Date(year, month - 1, day);
+                  }
+              } else if (voucher.date instanceof Date) {
+                  voucherDate = voucher.date;
+              } else {
+                  // Handle Firestore Timestamp
+                  voucherDate = (voucher.date as any)?.toDate?.() || new Date(voucher.date);
+              }
+          } catch (e) {
+              console.warn('Invalid date format:', voucher.date);
+              return;
+          }
+          
+          if (isNaN(voucherDate.getTime())) {
+              return;
+          }
+          
+          // Check if date is within the last 6 months range (include current month)
+          const monthStart = startOfMonth(voucherDate);
+          if (monthStart < sixMonthsAgo || monthStart > currentMonthStart) {
+              return;
+          }
+          
+          const yearMonth = format(monthStart, 'yyyy-MM');
+          
+          if (data[yearMonth]) {
+              const isInvoice = voucher.id.startsWith("INV-") && !voucher.id.startsWith("CANCEL-");
+              const isBill = voucher.id.startsWith("BILL-") && !voucher.id.startsWith("CANCEL-");
+              const isCreditNote = voucher.id.startsWith("CN-");
+              const isDebitNote = voucher.id.startsWith("DN-");
 
-            // Use the main voucher amount, which represents the total value
-            if (isInvoice) {
-                data[yearMonth].sales += voucher.amount || 0;
-            } else if (isCreditNote) {
-                data[yearMonth].sales -= Math.abs(voucher.amount || 0);
-            } else if (isBill) {
-                data[yearMonth].purchases += voucher.amount || 0;
-            } else if (isDebitNote) {
-                data[yearMonth].purchases -= Math.abs(voucher.amount || 0);
-            }
-        }
-    });
+              // Use the main voucher amount, which represents the total value
+              const amount = Number(voucher.amount) || 0;
+              if (isInvoice) {
+                  data[yearMonth].sales += amount;
+              } else if (isCreditNote) {
+                  data[yearMonth].sales -= Math.abs(amount);
+              } else if (isBill) {
+                  data[yearMonth].purchases += amount;
+              } else if (isDebitNote) {
+                  data[yearMonth].purchases -= Math.abs(amount);
+              }
+          }
+      });
+    }
     
     // Sort by sortOrder to maintain chronological order
+    // Always return 6 months of data (even if all zeros)
     return Object.values(data)
         .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map(d => ({ month: d.month, sales: d.sales, purchases: d.purchases, net: d.sales - d.purchases }));
+        .map(d => ({ 
+          month: d.month, 
+          sales: Math.max(0, d.sales), 
+          purchases: Math.max(0, d.purchases), 
+          net: d.sales - d.purchases 
+        }));
 
   }, [journalVouchers]);
 
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Summary - Last 6 Months</CardTitle>
+          <CardDescription>A look at net sales, net purchases, and cash flow.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -129,7 +183,7 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
         <CardDescription>A look at net sales, net purchases, and cash flow.</CardDescription>
       </CardHeader>
       <CardContent>
-        {chartData.length > 0 ? (
+        {chartData && chartData.length > 0 ? (
           <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
             <ChartContainer config={chartConfig}>
               <LazyBarChart accessibilityLayer data={chartData}>
@@ -139,6 +193,7 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
+                  tick={{ fontSize: 12 }}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -153,7 +208,10 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
           </Suspense>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
-            No financial data available for the last 6 months.
+            <div className="text-center">
+              <p className="mb-2">No financial data available for the last 6 months.</p>
+              <p className="text-sm">Create invoices or purchase bills to see data here.</p>
+            </div>
           </div>
         )}
       </CardContent>
