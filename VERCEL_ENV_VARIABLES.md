@@ -40,38 +40,54 @@ This document lists all the environment variables that need to be configured in 
 
 ## Optional Environment Variables
 
-### 2. `RESEND_API_KEY` (Optional)
+### 2. `RESEND_API_KEY` ⚠️ **REQUIRED for Email**
 
 **Purpose**: Enables email sending functionality
 
-**Used For**: Email sending API route (`/api/email/send`)
+**Used For**: 
+- Email sending API route (`/api/email/send`)
+- Sharing reports and documents via email
+- Sending PDF attachments
 
-**Status**: Currently commented out in the code. If you want to enable email functionality:
-1. Uncomment the email sending code in `src/app/api/email/send/route.ts`
-2. Get a Resend API key from [resend.com](https://resend.com)
-3. Add it to Vercel environment variables
+**How to Get**:
+1. Visit [Resend.com](https://resend.com)
+2. Sign up for a free account
+3. Go to **API Keys** section
+4. Click **"Create API Key"**
+5. Copy the generated API key (starts with `re_`)
 
 **How to Add in Vercel**:
 1. Settings → Environment Variables
 2. Name: `RESEND_API_KEY`
-3. Value: Your Resend API key
-4. Save
+3. Value: Your Resend API key (starts with `re_`)
+4. Select environments: **Production**, **Preview**, **Development**
+5. Save
+
+**Status**: ✅ **Now implemented and enabled** - See `EMAIL_SETUP_GUIDE.md` for detailed setup instructions
 
 ---
 
-### 3. `EMAIL_FROM` (Optional)
+### 3. `EMAIL_FROM` ⚠️ **REQUIRED for Email**
 
 **Purpose**: Sets the "from" email address for sent emails
 
-**Default Value**: `noreply@zenithbooks.com` (if not set)
+**Default Value**: `noreply@zenithbooks.in` (if not set)
 
-**Used For**: Email sending (only if `RESEND_API_KEY` is configured)
+**Used For**: Email sending (only works if `RESEND_API_KEY` is configured)
+
+**Important**: 
+- This email must be verified in your Resend account
+- For production: Use your verified domain email (e.g., `noreply@zenithbooks.in`)
+- For testing: Use Resend test domain (e.g., `onboarding@resend.dev`)
 
 **How to Add in Vercel**:
 1. Settings → Environment Variables
 2. Name: `EMAIL_FROM`
-3. Value: `noreply@zenithbooks.com` (or your preferred email)
-4. Save
+3. Value: Your verified email address (e.g., `noreply@zenithbooks.in`)
+4. Select environments: **Production**, **Preview**, **Development**
+5. Save
+
+**Setup**: See `EMAIL_SETUP_GUIDE.md` for domain verification instructions
 
 ---
 
@@ -176,7 +192,7 @@ After adding environment variables, you need to redeploy:
 
 ⚠️ **AI Features**: Require `GEMINI_API_KEY` to work properly
 
-📧 **Email Features**: Currently disabled (code is commented out). Requires `RESEND_API_KEY` if you want to enable.
+📧 **Email Features**: ✅ **Now enabled** - Requires `RESEND_API_KEY` and `EMAIL_FROM` to work. See `EMAIL_SETUP_GUIDE.md` for setup.
 
 ---
 

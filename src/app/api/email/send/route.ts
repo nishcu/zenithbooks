@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateAndSanitize, sanitizeString } from "@/lib/security/validation";
 import { z } from "zod";
+import { Resend } from "resend";
 
 /**
- * Email sending API route
+ * Email sending API route using Resend
  * 
- * Note: This is a placeholder implementation. In production, you should:
- * 1. Use a proper email service (Resend, SendGrid, AWS SES, etc.)
- * 2. Store API keys securely in environment variables
- * 3. Implement proper error handling and logging
- * 4. Add rate limiting per user
- * 5. Validate email addresses server-side
+ * Environment Variables Required:
+ * - RESEND_API_KEY: Your Resend API key
+ * - EMAIL_FROM: Sender email address (must be verified in Resend)
  */
 
 const emailSchema = z.object({
@@ -53,47 +51,83 @@ export async function POST(request: NextRequest) {
     const sanitizedSubject = sanitizeString(subject);
     const sanitizedBody = sanitizeString(emailBody);
 
-    // TODO: Implement actual email sending
-    // Example with a service like Resend:
-    /*
-    import { Resend } from 'resend';
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    
-    const emailData = {
-      from: process.env.EMAIL_FROM || 'noreply@zenithbooks.com',
-      to: to,
-      subject: sanitizedSubject,
-      html: sanitizedBody.replace(/\n/g, '<br>'),
-    };
+    // Get Resend API key and sender email from environment
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const emailFrom = process.env.EMAIL_FROM || "noreply@zenithbooks.in";
 
-    if (attachments && attachments.length > 0) {
-      emailData.attachments = attachments.map(att => ({
-        filename: att.filename,
-        content: Buffer.from(att.content, 'base64'),
-        contentType: att.contentType,
-      }));
+    // Check if Resend is configured
+    if (!resendApiKey) {
+      console.warn("RESEND_API_KEY not configured. Email sending disabled.");
+      return NextResponse.json(
+        {
+          error: "Email service not configured",
+          message: "Email service is not configured. Please contact support or configure RESEND_API_KEY.",
+        },
+        { status: 503 }
+      );
     }
 
-    const result = await resend.emails.send(emailData);
-    */
+    // Initialize Resend
+    const resend = new Resend(resendApiKey);
 
-    // For now, simulate email sending
-    console.log("Email would be sent:", {
-      to,
+    // Convert body to HTML (preserve line breaks)
+    const htmlBody = sanitizedBody
+      .replace(/\n/g, "<br>")
+      .replace(/\r\n/g, "<br>");
+
+    // Prepare email data
+    const emailData: any = {
+      from: emailFrom,
+      to: to,
       subject: sanitizedSubject,
-      body: sanitizedBody,
-      attachments: attachments?.length || 0,
-    });
+      html: htmlBody,
+    };
 
-    // In production, replace this with actual email sending
-    // For now, return success
-    return NextResponse.json(
-      {
-        message: "Email sent successfully",
-        // In production, return actual email ID: emailId: result.id
-      },
-      { status: 200 }
-    );
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      emailData.attachments = attachments.map((att) => {
+        // Decode base64 content
+        const content = Buffer.from(att.content, "base64");
+        return {
+          filename: att.filename,
+          content: content,
+          contentType: att.contentType || "application/octet-stream",
+        };
+      });
+    }
+
+    // Send email via Resend
+    try {
+      const result = await resend.emails.send(emailData);
+
+      if (result.error) {
+        console.error("Resend API error:", result.error);
+        return NextResponse.json(
+          {
+            error: "Failed to send email",
+            message: result.error.message || "Email service error. Please try again later.",
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          message: "Email sent successfully",
+          emailId: result.data?.id,
+        },
+        { status: 200 }
+      );
+    } catch (error) {
+      console.error("Resend error:", error);
+      return NextResponse.json(
+        {
+          error: "Failed to send email",
+          message: error instanceof Error ? error.message : "Unknown error occurred",
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Email sending error:", error);
     return NextResponse.json(
