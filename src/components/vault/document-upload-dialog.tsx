@@ -315,7 +315,7 @@ export function DocumentUploadDialog({
                   {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label || "Select a category"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px] z-[110]">
                 {VAULT_CATEGORIES_LIST.map((cat) => (
                   <SelectItem 
                     key={cat.value} 
