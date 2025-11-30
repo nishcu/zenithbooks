@@ -22,7 +22,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
-import { getServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 const assetSchema = z.object({
@@ -122,6 +122,13 @@ export default function VisaImmigrationCertificatePage() {
     }).catch(error => {
       console.error('Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const { fields: immovableFields, append: appendImmovable, remove: removeImmovable } = useFieldArray({ control: form.control, name: "immovableProperties" });

@@ -21,7 +21,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
-import { getServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
@@ -118,7 +118,7 @@ export default function CapitalContributionCertificatePage() {
     }
   }, [docId, user, form, router, toast]);
 
-  // Load pricing data
+  // Load pricing data with real-time updates
   useEffect(() => {
     console.log('🔍 Loading pricing for capital contribution...');
     getServicePricing().then(pricingData => {
@@ -129,6 +129,14 @@ export default function CapitalContributionCertificatePage() {
     }).catch(error => {
       console.error('❌ Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      console.log('🔄 Real-time pricing update received:', pricingData);
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handlePreview = async () => {

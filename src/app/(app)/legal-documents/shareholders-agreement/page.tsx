@@ -23,7 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
-import { getServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 const shareholderSchema = z.object({

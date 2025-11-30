@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, Table
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
-import { getServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -334,7 +334,7 @@ export default function NetWorthCertificatePage() {
     }
   }, [docId, user, form, router, toast]);
 
-  // Load pricing data
+  // Load pricing data with real-time updates
   useEffect(() => {
     console.log('🚀 NET-WORTH PAGE: Loading pricing data...');
     getServicePricing().then(pricingData => {
@@ -344,6 +344,14 @@ export default function NetWorthCertificatePage() {
     }).catch(error => {
       console.error('❌ NET-WORTH PAGE: Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      console.log('🔄 NET-WORTH PAGE: Real-time pricing update received:', pricingData);
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Debug pricing changes

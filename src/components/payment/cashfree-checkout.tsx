@@ -151,8 +151,8 @@ export function CashfreeCheckout({
         });
         setIsLoading(false);
         onFailure?.();
-        return;
-      }
+              return;
+            }
 
       console.log('SDK LOADED - paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
 
@@ -193,7 +193,7 @@ export function CashfreeCheckout({
       // Determine mode from API response (LIVE = production, TEST = sandbox)
       const mode = data.mode === 'LIVE' ? 'production' : 'sandbox';
       console.log('Initializing Cashfree SDK with mode:', mode);
-      
+
       try {
         // Step 1: Initialize Cashfree SDK with mode
         // window.Cashfree is a factory function, NOT a constructor
@@ -210,7 +210,7 @@ export function CashfreeCheckout({
         console.log('Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
         const result = await cashfree.checkout({
           paymentSessionId: paymentSessionId,
-        });
+            });
         
         console.log('✅ Cashfree checkout completed:', result);
         // Checkout will redirect - don't reset loading state as user is being redirected

@@ -50,7 +50,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
-import { getServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 
 
@@ -429,13 +429,20 @@ export default function PartnershipDeedPage() {
     }
   }, [form, deponentId]);
 
-  // Load pricing data
+  // Load pricing data with real-time updates
   useEffect(() => {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const formData = form.watch();
