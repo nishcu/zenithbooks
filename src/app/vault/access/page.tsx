@@ -59,7 +59,18 @@ export default function VaultAccessPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Invalid share code.");
+        if (response.status === 429) {
+          // Rate limited - show friendly message with lockout time
+          const lockoutUntil = data.lockoutUntil ? new Date(data.lockoutUntil) : null;
+          if (lockoutUntil) {
+            const minutesRemaining = Math.ceil((lockoutUntil.getTime() - Date.now()) / (1000 * 60));
+            setError(`Too many failed attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`);
+          } else {
+            setError("Too many failed attempts. Please try again in 15 minutes.");
+          }
+        } else {
+          setError(data.error || "Invalid share code.");
+        }
         setValidated(false);
         return;
       }
