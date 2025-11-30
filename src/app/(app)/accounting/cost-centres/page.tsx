@@ -33,10 +33,34 @@ import { PlusCircle, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { costCentres } from "@/lib/accounts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 export default function CostCentresPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Cost Centres</h1>
+        <UpgradeRequiredAlert
+          featureName="Cost Centre Management"
+          description="Create and manage cost centres for tracking departmental or project-based finances with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   
   // In a real app, this would come from a database and have full CRUD functionality
   const [centres, setCentres] = useState(costCentres);

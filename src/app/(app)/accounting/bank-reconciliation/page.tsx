@@ -62,10 +62,11 @@ import { format, parse } from "date-fns";
 import * as XLSX from 'xlsx';
 import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where, getFirestore } from "firebase/firestore";
+import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
+import { collection, query, where, getFirestore, doc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -181,6 +182,24 @@ export default function BankReconciliationPage() {
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
+
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Bank Reconciliation</h1>
+                <UpgradeRequiredAlert
+                    featureName="Bank Reconciliation"
+                    description="Reconcile bank statements with your books of account and track unmatched transactions with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     if (!accountingContext) {
         return (

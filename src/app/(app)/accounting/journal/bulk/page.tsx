@@ -29,9 +29,10 @@ import { useContext } from "react";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollection } from "react-firebase-hooks/firestore";
+import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { formatExcelFromJson } from "@/lib/export-utils";
@@ -111,6 +112,25 @@ export default function BulkJournalEntryPage() {
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
+
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Bulk Journal Entry</h1>
+                <UpgradeRequiredAlert
+                    featureName="Bulk Journal Entry"
+                    description="Upload multiple journal entries at once using Excel/CSV files with a Business or Professional plan."
+                    backHref="/accounting/journal"
+                    backLabel="Back to Journal"
+                />
+            </div>
+        );
+    }
+
     const [file, setFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);

@@ -35,12 +35,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, query, where, doc } from "firebase/firestore";
+import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { allAccounts } from "@/lib/accounts";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 const rapidVoucherSchema = z.object({
   type: z.enum(["receipt", "payment"]),
@@ -58,6 +59,24 @@ export default function RapidVoucherEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Rapid Voucher Entry</h1>
+        <UpgradeRequiredAlert
+          featureName="Rapid Voucher Entry"
+          description="Quickly create receipt and payment vouchers with a Business or Professional plan."
+          backHref="/accounting/vouchers"
+          backLabel="Back to Vouchers"
+        />
+      </div>
+    );
+  }
   
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);

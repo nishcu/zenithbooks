@@ -16,10 +16,11 @@ import { format, startOfYear, endOfYear, parse, startOfMonth, endOfMonth } from 
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 import { applyExcelFormatting } from "@/lib/export-utils";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where } from "firebase/firestore";
+import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 // Financial year options
 const financialYears = [
@@ -33,6 +34,25 @@ export default function BooksOfAccountPage() {
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
+
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Books of Account</h1>
+                <UpgradeRequiredAlert
+                    featureName="Books of Account"
+                    description="Generate day book, cash book, and other accounting books with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
+
     const [selectedPeriod, setSelectedPeriod] = useState<"financial-year" | "custom">("financial-year");
     const [selectedFinancialYear, setSelectedFinancialYear] = useState("2024-25");
     const [fromDate, setFromDate] = useState<Date | undefined>(startOfYear(new Date()));

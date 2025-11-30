@@ -13,6 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
   Table,
   TableBody,
@@ -57,6 +62,26 @@ type BudgetEntry = {
 
 export default function BudgetsPage() {
     const { toast } = useToast();
+    const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
+
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Budgets</h1>
+                <UpgradeRequiredAlert
+                    featureName="Budget Planning"
+                    description="Create and manage budgets for your accounts with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
+
     const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
     const { loading } = useContext(AccountingContext)!;
 

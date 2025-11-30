@@ -25,6 +25,11 @@ import { allAccounts, costCentres } from "@/lib/accounts";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 
 const formatCurrency = (value: number) => {
@@ -35,6 +40,25 @@ const formatCurrency = (value: number) => {
 export default function CostCentreSummaryPage() {
     const { journalVouchers, loading } = useContext(AccountingContext)!;
     const { toast } = useToast();
+    const [user] = useAuthState(auth);
+    const userDocRef = user ? doc(db, 'users', user.uid) : null;
+    const [userData] = useDocumentData(userDocRef);
+    const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+    const isFreemium = subscriptionPlan === 'freemium';
+
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Cost Centre Summary</h1>
+                <UpgradeRequiredAlert
+                    featureName="Cost Centre Summary"
+                    description="View income and expense summaries by cost centre with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     const costCentreData = useMemo(() => {
         const summary: Record<string, { income: number, expense: number, name: string }> = {};

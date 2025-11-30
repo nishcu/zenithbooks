@@ -27,6 +27,11 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 const initialOutwardSupplies = [
     { description: "B2C Supplies", taxableValue: 12500000, cgst: 1125000, sgst: 1125000, igst: 0, cess: 0 },
@@ -53,6 +58,26 @@ const initialTaxPaid = [
 export default function Gstr9WizardPage() {
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">GSTR-9 Filing</h1>
+        <UpgradeRequiredAlert
+          featureName="GSTR-9 Filing"
+          description="File annual GSTR-9 returns with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   const [step, setStep] = useState(1);
   const [outwardSupplies, setOutwardSupplies] = useState(initialOutwardSupplies);
   const [itc, setItc] = useState(initialItc);
