@@ -256,10 +256,10 @@ const CollapsibleMenuItem = ({ item, pathname }: { item: any, pathname: string }
         <CollapsibleTrigger asChild>
           <SidebarMenuButton size="lg" className="w-full justify-between">
             <div className="flex items-center gap-2">
-              <item.icon className="h-5 w-5" />
-              <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+              <item.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span className="group-data-[collapsible=icon]:hidden text-sm sm:text-base">{item.label}</span>
             </div>
-            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[collapsible=icon]:hidden" />
+            <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 transition-transform duration-200 group-data-[collapsible=icon]:hidden" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -277,8 +277,8 @@ const CollapsibleMenuItem = ({ item, pathname }: { item: any, pathname: string }
                             className="w-full"
                           >
                             <span className="flex w-full items-center gap-2">
-                              {subItem.icon && <subItem.icon className="h-4 w-4" />}
-                              <span>{subItem.label}</span>
+                              {subItem.icon && <subItem.icon className="h-4 w-4 sm:h-5 sm:w-5" />}
+                              <span className="text-sm sm:text-base">{subItem.label}</span>
                             </span>
                           </SidebarMenuSubButton>
                         </Link>
@@ -388,12 +388,12 @@ function MainLayout({
       <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
-            <ZenithBooksLogo className="size-8 text-primary" />
+            <ZenithBooksLogo className="size-8 sm:size-10 text-primary" />
             <div className="flex flex-col">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-lg sm:text-xl font-bold">
                 <span className="font-bold">Zenith</span><span className="font-bold">Books</span>
               </h2>
-              <span className="text-xs text-sidebar-foreground/50">Beyond Books</span>
+              <span className="text-xs sm:text-sm text-sidebar-foreground/50">Beyond Books</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -406,8 +406,8 @@ function MainLayout({
                     item.href && (
                       <Link href={item.href} passHref>
                         <SidebarMenuButton size="lg" isActive={pathname === item.href}>
-                          <item.icon className="h-5 w-5" />
-                          <span>{item.label}</span>
+                          <item.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                          <span className="text-sm sm:text-base">{item.label}</span>
                         </SidebarMenuButton>
                       </Link>
                     )
@@ -454,7 +454,7 @@ function MainLayout({
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6" role="main" aria-label="Main content">
+          <main className="flex flex-1 flex-col gap-4 p-3 sm:p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6" role="main" aria-label="Main content">
             <Suspense fallback={<Loader2 className="animate-spin" aria-label="Loading content" />}>
               {children}
             </Suspense>

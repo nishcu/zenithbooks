@@ -34,7 +34,7 @@ export const MarketingCarousel = memo(function MarketingCarousel() {
         {carouselImages.map((item) => (
           <CarouselItem key={item.id}>
             <Card className="overflow-hidden">
-              <CardContent className="relative flex aspect-[2.4/1] items-center justify-center p-0">
+              <CardContent className="relative flex h-32 sm:h-48 md:h-64 lg:aspect-[2.4/1] lg:h-auto items-center justify-center p-0">
                 <Image
                   src={item.imageUrl}
                   alt={item.description}
@@ -43,9 +43,9 @@ export const MarketingCarousel = memo(function MarketingCarousel() {
                   data-ai-hint={item.imageHint}
                 />
                 <div className="absolute inset-0 bg-black/50" />
-                <div className="relative z-10 text-center text-white p-4">
-                  <h2 className="text-3xl md:text-4xl font-bold">{item.description}</h2>
-                  <p className="mt-2 text-lg">Discover the power of GSTEase</p>
+                <div className="relative z-10 text-center text-white p-2 sm:p-4">
+                  <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold">{item.description}</h2>
+                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg">Discover the power of GSTEase</p>
                 </div>
               </CardContent>
             </Card>

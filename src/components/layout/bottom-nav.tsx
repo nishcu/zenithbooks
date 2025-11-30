@@ -19,30 +19,30 @@ export function BottomNav() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-16 bg-background/95 backdrop-blur border-t shadow-lg">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-20 bg-background/95 backdrop-blur border-t shadow-lg">
       <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group",
+              "inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 dark:hover:bg-gray-800 group active:bg-gray-100 dark:active:bg-gray-900",
               pathname === item.href
                 ? "text-primary"
                 : "text-muted-foreground"
             )}
           >
-            <item.icon className="w-5 h-5 mb-1" />
-            <span className="text-xs">{item.label}</span>
+            <item.icon className="w-6 h-6 sm:w-7 sm:h-7 mb-1" />
+            <span className="text-sm font-medium leading-tight">{item.label}</span>
           </Link>
         ))}
         <button
           onClick={toggleSidebar}
           type="button"
-          className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group text-muted-foreground"
+          className="inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 dark:hover:bg-gray-800 group text-muted-foreground active:bg-gray-100 dark:active:bg-gray-900"
         >
-          <Menu className="w-5 h-5 mb-1" />
-          <span className="text-xs">Menu</span>
+          <Menu className="w-6 h-6 sm:w-7 sm:h-7 mb-1" />
+          <span className="text-sm font-medium leading-tight">Menu</span>
         </button>
       </div>
     </div>
