@@ -199,24 +199,24 @@ export function SignupForm() {
                 control={form.control}
                 name="userType"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>I am a...</FormLabel>
+                  <FormItem className="space-y-3 mb-6">
+                    <FormLabel className="text-base">I am a...</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="grid grid-cols-2 gap-4"
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
                       >
-                        <FormItem>
+                        <FormItem className="space-y-0">
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Business Owner
+                            <Label htmlFor="business" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-3 sm:p-4 min-h-[60px] text-center hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <span className="text-sm sm:text-base font-medium whitespace-nowrap">Business Owner</span>
                             </Label>
                         </FormItem>
-                         <FormItem>
+                         <FormItem className="space-y-0">
                            <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Professional
+                            <Label htmlFor="professional" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-3 sm:p-4 min-h-[60px] text-center hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <span className="text-sm sm:text-base font-medium whitespace-nowrap">Professional</span>
                             </Label>
                         </FormItem>
                       </RadioGroup>
@@ -229,8 +229,8 @@ export function SignupForm() {
                 control={form.control}
                 name="companyName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company / Firm Name</FormLabel>
+                  <FormItem className="mt-2">
+                    <FormLabel className="text-base">Company / Firm Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Acme Inc." {...field} />
                     </FormControl>
