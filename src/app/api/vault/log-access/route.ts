@@ -70,17 +70,14 @@ export async function POST(request: NextRequest) {
       lastAccessedAt: serverTimestamp(),
     });
 
-    // Create notification for document owner
-    await addDoc(collection(db, "vaultNotifications"), {
+    // Create notification for document owner (use main notifications collection)
+    const { notifyDocumentAccess } = await import("@/lib/vault-notifications");
+    await notifyDocumentAccess(
       userId,
-      type: "document_accessed",
-      title: "Document Accessed",
-      message: `${documentData.fileName} was ${action === "download" ? "downloaded" : "viewed"} via share code "${shareCodeData.codeName}".`,
-      shareCodeId,
-      documentId,
-      read: false,
-      createdAt: serverTimestamp(),
-    });
+      documentData.fileName,
+      shareCodeData.codeName,
+      action as "view" | "download"
+    );
 
     return NextResponse.json({
       success: true,

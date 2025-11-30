@@ -6,7 +6,8 @@ import { auth, db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Key, Eye, EyeOff, Trash2, Clock, Copy, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Key, Eye, EyeOff, Trash2, Clock, Copy, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareCodeDialog } from "@/components/vault/share-code-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -170,13 +171,21 @@ export default function ShareCodeManagementPage() {
             Create and manage share codes to allow third parties to access your documents
           </p>
         </div>
-        <Button onClick={() => {
-          setEditingCode(null);
-          setIsDialogOpen(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Share Code
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/vault/logs">
+              <FileText className="mr-2 h-4 w-4" />
+              View All Logs
+            </Link>
+          </Button>
+          <Button onClick={() => {
+            setEditingCode(null);
+            setIsDialogOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Share Code
+          </Button>
+        </div>
       </div>
 
       {/* Info Card */}
@@ -295,6 +304,7 @@ export default function ShareCodeManagementPage() {
                       size="sm"
                       className="flex-1"
                       onClick={() => setSelectedCodeForLogs(code.id)}
+                      title="View access logs for this code"
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       Access Logs

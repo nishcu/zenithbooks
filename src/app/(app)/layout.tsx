@@ -33,9 +33,9 @@ import {
     BookCopy, ShoppingCart, ShoppingBag, Loader2, GitCompareArrows, FileSpreadsheet, 
     Building, TrendingUp, AreaChart, ConciergeBell, LayoutDashboard, MailWarning, 
     FileSignature, Newspaper, Info, Contact, Keyboard, PieChart, Boxes, Weight, 
-    Target, UserCog, FileArchive, Ticket, 
+    Target, UserCog,     FileArchive, Ticket, 
     ArrowRightLeft, Eraser, IndianRupee, Construction, Bell, CalendarDays,
-    Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap,
+    Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap, Key,
     AlertCircle, CheckCircle, Copy, SlidersHorizontal, Settings2, BarChart3,
     ArrowRight, Upload, Download
 } from "@/components/icons";
@@ -186,7 +186,16 @@ const allMenuItems = [
     ],
   },
   { href: "/import-export", label: "Import & Export", icon: Download, roles: ['business', 'professional'] },
-  { href: "/vault", label: "Document Vault", icon: Shield, roles: ['business', 'professional'] },
+  {
+    label: "Document Vault",
+    icon: FileKey,
+    roles: ['business', 'professional'],
+    subItems: [
+      { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
+      { href: "/vault/sharing", label: "Share Codes", icon: Key, roles: ['business', 'professional'] },
+      { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
+    ],
+  },
   {
     label: "Resources",
     icon: Info,

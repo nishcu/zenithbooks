@@ -95,7 +95,7 @@ export default function VaultPage() {
     return () => unsubscribe();
   }, [user, toast]);
 
-  // Fetch storage settings
+  // Fetch storage settings and check for warnings
   useEffect(() => {
     if (!user) return;
 
@@ -105,7 +105,15 @@ export default function VaultPage() {
         const settingsDoc = await getDoc(settingsRef);
         if (settingsDoc.exists()) {
           const data = settingsDoc.data();
-          setStorageUsed(data.currentStorageUsed || 0);
+          const currentStorageUsed = data.currentStorageUsed || 0;
+          setStorageUsed(currentStorageUsed);
+          
+          // Check for storage warnings
+          const percentage = (currentStorageUsed / storageLimit) * 100;
+          if (percentage >= 80) {
+            const { notifyStorageWarning } = await import("@/lib/vault-notifications");
+            await notifyStorageWarning(user.uid, currentStorageUsed, storageLimit, percentage);
+          }
         }
       } catch (error) {
         console.error("Error fetching storage settings:", error);
@@ -113,7 +121,23 @@ export default function VaultPage() {
     };
 
     fetchStorageSettings();
-  }, [user]);
+    
+    // Check for expiring share codes
+    const checkExpiringCodes = async () => {
+      try {
+        const { checkAndNotifyExpiringCodes } = await import("@/lib/vault-notifications");
+        await checkAndNotifyExpiringCodes(user.uid);
+      } catch (error) {
+        console.error("Error checking expiring codes:", error);
+      }
+    };
+    
+    checkExpiringCodes();
+    
+    // Check every hour for expiring codes
+    const interval = setInterval(checkExpiringCodes, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user, storageLimit]);
 
   // Filter documents by category, search term, and date range
   const filteredDocuments = documents.filter((doc) => {
