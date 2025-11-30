@@ -37,7 +37,7 @@ import {
     ArrowRightLeft, Eraser, IndianRupee, Construction, Bell, CalendarDays,
     Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap, Key,
     AlertCircle, CheckCircle, Copy, SlidersHorizontal, Settings2, BarChart3,
-    ArrowRight, Upload, Download
+    ArrowRight, Upload, Download, Share2
 } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -192,7 +192,7 @@ const allMenuItems = [
     roles: ['business', 'professional'],
     subItems: [
       { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
-      { href: "/vault/sharing", label: "Share Codes", icon: Key, roles: ['business', 'professional'] },
+      { href: "/vault/sharing", label: "Share Codes", icon: Share2, roles: ['business', 'professional'] },
       { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
       { href: "/vault/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
     ],
