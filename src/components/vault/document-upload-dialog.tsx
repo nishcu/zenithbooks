@@ -305,16 +305,27 @@ export function DocumentUploadDialog({
             </div>
             <Select
               value={category}
-              onValueChange={(value) => setCategory(value as VaultCategory)}
+              onValueChange={(value) => {
+                setCategory(value as VaultCategory);
+              }}
               disabled={isUploading}
             >
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select a category" />
+              <SelectTrigger id="category" className="w-full">
+                <SelectValue placeholder="Select a category">
+                  {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label || "Select a category"}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 {VAULT_CATEGORIES_LIST.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
+                  <SelectItem 
+                    key={cat.value} 
+                    value={cat.value}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{cat.label}</span>
+                      <span className="text-xs text-muted-foreground">{cat.description}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
