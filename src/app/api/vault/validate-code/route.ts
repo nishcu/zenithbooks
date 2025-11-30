@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import { checkRateLimit, resetRateLimit } from "@/lib/vault-security";
 
 /**
  * Validate a share code and return access information
@@ -15,6 +16,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Share code is required." },
         { status: 400 }
+      );
+    }
+
+    // Rate limiting check
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || 
+                     request.headers.get("x-real-ip") || 
+                     request.ip || 
+                     "unknown";
+    
+    const rateLimitCheck = await checkRateLimit(clientIp);
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: "Too many failed attempts. Please try again later.",
+          lockoutUntil: rateLimitCheck.lockoutUntil?.toISOString(),
+        },
+        { status: 429 }
       );
     }
 
@@ -52,6 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reset rate limit on successful validation
+    await resetRateLimit(clientIp);
+    
     // Return share code info (without sensitive data)
     return NextResponse.json({
       shareCodeId: shareCodeDoc.id,

@@ -3,7 +3,7 @@
  * Helper functions for creating vault-related notifications
  */
 
-import { collection, addDoc, serverTimestamp, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { VAULT_SHARE_CODE } from "@/lib/vault-constants";
 
@@ -20,10 +20,50 @@ interface NotificationData {
 }
 
 /**
+ * Check if notification type is enabled in user preferences
+ */
+async function isNotificationEnabled(
+  userId: string,
+  type: "accessAlerts" | "expiryWarnings" | "storageWarnings"
+): Promise<boolean> {
+  try {
+    const settingsRef = doc(db, "vaultSettings", userId);
+    const settingsDoc = await getDoc(settingsRef);
+    
+    if (!settingsDoc.exists()) {
+      return true; // Default to enabled
+    }
+    
+    const preferences = settingsDoc.data().notificationPreferences || {};
+    return preferences[type] ?? true; // Default to enabled if not set
+  } catch (error) {
+    console.error("Error checking notification preferences:", error);
+    return true; // Default to enabled on error
+  }
+}
+
+/**
  * Create a notification for the document owner
  */
 export async function createVaultNotification(data: NotificationData): Promise<void> {
   try {
+    // Check if notification should be created based on preferences
+    let shouldNotify = true;
+    
+    if (data.type === "info" && data.title === "Document Accessed") {
+      shouldNotify = await isNotificationEnabled(data.userId, "accessAlerts");
+    } else if (data.type === "warning" && (data.title.includes("Expiring") || data.title.includes("Expired"))) {
+      shouldNotify = await isNotificationEnabled(data.userId, "expiryWarnings");
+    } else if (data.type === "warning" || data.type === "error") {
+      if (data.title === "Storage Warning") {
+        shouldNotify = await isNotificationEnabled(data.userId, "storageWarnings");
+      }
+    }
+    
+    if (!shouldNotify) {
+      return; // Don't create notification if disabled
+    }
+    
     await addDoc(collection(db, "notifications"), {
       ...data,
       read: data.read ?? false,

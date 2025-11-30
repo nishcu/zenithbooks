@@ -27,6 +27,8 @@ import { PaginatedList } from "@/components/vault/paginated-list";
 import { OnboardingHint } from "@/components/vault/onboarding-hint";
 import { VaultErrorBoundary } from "@/components/vault/error-boundary";
 import { TooltipHelp } from "@/components/vault/tooltip-help";
+import { Download as DownloadIcon, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AccessLog {
   id: string;
@@ -39,6 +41,8 @@ interface AccessLog {
   accessedAt: any;
   clientIp?: string;
   userAgent?: string;
+  suspicious?: boolean;
+  suspiciousReason?: string;
 }
 
 interface ShareCode {
@@ -230,7 +234,8 @@ export default function VaultAccessLogsPage() {
   return (
     <VaultErrorBoundary>
       <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header */}
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">Access Logs</h1>
@@ -240,6 +245,53 @@ export default function VaultAccessLogsPage() {
             Track all document access and download activities
           </p>
         </div>
+        {filteredLogs.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              // Export logs to CSV
+              const headers = ["Document", "Category", "Share Code", "Action", "Accessed At", "IP Address", "Suspicious"];
+              const rows = filteredLogs.map(log => {
+                const accessedDate = log.accessedAt?.toDate 
+                  ? log.accessedAt.toDate() 
+                  : new Date(log.accessedAt);
+                const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
+                
+                return [
+                  log.documentName,
+                  log.documentCategory,
+                  shareCodeName,
+                  log.action,
+                  format(accessedDate, "yyyy-MM-dd HH:mm:ss"),
+                  log.clientIp || "—",
+                  log.suspicious ? "Yes" : "No"
+                ];
+              });
+              
+              const csvContent = [
+                headers.join(","),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+              ].join("\n");
+              
+              const blob = new Blob([csvContent], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `vault-access-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              
+              toast({
+                title: "Export Started",
+                description: "Access logs exported to CSV file.",
+              });
+            }}
+          >
+            <DownloadIcon className="mr-2 h-4 w-4" />
+            Export to CSV
+          </Button>
+        )}
+      </div>
 
         {/* Onboarding Hint */}
         {logs.length === 0 && (
@@ -418,6 +470,7 @@ export default function VaultAccessLogsPage() {
                       <TableHead>Action</TableHead>
                       <TableHead>Accessed At</TableHead>
                       <TableHead className="hidden lg:table-cell">IP Address</TableHead>
+                      <TableHead className="hidden xl:table-cell">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -428,46 +481,61 @@ export default function VaultAccessLogsPage() {
                       const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
 
                       return (
-                        <TableRow key={log.id}>
-                          <TableCell className="font-medium">
+                      <TableRow key={log.id} className={log.suspicious ? "bg-destructive/5" : ""}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
                             {log.documentName}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{log.documentCategory}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Key className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm">{shareCodeName}</span>
+                            {log.suspicious && (
+                              <AlertTriangle className="h-4 w-4 text-destructive" title={log.suspiciousReason} />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{log.documentCategory}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Key className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">{shareCodeName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={log.action === "download" ? "default" : "secondary"}>
+                            {log.action === "download" ? (
+                              <>
+                                <Download className="mr-1 h-3 w-3" />
+                                Download
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="mr-1 h-3 w-3" />
+                                View
+                              </>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>{format(accessedDate, "dd MMM, yyyy")}</div>
+                            <div className="text-muted-foreground">
+                              {format(accessedDate, "HH:mm:ss")}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={log.action === "download" ? "default" : "secondary"}>
-                              {log.action === "download" ? (
-                                <>
-                                  <Download className="mr-1 h-3 w-3" />
-                                  Download
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="mr-1 h-3 w-3" />
-                                  View
-                                </>
-                              )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">
+                          {log.clientIp || "—"}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell">
+                          {log.suspicious ? (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Suspicious
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div>{format(accessedDate, "dd MMM, yyyy")}</div>
-                              <div className="text-muted-foreground">
-                                {format(accessedDate, "HH:mm:ss")}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">
-                            {log.clientIp || "—"}
-                          </TableCell>
-                        </TableRow>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Normal</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
                       );
                     })}
                   </TableBody>
@@ -483,9 +551,14 @@ export default function VaultAccessLogsPage() {
                   const shareCodeName = shareCodes.find(c => c.id === log.shareCodeId)?.codeName || "Unknown";
 
                   return (
-                    <Card key={log.id}>
+                    <Card key={log.id} className={log.suspicious ? "border-destructive/50 bg-destructive/5" : ""}>
                       <CardContent className="p-4 space-y-2">
-                        <div className="font-medium">{log.documentName}</div>
+                        <div className="font-medium flex items-center gap-2">
+                          {log.documentName}
+                          {log.suspicious && (
+                            <AlertTriangle className="h-4 w-4 text-destructive" title={log.suspiciousReason} />
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline">{log.documentCategory}</Badge>
                           <Badge variant={log.action === "download" ? "default" : "secondary"}>
@@ -510,6 +583,12 @@ export default function VaultAccessLogsPage() {
                           <div>{format(accessedDate, "dd MMM, yyyy HH:mm")}</div>
                           {log.clientIp && (
                             <div className="font-mono text-xs">IP: {log.clientIp}</div>
+                          )}
+                          {log.suspicious && log.suspiciousReason && (
+                            <div className="text-xs text-destructive font-medium flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              {log.suspiciousReason}
+                            </div>
                           )}
                         </div>
                       </CardContent>

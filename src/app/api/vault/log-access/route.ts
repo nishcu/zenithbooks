@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from "firebase/firestore";
+import { checkSuspiciousActivity } from "@/lib/vault-security";
 
 /**
  * Log document access/download for share code
@@ -46,10 +47,14 @@ export async function POST(request: NextRequest) {
     const documentData = documentDoc.data();
 
     // Get client IP (if available)
-    const clientIp = request.headers.get("x-forwarded-for") || 
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || 
                      request.headers.get("x-real-ip") || 
+                     request.ip ||
                      "unknown";
 
+    // Check for suspicious activity
+    const suspiciousCheck = await checkSuspiciousActivity(userId, shareCodeId, clientIp);
+    
     // Create access log entry
     await addDoc(collection(db, "vaultAccessLogs"), {
       userId,
@@ -61,6 +66,8 @@ export async function POST(request: NextRequest) {
       accessedAt: serverTimestamp(),
       clientIp,
       userAgent: request.headers.get("user-agent") || "unknown",
+      suspicious: suspiciousCheck.suspicious || false,
+      suspiciousReason: suspiciousCheck.reason || null,
     });
 
     // Update share code access count

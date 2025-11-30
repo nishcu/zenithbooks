@@ -194,6 +194,7 @@ const allMenuItems = [
       { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
       { href: "/vault/sharing", label: "Share Codes", icon: Key, roles: ['business', 'professional'] },
       { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/vault/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
     ],
   },
   {
