@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IndianRupee, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getServicePricing, ServicePricing } from "@/lib/pricing-service";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { formatCurrency } from "@/lib/utils";
 
 export default function RentalReceiptPage() {
@@ -22,6 +22,10 @@ export default function RentalReceiptPage() {
 
     useEffect(() => {
         getServicePricing().then(setPricing);
+
+        // Subscribe to real-time pricing updates
+        const unsubscribe = onPricingUpdate(setPricing);
+        return () => unsubscribe();
     }, []);
 
     const handleGenerate = () => {
