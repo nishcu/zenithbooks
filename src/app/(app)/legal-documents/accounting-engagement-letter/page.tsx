@@ -109,6 +109,13 @@ export default function AccountingEngagementLetterPage() {
     }).catch(error => {
       console.error('Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handlePrint = useReactToPrint({

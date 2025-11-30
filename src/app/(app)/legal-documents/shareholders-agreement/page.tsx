@@ -100,13 +100,20 @@ export default function ShareholdersAgreement() {
     }
   }, [docId, user, form, router, toast]);
 
-  // Load pricing data
+  // Load pricing data with real-time updates
   useEffect(() => {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
     });
+
+    // Subscribe to real-time pricing updates
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const { fields, append, remove } = useFieldArray({
