@@ -120,8 +120,23 @@ export default function VaultAccessPage() {
         }),
       });
 
-      // Open download
-      window.open(document.fileUrl, "_blank");
+      // Properly download the file
+      const response = await fetch(document.fileUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = document.fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast({
         title: "Download Started",

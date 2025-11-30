@@ -77,8 +77,23 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         return;
       }
 
-      // Open in new tab for download
-      window.open(latestVersion.fileUrl, '_blank');
+      // Properly download the file
+      const response = await fetch(latestVersion.fileUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = document.fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast({
         title: "Download Started",

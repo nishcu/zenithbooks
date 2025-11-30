@@ -50,9 +50,26 @@ export function DocumentVersionHistory({
 }: DocumentVersionHistoryProps) {
   const { toast } = useToast();
 
-  const handleDownload = (versionNumber: number, fileUrl: string) => {
+  const handleDownload = async (versionNumber: number, fileUrl: string, fileName: string) => {
     try {
-      window.open(fileUrl, '_blank');
+      // Properly download the file
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || `version-${versionNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       toast({
         title: "Download Started",
         description: `Version ${versionNumber} download has started.`,
@@ -141,7 +158,10 @@ export function DocumentVersionHistory({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDownload(version.version, version.fileUrl)}
+                          onClick={() => {
+                            const fileName = `${document.fileName.replace(/\.[^/.]+$/, "")}_v${version.version}${document.fileName.match(/\.[^/.]+$/)?.[0] || ".pdf"}`;
+                            handleDownload(version.version, version.fileUrl, fileName);
+                          }}
                           title="Download this version"
                         >
                           <Download className="h-4 w-4" />
