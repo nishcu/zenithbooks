@@ -21,7 +21,10 @@ import { useRoleSimulator } from "@/context/role-simulator-context";
 import { Badge } from "@/components/ui/badge";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const initialTiers = [
   {
@@ -97,6 +100,39 @@ export default function PricingPage() {
   const { simulatedRole } = useRoleSimulator();
   const isSuperAdmin = simulatedRole === 'super_admin';
   const [user] = useAuthState(auth);
+  const [userType, setUserType] = useState<string | null>(null);
+
+  // Fetch user type from Firestore
+  useEffect(() => {
+    const fetchUserType = async () => {
+      if (user) {
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            setUserType(userDoc.data().userType || 'business');
+          }
+        } catch (error) {
+          console.error("Error fetching user type:", error);
+        }
+      }
+    };
+    fetchUserType();
+  }, [user]);
+
+  // Filter tiers based on user type
+  const availableTiers = useMemo(() => {
+    if (isSuperAdmin) {
+      // Super admin sees all tiers for editing
+      return tiers;
+    }
+    if (userType === 'professional') {
+      // Professionals can ONLY subscribe to Professional Plan
+      return tiers.filter(tier => tier.id === 'professional');
+    }
+    // Business users can see all plans
+    return tiers;
+  }, [tiers, userType, isSuperAdmin]);
 
   const handleEdit = (tierId: string) => {
     setEditingTier(tierId);
@@ -137,6 +173,14 @@ export default function PricingPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">
           {isSuperAdmin ? 'Edit the pricing and features for each subscription tier.' : 'Choose the plan that\'s right for you. From simple billing to comprehensive professional tools.'}
         </p>
+        {userType === 'professional' && !isSuperAdmin && (
+          <Alert className="max-w-2xl mx-auto mt-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              As a professional user, you can only subscribe to the <strong>Professional Plan</strong>. This plan includes Client Management features required to manage multiple business clients.
+            </AlertDescription>
+          </Alert>
+        )}
          <div className="flex items-center justify-center space-x-2 mt-6">
           <Label htmlFor="billing-cycle">Monthly</Label>
           <Switch
@@ -151,8 +195,8 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-        {tiers.map((tier) => {
+      <div className={cn("grid gap-8 items-stretch", availableTiers.length === 1 ? "max-w-md mx-auto" : availableTiers.length === 2 ? "md:grid-cols-2 max-w-4xl mx-auto" : "md:grid-cols-2 lg:grid-cols-3")}>
+        {availableTiers.map((tier) => {
           const isEditing = editingTier === tier.id;
           const price = billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual;
           const priceSuffix = tier.priceMonthly > 0 ? `/${billingCycle === 'monthly' ? 'month' : 'year'}` : '';
@@ -238,32 +282,44 @@ export default function PricingPage() {
                 <div className="w-full">
                   {tier.priceMonthly === 0 ? (
                     // Free plan
-                    <Button className="w-full">{tier.cta}</Button>
+                    userType === 'professional' ? (
+                      <Button className="w-full" disabled>
+                        Not Available for Professionals
+                      </Button>
+                    ) : (
+                      <Button className="w-full">{tier.cta}</Button>
+                    )
                   ) : (
                     // Paid plans
                     user ? (
-                      <CashfreeCheckout
-                        amount={billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual}
-                        planId={tier.id}
-                        planName={tier.name}
-                        userId={user.uid}
-                        userEmail={user.email || ''}
-                        userName={user.displayName || user.email || ''}
-                        onSuccess={(paymentId) => {
-                          toast({
-                            title: 'Subscription Activated!',
-                            description: `Welcome to ${tier.name} plan. Your subscription is now active.`,
-                          });
-                          // You might want to redirect to dashboard or show success page
-                        }}
-                        onFailure={() => {
-                          toast({
-                            variant: 'default',
-                            title: 'Payment Couldn\'t Be Processed',
-                            description: 'We couldn\'t complete your payment. Please check your payment details and try again.',
-                          });
-                        }}
-                      />
+                      userType === 'professional' && tier.id === 'business' ? (
+                        <Button className="w-full" disabled>
+                          Professional Plan Required
+                        </Button>
+                      ) : (
+                        <CashfreeCheckout
+                          amount={billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual}
+                          planId={tier.id}
+                          planName={tier.name}
+                          userId={user.uid}
+                          userEmail={user.email || ''}
+                          userName={user.displayName || user.email || ''}
+                          onSuccess={(paymentId) => {
+                            toast({
+                              title: 'Subscription Activated!',
+                              description: `Welcome to ${tier.name} plan. Your subscription is now active.`,
+                            });
+                            // You might want to redirect to dashboard or show success page
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: 'default',
+                              title: 'Payment Couldn\'t Be Processed',
+                              description: 'We couldn\'t complete your payment. Please check your payment details and try again.',
+                            });
+                          }}
+                        />
+                      )
                     ) : (
                       <Button
                         className="w-full"
