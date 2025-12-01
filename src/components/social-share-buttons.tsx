@@ -15,14 +15,7 @@ interface SocialShareButtonsProps {
 
 export const SocialShareButtons = ({ url, title }: SocialShareButtonsProps) => {
   const { toast } = useToast();
-
-  // Check if url is already an absolute URL
-  const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//');
-
-  // If it's an absolute URL, use it as-is; otherwise prepend the origin
-  const fullUrl = typeof window !== 'undefined'
-    ? (isAbsoluteUrl ? url : `${window.location.origin}${url}`)
-    : url;
+  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${url}` : url;
 
   const handleShare = (platform: "linkedin" | "twitter" | "facebook" | "whatsapp") => {
     let shareUrl = "";

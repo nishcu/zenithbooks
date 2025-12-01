@@ -23,7 +23,7 @@ const calculateReadingTime = (content: string[] | undefined): number => {
 };
 
 // Get related posts (currently disabled - no posts available)
-const getRelatedPosts = (currentPost: any, allPosts: any[], limit: number = 3) => {
+const getRelatedPosts = (currentPost: any, allPosts: any[], limit: number = 3): any[] => {
     return []; // Return empty array since we removed all posts
 };
 
@@ -199,7 +199,7 @@ export default function BlogPostPage() {
 
                         <div className="space-y-4">
                             {post.content && Array.isArray(post.content) ? (
-                                post.content.map((paragraph, index) => (
+                                post.content.map((paragraph: string, index: number) => (
                                     <p key={index} className="text-base leading-7">{paragraph}</p>
                                 ))
                             ) : (
