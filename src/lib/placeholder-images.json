@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "carousel-1",
+      "description": "Streamline Your Finances with Advanced Accounting",
+      "imageUrl": "https://images.unsplash.com/photo-1588859959931-39983ccaff7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhY2NvdW50aW5nJTIwY2hhcnRzfGVufDB8fHx8MTc1ODg4MDk3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "accounting charts"
+    },
+    {
+      "id": "carousel-2",
+      "description": "Effortless GST Compliance and Filing",
+      "imageUrl": "https://images.unsplash.com/photo-1512167976388-41fe84d0e691?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx0YXglMjBkb2N1bWVudHN8ZW58MHx8fHwxNzU4ODgwOTc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tax documents"
+    },
+    {
+      "id": "carousel-3",
+      "description": "Generate CMA Reports with AI-Powered Insights",
+      "imageUrl": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MHx8fHwxNzU4Nzk0NjYwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business meeting"
+    },
+    {
+      "id": "blog-4",
+      "description": "Indian leader addressing a professional audience",
+      "imageUrl": "https://images.unsplash.com/photo-1623979047394-a3c9b74d4b23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBwb2xpdGljaWFufGVufDB8fHx8MTc1ODkyMDQ0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "indian leader"
+    },
+    {
+      "id": "blog-5",
+      "description": "A network of professionals collaborating on a digital platform.",
+      "imageUrl": "https://images.unsplash.com/photo-1521737852577-68489a10811c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9mZXNzaW9uYWwlMjBuZXR3b3JrfGVufDB8fHx8MTc1ODkzNzY5N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional network"
+    }
+  ]
+}
