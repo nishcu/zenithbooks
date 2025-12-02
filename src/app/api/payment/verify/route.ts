@@ -91,15 +91,24 @@ export async function POST(request: NextRequest) {
     try {
       // Make direct API call to Cashfree with proper headers
       // Use correct header names: x-client-id and x-secret-key
-      const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders/${orderId}`, {
-        method: 'GET',
-        headers: {
-          'x-client-id': appId!,
-          'x-secret-key': secretKey!, // Correct header name
-          'x-api-version': '2022-09-01',
-          'Content-Type': 'application/json',
-        },
-      });
+      let cashfreeResponse;
+      try {
+        cashfreeResponse = await fetch(`${cashfreeBaseUrl}/orders/${orderId}`, {
+          method: 'GET',
+          headers: {
+            'x-client-id': appId!,
+            'x-secret-key': secretKey!, // Correct header name
+            'x-api-version': '2022-09-01',
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (fetchError: any) {
+        console.error('Network error calling Cashfree API:', fetchError);
+        throw {
+          message: `Network error: ${fetchError?.message || 'Failed to connect to Cashfree API'}`,
+          isNetworkError: true,
+        };
+      }
 
       if (!cashfreeResponse.ok) {
         const errorData = await cashfreeResponse.json().catch(() => ({}));
