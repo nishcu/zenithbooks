@@ -23,7 +23,15 @@ import 'jspdf-autotable';
 import { useToast } from '@/hooks/use-toast';
 
 // --- Type Definitions ---
-interface JournalVoucher { id: string; date: string; lines: { account: string; debit: number; credit: number }[]; narrative: string; voucherType: string; }
+interface JournalVoucher { 
+  id: string; 
+  date: string; 
+  lines: { account: string; debit: string | number; credit: string | number }[]; 
+  narration?: string;
+  narrative?: string;
+  voucherType?: string;
+  userId?: string;
+}
 interface LedgerEntry { id: string; date: string; particulars: string; type: string; debit: number; credit: number; balance: number; }
 interface StatCardProps { title: string; value: string | number; icon: React.ElementType; loading: boolean; }
 
@@ -94,6 +102,7 @@ export default function LedgersPage() {
   useEffect(() => {
     if (!(user && selectedAccount && dateRange?.from && dateRange?.to)) {
       setJournalVouchers([]);
+      setLoading(false);
       return;
     }
 
@@ -101,28 +110,98 @@ export default function LedgersPage() {
     const fetchVouchers = async () => {
       try {
         setLoading(true);
-        const start = dateRange.from;
-        const end = dateRange.to;
-        const q = query(collection(db, "journal_vouchers"), where("userId", "==", user.uid));
-        const querySnapshot = await getDocs(q);
-        const vouchers = querySnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher))
+        const start = new Date(dateRange.from);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(dateRange.to);
+        end.setHours(23, 59, 59, 999);
+        
+        // Try both collection names (journalVouchers and journal_vouchers)
+        let vouchers: JournalVoucher[] = [];
+        
+        try {
+          const q1 = query(collection(db, "journalVouchers"), where("userId", "==", user.uid));
+          const querySnapshot1 = await getDocs(q1);
+          vouchers = querySnapshot1.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher));
+        } catch (err1) {
+          console.log("Trying journal_vouchers collection...");
+          try {
+            const q2 = query(collection(db, "journal_vouchers"), where("userId", "==", user.uid));
+            const querySnapshot2 = await getDocs(q2);
+            vouchers = querySnapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher));
+          } catch (err2) {
+            console.error("Error fetching from both collections:", err1, err2);
+            throw err2;
+          }
+        }
+
+        // Filter vouchers by date range and account
+        const filteredVouchers = vouchers
           .filter(voucher => {
-            const voucherDate = new Date(voucher.date);
-            const inRange = isValidDate(start) && isValidDate(end) && isValidDate(voucherDate)
-              ? voucherDate >= start && voucherDate <= end
-              : true;
-            const hasAccount = voucher.lines.some(line => line.account === selectedAccount);
+            if (!voucher.lines || !Array.isArray(voucher.lines)) {
+              return false;
+            }
+            
+            // Parse date - handle both string and Date formats
+            let voucherDate: Date;
+            if (typeof voucher.date === 'string') {
+              // Handle yyyy-MM-dd format
+              const dateParts = voucher.date.split('-');
+              if (dateParts.length === 3) {
+                voucherDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+              } else {
+                voucherDate = new Date(voucher.date);
+              }
+            } else {
+              voucherDate = new Date(voucher.date);
+            }
+            
+            // Check if date is valid and in range
+            if (!isValidDate(voucherDate)) {
+              return false;
+            }
+            
+            const inRange = voucherDate >= start && voucherDate <= end;
+            
+            // Check if voucher has the selected account (normalize account codes)
+            const hasAccount = voucher.lines.some(line => {
+              const lineAccount = String(line.account || '').trim();
+              const selected = String(selectedAccount || '').trim();
+              return lineAccount === selected;
+            });
+            
             return inRange && hasAccount;
           })
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          .sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+          });
 
         if (isMounted) {
-          setJournalVouchers(vouchers);
+          setJournalVouchers(filteredVouchers);
+          if (filteredVouchers.length === 0 && vouchers.length > 0) {
+            toast({ 
+              title: "No Entries Found", 
+              description: `No entries found for account ${selectedAccount} in the selected date range. Found ${vouchers.length} total vouchers.`,
+              variant: "default"
+            });
+          } else if (filteredVouchers.length > 0) {
+            toast({ 
+              title: "Report Generated", 
+              description: `Found ${filteredVouchers.length} entries for the selected period.`,
+            });
+          }
         }
       } catch (err) {
         console.error("Error fetching vouchers: ", err);
-        toast({ title: "Error", description: "Could not fetch ledger data.", variant: "destructive"});
+        toast({ 
+          title: "Error", 
+          description: `Could not fetch ledger data: ${err instanceof Error ? err.message : 'Unknown error'}.`, 
+          variant: "destructive"
+        });
+        if (isMounted) {
+          setJournalVouchers([]);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -139,21 +218,62 @@ export default function LedgersPage() {
 
   // --- Memoized Calculations ---
   const { ledgerEntries, balances } = useMemo(() => {
-    if (!selectedAccount) return { ledgerEntries: [], balances: { opening: 0, closing: 0, totalDebits: 0, totalCredits: 0 } };
+    if (!selectedAccount || !journalVouchers || journalVouchers.length === 0) {
+      return { ledgerEntries: [], balances: { opening: 0, closing: 0, totalDebits: 0, totalCredits: 0 } };
+    }
+    
     let runningBalance = 0, totalDebits = 0, totalCredits = 0;
-    const entries: LedgerEntry[] = journalVouchers.flatMap((voucher, vIndex) => 
-        voucher.lines
-            .filter(line => line.account === selectedAccount)
-            .map((line, lIndex) => {
-                const debit = Number(line.debit) || 0;
-                const credit = Number(line.credit) || 0;
-                runningBalance += debit - credit;
-                totalDebits += debit;
-                totalCredits += credit;
-                return { id: `${voucher.id}-${lIndex}`, date: voucher.date, particulars: voucher.narrative, type: voucher.voucherType, debit, credit, balance: runningBalance };
-            })
-    );
-    return { ledgerEntries: entries, balances: { opening: 0, closing: runningBalance, totalDebits, totalCredits } };
+    const entries: LedgerEntry[] = [];
+    
+    // Sort vouchers by date first
+    const sortedVouchers = [...journalVouchers].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    sortedVouchers.forEach((voucher, vIndex) => {
+      if (!voucher.lines || !Array.isArray(voucher.lines)) {
+        return;
+      }
+      
+      voucher.lines
+        .filter(line => {
+          const lineAccount = String(line.account || '').trim();
+          const selected = String(selectedAccount || '').trim();
+          return lineAccount === selected;
+        })
+        .forEach((line, lIndex) => {
+          const debit = parseFloat(String(line.debit || '0').replace(/,/g, '')) || 0;
+          const credit = parseFloat(String(line.credit || '0').replace(/,/g, '')) || 0;
+          runningBalance += debit - credit;
+          totalDebits += debit;
+          totalCredits += credit;
+          
+          const narration = voucher.narration || voucher.narrative || 'Journal Entry';
+          const voucherType = voucher.voucherType || voucher.id?.substring(0, 3) || 'JV';
+          
+          entries.push({ 
+            id: `${voucher.id}-${lIndex}`, 
+            date: voucher.date, 
+            particulars: narration, 
+            type: voucherType, 
+            debit, 
+            credit, 
+            balance: runningBalance 
+          });
+        });
+    });
+    
+    return { 
+      ledgerEntries: entries, 
+      balances: { 
+        opening: 0, 
+        closing: runningBalance, 
+        totalDebits, 
+        totalCredits 
+      } 
+    };
   }, [journalVouchers, selectedAccount]);
   
   const selectedAccountDetails = useMemo(() => accounts.find(acc => acc.code === selectedAccount) || null, [accounts, selectedAccount]);
@@ -202,9 +322,36 @@ export default function LedgersPage() {
   }
 
   const handleGenerateReport = () => {
-    if (fromDate && toDate) {
-      setDateRange({ from: fromDate, to: toDate });
+    if (!selectedAccount) {
+      toast({
+        variant: "destructive",
+        title: "Account Required",
+        description: "Please select an account first.",
+      });
+      return;
     }
+    
+    if (!fromDate || !toDate) {
+      toast({
+        variant: "destructive",
+        title: "Date Range Required",
+        description: "Please select both from and to dates.",
+      });
+      return;
+    }
+    
+    // Normalize dates to start and end of day
+    const start = new Date(fromDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+    
+    setDateRange({ from: start, to: end });
+    
+    toast({
+      title: "Generating Report",
+      description: `Fetching ledger entries for ${selectedAccountDetails?.name || selectedAccount} from ${format(start, "dd MMM yyyy")} to ${format(end, "dd MMM yyyy")}.`,
+    });
   };
 
   const handleExportPdf = () => {
