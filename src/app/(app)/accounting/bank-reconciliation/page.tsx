@@ -179,6 +179,7 @@ const parseDateString = (dateStr: string): Date | null => {
 };
 
 export default function BankReconciliationPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
@@ -187,29 +188,12 @@ export default function BankReconciliationPage() {
     const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
     const isFreemium = subscriptionPlan === 'freemium';
 
-    if (user && isFreemium) {
-        return (
-            <div className="space-y-8 p-8">
-                <h1 className="text-3xl font-bold">Bank Reconciliation</h1>
-                <UpgradeRequiredAlert
-                    featureName="Bank Reconciliation"
-                    description="Reconcile bank statements with your books of account and track unmatched transactions with a Business or Professional plan."
-                    backHref="/dashboard"
-                    backLabel="Back to Dashboard"
-                />
-            </div>
-        );
-    }
-
-    if (!accountingContext) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    const { journalVouchers, addJournalVoucher, loading } = accountingContext;
+    // Get context values (but don't use them in hooks if context is null)
+    const { journalVouchers, addJournalVoucher, loading } = accountingContext || { 
+        journalVouchers: [], 
+        addJournalVoucher: () => {}, 
+        loading: false 
+    };
 
      const [statementTransactions, setStatementTransactions] = useState<StatementTransaction[]>([]);
      const [bookTransactions, setBookTransactions] = useState<BookTransaction[]>([]);
@@ -420,6 +404,29 @@ export default function BankReconciliationPage() {
     useEffect(() => {
         setJvDateInput(jvDate ? format(jvDate, 'yyyy-MM-dd') : '');
     }, [jvDate]);
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Bank Reconciliation</h1>
+                <UpgradeRequiredAlert
+                    featureName="Bank Reconciliation"
+                    description="Reconcile bank statements with your books of account and track unmatched transactions with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
+
+    if (!accountingContext) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
