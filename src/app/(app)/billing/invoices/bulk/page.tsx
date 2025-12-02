@@ -105,6 +105,15 @@ export default function BulkInvoicePage() {
   const [defaultTaxRate, setDefaultTaxRate] = useState<number>(18);
   const [startingInvoiceNumber, setStartingInvoiceNumber] = useState<string>("");
 
+  // ALL HOOKS MUST BE CALLED BEFORE EARLY RETURN
+  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  const [customersSnapshot, customersLoading] = useCollection(customersQuery);
+  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
+
+  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
+  const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
+
   // Show upgrade alert if freemium user
   if (user && isFreemium) {
     return (
@@ -141,14 +150,6 @@ export default function BulkInvoicePage() {
       </div>
     );
   }
-
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
-  const [customersSnapshot, customersLoading] = useCollection(customersQuery);
-  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
-
-  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
-  const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
-  const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
 
   // Auto-generate starting invoice number
   useEffect(() => {

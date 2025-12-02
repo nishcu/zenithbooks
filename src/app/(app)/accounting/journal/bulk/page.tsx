@@ -133,6 +133,14 @@ export default function BulkJournalEntryPage() {
     const [vendorsSnapshot] = useCollection(vendorsQuery);
     const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
 
+    // Get all valid account codes - MUST BE CALLED BEFORE EARLY RETURN
+    const validAccountCodes = useMemo(() => {
+        const accountCodes = new Set(allAccounts.map(acc => acc.code));
+        customers.forEach(c => accountCodes.add(c.id));
+        vendors.forEach(v => accountCodes.add(v.id));
+        return accountCodes;
+    }, [customers, vendors]);
+
     // Early return AFTER all hooks are called
     if (user && isFreemium) {
         return (
@@ -147,14 +155,6 @@ export default function BulkJournalEntryPage() {
             </div>
         );
     }
-
-    // Get all valid account codes
-    const validAccountCodes = useMemo(() => {
-        const accountCodes = new Set(allAccounts.map(acc => acc.code));
-        customers.forEach(c => accountCodes.add(c.id));
-        vendors.forEach(v => accountCodes.add(v.id));
-        return accountCodes;
-    }, [customers, vendors]);
 
     // Get account name by code
     const getAccountName = (code: string): string => {
