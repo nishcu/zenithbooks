@@ -52,10 +52,18 @@ type NoticeFormData = z.infer<typeof noticeSchema>;
 
 
 export default function NoticesPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
     const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+
+    const form = useForm<NoticeFormData>({
+        resolver: zodResolver(noticeSchema),
+        defaultValues: {
+            noticeType: "GST_NOTICE",
+        },
+    });
 
     const { handlePaymentSuccess } = useCertificationRequest({
         pricing,
@@ -74,13 +82,6 @@ export default function NoticesPage() {
             getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
         }
     }, [user]);
-
-    const form = useForm<NoticeFormData>({
-        resolver: zodResolver(noticeSchema),
-        defaultValues: {
-            noticeType: "GST_NOTICE",
-        },
-    });
     
     const noticeHandlingServices = pricing ? pricing.notice_handling : [];
     const selectedService = noticeHandlingServices.find(s => s.id === form.watch("noticeType"));
