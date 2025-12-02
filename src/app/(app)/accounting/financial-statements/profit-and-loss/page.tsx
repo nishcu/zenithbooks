@@ -2,8 +2,8 @@
 
 import React, { useContext, useMemo, useState, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, query, where, doc } from "firebase/firestore";
+import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
