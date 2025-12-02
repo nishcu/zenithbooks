@@ -61,6 +61,7 @@ type BudgetEntry = {
 };
 
 export default function BudgetsPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -68,6 +69,24 @@ export default function BudgetsPage() {
     const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
     const isFreemium = subscriptionPlan === 'freemium';
 
+    const accountingContext = useContext(AccountingContext);
+    const { loading } = accountingContext || { loading: false };
+
+    const budgetableAccounts = useMemo(() => {
+        return allAccounts.filter(acc => acc.type === "Revenue" || acc.type === "Expense");
+    }, []);
+
+    const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
+    
+    const [budgetData, setBudgetData] = useState<BudgetEntry[]>(() => 
+        budgetableAccounts.map(acc => ({
+            accountCode: acc.code,
+            accountName: acc.name,
+            budgetAmount: 0,
+        }))
+    );
+
+    // Early return AFTER all hooks are called
     if (user && isFreemium) {
         return (
             <div className="space-y-8 p-8">
@@ -82,20 +101,13 @@ export default function BudgetsPage() {
         );
     }
 
-    const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
-    const { loading } = useContext(AccountingContext)!;
-
-    const budgetableAccounts = useMemo(() => {
-        return allAccounts.filter(acc => acc.type === "Revenue" || acc.type === "Expense");
-    }, []);
-    
-    const [budgetData, setBudgetData] = useState<BudgetEntry[]>(() => 
-        budgetableAccounts.map(acc => ({
-            accountCode: acc.code,
-            accountName: acc.name,
-            budgetAmount: 0,
-        }))
-    );
+    if (!accountingContext) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     const handleBudgetChange = (accountCode: string, value: string) => {
         const amount = parseFloat(value) || 0;
