@@ -24,6 +24,14 @@ import {
     FileText,
     PlusCircle
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useContext } from "react";
 import { AccountingContext } from "@/context/accounting-context";
@@ -47,6 +55,18 @@ interface BulkJournalEntry {
     error?: string;
     originalDebitAccount?: string; // Store original name for display
     originalCreditAccount?: string; // Store original name for display
+}
+
+interface AccountMatch {
+    code: string;
+    name: string;
+    type: 'exact' | 'partial' | 'fuzzy';
+}
+
+interface MatchConfirmation {
+    originalName: string;
+    selectedCode: string;
+    selectedName: string;
 }
 
 // Accounting Rules Guide
@@ -123,6 +143,9 @@ export default function BulkJournalEntryPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [parsedEntries, setParsedEntries] = useState<BulkJournalEntry[]>([]);
     const [defaultDate, setDefaultDate] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [matchDialogOpen, setMatchDialogOpen] = useState(false);
+    const [pendingMatches, setPendingMatches] = useState<{ accountName: string; matches: AccountMatch[]; onConfirm: (code: string, name: string) => void } | null>(null);
+    const [confirmedMatches, setConfirmedMatches] = useState<Map<string, MatchConfirmation>>(new Map());
 
     // Fetch customers and vendors for account validation
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
@@ -167,32 +190,97 @@ export default function BulkJournalEntryPage() {
         return code;
     };
 
-    // Convert account name to account code (EXACT MATCH ONLY - no partial matching to prevent false positives)
-    // This ensures users must use exact account names from the Chart of Accounts
+    // Find possible account matches (exact, partial, fuzzy)
+    const findAccountMatches = (name: string): AccountMatch[] => {
+        if (!name || !name.trim()) return [];
+        
+        const normalizedName = name.trim().toLowerCase();
+        const matches: AccountMatch[] = [];
+        
+        // 1. Try exact match (case-insensitive)
+        let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
+        if (account) {
+            matches.push({ code: account.code, name: account.name, type: 'exact' });
+        }
+        
+        let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
+        if (customer) {
+            matches.push({ code: customer.id, name: customer.name, type: 'exact' });
+        }
+        
+        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
+        if (vendor) {
+            matches.push({ code: vendor.id, name: vendor.name, type: 'exact' });
+        }
+        
+        // If exact match found, return only that
+        if (matches.length > 0) return matches;
+        
+        // 2. Try partial match (contains)
+        allAccounts.forEach(acc => {
+            const accNameLower = acc.name.toLowerCase();
+            if (accNameLower.includes(normalizedName) || normalizedName.includes(accNameLower)) {
+                matches.push({ code: acc.code, name: acc.name, type: 'partial' });
+            }
+        });
+        
+        customers.forEach(c => {
+            const cNameLower = c.name.toLowerCase();
+            if (cNameLower.includes(normalizedName) || normalizedName.includes(cNameLower)) {
+                matches.push({ code: c.id, name: c.name, type: 'partial' });
+            }
+        });
+        
+        vendors.forEach(v => {
+            const vNameLower = v.name.toLowerCase();
+            if (vNameLower.includes(normalizedName) || normalizedName.includes(vNameLower)) {
+                matches.push({ code: v.id, name: v.name, type: 'partial' });
+            }
+        });
+        
+        // 3. Try fuzzy match (simple similarity - check if most words match)
+        if (matches.length === 0) {
+            const inputWords = normalizedName.split(/\s+/).filter(w => w.length > 2);
+            allAccounts.forEach(acc => {
+                const accWords = acc.name.toLowerCase().split(/\s+/);
+                const matchingWords = inputWords.filter(w => accWords.some(aw => aw.includes(w) || w.includes(aw)));
+                if (matchingWords.length >= Math.ceil(inputWords.length * 0.5)) {
+                    matches.push({ code: acc.code, name: acc.name, type: 'fuzzy' });
+                }
+            });
+        }
+        
+        // 4. If it's already a code
+        if (validAccountCodes.has(name.trim())) {
+            const code = name.trim();
+            const accountName = getAccountName(code);
+            matches.push({ code, name: accountName, type: 'exact' });
+        }
+        
+        // Return top 5 matches
+        return matches.slice(0, 5);
+    };
+
+    // Get account code by name (with confirmed matches support)
     const getAccountCodeByName = (name: string): string | null => {
         if (!name || !name.trim()) return null;
         
         const normalizedName = name.trim().toLowerCase();
         
-        // 1. Try exact match (case-insensitive) with system accounts
+        // Try exact match first
         let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
         if (account) return account.code;
         
-        // 2. Try exact match with customer names
         let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
         if (customer) return customer.id;
         
-        // 3. Try exact match with vendor names
         let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
         if (vendor) return vendor.id;
         
-        // 4. If it's already a code, return it
         if (validAccountCodes.has(name.trim())) {
             return name.trim();
         }
         
-        // NO PARTIAL MATCHING - This prevents false positives like "Salary" matching "Salaries and Wages - Indirect"
-        // Users must use exact account names from the Chart of Accounts
         return null;
     };
 
@@ -333,27 +421,81 @@ export default function BulkJournalEntryPage() {
                 errors.push("Amount must be greater than zero");
             }
 
-            // Convert account names to codes and validate
+            // Convert account names to codes and validate using confirmed matches
             let debitAccountCode: string | null = null;
             let creditAccountCode: string | null = null;
+
+            // Check confirmed matches first
+            const debitCacheKey = `${entry.debitAccount?.toLowerCase().trim()}_debit_${index}`;
+            const creditCacheKey = `${entry.creditAccount?.toLowerCase().trim()}_credit_${index}`;
+            
+            if (confirmedMatches.has(debitCacheKey)) {
+                debitAccountCode = confirmedMatches.get(debitCacheKey)!.selectedCode;
+            } else if (entry.debitAccount) {
+                // Try direct match (exact match only, no dialog during validation)
+                const normalizedName = entry.debitAccount.trim().toLowerCase();
+                let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
+                if (account) {
+                    debitAccountCode = account.code;
+                } else {
+                    let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
+                    if (customer) {
+                        debitAccountCode = customer.id;
+                    } else {
+                        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
+                        if (vendor) {
+                            debitAccountCode = vendor.id;
+                        } else if (validAccountCodes.has(entry.debitAccount.trim())) {
+                            debitAccountCode = entry.debitAccount.trim();
+                        }
+                    }
+                }
+            }
+
+            if (confirmedMatches.has(creditCacheKey)) {
+                creditAccountCode = confirmedMatches.get(creditCacheKey)!.selectedCode;
+            } else if (entry.creditAccount) {
+                const normalizedName = entry.creditAccount.trim().toLowerCase();
+                let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
+                if (account) {
+                    creditAccountCode = account.code;
+                } else {
+                    let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
+                    if (customer) {
+                        creditAccountCode = customer.id;
+                    } else {
+                        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
+                        if (vendor) {
+                            creditAccountCode = vendor.id;
+                        } else if (validAccountCodes.has(entry.creditAccount.trim())) {
+                            creditAccountCode = entry.creditAccount.trim();
+                        }
+                    }
+                }
+            }
 
             // Validate debit account
             if (!entry.debitAccount) {
                 errors.push("Debit account is required");
-            } else {
-                debitAccountCode = getAccountCodeByName(entry.debitAccount);
-                if (!debitAccountCode) {
-                    errors.push(`Invalid debit account: "${entry.debitAccount}". Please use the exact account name or ledger name.`);
+            } else if (!debitAccountCode) {
+                // Check if there are possible matches
+                const matches = findAccountMatches(entry.debitAccount);
+                if (matches.length > 0) {
+                    errors.push(`Debit account "${entry.debitAccount}" needs confirmation. Please check matches above.`);
+                } else {
+                    errors.push(`Invalid debit account: "${entry.debitAccount}". No matching account found.`);
                 }
             }
 
             // Validate credit account
             if (!entry.creditAccount) {
                 errors.push("Credit account is required");
-            } else {
-                creditAccountCode = getAccountCodeByName(entry.creditAccount);
-                if (!creditAccountCode) {
-                    errors.push(`Invalid credit account: "${entry.creditAccount}". Please use the exact account name or ledger name.`);
+            } else if (!creditAccountCode) {
+                const matches = findAccountMatches(entry.creditAccount);
+                if (matches.length > 0) {
+                    errors.push(`Credit account "${entry.creditAccount}" needs confirmation. Please check matches above.`);
+                } else {
+                    errors.push(`Invalid credit account: "${entry.creditAccount}". No matching account found.`);
                 }
             }
 
@@ -373,7 +515,7 @@ export default function BulkJournalEntryPage() {
                 originalCreditAccount: entry.originalCreditAccount || entry.creditAccount, // Preserve original name
                 debitAccount: debitAccountCode || entry.debitAccount, // Store code for processing
                 creditAccount: creditAccountCode || entry.creditAccount, // Store code for processing
-                status: errors.length === 0 ? 'valid' : 'error',
+                status: errors.length === 0 && debitAccountCode && creditAccountCode ? 'valid' : 'error',
                 error: errors.join('; '),
             };
         });
@@ -414,6 +556,63 @@ export default function BulkJournalEntryPage() {
                 return;
             }
 
+            // Find all accounts that need matching confirmation
+            const accountsNeedingMatch = new Map<string, AccountMatch[]>();
+            entries.forEach((entry, index) => {
+                // Check debit account
+                if (entry.debitAccount && !getAccountCodeByName(entry.debitAccount)) {
+                    const matches = findAccountMatches(entry.debitAccount);
+                    if (matches.length > 0) {
+                        accountsNeedingMatch.set(`debit_${index}_${entry.debitAccount}`, matches);
+                    }
+                }
+                // Check credit account
+                if (entry.creditAccount && !getAccountCodeByName(entry.creditAccount)) {
+                    const matches = findAccountMatches(entry.creditAccount);
+                    if (matches.length > 0) {
+                        accountsNeedingMatch.set(`credit_${index}_${entry.creditAccount}`, matches);
+                    }
+                }
+            });
+
+            // If there are accounts needing confirmation, show dialog
+            if (accountsNeedingMatch.size > 0) {
+                // Store entries and matches for later processing
+                setParsedEntries(entries.map(e => ({ ...e, status: 'error' as const, error: 'Pending account confirmation' })));
+                // Show first match dialog
+                const firstKey = Array.from(accountsNeedingMatch.keys())[0];
+                // Key format: "debit_0_Account Name" or "credit_1_Account Name"
+                const parts = firstKey.split('_');
+                const type = parts[0];
+                const index = parts[1];
+                const accountName = parts.slice(2).join('_'); // Rejoin in case account name has underscores
+                const isDebit = type === 'debit';
+                const entryIndex = parseInt(index);
+                const matches = accountsNeedingMatch.get(firstKey)!;
+                
+                setPendingMatches({
+                    accountName: accountName,
+                    matches,
+                    onConfirm: (code: string, selectedName: string) => {
+                        const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
+                        confirmedMatches.set(cacheKey, {
+                            originalName: accountName,
+                            selectedCode: code,
+                            selectedName
+                        });
+                        setMatchDialogOpen(false);
+                        setPendingMatches(null);
+                        
+                        // Process remaining matches or validate
+                        processRemainingMatches(entries, accountsNeedingMatch, Array.from(accountsNeedingMatch.keys()).slice(1));
+                    }
+                });
+                setMatchDialogOpen(true);
+                setIsProcessing(false);
+                return;
+            }
+
+            // No matches needed, validate directly
             const validatedEntries = validateEntries(entries);
             setParsedEntries(validatedEntries);
 
@@ -424,6 +623,7 @@ export default function BulkJournalEntryPage() {
                 title: "File Processed",
                 description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
             });
+            setIsProcessing(false);
         } catch (error: any) {
             console.error("Error processing file:", error);
             toast({
@@ -431,9 +631,55 @@ export default function BulkJournalEntryPage() {
                 title: "Processing Failed",
                 description: error.message || "An error occurred while processing the file.",
             });
-        } finally {
             setIsProcessing(false);
         }
+    };
+
+    const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[]) => {
+        if (remainingKeys.length === 0) {
+            // All matches confirmed, validate entries
+            const validatedEntries = validateEntries(entries);
+            setParsedEntries(validatedEntries);
+            
+            const validCount = validatedEntries.filter(e => e.status === 'valid').length;
+            const errorCount = validatedEntries.filter(e => e.status === 'error').length;
+            
+            toast({
+                title: "File Processed",
+                description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
+            });
+            return;
+        }
+        
+        // Process next match
+        const nextKey = remainingKeys[0];
+        // Key format: "debit_0_Account Name" or "credit_1_Account Name"
+        const parts = nextKey.split('_');
+        const type = parts[0];
+        const index = parts[1];
+        const accountName = parts.slice(2).join('_'); // Rejoin in case account name has underscores
+        const isDebit = type === 'debit';
+        const entryIndex = parseInt(index);
+        const matches = accountsNeedingMatch.get(nextKey)!;
+        
+        setPendingMatches({
+            accountName: accountName,
+            matches,
+            onConfirm: (code: string, selectedName: string) => {
+                const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
+                confirmedMatches.set(cacheKey, {
+                    originalName: accountName,
+                    selectedCode: code,
+                    selectedName
+                });
+                setMatchDialogOpen(false);
+                setPendingMatches(null);
+                
+                // Process remaining
+                processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1));
+            }
+        });
+        setMatchDialogOpen(true);
     };
 
     const handleCreateEntries = async () => {
@@ -870,6 +1116,48 @@ export default function BulkJournalEntryPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Account Match Confirmation Dialog */}
+            <Dialog open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Confirm Account Match</DialogTitle>
+                        <DialogDescription>
+                            The account name "{pendingMatches?.accountName}" doesn't match exactly. Please select the correct account from the options below:
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        {pendingMatches?.matches.map((match, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                                onClick={() => pendingMatches.onConfirm(match.code, match.name)}
+                            >
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold">{match.name}</span>
+                                        <Badge variant={match.type === 'exact' ? 'default' : match.type === 'partial' ? 'secondary' : 'outline'}>
+                                            {match.type === 'exact' ? 'Exact Match' : match.type === 'partial' ? 'Partial Match' : 'Similar Match'}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mt-1">Code: {match.code}</p>
+                                </div>
+                                <Button onClick={() => pendingMatches.onConfirm(match.code, match.name)}>
+                                    Select
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => {
+                            setMatchDialogOpen(false);
+                            setPendingMatches(null);
+                        }}>
+                            Cancel
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

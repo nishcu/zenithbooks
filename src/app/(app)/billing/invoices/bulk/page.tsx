@@ -114,6 +114,23 @@ export default function BulkInvoicePage() {
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
 
+  // Auto-generate starting invoice number - MUST BE BEFORE EARLY RETURN
+  useEffect(() => {
+    if (accountingContext?.journalVouchers) {
+      const journalVouchers = accountingContext.journalVouchers;
+      const invoices = journalVouchers.filter((v: any) => v && v.id && v.id.startsWith("INV-"));
+      const lastInvoice = invoices[invoices.length - 1];
+      
+      if (lastInvoice) {
+        const lastNumber = parseInt(lastInvoice.id.replace("INV-", "").replace(/[^0-9]/g, ''), 10);
+        const nextNumber = isNaN(lastNumber) ? "001" : String(lastNumber + 1).padStart(3, '0');
+        setStartingInvoiceNumber(nextNumber);
+      } else {
+        setStartingInvoiceNumber("001");
+      }
+    }
+  }, [accountingContext]);
+
   // Show upgrade alert if freemium user
   if (user && isFreemium) {
     return (
@@ -150,23 +167,6 @@ export default function BulkInvoicePage() {
       </div>
     );
   }
-
-  // Auto-generate starting invoice number
-  useEffect(() => {
-    if (accountingContext?.journalVouchers) {
-      const journalVouchers = accountingContext.journalVouchers;
-      const invoices = journalVouchers.filter((v: any) => v && v.id && v.id.startsWith("INV-"));
-      const lastInvoice = invoices[invoices.length - 1];
-      
-      if (lastInvoice) {
-        const lastNumber = parseInt(lastInvoice.id.replace("INV-", "").replace(/[^0-9]/g, ''), 10);
-        const nextNumber = isNaN(lastNumber) ? "001" : String(lastNumber + 1).padStart(3, '0');
-        setStartingInvoiceNumber(nextNumber);
-      } else {
-        setStartingInvoiceNumber("001");
-      }
-    }
-  }, [accountingContext]);
 
   const handleDownloadTemplate = () => {
     const headers = ["Customer Name", "Product Name", "Quantity", "Price", "Tax Rate (%)", "Invoice Date"];
