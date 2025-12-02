@@ -40,6 +40,7 @@ import { doc } from "firebase/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 export default function CostCentresPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const [user] = useAuthState(auth);
@@ -47,7 +48,11 @@ export default function CostCentresPage() {
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
+  
+  // In a real app, this would come from a database and have full CRUD functionality
+  const [centres, setCentres] = useState(costCentres);
 
+  // Early return AFTER all hooks are called
   if (user && isFreemium) {
     return (
       <div className="space-y-8 p-8">
@@ -61,9 +66,6 @@ export default function CostCentresPage() {
       </div>
     );
   }
-  
-  // In a real app, this would come from a database and have full CRUD functionality
-  const [centres, setCentres] = useState(costCentres);
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
     toast({

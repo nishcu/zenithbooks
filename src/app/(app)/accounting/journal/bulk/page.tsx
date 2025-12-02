@@ -109,6 +109,7 @@ const accountingRules = [
 ];
 
 export default function BulkJournalEntryPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
@@ -116,20 +117,6 @@ export default function BulkJournalEntryPage() {
     const [userData] = useDocumentData(userDocRef);
     const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
     const isFreemium = subscriptionPlan === 'freemium';
-
-    if (user && isFreemium) {
-        return (
-            <div className="space-y-8 p-8">
-                <h1 className="text-3xl font-bold">Bulk Journal Entry</h1>
-                <UpgradeRequiredAlert
-                    featureName="Bulk Journal Entry"
-                    description="Upload multiple journal entries at once using Excel/CSV files with a Business or Professional plan."
-                    backHref="/accounting/journal"
-                    backLabel="Back to Journal"
-                />
-            </div>
-        );
-    }
 
     const [file, setFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -145,6 +132,21 @@ export default function BulkJournalEntryPage() {
     const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
     const [vendorsSnapshot] = useCollection(vendorsQuery);
     const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Bulk Journal Entry</h1>
+                <UpgradeRequiredAlert
+                    featureName="Bulk Journal Entry"
+                    description="Upload multiple journal entries at once using Excel/CSV files with a Business or Professional plan."
+                    backHref="/accounting/journal"
+                    backLabel="Back to Journal"
+                />
+            </div>
+        );
+    }
 
     // Get all valid account codes
     const validAccountCodes = useMemo(() => {

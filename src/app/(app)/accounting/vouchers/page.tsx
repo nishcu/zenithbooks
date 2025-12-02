@@ -77,26 +77,12 @@ import Link from "next/link";
 
 
 export default function VouchersPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
-
-  // Show upgrade alert for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Receipt & Payment Vouchers</h1>
-        <UpgradeRequiredAlert
-          featureName="Receipt & Payment Vouchers"
-          description="Record cash and bank receipts and payments with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
 
   const accountingContext = useContext(AccountingContext);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -122,6 +108,20 @@ export default function VouchersPage() {
         ];
     }, [allAccounts, customers, vendors]);
 
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+      return (
+        <div className="space-y-8 p-8">
+          <h1 className="text-3xl font-bold">Receipt & Payment Vouchers</h1>
+          <UpgradeRequiredAlert
+            featureName="Receipt & Payment Vouchers"
+            description="Record cash and bank receipts and payments with a Business or Professional plan."
+            backHref="/dashboard"
+            backLabel="Back to Dashboard"
+          />
+        </div>
+      );
+    }
 
     if (!accountingContext) {
         return <Loader2 className="animate-spin" />;

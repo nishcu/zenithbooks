@@ -55,6 +55,7 @@ const rapidVoucherSchema = z.object({
 type RapidVoucherForm = z.infer<typeof rapidVoucherSchema>;
 
 export default function RapidVoucherEntryPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const accountingContext = useContext(AccountingContext);
   const { toast } = useToast();
   const router = useRouter();
@@ -63,20 +64,6 @@ export default function RapidVoucherEntryPage() {
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
-
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Rapid Voucher Entry</h1>
-        <UpgradeRequiredAlert
-          featureName="Rapid Voucher Entry"
-          description="Quickly create receipt and payment vouchers with a Business or Professional plan."
-          backHref="/accounting/vouchers"
-          backLabel="Back to Vouchers"
-        />
-      </div>
-    );
-  }
   
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
@@ -102,6 +89,21 @@ export default function RapidVoucherEntryPage() {
   const partyList = voucherType === 'receipt' ? customers : vendors;
   const partyLabel = voucherType === 'receipt' ? 'Received From (Customer)' : 'Paid To (Vendor)';
   const voucherPrefix = voucherType === 'receipt' ? 'RV' : 'PV';
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Rapid Voucher Entry</h1>
+        <UpgradeRequiredAlert
+          featureName="Rapid Voucher Entry"
+          description="Quickly create receipt and payment vouchers with a Business or Professional plan."
+          backHref="/accounting/vouchers"
+          backLabel="Back to Vouchers"
+        />
+      </div>
+    );
+  }
 
   const handleSave = useCallback(async (values: RapidVoucherForm, closeOnSave: boolean) => {
     if (!accountingContext) return;

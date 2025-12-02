@@ -59,6 +59,7 @@ const ReportTableRow: FC<{ label: string; amount?: number; isSub?: boolean; isTo
 
 // --- Main Component ---
 export default function BalanceSheetPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const { toast } = useToast();
   const { journalVouchers } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
@@ -67,20 +68,6 @@ export default function BalanceSheetPage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
-  // Show upgrade alert for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Balance Sheet</h1>
-        <UpgradeRequiredAlert
-          featureName="Balance Sheet"
-          description="Generate comprehensive balance sheets and financial statements with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
   const [isMismatchDialogOpen, setIsMismatchDialogOpen] = useState(false);
   const reportRef = useRef(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -137,6 +124,21 @@ export default function BalanceSheetPage() {
     return { combinedAccounts, accountBalances: balances, netProfit };
 
   }, [customersSnapshot, vendorsSnapshot, accountsSnapshot, journalVouchers]);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Balance Sheet</h1>
+        <UpgradeRequiredAlert
+          featureName="Balance Sheet"
+          description="Generate comprehensive balance sheets and financial statements with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
 
   const getBalance = (code: string): number => accountBalances[code] || 0;
   const getDisplayBalance = (code: string, type: 'Asset' | 'Liability'): number => type === 'Asset' ? -getBalance(code) : getBalance(code);

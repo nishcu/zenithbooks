@@ -38,6 +38,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function CostCentreSummaryPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { journalVouchers, loading } = useContext(AccountingContext)!;
     const { toast } = useToast();
     const [user] = useAuthState(auth);
@@ -45,20 +46,6 @@ export default function CostCentreSummaryPage() {
     const [userData] = useDocumentData(userDocRef);
     const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
     const isFreemium = subscriptionPlan === 'freemium';
-
-    if (user && isFreemium) {
-        return (
-            <div className="space-y-8 p-8">
-                <h1 className="text-3xl font-bold">Cost Centre Summary</h1>
-                <UpgradeRequiredAlert
-                    featureName="Cost Centre Summary"
-                    description="View income and expense summaries by cost centre with a Business or Professional plan."
-                    backHref="/dashboard"
-                    backLabel="Back to Dashboard"
-                />
-            </div>
-        );
-    }
 
     const costCentreData = useMemo(() => {
         const summary: Record<string, { income: number, expense: number, name: string }> = {};
@@ -99,6 +86,21 @@ export default function CostCentreSummaryPage() {
             net: acc.net + curr.net,
         }), { income: 0, expense: 0, net: 0 });
     }, [costCentreData]);
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Cost Centre Summary</h1>
+                <UpgradeRequiredAlert
+                    featureName="Cost Centre Summary"
+                    description="View income and expense summaries by cost centre with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     const handleExport = () => {
         if (costCentreData.length === 0) {

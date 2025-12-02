@@ -41,26 +41,12 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, loading }
 const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
 
 export default function LedgersPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
-
-  // Show upgrade alert for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">General Ledger</h1>
-        <UpgradeRequiredAlert
-          featureName="General Ledger"
-          description="Access detailed account-wise transaction history with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
 
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -78,6 +64,21 @@ export default function LedgersPage() {
   const [customersSnapshot] = useCollection(customersQuery);
   const vendorsQuery = user ? query(collection(db, 'vendors'), where('userId', '==', user.uid)) : null;
   const [vendorsSnapshot] = useCollection(vendorsQuery);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">General Ledger</h1>
+        <UpgradeRequiredAlert
+          featureName="General Ledger"
+          description="Access detailed account-wise transaction history with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
 
   // --- Effects ---
   useEffect(() => {

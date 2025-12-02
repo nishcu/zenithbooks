@@ -58,7 +58,7 @@ import { applyExcelFormatting } from "@/lib/export-utils";
 
 
 export default function TrialBalancePage() {
-    
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const router = useRouter();
     const { journalVouchers } = useContext(AccountingContext)!;
@@ -73,7 +73,15 @@ export default function TrialBalancePage() {
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const reportRef = useRef<HTMLDivElement>(null);
 
-    // Show upgrade alert for freemium users
+    const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+    const [customersSnapshot] = useCollection(customersQuery);
+    const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
+
+    const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
+    const [vendorsSnapshot] = useCollection(vendorsQuery);
+    const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
+
+    // Early return AFTER all hooks are called
     if (user && isFreemium) {
         return (
             <div className="space-y-8 p-8">
@@ -87,14 +95,6 @@ export default function TrialBalancePage() {
             </div>
         );
     }
-
-    const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
-    const [customersSnapshot] = useCollection(customersQuery);
-    const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
-
-    const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
-    const [vendorsSnapshot] = useCollection(vendorsQuery);
-    const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
 
     const trialBalanceData = useMemo(() => {
         const balances: Record<string, number> = {};
