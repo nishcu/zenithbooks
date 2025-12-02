@@ -53,26 +53,14 @@ const states = [
 ];
 
 export default function Gstr3bWizardPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
-
-  // Show upgrade alert for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">GSTR-3B Filing</h1>
-        <UpgradeRequiredAlert
-          featureName="GST Filing Tools"
-          description="File GSTR-3B and other GST returns with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
+  
+  // All hooks must be called before any early returns
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const { journalVouchers } = useContext(AccountingContext)!;
@@ -221,6 +209,20 @@ export default function Gstr3bWizardPage() {
     }));
   }, [step1Data, step3Data]);
 
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">GSTR-3B Filing</h1>
+        <UpgradeRequiredAlert
+          featureName="GST Filing Tools"
+          description="File GSTR-3B and other GST returns with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
 
   const handleStep1Change = (index: number, field: keyof typeof step1Data[0], value: string) => {
     const newData = [...step1Data];
