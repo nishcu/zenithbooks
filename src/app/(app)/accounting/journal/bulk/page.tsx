@@ -429,49 +429,30 @@ export default function BulkJournalEntryPage() {
             const debitCacheKey = `${entry.debitAccount?.toLowerCase().trim()}_debit_${index}`;
             const creditCacheKey = `${entry.creditAccount?.toLowerCase().trim()}_credit_${index}`;
             
-            if (confirmedMatches.has(debitCacheKey)) {
-                debitAccountCode = confirmedMatches.get(debitCacheKey)!.selectedCode;
-            } else if (entry.debitAccount) {
-                // Try direct match (exact match only, no dialog during validation)
-                const normalizedName = entry.debitAccount.trim().toLowerCase();
-                let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
-                if (account) {
-                    debitAccountCode = account.code;
-                } else {
-                    let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
-                    if (customer) {
-                        debitAccountCode = customer.id;
-                    } else {
-                        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
-                        if (vendor) {
-                            debitAccountCode = vendor.id;
-                        } else if (validAccountCodes.has(entry.debitAccount.trim())) {
-                            debitAccountCode = entry.debitAccount.trim();
-                        }
-                    }
+            // Try confirmed match first
+            for (const [key, confirmation] of confirmedMatches.entries()) {
+                if (key.includes(entry.debitAccount?.toLowerCase().trim() || '') && key.includes('debit') && key.includes(`${index}`)) {
+                    debitAccountCode = confirmation.selectedCode;
+                    break;
                 }
             }
+            
+            // If no confirmed match, try direct match
+            if (!debitAccountCode && entry.debitAccount) {
+                debitAccountCode = getAccountCodeByName(entry.debitAccount);
+            }
 
-            if (confirmedMatches.has(creditCacheKey)) {
-                creditAccountCode = confirmedMatches.get(creditCacheKey)!.selectedCode;
-            } else if (entry.creditAccount) {
-                const normalizedName = entry.creditAccount.trim().toLowerCase();
-                let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
-                if (account) {
-                    creditAccountCode = account.code;
-                } else {
-                    let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
-                    if (customer) {
-                        creditAccountCode = customer.id;
-                    } else {
-                        let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
-                        if (vendor) {
-                            creditAccountCode = vendor.id;
-                        } else if (validAccountCodes.has(entry.creditAccount.trim())) {
-                            creditAccountCode = entry.creditAccount.trim();
-                        }
-                    }
+            // Try confirmed match first for credit
+            for (const [key, confirmation] of confirmedMatches.entries()) {
+                if (key.includes(entry.creditAccount?.toLowerCase().trim() || '') && key.includes('credit') && key.includes(`${index}`)) {
+                    creditAccountCode = confirmation.selectedCode;
+                    break;
                 }
+            }
+            
+            // If no confirmed match, try direct match
+            if (!creditAccountCode && entry.creditAccount) {
+                creditAccountCode = getAccountCodeByName(entry.creditAccount);
             }
 
             // Validate debit account
