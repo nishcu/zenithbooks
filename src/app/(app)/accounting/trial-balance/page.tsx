@@ -130,6 +130,21 @@ export default function TrialBalancePage() {
 
     }, [journalVouchers, customers, vendors]);
 
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Trial Balance</h1>
+                <UpgradeRequiredAlert
+                    featureName="Trial Balance"
+                    description="Access comprehensive accounting features including trial balance, financial statements, and full accounting suite with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
+
     const totalDebits = trialBalanceData.reduce((acc, item) => acc + item.debit, 0);
     const totalCredits = trialBalanceData.reduce((acc, item) => acc + item.credit, 0);
     const difference = totalDebits - totalCredits;
