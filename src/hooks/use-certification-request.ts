@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from '@/lib/service-pricing-utils';
 
 interface CertificationRequestData {
   reportType: string;
@@ -19,7 +20,15 @@ interface UseCertificationRequestProps {
 export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }: UseCertificationRequestProps) {
   const [user] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const { toast } = useToast();
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const handleCertificationRequest = async (requestData: CertificationRequestData) => {
     if (!user) {
@@ -41,10 +50,20 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
       return false;
     }
 
-    // Get the price for the service
-    const price = pricing.ca_certs?.find((s: any) => s.id === serviceId)?.price || 0;
+    // Get the base price for the service
+    const basePrice = pricing.ca_certs?.find((s: any) => s.id === serviceId)?.price || 0;
+    
+    // Calculate effective price based on user subscription
+    const effectivePrice = userSubscriptionInfo
+      ? getEffectiveServicePrice(
+          basePrice,
+          userSubscriptionInfo.userType,
+          userSubscriptionInfo.subscriptionPlan,
+          "ca_certs"
+        )
+      : basePrice;
 
-    if (price === 0) {
+    if (effectivePrice === 0) {
       // Free service - proceed directly
       setIsSubmitting(true);
       try {
@@ -76,14 +95,22 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
       }
     } else {
       // Paid service - return price info for payment component
-      return { requiresPayment: true, price };
+      return { requiresPayment: true, price: effectivePrice };
     }
   };
 
   const handlePaymentSuccess = async (paymentId: string, requestData: CertificationRequestData) => {
     setIsSubmitting(true);
     try {
-      const price = pricing.ca_certs?.find((s: any) => s.id === serviceId)?.price || 0;
+      const basePrice = pricing.ca_certs?.find((s: any) => s.id === serviceId)?.price || 0;
+      const effectivePrice = userSubscriptionInfo
+        ? getEffectiveServicePrice(
+            basePrice,
+            userSubscriptionInfo.userType,
+            userSubscriptionInfo.subscriptionPlan,
+            "ca_certs"
+          )
+        : basePrice;
       await addDoc(collection(db, "certificationRequests"), {
         ...requestData,
         requestedBy: user?.displayName || user?.email,
@@ -92,7 +119,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
         status: "Pending",
         draftUrl: "#",
         signedDocumentUrl: null,
-        amount: price,
+        amount: effectivePrice,
         paymentId: paymentId,
       });
       toast({

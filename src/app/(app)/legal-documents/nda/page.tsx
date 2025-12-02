@@ -17,7 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, FileDown, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -29,6 +29,7 @@ import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const formSchema = z.object({
@@ -55,11 +56,19 @@ export default function NdaPage() {
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'nda'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -277,9 +286,19 @@ export default function NdaPage() {
             </p>
           </CardContent>
           <CardFooter>
-            {pricing && pricing.agreements?.find(s => s.id === 'nda')?.price > 0 ? (
+            {(() => {
+              const basePrice = pricing?.agreements?.find(s => s.id === 'nda')?.price || 0;
+              const effectivePrice = userSubscriptionInfo
+                ? getEffectiveServicePrice(
+                    basePrice,
+                    userSubscriptionInfo.userType,
+                    userSubscriptionInfo.subscriptionPlan,
+                    "agreements"
+                  )
+                : basePrice;
+              return effectivePrice > 0 ? (
               <CashfreeCheckout
-                amount={pricing.agreements.find(s => s.id === 'nda')?.price || 0}
+                amount={effectivePrice}
                 planId="nda_certification"
                 planName="NDA Professional Certification"
                 userId={user?.uid || ''}
@@ -305,7 +324,8 @@ export default function NdaPage() {
                 {isCertifying ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
                 Request Professional Certification
               </Button>
-            )}
+            );
+            })()}
           </CardFooter>
         </Card>
       )}

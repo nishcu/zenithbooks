@@ -38,6 +38,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const noticeSchema = z.object({
@@ -54,6 +55,7 @@ export default function NoticesPage() {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
+    const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
     const { handlePaymentSuccess } = useCertificationRequest({
         pricing,
@@ -66,6 +68,13 @@ export default function NoticesPage() {
         return () => unsubscribe();
     }, []);
 
+    // Fetch user subscription info
+    useEffect(() => {
+        if (user) {
+            getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+        }
+    }, [user]);
+
     const form = useForm<NoticeFormData>({
         resolver: zodResolver(noticeSchema),
         defaultValues: {
@@ -75,7 +84,15 @@ export default function NoticesPage() {
     
     const noticeHandlingServices = pricing ? pricing.notice_handling : [];
     const selectedService = noticeHandlingServices.find(s => s.id === form.watch("noticeType"));
-    const servicePrice = selectedService ? selectedService.price : 0;
+    const baseServicePrice = selectedService ? selectedService.price : 0;
+    const servicePrice = userSubscriptionInfo
+        ? getEffectiveServicePrice(
+            baseServicePrice,
+            userSubscriptionInfo.userType,
+            userSubscriptionInfo.subscriptionPlan,
+            "notice_handling"
+          )
+        : baseServicePrice;
 
     const handleSubmit = async (values: NoticeFormData) => {
         if (!user) {

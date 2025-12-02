@@ -85,6 +85,7 @@ import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const initialAssets: FixedAsset[] = [
   { id: 1, name: "Plant & Machinery", cost: 1000000, depreciationRate: 15, additionYear: 0 },
@@ -112,11 +113,19 @@ export default function CmaReportGeneratorPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [user] = useAuthState(auth);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handlePaymentSuccess } = useCertificationRequest({
     pricing,
     serviceId: 'cma_report'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const reportPrintRef = useRef(null);
 
@@ -330,7 +339,15 @@ export default function CmaReportGeneratorPage() {
     XLSX.writeFile(wb, `CMA_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   }
 
-  const cmaReportPrice = pricing?.reports.find(r => r.id === 'cma_report')?.price;
+  const baseCmaReportPrice = pricing?.reports.find(r => r.id === 'cma_report')?.price || 0;
+  const cmaReportPrice = userSubscriptionInfo
+    ? getEffectiveServicePrice(
+        baseCmaReportPrice,
+        userSubscriptionInfo.userType,
+        userSubscriptionInfo.subscriptionPlan,
+        "reports"
+      )
+    : baseCmaReportPrice;
 
   return (
     <div className="space-y-8">

@@ -18,10 +18,11 @@ import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, addDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
@@ -63,11 +64,19 @@ export default function TurnoverCertificatePage() {
   const [user, authLoading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
     pricing,
     serviceId: 'turnover'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -179,10 +188,18 @@ export default function TurnoverCertificatePage() {
           return;
       }
 
-      // Get the price for Turnover Certificate
-      const price = pricing.ca_certs?.find(s => s.id === 'turnover')?.price || 0;
+      // Get the base price for Turnover Certificate
+      const basePrice = pricing?.ca_certs?.find(s => s.id === 'turnover')?.price || 0;
+      const effectivePrice = userSubscriptionInfo
+        ? getEffectiveServicePrice(
+            basePrice,
+            userSubscriptionInfo.userType,
+            userSubscriptionInfo.subscriptionPlan,
+            "ca_certs"
+          )
+        : basePrice;
 
-      if (price === 0) {
+      if (effectivePrice === 0) {
           // Free certificate - proceed directly
           setIsSubmitting(true);
           try {
@@ -324,9 +341,19 @@ export default function TurnoverCertificatePage() {
                             fileName={`Turnover_Certificate_${formData.entityName}`}
                             whatsappMessage={whatsappMessage}
                         />
-                        {pricing && pricing.ca_certs?.find(s => s.id === 'turnover')?.price > 0 ? (
+                        {(() => {
+                          const basePrice = pricing?.ca_certs?.find(s => s.id === 'turnover')?.price || 0;
+                          const effectivePrice = userSubscriptionInfo
+                            ? getEffectiveServicePrice(
+                                basePrice,
+                                userSubscriptionInfo.userType,
+                                userSubscriptionInfo.subscriptionPlan,
+                                "ca_certs"
+                              )
+                            : basePrice;
+                          return effectivePrice > 0 ? (
                            <CashfreeCheckout
-                               amount={pricing.ca_certs.find(s => s.id === 'turnover')?.price || 0}
+                               amount={effectivePrice}
                                planId="turnover_cert"
                                planName="Turnover Certificate"
                                userId={user?.uid || ''}
@@ -336,7 +363,15 @@ export default function TurnoverCertificatePage() {
                                    // After successful payment, create the certification request
                                    setIsSubmitting(true);
                                    try {
-                                       const price = pricing.ca_certs.find(s => s.id === 'turnover')?.price || 0;
+                                       const basePrice = pricing?.ca_certs?.find(s => s.id === 'turnover')?.price || 0;
+                                       const effectivePrice = userSubscriptionInfo
+                                         ? getEffectiveServicePrice(
+                                             basePrice,
+                                             userSubscriptionInfo.userType,
+                                             userSubscriptionInfo.subscriptionPlan,
+                                             "ca_certs"
+                                           )
+                                         : basePrice;
                                        await addDoc(collection(db, "certificationRequests"), {
                                            reportType: "Turnover Certificate",
                                            clientName: form.getValues("entityName"),
@@ -347,7 +382,7 @@ export default function TurnoverCertificatePage() {
                                            draftUrl: "#",
                                            signedDocumentUrl: null,
                                            formData: form.getValues(),
-                                           amount: price,
+                                           amount: effectivePrice,
                                            paymentId: paymentId,
                                        });
                                        toast({
