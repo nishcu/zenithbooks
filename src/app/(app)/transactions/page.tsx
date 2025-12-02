@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
@@ -12,7 +12,6 @@ import { IndianRupee, Receipt, FileText, CreditCard, Loader2, Search } from "luc
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect } from "react";
 
 interface Transaction {
   id: string;
@@ -32,15 +31,19 @@ const EMPTY_TRANSACTIONS: Transaction[] = [];
 
 export default function TransactionsPage() {
   // All hooks must be called unconditionally at the top level
+  // IMPORTANT: All hooks must be in the same order on every render
   const [user] = useAuthState(auth);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [userData, setUserData] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
-  // Early return check - but hooks are already called above
-  // This is safe because all hooks are called before any conditional logic
+  // Ensure component is mounted on client side to prevent hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fetch user data and transactions together
   useEffect(() => {
@@ -146,29 +149,37 @@ export default function TransactionsPage() {
   }, [user]);
 
   // Filter transactions - use stable empty array reference
+  // Memoize with stable dependencies to prevent hook order issues
   const filteredTransactions = useMemo(() => {
-    // Ensure transactions is an array
-    if (!Array.isArray(transactions) || transactions.length === 0) {
+    // Defensive check - ensure transactions is always an array
+    const txArray = Array.isArray(transactions) ? transactions : [];
+    
+    // Early return for empty array
+    if (txArray.length === 0) {
       return EMPTY_TRANSACTIONS;
     }
 
-    let filtered = transactions; // Start with original array
+    // Apply filters sequentially
+    let filtered = txArray;
 
     // Filter by type
-    if (filterType !== "all") {
-      filtered = filtered.filter((t) => t.type === filterType);
+    if (filterType && filterType !== "all") {
+      filtered = filtered.filter((t) => t?.type === filterType);
     }
 
     // Filter by search term
-    if (searchTerm && searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(
-        (t) =>
+    const trimmedSearch = searchTerm?.trim() || "";
+    if (trimmedSearch) {
+      const searchLower = trimmedSearch.toLowerCase();
+      filtered = filtered.filter((t) => {
+        if (!t) return false;
+        return (
           t.description?.toLowerCase().includes(searchLower) ||
           t.status?.toLowerCase().includes(searchLower) ||
           t.orderId?.toLowerCase().includes(searchLower) ||
           t.paymentId?.toLowerCase().includes(searchLower)
-      );
+        );
+      });
     }
 
     return filtered;
@@ -203,24 +214,39 @@ export default function TransactionsPage() {
     return <Badge variant="outline">{status}</Badge>;
   };
 
+  // Memoize calculations with stable return values
   const totalAmount = useMemo(() => {
-    if (!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) {
+    const filtered = Array.isArray(filteredTransactions) ? filteredTransactions : [];
+    if (filtered.length === 0) {
       return 0;
     }
-    return filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    return filtered.reduce((sum, t) => {
+      return sum + (typeof t?.amount === 'number' ? t.amount : 0);
+    }, 0);
   }, [filteredTransactions]);
 
   const paidCount = useMemo(() => {
-    if (!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) {
+    const filtered = Array.isArray(filteredTransactions) ? filteredTransactions : [];
+    if (filtered.length === 0) {
       return 0;
     }
-    return filteredTransactions.filter((t) => {
-      const status = t.status?.toLowerCase() || "";
+    return filtered.filter((t) => {
+      if (!t) return false;
+      const status = (t.status || "").toLowerCase();
       return status === "success" || status === "paid" || status === "active" || status === "certified";
     }).length;
   }, [filteredTransactions]);
 
-  // Early return after all hooks are called
+  // Early returns after all hooks are called
+  // Prevent rendering until mounted to avoid hydration mismatches
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="space-y-8 p-8">
