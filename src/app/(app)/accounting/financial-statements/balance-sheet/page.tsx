@@ -125,21 +125,6 @@ export default function BalanceSheetPage() {
 
   }, [customersSnapshot, vendorsSnapshot, accountsSnapshot, journalVouchers]);
 
-  // Early return AFTER all hooks are called
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Balance Sheet</h1>
-        <UpgradeRequiredAlert
-          featureName="Balance Sheet"
-          description="Generate comprehensive balance sheets and financial statements with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
-
   const getBalance = (code: string): number => accountBalances[code] || 0;
   const getDisplayBalance = (code: string, type: 'Asset' | 'Liability'): number => type === 'Asset' ? -getBalance(code) : getBalance(code);
 
@@ -240,6 +225,22 @@ export default function BalanceSheetPage() {
   // --- Mismatch & Download Logic ---
   const difference = totalEquityAndLiabilities - totalAssets;
   const isMismatched = Math.abs(difference) > 0.01;
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Balance Sheet</h1>
+        <UpgradeRequiredAlert
+          featureName="Balance Sheet"
+          description="Generate comprehensive balance sheets and financial statements with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   const handleDownloadCsv = () => {
     const formatNumber = (value?: number) => (typeof value === "number" ? value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "");
     const formatDate = format(date || new Date(), 'dd MMMM yyyy');

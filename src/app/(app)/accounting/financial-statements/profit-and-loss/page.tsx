@@ -150,6 +150,21 @@ export default function ProfitAndLossPage() {
     return "For the period covering all transactions";
   }, [dateRange]);
 
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Profit & Loss</h1>
+        <UpgradeRequiredAlert
+          featureName="Profit & Loss Statement"
+          description="Generate comprehensive profit and loss statements with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   const handleDownloadCsv = () => {
     const rows = [
       ["Section", "Particulars", "Amount"],
