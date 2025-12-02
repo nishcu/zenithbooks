@@ -23,26 +23,12 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 
 export default function Form16() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
-
-  // Show upgrade alert for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Form 16</h1>
-        <UpgradeRequiredAlert
-          featureName="Form 16 Generator"
-          description="Generate Form 16 certificates for your employees with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
 
   const printRef = useRef(null);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -59,6 +45,21 @@ export default function Form16() {
   const [deductions, setDeductions] = useState(150000);
   const [taxableIncome, setTaxableIncome] = useState(1050000);
   const [taxDeducted, setTaxDeducted] = useState(124800);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Form 16</h1>
+        <UpgradeRequiredAlert
+          featureName="Form 16 Generator"
+          description="Generate Form 16 certificates for your employees with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
 
 
   return (
