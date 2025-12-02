@@ -56,6 +56,7 @@ const initialTaxPaid = [
 ];
 
 export default function Gstr9WizardPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
   const [user] = useAuthState(auth);
@@ -64,6 +65,13 @@ export default function Gstr9WizardPage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
+  // All hooks must be called before any early returns
+  const [step, setStep] = useState(1);
+  const [outwardSupplies, setOutwardSupplies] = useState(initialOutwardSupplies);
+  const [itc, setItc] = useState(initialItc);
+  const [taxPaid, setTaxPaid] = useState(initialTaxPaid);
+
+  // Early return AFTER all hooks are called
   if (user && isFreemium) {
     return (
       <div className="space-y-8 p-8">
@@ -77,11 +85,6 @@ export default function Gstr9WizardPage() {
       </div>
     );
   }
-
-  const [step, setStep] = useState(1);
-  const [outwardSupplies, setOutwardSupplies] = useState(initialOutwardSupplies);
-  const [itc, setItc] = useState(initialItc);
-  const [taxPaid, setTaxPaid] = useState(initialTaxPaid);
 
   const handleNext = () => {
     toast({
