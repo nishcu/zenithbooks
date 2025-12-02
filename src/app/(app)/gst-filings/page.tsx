@@ -56,6 +56,7 @@ const months = [
 
 
 export default function GstFilings() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { journalVouchers, loading } = useContext(AccountingContext)!;
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -65,21 +66,7 @@ export default function GstFilings() {
     const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
     const [month, setMonth] = useState(new Date().getMonth().toString().padStart(2, '0'));
 
-    // Show upgrade alert for freemium users
-    if (user && isFreemium) {
-        return (
-            <div className="space-y-8 p-8">
-                <h1 className="text-3xl font-bold">GST Filings</h1>
-                <UpgradeRequiredAlert
-                    featureName="GST Compliance Tools"
-                    description="File GST returns, generate GST reports, and access reconciliation tools with a Business or Professional plan."
-                    backHref="/dashboard"
-                    backLabel="Back to Dashboard"
-                />
-            </div>
-        );
-    }
-
+    // Calculate summaries - MUST be called before any early returns
     const { gstr1Summary, gstr3bSummary, netGstPayable } = useMemo(() => {
         // Exclude cancelled invoices from regular invoices
         const salesInvoices = journalVouchers.filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses);
@@ -118,6 +105,21 @@ export default function GstFilings() {
             netGstPayable: finalOutputGst - finalItc,
         }
     }, [journalVouchers]);
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">GST Filings</h1>
+                <UpgradeRequiredAlert
+                    featureName="GST Compliance Tools"
+                    description="File GST returns, generate GST reports, and access reconciliation tools with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
