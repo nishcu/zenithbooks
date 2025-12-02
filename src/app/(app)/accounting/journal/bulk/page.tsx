@@ -167,37 +167,32 @@ export default function BulkJournalEntryPage() {
         return code;
     };
 
-    // Convert account name to account code (with fuzzy matching)
+    // Convert account name to account code (EXACT MATCH ONLY - no partial matching to prevent false positives)
+    // This ensures users must use exact account names from the Chart of Accounts
     const getAccountCodeByName = (name: string): string | null => {
         if (!name || !name.trim()) return null;
         
         const normalizedName = name.trim().toLowerCase();
         
-        // First, try exact match (case-insensitive)
+        // 1. Try exact match (case-insensitive) with system accounts
         let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
         if (account) return account.code;
         
+        // 2. Try exact match with customer names
         let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
         if (customer) return customer.id;
         
+        // 3. Try exact match with vendor names
         let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
         if (vendor) return vendor.id;
         
-        // Try partial match (contains)
-        account = allAccounts.find(acc => acc.name.toLowerCase().includes(normalizedName) || normalizedName.includes(acc.name.toLowerCase()));
-        if (account) return account.code;
-        
-        customer = customers.find(c => c.name.toLowerCase().includes(normalizedName) || normalizedName.includes(c.name.toLowerCase()));
-        if (customer) return customer.id;
-        
-        vendor = vendors.find(v => v.name.toLowerCase().includes(normalizedName) || normalizedName.includes(v.name.toLowerCase()));
-        if (vendor) return vendor.id;
-        
-        // If it's already a code, return it
+        // 4. If it's already a code, return it
         if (validAccountCodes.has(name.trim())) {
             return name.trim();
         }
         
+        // NO PARTIAL MATCHING - This prevents false positives like "Salary" matching "Salaries and Wages - Indirect"
+        // Users must use exact account names from the Chart of Accounts
         return null;
     };
 
@@ -573,6 +568,26 @@ export default function BulkJournalEntryPage() {
                 </TabsList>
 
                 <TabsContent value="upload" className="space-y-6">
+                    <Alert className="border-primary bg-primary/5">
+                        <AlertCircle className="h-4 w-4 text-primary" />
+                        <AlertTitle className="text-lg font-semibold">Important: Use Exact Account Names</AlertTitle>
+                        <AlertDescription className="mt-2">
+                            <p className="mb-2">
+                                <strong>Use ONLY System-generated Chart of Accounts and accounts created by you.</strong>
+                            </p>
+                            <p className="mb-2">
+                                Account names must match <strong>exactly</strong> (case-insensitive). For example:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 mb-2 ml-4">
+                                <li>✅ Correct: <code className="bg-muted px-1 rounded">Salaries and Wages - Indirect</code></li>
+                                <li>❌ Wrong: <code className="bg-muted px-1 rounded">Salary</code> (will not match and journal entry will fail)</li>
+                                <li>❌ Wrong: <code className="bg-muted px-1 rounded">Salaries</code> (will not match and journal entry will fail)</li>
+                            </ul>
+                            <p className="mb-2">
+                                <strong>Download the Sample Excel Sheet from Chart of Accounts page</strong> to see all available account names.
+                            </p>
+                        </AlertDescription>
+                    </Alert>
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

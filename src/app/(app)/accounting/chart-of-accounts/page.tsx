@@ -48,6 +48,9 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { allAccounts } from "@/lib/accounts";
+import * as XLSX from "xlsx";
+import { Download } from "lucide-react";
+import { formatExcelFromJson } from "@/lib/export-utils";
 
 interface Account {
     code: string;
@@ -158,6 +161,62 @@ export default function ChartOfAccountsPage() {
     form.setValue("code", nextCode);
   };
 
+  // Determine debit/credit nature based on account type
+  const getDebitCreditNature = (accountType: string): string => {
+    const type = accountType.toLowerCase();
+    if (type.includes('asset') || type === 'cash' || type === 'bank' || type === 'inventory' || type === 'investment') {
+      return "Debit to Increase, Credit to Decrease";
+    } else if (type.includes('liability') || type === 'equity') {
+      return "Credit to Increase, Debit to Decrease";
+    } else if (type === 'revenue' || type.includes('income')) {
+      return "Credit to Increase, Debit to Decrease";
+    } else if (type.includes('expense') || type.includes('cost of goods sold') || type === 'depreciation') {
+      return "Debit to Increase, Credit to Decrease";
+    }
+    return "N/A";
+  };
+
+  const handleDownloadSampleExcel = () => {
+    // Prepare data with all system accounts and user-created accounts
+    const systemAccounts = allAccounts.map(account => ({
+      "Account Code": account.code,
+      "Account Name": account.name,
+      "Account Type": account.type,
+      "Debit/Credit Nature": getDebitCreditNature(account.type),
+      "Source": "System Generated"
+    }));
+
+    const userCreatedAccounts = userAccounts.map(account => ({
+      "Account Code": account.code,
+      "Account Name": account.name,
+      "Account Type": account.type,
+      "Debit/Credit Nature": getDebitCreditNature(account.type),
+      "Source": "User Created"
+    }));
+
+    const excelData = [...systemAccounts, ...userCreatedAccounts].sort((a, b) => 
+      (a["Account Code"] || "").localeCompare(b["Account Code"] || "")
+    );
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // Apply formatting
+    formatExcelFromJson(ws, excelData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Chart of Accounts");
+    
+    // Download
+    XLSX.writeFile(wb, "zenithbooks-chart-of-accounts-sample.xlsx");
+    
+    toast({
+      title: "Sample Excel Downloaded",
+      description: "Chart of Accounts sample file has been downloaded. Use exact account names from this file in your journal entries.",
+    });
+  };
+
   const onSubmit = async (values: z.infer<typeof accountSchema>) => {
     if (!user) {
         toast({ variant: "destructive", title: "Not Authenticated" });
@@ -218,13 +277,18 @@ export default function ChartOfAccountsPage() {
                     A complete list of your company's financial accounts.
                 </p>
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2"/>
-                        Add Custom Account
-                    </Button>
-                </DialogTrigger>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={handleDownloadSampleExcel}>
+                    <Download className="mr-2 h-4 w-4"/>
+                    Download Sample Excel Sheet
+                </Button>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2"/>
+                            Add Custom Account
+                        </Button>
+                    </DialogTrigger>
                 <DialogContent className="sm:max-w-lg">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -265,7 +329,8 @@ export default function ChartOfAccountsPage() {
                     </form>
                   </Form>
                 </DialogContent>
-            </Dialog>
+                </Dialog>
+            </div>
         </div>
       
       <Card>
