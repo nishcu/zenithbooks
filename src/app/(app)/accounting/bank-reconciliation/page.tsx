@@ -580,45 +580,6 @@ export default function BankReconciliationPage() {
         document.body.removeChild(link);
         toast({ title: "Template Downloaded", description: "A sample CSV template has been downloaded." });
     };
-
-    const handleDownloadSkippedRows = useCallback(() => {
-        if (!skippedRowsDetail.length) return;
-        const escapeCsv = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
-        const header = 'Row Number,Reason,Row Data\n';
-        const body = skippedRowsDetail
-            .map(row => {
-                const rowData = row.raw ?? '';
-                return `${row.rowNumber},${escapeCsv(row.reason)},${escapeCsv(rowData)}`;
-            })
-            .join('\n');
-        const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `skipped-rows-${Date.now()}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, [skippedRowsDetail]);
-
-    const toggleSelection = useCallback((id: string, type: 'statement' | 'book') => {
-        if (type === 'statement') {
-            setSelectedStatementTxs(prev => {
-                const newSelection = new Set(prev);
-                if (newSelection.has(id)) newSelection.delete(id);
-                else newSelection.add(id);
-                return newSelection;
-            });
-        } else {
-             setSelectedBookTxs(prev => {
-                const newSelection = new Set(prev);
-                if (newSelection.has(id)) newSelection.delete(id);
-                else newSelection.add(id);
-                return newSelection;
-            });
-        }
-    }, []);
     
     const handleMatch = () => {
         const currentlySelectedStatementTxs = Array.from(selectedStatementTxs).filter(id => !matchedPairs.has(id));
