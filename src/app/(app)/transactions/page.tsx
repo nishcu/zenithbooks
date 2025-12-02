@@ -6,7 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Removed unused Tabs import
 import { format } from "date-fns";
 import { IndianRupee, Receipt, FileText, CreditCard, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
