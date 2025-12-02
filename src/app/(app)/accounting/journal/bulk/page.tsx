@@ -144,11 +144,13 @@ export default function BulkJournalEntryPage() {
     const [parsedEntries, setParsedEntries] = useState<BulkJournalEntry[]>([]);
     const [defaultDate, setDefaultDate] = useState(format(new Date(), "yyyy-MM-dd"));
     const [matchDialogOpen, setMatchDialogOpen] = useState(false);
-    const [pendingMatches, setPendingMatches] = useState<{ accountName: string; matches: AccountMatch[]; onConfirm: (code: string, name: string) => void } | null>(null);
+    const [pendingMatches, setPendingMatches] = useState<{ accountName: string; matches: AccountMatch[]; onConfirm: (code: string, name: string) => void; currentIndex: number; totalCount: number } | null>(null);
     const [confirmedMatches, setConfirmedMatches] = useState<Map<string, MatchConfirmation>>(new Map());
     const [pendingEntries, setPendingEntries] = useState<BulkJournalEntry[]>([]);
     const [pendingAccountsMap, setPendingAccountsMap] = useState<Map<string, AccountMatch[]>>(new Map());
     const [allPendingKeys, setAllPendingKeys] = useState<string[]>([]);
+    const [totalAccountsNeedingMatch, setTotalAccountsNeedingMatch] = useState(0);
+    const [confirmedAccountsCount, setConfirmedAccountsCount] = useState(0);
 
     // Fetch customers and vendors for account validation
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
@@ -567,9 +569,16 @@ export default function BulkJournalEntryPage() {
                 setPendingAccountsMap(accountsNeedingMatch);
                 setAllPendingKeys(Array.from(accountsNeedingMatch.keys()));
                 
+                // Set total count and reset confirmed count
+                const totalCount = accountsNeedingMatch.size;
+                setTotalAccountsNeedingMatch(totalCount);
+                setConfirmedAccountsCount(0);
+                
                 setPendingMatches({
                     accountName: accountName,
                     matches,
+                    currentIndex: 1,
+                    totalCount: totalCount,
                     onConfirm: (code: string, selectedName: string) => {
                         const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
                         
@@ -584,6 +593,9 @@ export default function BulkJournalEntryPage() {
                             return newMap;
                         });
                         
+                        // Update confirmed count
+                        setConfirmedAccountsCount(prev => prev + 1);
+                        
                         setMatchDialogOpen(false);
                         setPendingMatches(null);
                         
@@ -591,7 +603,7 @@ export default function BulkJournalEntryPage() {
                         const remainingKeys = Array.from(accountsNeedingMatch.keys()).slice(1);
                         if (remainingKeys.length > 0) {
                             setTimeout(() => {
-                                processRemainingMatches(entries, accountsNeedingMatch, remainingKeys);
+                                processRemainingMatches(entries, accountsNeedingMatch, remainingKeys, 1, totalCount);
                             }, 100);
                         } else {
                             // All matches confirmed, validate entries
@@ -728,9 +740,10 @@ export default function BulkJournalEntryPage() {
         });
     };
 
-    const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[]) => {
+    const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[], currentIndex: number, totalCount: number) => {
         if (remainingKeys.length === 0) {
             // All matches confirmed, validate entries
+            setConfirmedAccountsCount(totalCount);
             finalizeValidation(entries);
             return;
         }
@@ -749,6 +762,8 @@ export default function BulkJournalEntryPage() {
         setPendingMatches({
             accountName: accountName,
             matches,
+            currentIndex: currentIndex + 1,
+            totalCount: totalCount,
             onConfirm: (code: string, selectedName: string) => {
                 const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
                 
@@ -763,12 +778,15 @@ export default function BulkJournalEntryPage() {
                     return newMap;
                 });
                 
+                // Update confirmed count
+                setConfirmedAccountsCount(prev => prev + 1);
+                
                 setMatchDialogOpen(false);
                 setPendingMatches(null);
                 
                 // Process remaining
                 setTimeout(() => {
-                    processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1));
+                    processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1), currentIndex + 1, totalCount);
                 }, 100);
             }
         });
@@ -1241,7 +1259,34 @@ export default function BulkJournalEntryPage() {
                     <DialogHeader>
                         <DialogTitle>Confirm Account Match</DialogTitle>
                         <DialogDescription>
-                            The account name "{pendingMatches?.accountName}" doesn't match exactly. Please select the correct account from the options below:
+                            <div className="space-y-2">
+                                <p>
+                                    The account name "<strong>{pendingMatches?.accountName}</strong>" doesn't match exactly. Please select the correct account from the options below:
+                                </p>
+                                {pendingMatches && (
+                                    <div className="flex items-center gap-2 mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-primary">
+                                                Progress: {pendingMatches.currentIndex} of {pendingMatches.totalCount} accounts
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {pendingMatches.totalCount - pendingMatches.currentIndex + 1} account(s) remaining
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-primary transition-all duration-300"
+                                                    style={{ width: `${(pendingMatches.currentIndex / pendingMatches.totalCount) * 100}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-sm font-semibold text-primary">
+                                                {Math.round((pendingMatches.currentIndex / pendingMatches.totalCount) * 100)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4 max-h-[400px] overflow-y-auto">
