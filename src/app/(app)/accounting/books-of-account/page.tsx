@@ -31,6 +31,7 @@ const financialYears = [
 ];
 
 export default function BooksOfAccountPage() {
+    // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { toast } = useToast();
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
@@ -38,20 +39,6 @@ export default function BooksOfAccountPage() {
     const [userData] = useDocumentData(userDocRef);
     const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
     const isFreemium = subscriptionPlan === 'freemium';
-
-    if (user && isFreemium) {
-        return (
-            <div className="space-y-8 p-8">
-                <h1 className="text-3xl font-bold">Books of Account</h1>
-                <UpgradeRequiredAlert
-                    featureName="Books of Account"
-                    description="Generate day book, cash book, and other accounting books with a Business or Professional plan."
-                    backHref="/dashboard"
-                    backLabel="Back to Dashboard"
-                />
-            </div>
-        );
-    }
 
     const [selectedPeriod, setSelectedPeriod] = useState<"financial-year" | "custom">("financial-year");
     const [selectedFinancialYear, setSelectedFinancialYear] = useState("2024-25");
@@ -68,6 +55,24 @@ export default function BooksOfAccountPage() {
     const [vendorsSnapshot] = useCollection(vendorsQuery);
     const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
 
+    // Get context values (but don't use them in hooks if context is null)
+    const { journalVouchers } = accountingContext || { journalVouchers: [] };
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+        return (
+            <div className="space-y-8 p-8">
+                <h1 className="text-3xl font-bold">Books of Account</h1>
+                <UpgradeRequiredAlert
+                    featureName="Books of Account"
+                    description="Generate day book, cash book, and other accounting books with a Business or Professional plan."
+                    backHref="/dashboard"
+                    backLabel="Back to Dashboard"
+                />
+            </div>
+        );
+    }
+
     if (!accountingContext) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -75,8 +80,6 @@ export default function BooksOfAccountPage() {
             </div>
         );
     }
-
-    const { journalVouchers } = accountingContext;
 
     // Get account name by code
     const getAccountName = (code: string): string => {
