@@ -5,6 +5,11 @@ import { db } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json().catch((error) => {
+      console.error('Failed to parse request body:', error);
+      throw new Error('Invalid request body');
+    });
+
     const {
       orderId,
       paymentId,
@@ -12,7 +17,15 @@ export async function POST(request: NextRequest) {
       userId,
       planId,
       amount
-    } = await request.json();
+    } = body;
+
+    // Validate required fields
+    if (!orderId) {
+      return NextResponse.json(
+        { error: 'Order ID is required' },
+        { status: 400 }
+      );
+    }
 
     // Initialize Cashfree for verification
     const appId = process.env.CASHFREE_APP_ID?.trim();
@@ -162,16 +175,22 @@ export async function POST(request: NextRequest) {
 
       // Update user's subscription status in Firestore
       if (userId) {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-          subscriptionStatus: 'active',
-          subscriptionPlan: planId,
-          lastPaymentDate: serverTimestamp(),
-          cashfreePaymentId: paymentId,
-          cashfreeOrderId: orderId,
-          paymentAmount: amount,
-          paymentStatus: orderDetails.orderStatus,
-        });
+        try {
+          const userRef = doc(db, 'users', userId);
+          await updateDoc(userRef, {
+            subscriptionStatus: 'active',
+            subscriptionPlan: planId,
+            lastPaymentDate: serverTimestamp(),
+            cashfreePaymentId: paymentId,
+            cashfreeOrderId: orderId,
+            paymentAmount: amount,
+            paymentStatus: orderStatus || paymentStatus || 'SUCCESS',
+          });
+        } catch (firestoreError) {
+          console.error('Firestore update error:', firestoreError);
+          // Don't fail the entire request if Firestore update fails
+          // Payment is already verified, just log the error
+        }
       }
 
       return NextResponse.json({
@@ -209,10 +228,24 @@ export async function POST(request: NextRequest) {
       throw cashfreeError;
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error verifying payment:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error?.message || 'Payment verification failed';
+    const errorDetails = process.env.NODE_ENV === 'development' 
+      ? { 
+          message: errorMessage,
+          stack: error?.stack,
+          name: error?.name,
+        }
+      : { message: errorMessage };
+
     return NextResponse.json(
-      { error: 'Payment verification failed' },
+      { 
+        error: 'Payment verification failed',
+        details: errorDetails,
+      },
       { status: 500 }
     );
   }
