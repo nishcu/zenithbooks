@@ -28,12 +28,16 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  // All hooks must be called unconditionally at the top level
   const [user] = useAuthState(auth);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [userData, setUserData] = useState<any>(null);
+  
+  // Early return check - but hooks are already called above
+  // This is safe because all hooks are called before any conditional logic
 
   // Fetch user data and transactions together
   useEffect(() => {
@@ -138,14 +142,15 @@ export default function TransactionsPage() {
     fetchAllData();
   }, [user]);
 
-  // Filter transactions
+  // Filter transactions - use stable empty array reference
+  const emptyArray: Transaction[] = [];
   const filteredTransactions = useMemo(() => {
     // Ensure transactions is an array
-    if (!Array.isArray(transactions)) {
-      return [];
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      return emptyArray;
     }
 
-    let filtered = [...transactions]; // Create a copy to avoid mutating the original
+    let filtered = transactions; // Start with original array
 
     // Filter by type
     if (filterType !== "all") {
@@ -153,8 +158,8 @@ export default function TransactionsPage() {
     }
 
     // Filter by search term
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    if (searchTerm && searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(
         (t) =>
           t.description?.toLowerCase().includes(searchLower) ||
@@ -197,16 +202,23 @@ export default function TransactionsPage() {
   };
 
   const totalAmount = useMemo(() => {
+    if (!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) {
+      return 0;
+    }
     return filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
   }, [filteredTransactions]);
 
   const paidCount = useMemo(() => {
+    if (!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) {
+      return 0;
+    }
     return filteredTransactions.filter((t) => {
-      const status = t.status.toLowerCase();
+      const status = t.status?.toLowerCase() || "";
       return status === "success" || status === "paid" || status === "active" || status === "certified";
     }).length;
   }, [filteredTransactions]);
 
+  // Early return after all hooks are called
   if (!user) {
     return (
       <div className="space-y-8 p-8">
