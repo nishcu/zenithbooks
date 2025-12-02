@@ -69,6 +69,7 @@ const months = [
 ];
 
 export default function TdsReturns() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const { toast } = useToast();
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -77,7 +78,17 @@ export default function TdsReturns() {
   const isFreemium = subscriptionPlan === 'freemium';
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // Show upgrade alert for freemium users
+  // All hooks must be called before any early returns
+  const [reportType, setReportType] = useState("tds");
+  const [period, setPeriod] = useState("monthly");
+  const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
+  const [month, setMonth] = useState("04");
+  const [quarter, setQuarter] = useState("q1");
+  const [reportData, setReportData] = useState<ReportRow[]>([]);
+  const [reportTitle, setReportTitle] = useState("");
+  const { journalVouchers } = useAccountingContext();
+
+  // Early return AFTER all hooks are called
   if (user && isFreemium) {
     return (
       <div className="space-y-8 p-8">
@@ -91,14 +102,6 @@ export default function TdsReturns() {
       </div>
     );
   }
-  const [reportType, setReportType] = useState("tds");
-  const [period, setPeriod] = useState("monthly");
-  const [financialYear, setFinancialYear] = useState(getFinancialYears()[0]);
-  const [month, setMonth] = useState("04");
-  const [quarter, setQuarter] = useState("q1");
-  const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [reportTitle, setReportTitle] = useState("");
-  const { journalVouchers } = useAccountingContext();
 
   const financialYears = getFinancialYears();
 
