@@ -146,6 +146,9 @@ export default function BulkJournalEntryPage() {
     const [matchDialogOpen, setMatchDialogOpen] = useState(false);
     const [pendingMatches, setPendingMatches] = useState<{ accountName: string; matches: AccountMatch[]; onConfirm: (code: string, name: string) => void } | null>(null);
     const [confirmedMatches, setConfirmedMatches] = useState<Map<string, MatchConfirmation>>(new Map());
+    const [pendingEntries, setPendingEntries] = useState<BulkJournalEntry[]>([]);
+    const [pendingAccountsMap, setPendingAccountsMap] = useState<Map<string, AccountMatch[]>>(new Map());
+    const [allPendingKeys, setAllPendingKeys] = useState<string[]>([]);
 
     // Fetch customers and vendors for account validation
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
@@ -430,28 +433,16 @@ export default function BulkJournalEntryPage() {
             const creditCacheKey = `${entry.creditAccount?.toLowerCase().trim()}_credit_${index}`;
             
             // Try confirmed match first
-            for (const [key, confirmation] of confirmedMatches.entries()) {
-                if (key.includes(entry.debitAccount?.toLowerCase().trim() || '') && key.includes('debit') && key.includes(`${index}`)) {
-                    debitAccountCode = confirmation.selectedCode;
-                    break;
-                }
-            }
-            
-            // If no confirmed match, try direct match
-            if (!debitAccountCode && entry.debitAccount) {
+            if (confirmedMatches.has(debitCacheKey)) {
+                debitAccountCode = confirmedMatches.get(debitCacheKey)!.selectedCode;
+            } else if (entry.debitAccount) {
                 debitAccountCode = getAccountCodeByName(entry.debitAccount);
             }
 
             // Try confirmed match first for credit
-            for (const [key, confirmation] of confirmedMatches.entries()) {
-                if (key.includes(entry.creditAccount?.toLowerCase().trim() || '') && key.includes('credit') && key.includes(`${index}`)) {
-                    creditAccountCode = confirmation.selectedCode;
-                    break;
-                }
-            }
-            
-            // If no confirmed match, try direct match
-            if (!creditAccountCode && entry.creditAccount) {
+            if (confirmedMatches.has(creditCacheKey)) {
+                creditAccountCode = confirmedMatches.get(creditCacheKey)!.selectedCode;
+            } else if (entry.creditAccount) {
                 creditAccountCode = getAccountCodeByName(entry.creditAccount);
             }
 
@@ -571,21 +562,43 @@ export default function BulkJournalEntryPage() {
                 const entryIndex = parseInt(index);
                 const matches = accountsNeedingMatch.get(firstKey)!;
                 
+                // Store entries and matches for later processing
+                setPendingEntries(entries);
+                setPendingAccountsMap(accountsNeedingMatch);
+                setAllPendingKeys(Array.from(accountsNeedingMatch.keys()));
+                
                 setPendingMatches({
                     accountName: accountName,
                     matches,
                     onConfirm: (code: string, selectedName: string) => {
                         const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
-                        confirmedMatches.set(cacheKey, {
-                            originalName: accountName,
-                            selectedCode: code,
-                            selectedName
+                        
+                        // Update confirmed matches using setter
+                        setConfirmedMatches(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(cacheKey, {
+                                originalName: accountName,
+                                selectedCode: code,
+                                selectedName
+                            });
+                            return newMap;
                         });
+                        
                         setMatchDialogOpen(false);
                         setPendingMatches(null);
                         
                         // Process remaining matches or validate
-                        processRemainingMatches(entries, accountsNeedingMatch, Array.from(accountsNeedingMatch.keys()).slice(1));
+                        const remainingKeys = Array.from(accountsNeedingMatch.keys()).slice(1);
+                        if (remainingKeys.length > 0) {
+                            setTimeout(() => {
+                                processRemainingMatches(entries, accountsNeedingMatch, remainingKeys);
+                            }, 100);
+                        } else {
+                            // All matches confirmed, validate entries
+                            setTimeout(() => {
+                                finalizeValidation(entries);
+                            }, 100);
+                        }
                     }
                 });
                 setMatchDialogOpen(true);
@@ -616,10 +629,12 @@ export default function BulkJournalEntryPage() {
         }
     };
 
-    const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[]) => {
-        if (remainingKeys.length === 0) {
-            // All matches confirmed, validate entries
-            const validatedEntries = validateEntries(entries);
+    const finalizeValidation = (entries: BulkJournalEntry[]) => {
+        // Get current confirmed matches from state
+        setConfirmedMatches(currentMatches => {
+            // Create a copy to ensure we're using the latest
+            const matchesCopy = new Map(currentMatches);
+            const validatedEntries = validateEntriesWithMatches(entries, matchesCopy);
             setParsedEntries(validatedEntries);
             
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
@@ -629,6 +644,94 @@ export default function BulkJournalEntryPage() {
                 title: "File Processed",
                 description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
             });
+            
+            return matchesCopy;
+        });
+    };
+
+    const validateEntriesWithMatches = (entries: BulkJournalEntry[], matches: Map<string, MatchConfirmation>): BulkJournalEntry[] => {
+        return entries.map((entry, index) => {
+            const errors: string[] = [];
+
+            // Validate amount
+            if (!entry.amount || entry.amount <= 0) {
+                errors.push("Amount must be greater than zero");
+            }
+
+            // Convert account names to codes and validate using confirmed matches
+            let debitAccountCode: string | null = null;
+            let creditAccountCode: string | null = null;
+
+            // Check confirmed matches first
+            const debitCacheKey = `${entry.debitAccount?.toLowerCase().trim()}_debit_${index}`;
+            const creditCacheKey = `${entry.creditAccount?.toLowerCase().trim()}_credit_${index}`;
+            
+            // Try confirmed match first
+            for (const [key, confirmation] of matches.entries()) {
+                if (key === debitCacheKey) {
+                    debitAccountCode = confirmation.selectedCode;
+                    break;
+                }
+            }
+            
+            // If no confirmed match, try direct match
+            if (!debitAccountCode && entry.debitAccount) {
+                debitAccountCode = getAccountCodeByName(entry.debitAccount);
+            }
+
+            // Try confirmed match first for credit
+            for (const [key, confirmation] of matches.entries()) {
+                if (key === creditCacheKey) {
+                    creditAccountCode = confirmation.selectedCode;
+                    break;
+                }
+            }
+            
+            // If no confirmed match, try direct match
+            if (!creditAccountCode && entry.creditAccount) {
+                creditAccountCode = getAccountCodeByName(entry.creditAccount);
+            }
+
+            // Validate debit account
+            if (!entry.debitAccount) {
+                errors.push("Debit account is required");
+            } else if (!debitAccountCode) {
+                errors.push(`Invalid debit account: "${entry.debitAccount}". No matching account found.`);
+            }
+
+            // Validate credit account
+            if (!entry.creditAccount) {
+                errors.push("Credit account is required");
+            } else if (!creditAccountCode) {
+                errors.push(`Invalid credit account: "${entry.creditAccount}". No matching account found.`);
+            }
+
+            // Validate same account not debited and credited
+            if (debitAccountCode && creditAccountCode && debitAccountCode === creditAccountCode) {
+                errors.push("Debit and credit accounts cannot be the same");
+            }
+
+            // Validate date
+            if (!entry.date || !entry.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                errors.push("Invalid date format. Use YYYY-MM-DD");
+            }
+
+            return {
+                ...entry,
+                originalDebitAccount: entry.originalDebitAccount || entry.debitAccount,
+                originalCreditAccount: entry.originalCreditAccount || entry.creditAccount,
+                debitAccount: debitAccountCode || entry.debitAccount,
+                creditAccount: creditAccountCode || entry.creditAccount,
+                status: errors.length === 0 && debitAccountCode && creditAccountCode ? 'valid' : 'error',
+                error: errors.join('; '),
+            };
+        });
+    };
+
+    const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[]) => {
+        if (remainingKeys.length === 0) {
+            // All matches confirmed, validate entries
+            finalizeValidation(entries);
             return;
         }
         
@@ -648,16 +751,25 @@ export default function BulkJournalEntryPage() {
             matches,
             onConfirm: (code: string, selectedName: string) => {
                 const cacheKey = `${accountName.toLowerCase()}_${isDebit ? 'debit' : 'credit'}_${entryIndex}`;
-                confirmedMatches.set(cacheKey, {
-                    originalName: accountName,
-                    selectedCode: code,
-                    selectedName
+                
+                // Update confirmed matches using setter
+                setConfirmedMatches(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(cacheKey, {
+                        originalName: accountName,
+                        selectedCode: code,
+                        selectedName
+                    });
+                    return newMap;
                 });
+                
                 setMatchDialogOpen(false);
                 setPendingMatches(null);
                 
                 // Process remaining
-                processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1));
+                setTimeout(() => {
+                    processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1));
+                }, 100);
             }
         });
         setMatchDialogOpen(true);
@@ -856,8 +968,33 @@ export default function BulkJournalEntryPage() {
                                 </div>
                             )}
 
-                            {parsedEntries.length > 0 && (
+                                    {parsedEntries.length > 0 && (
                                 <>
+                                    {/* Show button to finalize validation if there are pending confirmations */}
+                                    {parsedEntries.some(e => e.error === 'Pending account confirmation') && (
+                                        <Alert className="border-yellow-500 bg-yellow-50">
+                                            <AlertCircle className="h-4 w-4 text-yellow-600" />
+                                            <AlertTitle>Account Confirmations Pending</AlertTitle>
+                                            <AlertDescription className="mt-2">
+                                                <p className="mb-2">
+                                                    Some accounts need confirmation. Please complete all account match confirmations above, then click the button below to validate entries.
+                                                </p>
+                                                <Button 
+                                                    onClick={() => {
+                                                        if (pendingEntries.length > 0) {
+                                                            finalizeValidation(pendingEntries);
+                                                        } else {
+                                                            finalizeValidation(parsedEntries);
+                                                        }
+                                                    }}
+                                                    className="mt-2"
+                                                >
+                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                    Confirm & Validate Entries
+                                                </Button>
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <Card>
                                             <CardContent className="pt-6">
@@ -1107,12 +1244,11 @@ export default function BulkJournalEntryPage() {
                             The account name "{pendingMatches?.accountName}" doesn't match exactly. Please select the correct account from the options below:
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 max-h-[400px] overflow-y-auto">
                         {pendingMatches?.matches.map((match, index) => (
                             <div
                                 key={index}
-                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                                onClick={() => pendingMatches.onConfirm(match.code, match.name)}
+                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
@@ -1123,7 +1259,16 @@ export default function BulkJournalEntryPage() {
                                     </div>
                                     <p className="text-sm text-muted-foreground mt-1">Code: {match.code}</p>
                                 </div>
-                                <Button onClick={() => pendingMatches.onConfirm(match.code, match.name)}>
+                                <Button 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (pendingMatches) {
+                                            pendingMatches.onConfirm(match.code, match.name);
+                                        }
+                                    }}
+                                    className="ml-4"
+                                >
                                     Select
                                 </Button>
                             </div>
