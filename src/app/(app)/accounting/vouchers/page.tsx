@@ -108,28 +108,15 @@ export default function VouchersPage() {
         ];
     }, [allAccounts, customers, vendors]);
 
-    // Early return AFTER all hooks are called
-    if (user && isFreemium) {
-      return (
-        <div className="space-y-8 p-8">
-          <h1 className="text-3xl font-bold">Receipt & Payment Vouchers</h1>
-          <UpgradeRequiredAlert
-            featureName="Receipt & Payment Vouchers"
-            description="Record cash and bank receipts and payments with a Business or Professional plan."
-            backHref="/dashboard"
-            backLabel="Back to Dashboard"
-          />
-        </div>
-      );
-    }
-
-    if (!accountingContext) {
-        return <Loader2 className="animate-spin" />;
-    }
-    
-    const { journalVouchers, addJournalVoucher, loading } = accountingContext;
+    // Get context values (but don't use them in hooks if context is null)
+    const { journalVouchers, addJournalVoucher, loading } = accountingContext || { 
+        journalVouchers: [], 
+        addJournalVoucher: () => {}, 
+        loading: false 
+    };
 
     const { receipts, payments } = useMemo(() => {
+        if (!journalVouchers) return { receipts: [], payments: [] };
         const reversedIds = new Set(
             journalVouchers
               .filter(v => v && v.reverses)
@@ -169,6 +156,25 @@ export default function VouchersPage() {
             payments: allPayments.filter(v => !reversedIds.has(v.id))
         };
     }, [journalVouchers]);
+
+    // Early return AFTER all hooks are called
+    if (user && isFreemium) {
+      return (
+        <div className="space-y-8 p-8">
+          <h1 className="text-3xl font-bold">Receipt & Payment Vouchers</h1>
+          <UpgradeRequiredAlert
+            featureName="Receipt & Payment Vouchers"
+            description="Record cash and bank receipts and payments with a Business or Professional plan."
+            backHref="/dashboard"
+            backLabel="Back to Dashboard"
+          />
+        </div>
+      );
+    }
+
+    if (!accountingContext) {
+        return <Loader2 className="animate-spin" />;
+    }
     
     const handleDeleteVoucher = async (voucherId: string) => {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);

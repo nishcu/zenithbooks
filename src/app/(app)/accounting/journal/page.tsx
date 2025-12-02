@@ -126,21 +126,6 @@ export default function JournalVoucherPage() {
     ];
   }, [customers, vendors]);
 
-  // Early return AFTER all hooks are called
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Journal Vouchers</h1>
-        <UpgradeRequiredAlert
-          featureName="Journal Vouchers"
-          description="Create and manage journal entries for accounting adjustments with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (editingVoucher) {
       setDate(new Date(editingVoucher.date));
@@ -158,13 +143,16 @@ export default function JournalVoucherPage() {
     }
   }, [editingVoucher]);
 
-  if (!accountingContext) {
-    return <Loader2 className="animate-spin" />;
-  }
-
-  const { journalVouchers: allVouchers, addJournalVoucher, updateJournalVoucher, loading } = accountingContext;
+  // Get context values (but don't use them in hooks if context is null)
+  const { journalVouchers: allVouchers, addJournalVoucher, updateJournalVoucher, loading } = accountingContext || { 
+    journalVouchers: [], 
+    addJournalVoucher: () => {}, 
+    updateJournalVoucher: () => {}, 
+    loading: false 
+  };
 
   const visibleJournalVouchers = useMemo(() => {
+    if (!allVouchers) return [];
     const reversedIds = new Set(
       allVouchers.filter((v: JournalVoucher | null) => v && v.reverses).map((v: JournalVoucher) => v.reverses)
     );
@@ -183,6 +171,25 @@ export default function JournalVoucherPage() {
         voucher.narration.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [visibleJournalVouchers, searchTerm]);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Journal Vouchers</h1>
+        <UpgradeRequiredAlert
+          featureName="Journal Vouchers"
+          description="Create and manage journal entries for accounting adjustments with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
+  if (!accountingContext) {
+    return <Loader2 className="animate-spin" />;
+  }
 
   const handleDeleteJournalVoucher = async (voucherId: string) => {
     const originalVoucher = allVouchers.find((v: JournalVoucher | null) => v && v.id === voucherId);
