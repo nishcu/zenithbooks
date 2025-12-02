@@ -63,10 +63,11 @@ export default function TurnoverCertificatePage() {
   const printRef = useRef<HTMLDivElement>(null);
   const [user, authLoading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(!!docId);
-  const [pricing, setPricing] = useState(null);
+  const [pricing, setPricing] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
-  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
+  const { handleCertificationRequest, handlePaymentSuccess } = useCertificationRequest({
     pricing,
     serviceId: 'turnover'
   });
@@ -229,7 +230,7 @@ export default function TurnoverCertificatePage() {
           // Paid certificate - show payment modal or redirect to payment
           toast({
               title: "Payment Required",
-              description: `This service costs ₹${price}. Please complete the payment to proceed.`,
+              description: `This service costs ₹${effectivePrice}. Please complete the payment to proceed.`,
           });
           // Payment will be handled by the CashfreeCheckout component
       }
@@ -413,7 +414,8 @@ export default function TurnoverCertificatePage() {
                               {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
                               Request Certification
                            </Button>
-                       )}
+                       );
+                        })()}
                      </div>
                 </CardFooter>
             </Card>
