@@ -126,6 +126,7 @@ export default function TransactionsPage() {
         // Sort by date (newest first)
         allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
         
+        // Update transactions - React will handle re-render optimization
         setTransactions(allTransactions);
       } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -139,7 +140,12 @@ export default function TransactionsPage() {
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
+    // Ensure transactions is an array
+    if (!Array.isArray(transactions)) {
+      return [];
+    }
+
+    let filtered = [...transactions]; // Create a copy to avoid mutating the original
 
     // Filter by type
     if (filterType !== "all") {
@@ -151,8 +157,8 @@ export default function TransactionsPage() {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (t) =>
-          t.description.toLowerCase().includes(searchLower) ||
-          t.status.toLowerCase().includes(searchLower) ||
+          t.description?.toLowerCase().includes(searchLower) ||
+          t.status?.toLowerCase().includes(searchLower) ||
           t.orderId?.toLowerCase().includes(searchLower) ||
           t.paymentId?.toLowerCase().includes(searchLower)
       );
@@ -190,11 +196,16 @@ export default function TransactionsPage() {
     return <Badge variant="outline">{status}</Badge>;
   };
 
-  const totalAmount = filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-  const paidCount = filteredTransactions.filter((t) => {
-    const status = t.status.toLowerCase();
-    return status === "success" || status === "paid" || status === "active" || status === "certified";
-  }).length;
+  const totalAmount = useMemo(() => {
+    return filteredTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  }, [filteredTransactions]);
+
+  const paidCount = useMemo(() => {
+    return filteredTransactions.filter((t) => {
+      const status = t.status.toLowerCase();
+      return status === "success" || status === "paid" || status === "active" || status === "certified";
+    }).length;
+  }, [filteredTransactions]);
 
   if (!user) {
     return (
