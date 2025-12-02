@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!orderId) {
+    if (!orderId || typeof orderId !== 'string' || orderId.trim() === '') {
       return NextResponse.json(
-        { error: 'Order ID is required' },
+        { error: 'Order ID is required and must be a valid string' },
         { status: 400 }
       );
     }
@@ -37,15 +37,20 @@ export async function POST(request: NextRequest) {
 
       // Update user's subscription status in Firestore for demo
       if (userId) {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-          subscriptionStatus: 'active',
-          subscriptionPlan: planId,
-          lastPaymentDate: serverTimestamp(),
-          demoPaymentId: paymentId || `demo_${Date.now()}`,
-          demoOrderId: orderId || `demo_order_${Date.now()}`,
-          paymentAmount: amount,
-        });
+        try {
+          const userRef = doc(db, 'users', userId);
+          await updateDoc(userRef, {
+            subscriptionStatus: 'active',
+            subscriptionPlan: planId,
+            lastPaymentDate: serverTimestamp(),
+            demoPaymentId: paymentId || `demo_${Date.now()}`,
+            demoOrderId: orderId || `demo_order_${Date.now()}`,
+            paymentAmount: amount,
+          });
+        } catch (firestoreError) {
+          console.error('Firestore update error in demo mode:', firestoreError);
+          // Still return success for demo mode even if Firestore fails
+        }
       }
 
       return NextResponse.json({
@@ -200,31 +205,37 @@ export async function POST(request: NextRequest) {
         orderStatus: orderStatus,
       });
 
-    } catch (cashfreeError) {
+    } catch (cashfreeError: any) {
       console.error('Cashfree verification error:', cashfreeError);
 
       // Fallback: still update the user if we have the payment details
       // This is more lenient than Razorpay's strict verification
       if (userId && paymentId) {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-          subscriptionStatus: 'active',
-          subscriptionPlan: planId,
-          lastPaymentDate: serverTimestamp(),
-          cashfreePaymentId: paymentId,
-          cashfreeOrderId: orderId,
-          paymentAmount: amount,
-          paymentStatus: 'VERIFICATION_FAILED',
-        });
+        try {
+          const userRef = doc(db, 'users', userId);
+          await updateDoc(userRef, {
+            subscriptionStatus: 'active',
+            subscriptionPlan: planId,
+            lastPaymentDate: serverTimestamp(),
+            cashfreePaymentId: paymentId,
+            cashfreeOrderId: orderId,
+            paymentAmount: amount,
+            paymentStatus: 'VERIFICATION_FAILED',
+          });
 
-        return NextResponse.json({
-          success: true,
-          message: 'Payment recorded but verification failed - please contact support',
-          paymentId: paymentId,
-          warning: 'Verification failed but payment recorded',
-        });
+          return NextResponse.json({
+            success: true,
+            message: 'Payment recorded but verification failed - please contact support',
+            paymentId: paymentId,
+            warning: 'Verification failed but payment recorded',
+          });
+        } catch (firestoreError) {
+          console.error('Firestore update failed in fallback:', firestoreError);
+          // Continue to throw the original Cashfree error
+        }
       }
 
+      // If we can't update Firestore or don't have userId/paymentId, throw the original error
       throw cashfreeError;
     }
 
