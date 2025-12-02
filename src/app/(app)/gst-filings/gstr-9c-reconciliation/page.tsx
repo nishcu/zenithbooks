@@ -92,6 +92,7 @@ const initialAdditionalLiability = [
 ];
 
 export default function Gstr9cPage() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
   const [user] = useAuthState(auth);
@@ -100,20 +101,7 @@ export default function Gstr9cPage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">GSTR-9C Reconciliation</h1>
-        <UpgradeRequiredAlert
-          featureName="GSTR-9C Reconciliation"
-          description="Generate GSTR-9C reconciliation statements with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
-
+  // All hooks must be called before any early returns
   const [turnoverReconData, setTurnoverReconData] = useState(initialTurnoverRecon);
   const [taxableTurnoverReconData, setTaxableTurnoverReconData] = useState(initialTaxableTurnoverRecon);
   const [taxPaidData, setTaxPaidData] = useState(initialTaxPaidRecon);
@@ -131,6 +119,21 @@ export default function Gstr9cPage() {
     membershipNo: "123456",
     firmName: "S. Sharma & Associates"
   });
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">GSTR-9C Reconciliation</h1>
+        <UpgradeRequiredAlert
+          featureName="GSTR-9C Reconciliation"
+          description="Generate GSTR-9C reconciliation statements with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
   
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
