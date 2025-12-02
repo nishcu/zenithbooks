@@ -218,6 +218,7 @@ const allMenuItems = [
       { href: "/settings/branding", label: "Company Branding", icon: Building, roles: ['business', 'professional', 'super_admin'] },
       { href: "/settings/users", label: "User Management", icon: Users, roles: ['business', 'professional', 'super_admin'] },
       { href: "/settings/professional-profile", label: "Professional Profile", icon: Briefcase, roles: ['professional'] },
+      { href: "/transactions", label: "Transaction History", icon: CreditCard, roles: ['business', 'professional', 'super_admin'] },
     ],
   },
   {
