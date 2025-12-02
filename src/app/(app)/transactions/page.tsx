@@ -27,6 +27,9 @@ interface Transaction {
   reportType?: string;
 }
 
+// Stable empty array reference outside component
+const EMPTY_TRANSACTIONS: Transaction[] = [];
+
 export default function TransactionsPage() {
   // All hooks must be called unconditionally at the top level
   const [user] = useAuthState(auth);
@@ -143,11 +146,10 @@ export default function TransactionsPage() {
   }, [user]);
 
   // Filter transactions - use stable empty array reference
-  const emptyArray: Transaction[] = [];
   const filteredTransactions = useMemo(() => {
     // Ensure transactions is an array
     if (!Array.isArray(transactions) || transactions.length === 0) {
-      return emptyArray;
+      return EMPTY_TRANSACTIONS;
     }
 
     let filtered = transactions; // Start with original array
