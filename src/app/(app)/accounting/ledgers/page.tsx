@@ -65,21 +65,6 @@ export default function LedgersPage() {
   const vendorsQuery = user ? query(collection(db, 'vendors'), where('userId', '==', user.uid)) : null;
   const [vendorsSnapshot] = useCollection(vendorsQuery);
 
-  // Early return AFTER all hooks are called
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">General Ledger</h1>
-        <UpgradeRequiredAlert
-          featureName="General Ledger"
-          description="Access detailed account-wise transaction history with a Business or Professional plan."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
-
   // --- Effects ---
   useEffect(() => {
     const combined = [...allAccounts];
@@ -173,8 +158,6 @@ export default function LedgersPage() {
   
   const selectedAccountDetails = useMemo(() => accounts.find(acc => acc.code === selectedAccount) || null, [accounts, selectedAccount]);
 
-  const handleExportPdf = () => { /* PDF Export Logic */ };
-
   // --- Render --- 
   const tableContent = useMemo(() => {
       if (loading) {
@@ -202,6 +185,21 @@ export default function LedgersPage() {
           </TableRow>
       );
   }, [ledgerEntries, loading]);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">General Ledger</h1>
+        <UpgradeRequiredAlert
+          featureName="General Ledger"
+          description="Access detailed account-wise transaction history with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
 
   const handleGenerateReport = () => {
     if (fromDate && toDate) {
