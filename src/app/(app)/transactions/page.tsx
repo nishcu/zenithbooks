@@ -35,44 +35,54 @@ export default function TransactionsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [userData, setUserData] = useState<any>(null);
 
-  // Fetch user data for subscription payments
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUserData = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    fetchUserData();
-  }, [user]);
-
-  // Fetch certification requests
+  // Fetch user data and transactions together
   useEffect(() => {
     if (!user) {
       setLoading(false);
+      setTransactions([]);
+      setUserData(null);
       return;
     }
 
-    const fetchTransactions = async () => {
+    const fetchAllData = async () => {
       try {
         setLoading(true);
         const allTransactions: Transaction[] = [];
 
-        // Fetch certification requests (CA certificates, legal documents, reports, notices)
-        const certRequestsQuery = query(
-          collection(db, "certificationRequests"),
-          where("userId", "==", user.uid),
-          orderBy("requestDate", "desc")
-        );
+        // Fetch user data and certification requests in parallel
+        const [userDoc, certRequestsSnapshot] = await Promise.all([
+          getDoc(doc(db, "users", user.uid)),
+          getDocs(
+            query(
+              collection(db, "certificationRequests"),
+              where("userId", "==", user.uid),
+              orderBy("requestDate", "desc")
+            )
+          ),
+        ]);
 
-        const certRequestsSnapshot = await getDocs(certRequestsQuery);
+        // Set user data
+        if (userDoc.exists()) {
+          const userDataFromDoc = userDoc.data();
+          setUserData(userDataFromDoc);
+
+          // Add subscription payment from user data (if available)
+          if (userDataFromDoc?.lastPaymentDate && userDataFromDoc?.paymentAmount) {
+            const paymentDate = userDataFromDoc.lastPaymentDate?.toDate() || new Date();
+            allTransactions.push({
+              id: `subscription_${userDataFromDoc.cashfreeOrderId || "latest"}`,
+              type: "subscription",
+              description: `${userDataFromDoc.subscriptionPlan || "Subscription"} Plan`,
+              amount: userDataFromDoc.paymentAmount || 0,
+              date: paymentDate,
+              status: userDataFromDoc.subscriptionStatus || "active",
+              orderId: userDataFromDoc.cashfreeOrderId,
+              paymentId: userDataFromDoc.cashfreePaymentId,
+            });
+          }
+        }
+
+        // Process certification requests
         certRequestsSnapshot.forEach((doc) => {
           const data = doc.data();
           const requestDate = data.requestDate?.toDate() || data.createdAt?.toDate() || new Date();
@@ -113,21 +123,6 @@ export default function TransactionsPage() {
           });
         });
 
-        // Add subscription payment from user data (if available)
-        if (userData?.lastPaymentDate && userData?.paymentAmount) {
-          const paymentDate = userData.lastPaymentDate?.toDate() || new Date();
-          allTransactions.push({
-            id: `subscription_${userData.cashfreeOrderId || "latest"}`,
-            type: "subscription",
-            description: `${userData.subscriptionPlan || "Subscription"} Plan`,
-            amount: userData.paymentAmount || 0,
-            date: paymentDate,
-            status: userData.subscriptionStatus || "active",
-            orderId: userData.cashfreeOrderId,
-            paymentId: userData.cashfreePaymentId,
-          });
-        }
-
         // Sort by date (newest first)
         allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
         
@@ -139,8 +134,8 @@ export default function TransactionsPage() {
       }
     };
 
-    fetchTransactions();
-  }, [user, userData]);
+    fetchAllData();
+  }, [user]);
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
