@@ -98,110 +98,190 @@ export function DateRangeSelector({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="from-date">From Date</Label>
-          <Popover open={fromOpen} onOpenChange={setFromOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                id="from-date"
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal min-w-0",
-                  !fromDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                <span className="truncate min-w-0">
-                  {fromDate ? format(fromDate, "dd MMM yyyy") : "Select from date"}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={fromDate}
-                onSelect={(date) => {
-                  onFromDateChange(date)
-                  setFromOpen(false)
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <Input
-            list="from-date-suggestions"
-            value={fromInput}
-            placeholder="YYYY-MM-DD or keyword (today)"
-            onChange={(event) => setFromInput(event.target.value)}
-            onBlur={() => commitManualInput("from", fromInput)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault()
-                commitManualInput("from", fromInput)
-              }
-            }}
-          />
-          <datalist id="from-date-suggestions">
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="month-start">Month Start</option>
-            <option value="month-end">Month End</option>
-          </datalist>
-          <p className="text-xs text-muted-foreground">
-            Pick a date or type keywords like "today", "month-start", or a custom YYYY-MM-DD.
-          </p>
+          {/* Manual Input - More Prominent */}
+          <div className="space-y-2">
+            <Input
+              id="from-date-input"
+              type="date"
+              value={fromInput}
+              placeholder="YYYY-MM-DD"
+              onChange={(event) => {
+                setFromInput(event.target.value)
+                if (event.target.value) {
+                  const parsed = parseManualDate(event.target.value)
+                  if (parsed) {
+                    onFromDateChange(parsed)
+                  }
+                }
+              }}
+              className="w-full"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Or</span>
+              <Popover open={fromOpen} onOpenChange={setFromOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="from-date"
+                    variant={"outline"}
+                    size="sm"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !fromDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {fromDate ? format(fromDate, "dd MMM yyyy") : "Pick from calendar"}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={fromDate}
+                    onSelect={(date) => {
+                      onFromDateChange(date)
+                      setFromOpen(false)
+                    }}
+                    initialFocus
+                    className="calendar-fixed"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const today = new Date()
+                onFromDateChange(today)
+                setFromInput(format(today, "yyyy-MM-dd"))
+              }}
+            >
+              Today
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const start = startOfMonth(new Date())
+                onFromDateChange(start)
+                setFromInput(format(start, "yyyy-MM-dd"))
+              }}
+            >
+              Month Start
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const yesterday = subDays(new Date(), 1)
+                onFromDateChange(yesterday)
+                setFromInput(format(yesterday, "yyyy-MM-dd"))
+              }}
+            >
+              Yesterday
+            </Button>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="to-date">To Date</Label>
-          <Popover open={toOpen} onOpenChange={setToOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                id="to-date"
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal min-w-0",
-                  !toDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                <span className="truncate min-w-0">
-                  {toDate ? format(toDate, "dd MMM yyyy") : "Select to date"}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={toDate}
-                onSelect={(date) => {
-                  onToDateChange(date)
-                  setToOpen(false)
-                }}
-                initialFocus
-                disabled={(date) => fromDate ? date < fromDate : false}
-              />
-            </PopoverContent>
-          </Popover>
-          <Input
-            list="to-date-suggestions"
-            value={toInput}
-            placeholder="YYYY-MM-DD or keyword (today)"
-            onChange={(event) => setToInput(event.target.value)}
-            onBlur={() => commitManualInput("to", toInput)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault()
-                commitManualInput("to", toInput)
-              }
-            }}
-          />
-          <datalist id="to-date-suggestions">
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="month-start">Month Start</option>
-            <option value="month-end">Month End</option>
-          </datalist>
-          <p className="text-xs text-muted-foreground">
-            Pick a date or type keywords like "today", "month-end", or a custom YYYY-MM-DD.
-          </p>
+          {/* Manual Input - More Prominent */}
+          <div className="space-y-2">
+            <Input
+              id="to-date-input"
+              type="date"
+              value={toInput}
+              placeholder="YYYY-MM-DD"
+              onChange={(event) => {
+                setToInput(event.target.value)
+                if (event.target.value) {
+                  const parsed = parseManualDate(event.target.value)
+                  if (parsed) {
+                    onToDateChange(parsed)
+                  }
+                }
+              }}
+              className="w-full"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Or</span>
+              <Popover open={toOpen} onOpenChange={setToOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="to-date"
+                    variant={"outline"}
+                    size="sm"
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !toDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {toDate ? format(toDate, "dd MMM yyyy") : "Pick from calendar"}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={toDate}
+                    onSelect={(date) => {
+                      onToDateChange(date)
+                      setToOpen(false)
+                    }}
+                    initialFocus
+                    disabled={(date) => fromDate ? date < fromDate : false}
+                    className="calendar-fixed"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const today = new Date()
+                onToDateChange(today)
+                setToInput(format(today, "yyyy-MM-dd"))
+              }}
+            >
+              Today
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const end = endOfMonth(new Date())
+                onToDateChange(end)
+                setToInput(format(end, "yyyy-MM-dd"))
+              }}
+            >
+              Month End
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                const yesterday = subDays(new Date(), 1)
+                onToDateChange(yesterday)
+                setToInput(format(yesterday, "yyyy-MM-dd"))
+              }}
+            >
+              Yesterday
+            </Button>
+          </div>
         </div>
       </div>
       <Button
