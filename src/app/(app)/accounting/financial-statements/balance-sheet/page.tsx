@@ -37,6 +37,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useReactToPrint } from "react-to-print";
 import { formatCurrency, cn } from "@/lib/utils";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 // --- Type Definitions ---
 type CombinedAccount = Account & { id?: string };

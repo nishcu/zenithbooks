@@ -35,6 +35,7 @@ import { AccountingContext, JournalVoucher } from "@/context/accounting-context"
 import { allAccounts } from "@/lib/accounts";
 import { formatCurrency, cn } from "@/lib/utils";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 // --- UTILITY FUNCTIONS ---
 interface Account {
