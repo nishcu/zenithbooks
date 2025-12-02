@@ -424,7 +424,8 @@ textarea:focus-visible {
 
 /* Improved Card Styles */
 .card {
-  transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fade-in-up 0.4s ease-out;
 }
 
 .card:hover {
@@ -436,17 +437,46 @@ textarea:focus-visible {
 }
 
 .card-interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-interactive:active {
+  transform: translateY(-2px) scale(0.99);
 }
 
 /* Better Button Styles */
 button {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+button:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 button:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 /* Improved Form Styles */
@@ -504,11 +534,21 @@ table thead {
 }
 
 table tbody tr {
-  transition: background-color 0.15s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fade-in 0.3s ease-out;
+  animation-fill-mode: both;
 }
+
+table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+table tbody tr:nth-child(5) { animation-delay: 0.25s; }
 
 table tbody tr:hover {
   background-color: hsl(var(--muted) / 0.5);
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 0 hsl(var(--primary) / 0.3);
 }
 
 table tbody tr:last-child {
@@ -647,23 +687,94 @@ a:hover {
 
 /* Improved Dropdown Styles */
 [role="menu"] {
-  animation: slideDown 0.2s ease-out;
+  animation: fade-in-down 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+/* Input focus animations */
+input:focus,
+textarea:focus,
+select:focus {
+  animation: pulse-slow 2s ease-in-out infinite;
+  animation-duration: 0.3s;
+}
+
+/* Badge animations */
+.badge {
+  animation: fade-in 0.3s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Alert animations */
+[role="alert"] {
+  animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Progress bar animation */
+.progress-bar {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tooltip animations */
+[data-radix-tooltip-content] {
+  animation: fade-in-down 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toast notifications animation */
+[data-sonner-toast] {
+  animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Better Dialog/Modal Styles */
 [role="dialog"] {
-  animation: fadeIn 0.2s ease-out;
+  animation: scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[role="dialog"]::backdrop {
+  animation: fade-in 0.2s ease-out;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 @keyframes fadeIn {
@@ -673,6 +784,15 @@ a:hover {
   to {
     opacity: 1;
   }
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fade-in-up 0.4s ease-out;
+}
+
+.page-exit {
+  animation: fade-in 0.2s ease-out reverse;
 }
 
 /* Improved Accessibility */
