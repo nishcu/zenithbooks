@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           method: 'GET',
           headers: {
             'x-client-id': appId!,
-            'x-secret-key': secretKey!, // Correct header name
+            'x-client-secret': secretKey!, // Correct header name (matches payment route)
             'x-api-version': '2022-09-01',
             'Content-Type': 'application/json',
           },
@@ -112,6 +112,20 @@ export async function POST(request: NextRequest) {
 
       if (!cashfreeResponse.ok) {
         const errorData = await cashfreeResponse.json().catch(() => ({}));
+        
+        // Log authentication errors with more detail
+        if (cashfreeResponse.status === 401) {
+          console.error('Cashfree authentication failed:', {
+            status: cashfreeResponse.status,
+            error: errorData,
+            hasAppId: !!appId,
+            hasSecretKey: !!secretKey,
+            appIdPrefix: appId?.substring(0, 10),
+            secretKeyPrefix: secretKey?.substring(0, 10),
+            baseUrl: cashfreeBaseUrl,
+          });
+        }
+        
         throw {
           response: {
             status: cashfreeResponse.status,
