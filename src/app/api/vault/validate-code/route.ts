@@ -10,8 +10,13 @@ export const dynamic = 'force-dynamic';
 /**
  * Validate a share code and return access information
  * This is a public API endpoint (no auth required for validation)
+ * 
+ * Route: POST /api/vault/validate-code
  */
 export async function POST(request: NextRequest) {
+  // Log for debugging (remove in production if needed)
+  console.log('[validate-code] POST request received');
+  
   try {
     const body = await request.json();
     const { code } = body;
