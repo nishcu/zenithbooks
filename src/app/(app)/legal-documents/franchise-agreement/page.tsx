@@ -30,7 +30,6 @@ import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
-import { ShareButtons } from "@/components/documents/share-buttons";
 
 const formSchema = z.object({
   franchisorName: z.string().min(3, "Franchisor name is required."),
