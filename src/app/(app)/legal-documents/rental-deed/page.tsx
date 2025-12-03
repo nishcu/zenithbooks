@@ -338,10 +338,56 @@ export default function RentalDeedPage() {
                 </CardContent>
                 <CardFooter className="justify-between mt-6">
                   <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-                  <ShareButtons
-                    contentRef={printRef}
-                    fileName={`Rental_Agreement_${formData.tenantName}`}
-                  />
+                  {(() => {
+                    const basePrice = pricing?.registration_deeds?.find(s => s.id === 'rental_deed')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "registration_deeds"
+                        )
+                      : basePrice;
+                    const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                    if (requiresPayment) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="rental_deed_download"
+                          planName="Rental Deed Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      // Show download buttons (either free or already paid)
+                      if (!showDocument && effectivePrice === 0) {
+                        setShowDocument(true);
+                      }
+                      return showDocument ? (
+                        <ShareButtons
+                          contentRef={printRef}
+                          fileName={`Rental_Agreement_${formData.tenantName}`}
+                        />
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         );
