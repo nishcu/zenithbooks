@@ -66,7 +66,8 @@ export function exportToCSV(
 export function applyExcelFormatting(
   worksheet: XLSX.WorkSheet,
   headers: string[],
-  rows: (string | number)[][]
+  rows: (string | number)[][],
+  headerOffset: number = 0
 ): void {
   // Calculate optimal column widths for proper alignment
   const colWidths = headers.map((_, i) => {

@@ -21,6 +21,7 @@ import { collection, query, where, doc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
+import { readBrandingSettings, type BrandingSettings } from "@/lib/branding";
 
 // Financial year options
 const financialYears = [
@@ -811,6 +812,62 @@ export default function BooksOfAccountPage() {
         return { headers, rows };
     };
 
+    // Generate header rows for Excel sheets (print-ready format)
+    const generateSheetHeaders = (sheetName: string, dateFrom: Date, dateTo: Date, maxCols: number): (string | number)[][] => {
+        const branding = readBrandingSettings();
+        const headers: (string | number)[][] = [];
+        
+        // Get address components
+        const addressParts = [
+            branding.address1,
+            branding.address2,
+            `${branding.city}, ${branding.state} - ${branding.pincode}`
+        ].filter(Boolean);
+        const fullAddress = addressParts.join(", ");
+        
+        // Row 1: Company Name (centered, bold)
+        const companyRow: (string | number)[] = new Array(maxCols).fill("");
+        companyRow[0] = branding.companyName;
+        headers.push(companyRow);
+        
+        // Row 2: Address
+        const addressRow: (string | number)[] = new Array(maxCols).fill("");
+        addressRow[0] = fullAddress;
+        headers.push(addressRow);
+        
+        // Row 3: GST Number
+        if (branding.gstin) {
+            const gstRow: (string | number)[] = new Array(maxCols).fill("");
+            gstRow[0] = `GSTIN: ${branding.gstin}`;
+            headers.push(gstRow);
+        }
+        
+        // Row 4: Blank row
+        headers.push(new Array(maxCols).fill(""));
+        
+        // Row 5: Main Title - "Books of Accounts"
+        const titleRow: (string | number)[] = new Array(maxCols).fill("");
+        titleRow[0] = "Books of Accounts";
+        headers.push(titleRow);
+        
+        // Row 6: Period - "From [date] to [date]"
+        const periodRow: (string | number)[] = new Array(maxCols).fill("");
+        const fromDateStr = format(dateFrom, "dd-MMM-yyyy");
+        const toDateStr = format(dateTo, "dd-MMM-yyyy");
+        periodRow[0] = `From ${fromDateStr} to ${toDateStr}`;
+        headers.push(periodRow);
+        
+        // Row 7: Sub-heading - Sheet name (e.g., "Cash Book")
+        const subTitleRow: (string | number)[] = new Array(maxCols).fill("");
+        subTitleRow[0] = sheetName;
+        headers.push(subTitleRow);
+        
+        // Row 8: Blank row
+        headers.push(new Array(maxCols).fill(""));
+        
+        return headers;
+    };
+
     // Generate Books of Account Excel
     const handleGenerateBooks = async () => {
         setIsGenerating(true);
@@ -854,8 +911,130 @@ export default function BooksOfAccountPage() {
 
             sheets.forEach(({ name, data }) => {
                 if (data.rows.length > 0) {
-                    const worksheet = XLSX.utils.aoa_to_sheet([data.headers, ...data.rows]);
-                    applyExcelFormatting(worksheet, data.headers, data.rows);
+                    // Get maximum columns for header alignment
+                    const maxCols = Math.max(data.headers.length, ...data.rows.map(row => row.length));
+                    
+                    // Generate print-ready headers
+                    const sheetHeaders = generateSheetHeaders(name, from, to, maxCols);
+                    const headerRowCount = sheetHeaders.length;
+                    
+                    // Combine headers + data headers + data rows
+                    const allRows = [
+                        ...sheetHeaders,
+                        data.headers,  // Column headers
+                        ...data.rows   // Data rows
+                    ];
+                    
+                    const worksheet = XLSX.utils.aoa_to_sheet(allRows);
+                    
+                    // Apply formatting (this will format the data headers and rows)
+                    applyExcelFormatting(worksheet, data.headers, data.rows, headerRowCount);
+                    
+                    // Get cell range for styling
+                    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+                    const maxCol = range.e.c;
+                    const maxRow = range.e.r;
+                    
+                    // Style header rows (company name, title, etc.)
+                    // Row 1: Company Name - Bold, larger font
+                    const companyCell = XLSX.utils.encode_cell({ r: 0, c: 0 });
+                    if (!worksheet[companyCell]) worksheet[companyCell] = { t: 's', v: sheetHeaders[0][0] };
+                    worksheet[companyCell].s = {
+                        font: { bold: true, sz: 16 },
+                        alignment: { horizontal: 'center' }
+                    };
+                    
+                    // Merge cells for company name across all columns
+                    if (!worksheet['!merges']) worksheet['!merges'] = [];
+                    worksheet['!merges'].push({
+                        s: { r: 0, c: 0 },
+                        e: { r: 0, c: maxCol }
+                    });
+                    
+                    // Row 2: Address - Center
+                    const addressCell = XLSX.utils.encode_cell({ r: 1, c: 0 });
+                    if (!worksheet[addressCell]) worksheet[addressCell] = { t: 's', v: sheetHeaders[1][0] };
+                    worksheet[addressCell].s = {
+                        alignment: { horizontal: 'center' }
+                    };
+                    worksheet['!merges'].push({
+                        s: { r: 1, c: 0 },
+                        e: { r: 1, c: maxCol }
+                    });
+                    
+                    // GST row if exists
+                    if (sheetHeaders.length > 3 && sheetHeaders[2][0]) {
+                        const gstCell = XLSX.utils.encode_cell({ r: 2, c: 0 });
+                        if (!worksheet[gstCell]) worksheet[gstCell] = { t: 's', v: sheetHeaders[2][0] };
+                        worksheet[gstCell].s = {
+                            alignment: { horizontal: 'center' }
+                        };
+                        worksheet['!merges'].push({
+                            s: { r: 2, c: 0 },
+                            e: { r: 2, c: maxCol }
+                        });
+                    }
+                    
+                    // Title row - "Books of Accounts" - Bold, larger
+                    const titleRowIndex = sheetHeaders.findIndex(row => row[0] === "Books of Accounts");
+                    if (titleRowIndex >= 0) {
+                        const titleCell = XLSX.utils.encode_cell({ r: titleRowIndex, c: 0 });
+                        if (!worksheet[titleCell]) worksheet[titleCell] = { t: 's', v: "Books of Accounts" };
+                        worksheet[titleCell].s = {
+                            font: { bold: true, sz: 14 },
+                            alignment: { horizontal: 'center' }
+                        };
+                        worksheet['!merges'].push({
+                            s: { r: titleRowIndex, c: 0 },
+                            e: { r: titleRowIndex, c: maxCol }
+                        });
+                    }
+                    
+                    // Period row
+                    const periodRowIndex = sheetHeaders.findIndex(row => String(row[0]).startsWith("From"));
+                    if (periodRowIndex >= 0) {
+                        const periodCell = XLSX.utils.encode_cell({ r: periodRowIndex, c: 0 });
+                        if (!worksheet[periodCell]) worksheet[periodCell] = { t: 's', v: sheetHeaders[periodRowIndex][0] };
+                        worksheet[periodCell].s = {
+                            alignment: { horizontal: 'center' }
+                        };
+                        worksheet['!merges'].push({
+                            s: { r: periodRowIndex, c: 0 },
+                            e: { r: periodRowIndex, c: maxCol }
+                        });
+                    }
+                    
+                    // Sub-title row (Sheet name) - Bold
+                    const subTitleRowIndex = sheetHeaders.findIndex(row => row[0] === name);
+                    if (subTitleRowIndex >= 0) {
+                        const subTitleCell = XLSX.utils.encode_cell({ r: subTitleRowIndex, c: 0 });
+                        if (!worksheet[subTitleCell]) worksheet[subTitleCell] = { t: 's', v: name };
+                        worksheet[subTitleCell].s = {
+                            font: { bold: true, sz: 12 },
+                            alignment: { horizontal: 'center' }
+                        };
+                        worksheet['!merges'].push({
+                            s: { r: subTitleRowIndex, c: 0 },
+                            e: { r: subTitleRowIndex, c: maxCol }
+                        });
+                    }
+                    
+                    // Style column headers (bold)
+                    data.headers.forEach((header, colIndex) => {
+                        const headerCell = XLSX.utils.encode_cell({ r: headerRowCount, c: colIndex });
+                        if (worksheet[headerCell]) {
+                            if (!worksheet[headerCell].s) worksheet[headerCell].s = {};
+                            worksheet[headerCell].s.font = { bold: true };
+                            worksheet[headerCell].s.fill = { fgColor: { rgb: "E0E0E0" } }; // Light gray background
+                            worksheet[headerCell].s.alignment = { horizontal: 'center', vertical: 'center' };
+                        }
+                    });
+                    
+                    // Set print area and page setup for better printing
+                    const lastRow = maxRow + 1; // Excel is 1-indexed
+                    const lastCol = String.fromCharCode(65 + maxCol); // Convert to column letter
+                    worksheet['!printArea'] = `A1:${lastCol}${lastRow}`;
+                    
                     XLSX.utils.book_append_sheet(workbook, worksheet, name.substring(0, 31));
                 }
             });
