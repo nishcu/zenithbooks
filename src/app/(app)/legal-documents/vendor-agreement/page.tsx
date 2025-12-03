@@ -249,10 +249,56 @@ export default function VendorAgreementPage() {
                 </CardContent>
                 <CardFooter className="justify-between mt-6">
                   <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-                  <ShareButtons
-                    contentRef={printRef}
-                    fileName={`Vendor_Agreement_${formData.vendorName}`}
-                  />
+                  {(() => {
+                    const basePrice = pricing?.agreements?.find(s => s.id === 'vendor_agreement')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "agreements"
+                        )
+                      : basePrice;
+                    const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                    if (requiresPayment) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="vendor_agreement_download"
+                          planName="Vendor Agreement Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      // Show download buttons (either free or already paid)
+                      if (!showDocument && effectivePrice === 0) {
+                        setShowDocument(true);
+                      }
+                      return showDocument ? (
+                        <ShareButtons
+                          contentRef={printRef}
+                          fileName={`Vendor_Agreement_${formData.vendorName}`}
+                        />
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         );
