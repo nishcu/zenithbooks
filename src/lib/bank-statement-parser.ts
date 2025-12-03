@@ -290,8 +290,19 @@ export function parseExcel(file: File): Promise<ParseResult> {
           return;
         }
 
-        // Detect header row
-        const headerRow = json[0].map((h: any) => String(h || '').toLowerCase());
+        // Detect header row - check row 0 (A1) first, then row 1 (A2) if needed
+        let headerRowIndex = 0;
+        let headerRow = json[0]?.map((h: any) => String(h || '').toLowerCase()) || [];
+        
+        // Check if row 0 looks like headers
+        const row0HasHeaders = headerRow.some(h => h.includes('date') || h.includes('description') || h.includes('particulars'));
+        
+        // If row 0 doesn't have headers, check row 1 (A2)
+        if (!row0HasHeaders && json.length > 1) {
+          headerRowIndex = 1;
+          headerRow = json[1]?.map((h: any) => String(h || '').toLowerCase()) || [];
+        }
+        
         let dateIndex = -1;
         let descIndex = -1;
         let debitIndex = -1;
@@ -359,8 +370,9 @@ export function parseExcel(file: File): Promise<ParseResult> {
 
         const transactions: ParsedTransaction[] = [];
         const skippedRows: SkippedRow[] = [];
-        const hasHeaderRow = headerRow.some(h => h.includes('date') || h.includes('description'));
-        const startIndex = hasHeaderRow ? 1 : 0;
+        const hasHeaderRow = headerRow.some(h => h.includes('date') || h.includes('description') || h.includes('particulars'));
+        // Start from the row after the header row (A2 if header is in A1, A3 if header is in A2)
+        const startIndex = hasHeaderRow ? headerRowIndex + 1 : 0;
         let rawRowCount = 0;
         let skippedRowCount = 0;
         let lastKnownDate: string | null = null;
