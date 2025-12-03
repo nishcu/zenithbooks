@@ -3,6 +3,10 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from "firebase/firestore";
 import { checkSuspiciousActivity } from "@/lib/vault-security";
 
+// Ensure this route is included in the build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Log document access/download for share code
  * This tracks when third parties access documents

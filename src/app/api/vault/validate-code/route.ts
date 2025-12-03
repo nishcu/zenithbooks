@@ -3,6 +3,10 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { checkRateLimit, resetRateLimit } from "@/lib/vault-security";
 
+// Ensure this route is included in the build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Validate a share code and return access information
  * This is a public API endpoint (no auth required for validation)

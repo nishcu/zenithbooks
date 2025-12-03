@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 
+// Ensure this route is included in the build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Get shared documents for a user based on categories
  * This endpoint is used by third parties accessing via share code
