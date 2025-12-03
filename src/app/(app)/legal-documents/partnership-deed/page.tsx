@@ -900,11 +900,76 @@ export default function PartnershipDeedPage() {
                     </CardFooter>
                 </Card>
 
-                <Card>
-                    <CardHeader><CardTitle>Main Document: Partnership Deed</CardTitle></CardHeader>
-                    <CardContent><PartnershipDeedToPrint ref={printRefDeed} formData={formData} /></CardContent>
-                    <CardFooter><Button onClick={() => handleDownloadPdf(printRefDeed, `Partnership_Deed_${formData.firmName}`)}><Printer className="mr-2"/> Download PDF</Button></CardFooter>
-                </Card>
+                {/* Payment Gate - Show once before all documents */}
+                {(() => {
+                  const basePrice = pricing?.registration_deeds?.find(s => s.id === 'partnership_deed')?.price || 0;
+                  const effectivePrice = userSubscriptionInfo
+                    ? getEffectiveServicePrice(
+                        basePrice,
+                        userSubscriptionInfo.userType,
+                        userSubscriptionInfo.subscriptionPlan,
+                        "registration_deeds"
+                      )
+                    : basePrice;
+                  const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                  if (requiresPayment) {
+                    return (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Payment Required</CardTitle>
+                          <CardDescription>Complete payment to download all partnership deed documents.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            After payment, you'll be able to download the Partnership Deed and all supporting annexures.
+                          </p>
+                        </CardContent>
+                        <CardFooter>
+                          <CashfreeCheckout
+                            amount={effectivePrice}
+                            planId="partnership_deed_download"
+                            planName="Partnership Deed Download"
+                            userId={user?.uid || ''}
+                            userEmail={user?.email || ''}
+                            userName={user?.displayName || ''}
+                            onSuccess={(paymentId) => {
+                              setShowDocument(true);
+                              toast({
+                                title: "Payment Successful",
+                                description: "Your documents are ready for download."
+                              });
+                            }}
+                            onFailure={() => {
+                              toast({
+                                variant: "destructive",
+                                title: "Payment Failed",
+                                description: "Payment was not completed. Please try again."
+                              });
+                            }}
+                          />
+                        </CardFooter>
+                      </Card>
+                    );
+                  } else {
+                    // Show download buttons (either free or already paid)
+                    if (!showDocument && effectivePrice === 0) {
+                      setShowDocument(true);
+                    }
+                    return null; // Payment gate card won't show, documents will show below
+                  }
+                })()}
+
+                {/* Documents - Only show if payment completed or free */}
+                {showDocument && (
+                  <>
+                    <Card>
+                        <CardHeader><CardTitle>Main Document: Partnership Deed</CardTitle></CardHeader>
+                        <CardContent><PartnershipDeedToPrint ref={printRefDeed} formData={formData} /></CardContent>
+                        <CardFooter><Button onClick={() => handleDownloadPdf(printRefDeed, `Partnership_Deed_${formData.firmName}`)}><Printer className="mr-2"/> Download PDF</Button></CardFooter>
+                    </Card>
+                  </>
+                )}
 
                 <Card>
                     <CardHeader><CardTitle>Annexure: Form No. 1</CardTitle><CardDescription>Application for Registration of Firm.</CardDescription></CardHeader>
