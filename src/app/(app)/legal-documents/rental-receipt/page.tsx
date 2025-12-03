@@ -128,22 +128,31 @@ export default function RentalReceiptPage() {
                 </CardContent>
                 <CardFooter>
                     {requiresPayment ? (
-                        <CashfreeCheckout
-                            amount={rentalReceiptPrice || 0}
-                            planId="rental_receipt_hra"
-                            planName="Rental Receipt for HRA"
-                            userId={user?.uid || ''}
-                            userEmail={user?.email || ''}
-                            userName={user?.displayName || ''}
-                            onSuccess={handlePaymentSuccessCallback}
-                            onFailure={() => {
-                                toast({
-                                    variant: "destructive",
-                                    title: "Payment Failed",
-                                    description: "Payment was not completed. Please try again."
-                                });
-                            }}
-                        />
+                        <div className="w-full">
+                            {!tenantName || !landlordName || !rentAmount || !address ? (
+                                <Button disabled className="w-full">
+                                    <Printer className="mr-2"/>
+                                    Please fill all fields to proceed
+                                </Button>
+                            ) : (
+                                <CashfreeCheckout
+                                    amount={rentalReceiptPrice || 0}
+                                    planId="rental_receipt_hra"
+                                    planName="Rental Receipt for HRA"
+                                    userId={user?.uid || ''}
+                                    userEmail={user?.email || ''}
+                                    userName={user?.displayName || ''}
+                                    onSuccess={handlePaymentSuccessCallback}
+                                    onFailure={() => {
+                                        toast({
+                                            variant: "destructive",
+                                            title: "Payment Failed",
+                                            description: "Payment was not completed. Please try again."
+                                        });
+                                    }}
+                                />
+                            )}
+                        </div>
                     ) : (
                         <Button onClick={handleGenerate} disabled={isGenerating}>
                             {isGenerating ? (
