@@ -16,11 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Key, Copy, CheckCircle2 } from "lucide-react";
+import { Loader2, Copy, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VAULT_CATEGORIES_LIST, VAULT_SHARE_CODE, VaultCategory } from "@/lib/vault-constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { addUserPrefixToCode, extractUserPrefixFromCode } from "@/lib/vault-user-code";
 
 interface ShareCode {
   id: string;
@@ -74,23 +75,19 @@ export function ShareCodeDialog({
     }
   }, [open, editingCode]);
 
-  const generateRandomCode = () => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Excluding confusing chars
-    let code = "";
-    for (let i = 0; i < 12; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setSecretCode(code);
-    setGeneratedCode(code);
-    setCodeCopied(false);
-  };
+  // Removed auto-generation - user must enter their own code
+  // Codes will automatically get user prefix when saved
 
   const validateCode = (code: string): boolean => {
-    if (code.length < VAULT_SHARE_CODE.MIN_LENGTH) {
-      setError(`Code must be at least ${VAULT_SHARE_CODE.MIN_LENGTH} characters long.`);
+    // Check if user entered code with prefix (old format or manual entry)
+    const extracted = extractUserPrefixFromCode(code);
+    const actualCode = extracted ? extracted.code : code;
+    
+    if (actualCode.length < VAULT_SHARE_CODE.MIN_LENGTH) {
+      setError(`Code must be at least ${VAULT_SHARE_CODE.MIN_LENGTH} characters long (excluding prefix).`);
       return false;
     }
-    if (VAULT_SHARE_CODE.REQUIRES_ALPHANUMERIC && !/^[A-Za-z0-9]+$/.test(code)) {
+    if (VAULT_SHARE_CODE.REQUIRES_ALPHANUMERIC && !/^[A-Za-z0-9]+$/.test(actualCode)) {
       setError("Code must contain only letters and numbers.");
       return false;
     }
@@ -145,9 +142,10 @@ export function ShareCodeDialog({
 
     // Only validate and hash code if creating new (not editing)
     let codeHash = "";
+    let finalCodeToStore = "";
     if (!editingCode) {
       if (!secretCode.trim()) {
-        setError("Please enter or generate a secret code.");
+        setError("Please enter a secret code.");
         return;
       }
 
@@ -155,10 +153,16 @@ export function ShareCodeDialog({
         return;
       }
 
-      // CRITICAL SECURITY FIX: Include userId in hash to prevent collisions between users
-      // Hash format: H(code + userId) ensures each user's codes are unique
-      const codeWithUserId = `${secretCode.trim()}:${user.uid}`;
-      codeHash = await hashCode(codeWithUserId);
+      // Extract actual code if user entered with prefix
+      const extracted = extractUserPrefixFromCode(secretCode.trim());
+      const userCode = extracted ? extracted.code : secretCode.trim();
+      
+      // Add user prefix to make code unique
+      const codeWithPrefix = await addUserPrefixToCode(userCode, user.uid);
+      finalCodeToStore = codeWithPrefix;
+      
+      // Hash the full code (with prefix) for storage
+      codeHash = await hashCode(codeWithPrefix);
     }
 
     setIsSaving(true);
@@ -199,8 +203,8 @@ export function ShareCodeDialog({
           accessCount: 0,
         });
 
-        // Set generated code for display
-        setGeneratedCode(secretCode.trim());
+        // Set generated code for display (show the full code with prefix)
+        setGeneratedCode(finalCodeToStore);
         toast({
           title: "Share Code Created",
           description: "Copy the code now - it won't be shown again!",
@@ -311,31 +315,20 @@ export function ShareCodeDialog({
           {!editingCode && (
             <div className="space-y-2">
               <Label htmlFor="secretCode">Secret Code *</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="secretCode"
-                  value={secretCode}
-                  onChange={(e) => {
-                    setSecretCode(e.target.value.toUpperCase());
-                    setGeneratedCode(null);
-                  }}
-                  placeholder="Enter or generate a code"
-                  disabled={isSaving || !!generatedCode}
-                  className="font-mono"
-                  maxLength={20}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={generateRandomCode}
-                  disabled={isSaving || !!generatedCode}
-                >
-                  <Key className="mr-2 h-4 w-4" />
-                  Generate
-                </Button>
-              </div>
+              <Input
+                id="secretCode"
+                value={secretCode}
+                onChange={(e) => {
+                  setSecretCode(e.target.value.toUpperCase());
+                  setGeneratedCode(null);
+                }}
+                placeholder="Enter your code (e.g., SMRAEAFORCA)"
+                disabled={isSaving || !!generatedCode}
+                className="font-mono"
+                maxLength={20}
+              />
               <p className="text-xs text-muted-foreground">
-                Minimum {VAULT_SHARE_CODE.MIN_LENGTH} characters, alphanumeric only. This code will be hashed and cannot be retrieved later.
+                Minimum {VAULT_SHARE_CODE.MIN_LENGTH} characters, alphanumeric only. A unique prefix will be automatically added to make your code secure.
               </p>
             </div>
           )}
