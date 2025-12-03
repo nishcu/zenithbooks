@@ -28,6 +28,12 @@ import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -60,6 +66,24 @@ const numberToWords = (num: number): string => {
 export default function RentalReceiptsPage() {
   const { toast } = useToast();
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState<ServicePricing | null>(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(setPricing);
+    const unsubscribe = onPricingUpdate(setPricing);
+    return () => unsubscribe();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -171,11 +195,57 @@ export default function RentalReceiptsPage() {
                 </div>
             </CardContent>
             <CardFooter>
-                 <ShareButtons 
-                    contentRef={printRef}
-                    fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
-                    whatsappMessage={whatsappMessage}
-                />
+                {(() => {
+                  const basePrice = pricing?.hr_documents?.find(s => s.id === 'rental_receipt_hra')?.price || 0;
+                  const effectivePrice = userSubscriptionInfo
+                    ? getEffectiveServicePrice(
+                        basePrice,
+                        userSubscriptionInfo.userType,
+                        userSubscriptionInfo.subscriptionPlan,
+                        "hr_documents"
+                      )
+                    : basePrice;
+                  const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                  if (requiresPayment) {
+                    return (
+                      <CashfreeCheckout
+                        amount={effectivePrice}
+                        planId="rental_receipts_download"
+                        planName="Rental Receipts Download"
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        onSuccess={(paymentId) => {
+                          setShowDocument(true);
+                          toast({
+                            title: "Payment Successful",
+                            description: "Your document is ready for download."
+                          });
+                        }}
+                        onFailure={() => {
+                          toast({
+                            variant: "destructive",
+                            title: "Payment Failed",
+                            description: "Payment was not completed. Please try again."
+                          });
+                        }}
+                      />
+                    );
+                  } else {
+                    // Show download buttons (either free or already paid)
+                    if (!showDocument && effectivePrice === 0) {
+                      setShowDocument(true);
+                    }
+                    return showDocument ? (
+                      <ShareButtons 
+                        contentRef={printRef}
+                        fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
+                        whatsappMessage={whatsappMessage}
+                      />
+                    ) : null;
+                  }
+                })()}
             </CardFooter>
         </Card>
       </div>

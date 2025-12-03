@@ -52,6 +52,7 @@ import html2pdf from "html2pdf.js";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const partnerSchema = z.object({
@@ -393,11 +394,20 @@ export default function PartnershipDeedPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'partnership_deed'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
