@@ -262,19 +262,19 @@ export function LoginForm() {
                                 </div>
                                 <FormControl>
                                 <div className="relative">
-                                    <Input 
+                                    <Input
                                         id="password"
-                                        type={showPassword ? "text" : "password"} 
+                                        type={showPassword ? "text" : "password"}
                                         aria-label="Password"
                                         aria-required="true"
-                                        className="pr-10"
-                                        {...field} 
+                                        className="pr-12"
+                                        {...field}
                                     />
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
                                     >
@@ -300,7 +300,7 @@ export function LoginForm() {
                                     <Checkbox
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        className="mt-0.5 h-3 w-3"
+                                        className="mt-0.5 h-4 w-4 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                     />
                                 </FormControl>
                                 <div className="leading-tight">
