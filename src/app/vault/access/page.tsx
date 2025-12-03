@@ -56,9 +56,20 @@ export default function VaultAccessPage() {
         body: JSON.stringify({ code: shareCode.trim() }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error("Error parsing response:", jsonError);
+        setError("Invalid response from server. Please try again.");
+        setValidated(false);
+        return;
+      }
 
       if (!response.ok) {
+        if (response.status === 404) {
+          setError("Share code not found. Please check the code and try again.");
+        }
         if (response.status === 429) {
           // Rate limited - show friendly message with lockout time
           const lockoutUntil = data.lockoutUntil ? new Date(data.lockoutUntil) : null;
@@ -91,7 +102,19 @@ export default function VaultAccessPage() {
     setLoading(true);
     try {
       // Fetch documents from the user's vault that match shared categories
-      const response = await fetch(`/api/vault/shared-documents?userId=${codeInfo.userId}&categories=${codeInfo.categories.join(",")}`);
+      const categoriesParam = encodeURIComponent(codeInfo.categories.join(","));
+      const response = await fetch(`/api/vault/shared-documents?userId=${codeInfo.userId}&categories=${categoriesParam}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Documents not found. The share code may have been revoked.");
+        } else {
+          const data = await response.json().catch(() => ({}));
+          setError(data.error || "Failed to load documents.");
+        }
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {

@@ -279,7 +279,15 @@ export function ShareCodeDialog({
                   </Button>
                 </div>
                 <div className="text-xs text-green-700 dark:text-green-300">
-                  Share this code with third parties. They can use it at {typeof window !== 'undefined' ? window.location.origin : ''}/vault/access
+                  Share this code with third parties. They can use it at{" "}
+                  <a
+                    href="/vault/access"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium hover:text-green-800 dark:hover:text-green-200"
+                  >
+                    {typeof window !== 'undefined' ? window.location.origin : 'https://zenithbooks.in'}/vault/access
+                  </a>
                 </div>
               </AlertDescription>
             </Alert>
