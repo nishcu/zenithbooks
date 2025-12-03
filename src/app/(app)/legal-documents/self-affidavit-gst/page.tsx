@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,9 +24,15 @@ import {
   FormMessage,
   FormLabel,
 } from "@/components/ui/form";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { ShareButtons } from "@/components/documents/share-buttons";
 
 const formSchema = z.object({
   deponentName: z.string().min(3, "Deponent's name is required."),
@@ -40,6 +46,25 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function SelfAffidavitGstPage() {
   const { toast } = useToast();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState<ServicePricing | null>(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
+
+  // Load pricing data
+  useEffect(() => {
+    getServicePricing().then(setPricing);
+    const unsubscribe = onPricingUpdate(setPricing);
+    return () => unsubscribe();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -61,11 +86,11 @@ export default function SelfAffidavitGstPage() {
     return `
 AFFIDAVIT
 
-I ${deponentName || "[Deponent Name]"}, ${parentage || "[S/o, W/o, D/o]"} R/o “${address || "[Full Address]"}”${aadhaarText}, do hereby solemnly affirm and state that as follows:
+I ${deponentName || "[Deponent Name]"}, ${parentage || "[S/o, W/o, D/o]"} R/o "${address || "[Full Address]"}${aadhaarText}, do hereby solemnly affirm and state that as follows:
 
-That I am the owner of the above mentioned property at “${address || "[Full Address]"}”.
+That I am the owner of the above mentioned property at "${address || "[Full Address]"}".
 
-We are doing partnership/proprietorship business in the name and style of M/s “${firmName || "[Firm Name]"}” and which is managed by me i.e. ${deponentName || "[Deponent Name]"} at R/o “${address || "[Full Address]"}” which is owned by me and I am not charging any rent for running this partnership business.
+We are doing partnership/proprietorship business in the name and style of M/s "${firmName || "[Firm Name]"}" and which is managed by me i.e. ${deponentName || "[Deponent Name]"} at R/o "${address || "[Full Address]"}" which is owned by me and I am not charging any rent for running this partnership business.
 
 I do hereby declare and confirm that the contents of the affidavit are true and correct to the best of my knowledge and belief and nothing material has been concealed.
 
@@ -77,19 +102,58 @@ Date:                                       Deponent Signature
   
   const affidavitText = generateAffidavitText(formData);
 
-  const handleDownload = () => {
-    const blob = new Blob([affidavitText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Self_Affidavit.txt';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast({ title: "Download Started", description: "Your affidavit text file has been downloaded." });
+  const handleGenerate = () => {
+    if (!formData.deponentName || !formData.parentage || !formData.address || !formData.firmName) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in all the required fields to generate the affidavit."
+      });
+      return;
+    }
+
+    // Check if payment is required
+    const basePrice = pricing?.gst_documents?.find(s => s.id === 'self_affidavit_gst')?.price || 0;
+    const effectivePrice = userSubscriptionInfo
+      ? getEffectiveServicePrice(
+          basePrice,
+          userSubscriptionInfo.userType,
+          userSubscriptionInfo.subscriptionPlan,
+          "gst_documents"
+        )
+      : basePrice;
+
+    // If payment required, don't show document yet
+    if (effectivePrice > 0) {
+      return; // Payment will be handled by CashfreeCheckout
+    }
+
+    // No payment required - show document
+    setShowDocument(true);
+    toast({
+      title: "Affidavit Generated",
+      description: "Your affidavit has been generated and is ready for download."
+    });
   };
 
+  const handlePaymentSuccess = (paymentId: string) => {
+    setShowDocument(true);
+    toast({
+      title: "Payment Successful",
+      description: "Your affidavit has been generated and is ready for download."
+    });
+  };
+
+  const basePrice = pricing?.gst_documents?.find(s => s.id === 'self_affidavit_gst')?.price || 0;
+  const effectivePrice = userSubscriptionInfo
+    ? getEffectiveServicePrice(
+        basePrice,
+        userSubscriptionInfo.userType,
+        userSubscriptionInfo.subscriptionPlan,
+        "gst_documents"
+      )
+    : basePrice;
+  const requiresPayment = effectivePrice > 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -144,13 +208,58 @@ Date:                                       Deponent Signature
                 </pre>
             </CardContent>
             <CardFooter>
-                <Button onClick={handleDownload}>
-                    <FileDown className="mr-2" />
-                    Download as .txt
-                </Button>
+                {!formData.deponentName || !formData.parentage || !formData.address || !formData.firmName ? (
+                    <Button disabled className="w-full">
+                        Please fill all required fields
+                    </Button>
+                ) : requiresPayment ? (
+                    <CashfreeCheckout
+                        amount={effectivePrice}
+                        planId="self_affidavit_gst"
+                        planName="Self Affidavit for GST"
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        onSuccess={handlePaymentSuccess}
+                        onFailure={() => {
+                            toast({
+                                variant: "destructive",
+                                title: "Payment Failed",
+                                description: "Payment was not completed. Please try again."
+                            });
+                        }}
+                    />
+                ) : (
+                    <Button onClick={handleGenerate} className="w-full">
+                        Generate & Download
+                    </Button>
+                )}
             </CardFooter>
         </Card>
       </div>
+
+      {/* Generated Document for Download */}
+      {showDocument && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Affidavit</CardTitle>
+            <CardDescription>Your affidavit is ready for download and printing.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div ref={printRef} className="p-4 bg-white rounded-md border">
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                {affidavitText}
+              </pre>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <ShareButtons 
+              contentRef={printRef}
+              fileName={`Self_Affidavit_GST_${formData.deponentName}`}
+            />
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

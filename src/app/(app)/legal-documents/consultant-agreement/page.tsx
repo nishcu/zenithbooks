@@ -37,6 +37,7 @@ import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const formSchema = z.object({
@@ -68,11 +69,20 @@ export default function ConsultantAgreementPage() {
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'consultant_agreement'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -273,10 +283,56 @@ export default function ConsultantAgreementPage() {
                 </CardContent>
                 <CardFooter className="justify-between mt-6">
                   <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-                   <ShareButtons
-                    contentRef={printRef}
-                    fileName={`Consultant_Agreement_${formData.consultantName}`}
-                  />
+                  {(() => {
+                    const basePrice = pricing?.agreements?.find(s => s.id === 'consultant_agreement')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "agreements"
+                        )
+                      : basePrice;
+                    const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                    if (requiresPayment) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="consultant_agreement_download"
+                          planName="Consultant Agreement Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      // Show download buttons (either free or already paid)
+                      if (!showDocument && effectivePrice === 0) {
+                        setShowDocument(true);
+                      }
+                      return showDocument ? (
+                        <ShareButtons
+                          contentRef={printRef}
+                          fileName={`Consultant_Agreement_${formData.consultantName}`}
+                        />
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         );
