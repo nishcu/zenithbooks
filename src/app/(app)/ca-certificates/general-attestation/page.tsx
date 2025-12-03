@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const formSchema = z.object({
@@ -48,6 +49,7 @@ export default function GeneralAttestationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -92,6 +94,13 @@ export default function GeneralAttestationPage() {
       loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -260,35 +269,51 @@ export default function GeneralAttestationPage() {
                 fileName={`Certificate_${formData.subject}`}
                 whatsappMessage={whatsappMessage}
               />
-              {pricing && pricing.ca_certs?.find(s => s.id === 'general_attestation')?.price > 0 ? (
-                <CashfreeCheckout
-                  amount={pricing.ca_certs.find(s => s.id === 'general_attestation')?.price || 0}
-                  planId="general_attestation_cert"
-                  planName="General Attestation Certificate"
-                  userId={user?.uid || ''}
-                  userEmail={user?.email || ''}
-                  userName={user?.displayName || ''}
-                  onSuccess={(paymentId) => {
-                    handlePaymentSuccess(paymentId, {
-                      reportType: "General Attestation Certificate",
-                      clientName: form.getValues("clientName"),
-                      formData: form.getValues(),
-                    });
-                  }}
-                  onFailure={() => {
-                    toast({
-                      variant: "destructive",
-                      title: "Payment Failed",
-                      description: "Payment was not completed. Please try again."
-                    });
-                  }}
-                />
-              ) : (
-                <Button type="button" className="ml-2" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <FileSignature className="mr-2" />}
-                  Request Certification
-                </Button>
-              )}
+              {(() => {
+                const basePrice = pricing?.ca_certs?.find(s => s.id === 'general_attestation')?.price || 0;
+                const effectivePrice = userSubscriptionInfo
+                  ? getEffectiveServicePrice(
+                      basePrice,
+                      userSubscriptionInfo.userType,
+                      userSubscriptionInfo.subscriptionPlan,
+                      "ca_certs"
+                    )
+                  : basePrice;
+                
+                if (effectivePrice > 0) {
+                  return (
+                    <CashfreeCheckout
+                      amount={effectivePrice}
+                      planId="general_attestation_cert"
+                      planName="General Attestation Certificate"
+                      userId={user?.uid || ''}
+                      userEmail={user?.email || ''}
+                      userName={user?.displayName || ''}
+                      onSuccess={(paymentId) => {
+                        handlePaymentSuccess(paymentId, {
+                          reportType: "General Attestation Certificate",
+                          clientName: form.getValues("clientName"),
+                          formData: form.getValues(),
+                        });
+                      }}
+                      onFailure={() => {
+                        toast({
+                          variant: "destructive",
+                          title: "Payment Failed",
+                          description: "Payment was not completed. Please try again."
+                        });
+                      }}
+                    />
+                  );
+                } else {
+                  return (
+                    <Button type="button" className="ml-2" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <FileSignature className="mr-2" />}
+                      Request Certification
+                    </Button>
+                  );
+                }
+              })()}
             </div>
           </CardFooter>
         </Card>

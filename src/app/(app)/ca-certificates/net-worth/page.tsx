@@ -20,6 +20,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { db, auth } from "@/lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -288,6 +289,7 @@ export default function NetWorthCertificatePage() {
   const [user, authLoading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
     pricing,
@@ -333,6 +335,13 @@ export default function NetWorthCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -535,35 +544,51 @@ export default function NetWorthCertificatePage() {
                                  return null;
                              })()}
 
-                             {pricing && pricing.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 ? (
-                                <CashfreeCheckout
-                                    amount={pricing.ca_certs.find(s => s.id === 'net_worth')?.price || 0}
-                                    planId="net_worth_cert"
-                                    planName="Net Worth Certificate"
-                                    userId={user?.uid || ''}
-                                    userEmail={user?.email || ''}
-                                    userName={user?.displayName || ''}
-                                    onSuccess={(paymentId) => {
+                             {(() => {
+                                const basePrice = pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price || 0;
+                                const effectivePrice = userSubscriptionInfo
+                                  ? getEffectiveServicePrice(
+                                      basePrice,
+                                      userSubscriptionInfo.userType,
+                                      userSubscriptionInfo.subscriptionPlan,
+                                      "ca_certs"
+                                    )
+                                  : basePrice;
+                                
+                                if (effectivePrice > 0) {
+                                  return (
+                                    <CashfreeCheckout
+                                      amount={effectivePrice}
+                                      planId="net_worth_cert"
+                                      planName="Net Worth Certificate"
+                                      userId={user?.uid || ''}
+                                      userEmail={user?.email || ''}
+                                      userName={user?.displayName || ''}
+                                      onSuccess={(paymentId) => {
                                         handlePaymentSuccess(paymentId, {
-                                            reportType: "Net Worth Certificate",
-                                            clientName: form.getValues("clientName"),
-                                            formData: form.getValues(),
+                                          reportType: "Net Worth Certificate",
+                                          clientName: form.getValues("clientName"),
+                                          formData: form.getValues(),
                                         });
-                                    }}
-                                    onFailure={() => {
+                                      }}
+                                      onFailure={() => {
                                         toast({
-                                            variant: "destructive",
-                                            title: "Payment Failed",
-                                            description: "Payment was not completed. Please try again."
+                                          variant: "destructive",
+                                          title: "Payment Failed",
+                                          description: "Payment was not completed. Please try again."
                                         });
-                                    }}
-                                />
-                            ) : (
-                                <Button type="button" onClick={handleCertificationRequestWrapper} disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                                    Request Certification
-                                </Button>
-                            )}
+                                      }}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <Button type="button" onClick={handleCertificationRequestWrapper} disabled={isSubmitting}>
+                                      {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                      Request Certification
+                                    </Button>
+                                  );
+                                }
+                              })()}
                          </div>
                     </CardFooter>
                 </Card>

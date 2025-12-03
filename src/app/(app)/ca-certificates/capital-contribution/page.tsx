@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 
 const formSchema = z.object({
@@ -68,6 +69,7 @@ export default function CapitalContributionCertificatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   console.log('👤 User auth status:', { user: !!user, authLoading, userId: user?.uid });
 
@@ -117,6 +119,13 @@ export default function CapitalContributionCertificatePage() {
         loadDocument();
     }
   }, [docId, user, form, router, toast]);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -299,35 +308,51 @@ export default function CapitalContributionCertificatePage() {
                             fileName={`Capital_Contribution_${formData.entityName}`}
                             whatsappMessage={whatsappMessage}
                         />
-                        {pricing && pricing.ca_certs?.find(s => s.id === 'capital_contribution')?.price > 0 ? (
-                            <CashfreeCheckout
-                                amount={pricing.ca_certs.find(s => s.id === 'capital_contribution')?.price || 0}
+                        {(() => {
+                          const basePrice = pricing?.ca_certs?.find(s => s.id === 'capital_contribution')?.price || 0;
+                          const effectivePrice = userSubscriptionInfo
+                            ? getEffectiveServicePrice(
+                                basePrice,
+                                userSubscriptionInfo.userType,
+                                userSubscriptionInfo.subscriptionPlan,
+                                "ca_certs"
+                              )
+                            : basePrice;
+                          
+                          if (effectivePrice > 0) {
+                            return (
+                              <CashfreeCheckout
+                                amount={effectivePrice}
                                 planId="capital_contribution_cert"
                                 planName="Capital Contribution Certificate"
                                 userId={user?.uid || ''}
                                 userEmail={user?.email || ''}
                                 userName={user?.displayName || ''}
                                 onSuccess={(paymentId) => {
-                                    handlePaymentSuccess(paymentId, {
-                                        reportType: "Capital Contribution Certificate",
-                                        clientName: form.getValues("contributorName"),
-                                        formData: form.getValues(),
-                                    });
+                                  handlePaymentSuccess(paymentId, {
+                                    reportType: "Capital Contribution Certificate",
+                                    clientName: form.getValues("contributorName"),
+                                    formData: form.getValues(),
+                                  });
                                 }}
                                 onFailure={() => {
-                                    toast({
-                                        variant: "destructive",
-                                        title: "Payment Failed",
-                                        description: "Payment was not completed. Please try again."
-                                    });
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Payment Failed",
+                                    description: "Payment was not completed. Please try again."
+                                  });
                                 }}
-                            />
-                        ) : (
-                            <Button type="button" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
+                              />
+                            );
+                          } else {
+                            return (
+                              <Button type="button" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
                                 {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
                                 Request Certification
-                            </Button>
-                        )}
+                              </Button>
+                            );
+                          }
+                        })()}
                      </div>
                 </CardFooter>
             </Card>

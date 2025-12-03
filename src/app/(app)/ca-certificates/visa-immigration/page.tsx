@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const assetSchema = z.object({
   description: z.string().min(3, "Description is required."),
@@ -62,6 +63,7 @@ export default function VisaImmigrationCertificatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -434,35 +436,51 @@ export default function VisaImmigrationCertificatePage() {
                                 fileName={`Financial_Questionnaire_${formData.studentName}`}
                                 whatsappMessage={whatsappMessage}
                              />
-                             {pricing && pricing.ca_certs?.find(s => s.id === 'visa_immigration')?.price > 0 ? (
-                                <CashfreeCheckout
-                                    amount={pricing.ca_certs.find(s => s.id === 'visa_immigration')?.price || 0}
-                                    planId="visa_immigration_cert"
-                                    planName="Visa & Immigration Financials"
-                                    userId={user?.uid || ''}
-                                    userEmail={user?.email || ''}
-                                    userName={user?.displayName || ''}
-                                    onSuccess={(paymentId) => {
+                             {(() => {
+                                const basePrice = pricing?.ca_certs?.find(s => s.id === 'visa_immigration')?.price || 0;
+                                const effectivePrice = userSubscriptionInfo
+                                  ? getEffectiveServicePrice(
+                                      basePrice,
+                                      userSubscriptionInfo.userType,
+                                      userSubscriptionInfo.subscriptionPlan,
+                                      "ca_certs"
+                                    )
+                                  : basePrice;
+                                
+                                if (effectivePrice > 0) {
+                                  return (
+                                    <CashfreeCheckout
+                                      amount={effectivePrice}
+                                      planId="visa_immigration_cert"
+                                      planName="Visa & Immigration Financials"
+                                      userId={user?.uid || ''}
+                                      userEmail={user?.email || ''}
+                                      userName={user?.displayName || ''}
+                                      onSuccess={(paymentId) => {
                                         handlePaymentSuccess(paymentId, {
-                                            reportType: "Visa & Immigration Financials",
-                                            clientName: form.getValues("studentName"),
-                                            formData: form.getValues(),
+                                          reportType: "Visa & Immigration Financials",
+                                          clientName: form.getValues("studentName"),
+                                          formData: form.getValues(),
                                         });
-                                    }}
-                                    onFailure={() => {
+                                      }}
+                                      onFailure={() => {
                                         toast({
-                                            variant: "destructive",
-                                            title: "Payment Failed",
-                                            description: "Payment was not completed. Please try again."
+                                          variant: "destructive",
+                                          title: "Payment Failed",
+                                          description: "Payment was not completed. Please try again."
                                         });
-                                    }}
-                                />
-                            ) : (
-                                <Button type="button" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
-                                    Request Certification
-                                </Button>
-                            )}
+                                      }}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <Button type="button" onClick={handleLocalCertificationRequest} disabled={isSubmitting}>
+                                      {isSubmitting ? <Loader2 className="mr-2 animate-spin"/> : <FileSignature className="mr-2"/>}
+                                      Request Certification
+                                    </Button>
+                                  );
+                                }
+                              })()}
                          </div>
                     </CardFooter>
                 </Card>
