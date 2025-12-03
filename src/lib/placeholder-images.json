@@ -2,21 +2,33 @@
   "placeholderImages": [
     {
       "id": "carousel-1",
-      "description": "Streamline Your Finances with Advanced Accounting",
-      "imageUrl": "https://images.unsplash.com/photo-1588859959931-39983ccaff7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhY2NvdW50aW5nJTIwY2hhcnRzfGVufDB8fHx8MTc1ODg4MDk3OXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "accounting charts"
+      "description": "Document Vault - Secure Cloud Storage for All Your Business Documents",
+      "imageUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "secure document vault storage"
     },
     {
       "id": "carousel-2",
-      "description": "Effortless GST Compliance and Filing",
-      "imageUrl": "https://images.unsplash.com/photo-1512167976388-41fe84d0e691?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx0YXglMjBkb2N1bWVudHN8ZW58MHx8fHwxNzU4ODgwOTc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "tax documents"
+      "description": "Voice to Invoice - Create Invoices Instantly Using Voice Commands",
+      "imageUrl": "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "voice technology AI assistant"
     },
     {
       "id": "carousel-3",
-      "description": "Generate CMA Reports with AI-Powered Insights",
-      "imageUrl": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MHx8fHwxNzU4Nzk0NjYwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "business meeting"
+      "description": "Bulk Journal to Books of Accounts in Minutes - Automated Accounting Made Simple",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "accounting automation books ledger"
+    },
+    {
+      "id": "carousel-4",
+      "description": "Bulk Invoices - Generate Hundreds of Invoices in Seconds",
+      "imageUrl": "https://images.unsplash.com/photo-1556740758-90de374c12ad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bulk invoice generation automation"
+    },
+    {
+      "id": "carousel-5",
+      "description": "Professional Networking - First Time in India - Connect CAs, Tax Consultants & Businesses",
+      "imageUrl": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional networking collaboration india"
     },
     {
       "id": "blog-4",

@@ -42,10 +42,10 @@ export const MarketingCarousel = memo(function MarketingCarousel() {
                   className="object-cover"
                   data-ai-hint={item.imageHint}
                 />
-                <div className="absolute inset-0 bg-black/50" />
-                <div className="relative z-10 text-center text-white p-2 sm:p-4">
-                  <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold">{item.description}</h2>
-                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg">Discover the power of GSTEase</p>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/60 to-black/70" />
+                <div className="relative z-10 text-center text-white p-4 sm:p-6 md:p-8">
+                  <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold drop-shadow-lg">{item.description}</h2>
+                  <p className="mt-2 sm:mt-3 text-xs sm:text-sm md:text-base lg:text-lg text-white/90 drop-shadow-md">Powered by ZenithBooks</p>
                 </div>
               </CardContent>
             </Card>
