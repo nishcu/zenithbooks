@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AccountingContext } from "@/context/accounting-context";
+import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
+import { allAccounts } from "@/lib/accounts";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
@@ -40,7 +42,6 @@ import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { allAccounts } from "@/lib/accounts";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 const rapidVoucherSchema = z.object({
@@ -132,6 +133,17 @@ export default function RapidVoucherEntryPage() {
             { account: cashOrBankAc, debit: '0', credit: values.amount.toFixed(2)}  // Credit Bank/Cash
         ];
         narration = `Paid to ${selectedParty.name}`;
+    }
+    
+    // Use auto-narration generator to enhance or validate narration
+    const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+    const customersList = customers.map(c => ({ id: c.id, name: c.name }));
+    const vendorsList = vendors.map(v => ({ id: v.id, name: v.name }));
+    const autoNarration = generateAutoNarration(journalLines, accounts, customersList, vendorsList);
+    
+    // Use auto-generated narration if it's more descriptive or if current narration is generic
+    if (shouldAutoGenerateNarration(narration) || autoNarration.length > narration.length) {
+        narration = autoNarration;
     }
 
 

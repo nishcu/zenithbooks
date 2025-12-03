@@ -73,7 +73,8 @@ import { cn } from "@/lib/utils";
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { parseCSV, parseExcel, parsePDF, categorizeTransaction, type ParsedTransaction, type SkippedRow } from '@/lib/bank-statement-parser';
-  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { generateAutoNarration, shouldAutoGenerateNarration } from '@/lib/narration-generator';
 import {
     Command,
     CommandEmpty,
@@ -677,10 +678,21 @@ export default function BankReconciliationPage() {
                         { account: bankAccount, debit: '0', credit: String(Math.abs(amount)), costCentre: '' }
                       ];
 
+                // Auto-generate narration if description is empty or generic
+                let narration = tx.description?.trim() || '';
+                if (shouldAutoGenerateNarration(narration)) {
+                    const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+                    const customersList = customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [];
+                    const vendorsList = vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [];
+                    narration = generateAutoNarration(journalLines, accounts, customersList, vendorsList);
+                } else {
+                    narration = narration || 'Bank Reconciliation Entry';
+                }
+
                 const newVoucher = {
                     id: voucherId,
                     date: tx.date,
-                    narration: tx.description,
+                    narration: narration,
                     lines: journalLines,
                     amount: Math.abs(amount)
                 };
@@ -859,10 +871,12 @@ export default function BankReconciliationPage() {
           </div>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Upload tips</AlertTitle>
+            <AlertTitle>Upload Format Requirements</AlertTitle>
             <AlertDescription>
-              For better results, upload clean statements without blank lines, merged header rows, or invalid/empty dates.
-              Fixing these issues upfront helps us import all {importSummary?.totalRows ?? "your"} rows without skips.
+              <div className="space-y-2">
+                <p><strong>Excel Format:</strong> Please ensure your Excel file has headers in Row 1 (A1) and data starts from Row 2 (A2). The system will automatically read data from Cell A2 onwards.</p>
+                <p>For better results, upload clean statements without blank lines, merged header rows, or invalid/empty dates. Fixing these issues upfront helps us import all {importSummary?.totalRows ?? "your"} rows without skips.</p>
+              </div>
             </AlertDescription>
           </Alert>
         </CardContent>
