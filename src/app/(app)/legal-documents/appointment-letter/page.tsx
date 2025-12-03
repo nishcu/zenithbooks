@@ -23,6 +23,7 @@ import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const formSchema = z.object({
   companyName: z.string().min(3, "Company name is required."),
@@ -50,11 +51,20 @@ export default function AppointmentLetterPage() {
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'appointment_letter'
   });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -222,10 +232,56 @@ export default function AppointmentLetterPage() {
                 </CardContent>
                 <CardFooter className="justify-between mt-6">
                   <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-                  <ShareButtons 
-                    contentRef={printRef}
-                    fileName={`Appointment_Letter_${formData.employeeName}`}
-                  />
+                  {(() => {
+                    const basePrice = pricing?.hr_documents?.find(s => s.id === 'appointment_letter')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "hr_documents"
+                        )
+                      : basePrice;
+                    const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                    if (requiresPayment) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="appointment_letter_download"
+                          planName="Appointment Letter Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      // Show download buttons (either free or already paid)
+                      if (!showDocument && effectivePrice === 0) {
+                        setShowDocument(true);
+                      }
+                      return showDocument ? (
+                        <ShareButtons 
+                          contentRef={printRef}
+                          fileName={`Appointment_Letter_${formData.employeeName}`}
+                        />
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         );
