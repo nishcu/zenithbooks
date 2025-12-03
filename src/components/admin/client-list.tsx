@@ -12,23 +12,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, ArrowRightLeft, FileArchive, LogIn } from "lucide-react";
+import { PlusCircle, ArrowRightLeft, FileArchive, LogIn, Users, Inbox } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
-
-const sampleClients = [
-  { id: "CL-001", name: "Innovate LLC", gstin: "29AABCI5678G1Z4", email: "contact@innovate.llc" },
-  { id: "CL-002", name: "Quantum Services", gstin: "07LMNOP1234Q1Z9", email: "accounts@quantum.com" },
-  { id: "CL-003", name: "Synergy Corp", gstin: "24AAACS4321H1Z2", email: "finance@synergy.io" },
-];
-
-const sampleAssignedWork = [
-    { id: 'REQ-001', client: 'Innovate LLC', type: 'Net Worth Certificate', dueDate: '2024-08-15', status: 'Pending' },
-    { id: 'REQ-002', client: 'Synergy Corp', type: 'GST Notice Reply', dueDate: '2024-08-10', status: 'In Progress' },
-];
 
 interface ClientListProps {
   onSwitchWorkspace: (client: { id: string, name: string } | null) => void;
@@ -37,7 +26,7 @@ interface ClientListProps {
 
 export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProps) {
   const { toast } = useToast();
-  const [clients, setClients] = useState(sampleClients);
+  const [clients, setClients] = useState<Array<{ id: string; name: string; gstin: string; email: string }>>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const [newClientName, setNewClientName] = useState("");
@@ -124,52 +113,71 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
                     </DialogContent>
                 </Dialog>
             </div>
-            <div className="border rounded-md">
+            {clients.length === 0 ? (
+              <div className="border rounded-md p-12 text-center">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="rounded-full bg-primary/10 p-4">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">No clients yet</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Start managing your clients by adding your first client to the list.
+                    </p>
+                  </div>
+                  <Button onClick={() => setIsDialogOpen(true)} className="mt-4">
+                    <PlusCircle className="mr-2" /> Add Your First Client
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="border rounded-md">
                 <Table>
-                <TableHeader>
+                  <TableHeader>
                     <TableRow>
-                    <TableHead>Client Name</TableHead>
-                    <TableHead>GSTIN</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                      <TableHead>Client Name</TableHead>
+                      <TableHead>GSTIN</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
                     </TableRow>
-                </TableHeader>
-                <TableBody>
+                  </TableHeader>
+                  <TableBody>
                     <TableRow className={!activeClientId ? "bg-primary/10" : ""}>
-                        <TableCell className="font-medium">My Workspace</TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">Your own business data</TableCell>
-                        <TableCell className="text-right">
-                            <Button
-                                variant={!activeClientId ? "default" : "outline"}
-                                size="sm"
-                                disabled={!activeClientId}
-                                onClick={() => handleSwitchWorkspace(null)}
-                            >
-                                <LogIn className="mr-2" />
-                                My Workspace
-                            </Button>
-                        </TableCell>
+                      <TableCell className="font-medium">My Workspace</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">Your own business data</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant={!activeClientId ? "default" : "outline"}
+                          size="sm"
+                          disabled={!activeClientId}
+                          onClick={() => handleSwitchWorkspace(null)}
+                        >
+                          <LogIn className="mr-2" />
+                          My Workspace
+                        </Button>
+                      </TableCell>
                     </TableRow>
                     {clients.map((client) => (
-                    <TableRow key={client.id} className={activeClientId === client.id ? "bg-primary/10" : ""}>
+                      <TableRow key={client.id} className={activeClientId === client.id ? "bg-primary/10" : ""}>
                         <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell className="font-mono text-xs">
-                        {client.gstin}
+                          {client.gstin}
                         </TableCell>
                         <TableCell className="text-right">
-                        <Button
+                          <Button
                             variant={activeClientId === client.id ? "default" : "outline"}
                             size="sm"
                             onClick={() => handleSwitchWorkspace(client)}
-                        >
+                          >
                             <ArrowRightLeft className="mr-2" />
-                             {activeClientId === client.id ? "Viewing" : "Manage"}
-                        </Button>
+                            {activeClientId === client.id ? "Viewing" : "Manage"}
+                          </Button>
                         </TableCell>
-                    </TableRow>
+                      </TableRow>
                     ))}
-                </TableBody>
+                  </TableBody>
                 </Table>
-            </div>
+              </div>
+            )}
         </CardContent>
       </Card>
       
@@ -179,30 +187,19 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
           <CardDescription>A list of certification requests and other tasks assigned to you by the Super Admin.</CardDescription>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Task / Document Type</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                     {sampleAssignedWork.map((work) => (
-                        <TableRow key={work.id}>
-                            <TableCell className="font-medium">{work.client}</TableCell>
-                            <TableCell>{work.type}</TableCell>
-                            <TableCell>{work.dueDate}</TableCell>
-                            <TableCell><Badge variant={work.status === 'Pending' ? 'secondary' : 'default'}>{work.status}</Badge></TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="outline" size="sm">View Details</Button>
-                            </TableCell>
-                        </TableRow>
-                     ))}
-                </TableBody>
-            </Table>
+          <div className="border rounded-md p-12 text-center">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="rounded-full bg-primary/10 p-4">
+                <Inbox className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">No assigned work</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Tasks and certification requests assigned to you will appear here.
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
