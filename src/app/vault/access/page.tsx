@@ -67,10 +67,19 @@ export default function VaultAccessPage() {
       }
 
       if (!response.ok) {
+        // Check if it's a route 404 (route doesn't exist) vs application 404 (invalid code)
         if (response.status === 404) {
-          setError("Share code not found. Please check the code and try again.");
-        }
-        if (response.status === 429) {
+          // Try to parse error message to distinguish route 404 from invalid code
+          const errorMessage = data?.error || "";
+          if (errorMessage.includes("Invalid or expired") || errorMessage.includes("Share code")) {
+            // This is an application-level 404 (invalid code)
+            setError("Share code not found. Please check the code and try again.");
+          } else {
+            // This might be a route 404 (route not deployed)
+            setError("Service temporarily unavailable. Please contact support or try again later.");
+            console.error("Route 404 error - API endpoint may not be deployed:", response);
+          }
+        } else if (response.status === 429) {
           // Rate limited - show friendly message with lockout time
           const lockoutUntil = data.lockoutUntil ? new Date(data.lockoutUntil) : null;
           if (lockoutUntil) {

@@ -3,10 +3,24 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { checkRateLimit, resetRateLimit } from "@/lib/vault-security";
 
-// Ensure this route is included in the build
-// Build timestamp: 2025-12-03-16-00 - Force fresh rebuild
+// CRITICAL: Ensure this route is included in the build
+// Build timestamp: 2025-12-03-16-30 - Force fresh rebuild
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/**
+ * Health check - GET handler for testing route availability
+ * Route: GET /api/vault/validate-code
+ */
+export async function GET(request: NextRequest) {
+  console.log('[validate-code] GET request received - Route is accessible');
+  return NextResponse.json({
+    status: "ok",
+    message: "Validate code endpoint is operational",
+    method: "GET",
+    timestamp: new Date().toISOString(),
+  });
+}
 
 /**
  * Validate a share code and return access information
@@ -105,9 +119,20 @@ export async function POST(request: NextRequest) {
       userId: shareCodeData.userId,
     });
   } catch (error) {
-    console.error("Error validating share code:", error);
+    console.error("[validate-code] Error validating share code:", error);
+    // Log more details for debugging
+    if (error instanceof Error) {
+      console.error("[validate-code] Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+    }
     return NextResponse.json(
-      { error: "Failed to validate share code." },
+      { 
+        error: "Failed to validate share code.",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.message : String(error)) : undefined
+      },
       { status: 500 }
     );
   }
