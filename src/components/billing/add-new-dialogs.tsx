@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     Dialog,
     DialogContent,
@@ -25,6 +25,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { allAccounts } from "@/lib/accounts";
+import { suggestHsnCodeAction } from "@/app/(app)/items/suggest-hsn/actions";
+import { Wand2, Loader2 } from "lucide-react";
 
 type Party = {
   id: string;
@@ -234,6 +236,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: boolean, onOpenChange: (open: boolean) => void, item?: Item | null, stockGroups?: {id: string, name: string}[] }) {
     const { toast } = useToast();
     const [user] = useAuthState(auth);
+    const [isSuggestingHsn, setIsSuggestingHsn] = useState(false);
 
     const form = useForm<z.infer<typeof itemSchema>>({
         resolver: zodResolver(itemSchema),
@@ -247,6 +250,47 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
         form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" });
       }
     }, [item, open, form]);
+
+    const handleSuggestHsn = async (description: string) => {
+        if (!description || description.trim().length < 3) {
+            toast({ 
+                variant: "destructive", 
+                title: "Description Required", 
+                description: "Please enter at least 3 characters to get HSN code suggestion." 
+            });
+            return;
+        }
+
+        setIsSuggestingHsn(true);
+        try {
+            const result = await suggestHsnCodeAction({
+                productOrServiceDescription: description,
+            });
+            
+            if (result?.hsnCode) {
+                form.setValue("hsn", result.hsnCode);
+                toast({ 
+                    title: "HSN Code Suggested", 
+                    description: `Suggested HSN code: ${result.hsnCode}` 
+                });
+            } else {
+                toast({ 
+                    variant: "destructive", 
+                    title: "Suggestion Failed", 
+                    description: "Could not get HSN code suggestion. Please try again." 
+                });
+            }
+        } catch (error: any) {
+            console.error("Error suggesting HSN code:", error);
+            toast({ 
+                variant: "destructive", 
+                title: "Error", 
+                description: error.message || "Failed to get HSN code suggestion. Please try again." 
+            });
+        } finally {
+            setIsSuggestingHsn(false);
+        }
+    };
 
     const onSubmit = async (values: z.infer<typeof itemSchema>) => {
         if (!user) {
@@ -282,10 +326,78 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
                             <DialogDescription>{dialogDescription}</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><Label>Item Name</Label><FormControl><Input placeholder="e.g. Wireless Keyboard" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                            <FormField 
+                                control={form.control} 
+                                name="name" 
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <Label>Item Name</Label>
+                                        <div className="flex gap-2">
+                                            <FormControl>
+                                                <Input 
+                                                    placeholder="e.g. Wireless Keyboard" 
+                                                    {...field} 
+                                                />
+                                            </FormControl>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => {
+                                                    const itemName = form.watch("name");
+                                                    const description = form.watch("description") || itemName;
+                                                    handleSuggestHsn(description || itemName);
+                                                }}
+                                                disabled={isSuggestingHsn || !form.watch("name")?.trim()}
+                                                title="Suggest HSN Code from Item Name"
+                                            >
+                                                {isSuggestingHsn ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Wand2 className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><Label>Description</Label><FormControl><Textarea placeholder="A short description of the item" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                              <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="hsn" render={({ field }) => ( <FormItem><Label>HSN/SAC Code</Label><FormControl><Input placeholder="e.g. 8471" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                                <FormField 
+                                    control={form.control} 
+                                    name="hsn" 
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <Label>HSN/SAC Code</Label>
+                                            <div className="flex gap-2">
+                                                <FormControl>
+                                                    <Input placeholder="e.g. 8471" {...field} />
+                                                </FormControl>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        const description = form.watch("description") || form.watch("name");
+                                                        if (description) {
+                                                            handleSuggestHsn(description);
+                                                        }
+                                                    }}
+                                                    disabled={isSuggestingHsn || (!form.watch("name")?.trim() && !form.watch("description")?.trim())}
+                                                    title="Suggest HSN Code using AI"
+                                                >
+                                                    {isSuggestingHsn ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Wand2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                  <FormField control={form.control} name="gstRate" render={({ field }) => ( <FormItem><Label>GST Rate (%)</Label><FormControl><Input type="number" placeholder="e.g. 18" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                                 <FormField control={form.control} name="stockGroupId" render={({ field }) => ( <FormItem><Label>Stock Group</Label>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
