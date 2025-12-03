@@ -1,16 +1,22 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileArchive, FileDown } from "lucide-react";
+import { FileArchive, FileDown, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
+import Link from "next/link";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 const registers = [
     { id: "reg_members", label: "Register of Members (MGT-1)" },
@@ -25,6 +31,32 @@ const registers = [
 export default function StatutoryRegisters() {
     const { toast } = useToast();
     const [selectedRegisters, setSelectedRegisters] = useState<string[]>(["reg_members", "reg_directors"]);
+    const [user] = useAuthState(auth);
+    const [pricing, setPricing] = useState(null);
+    const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+    const [showDocument, setShowDocument] = useState(false);
+
+    // Fetch user subscription info
+    useEffect(() => {
+      if (user) {
+        getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+      }
+    }, [user]);
+
+    // Load pricing data with real-time updates
+    useEffect(() => {
+      getServicePricing().then(pricingData => {
+        setPricing(pricingData);
+      }).catch(error => {
+        console.error('Error loading pricing:', error);
+      });
+
+      const unsubscribe = onPricingUpdate(pricingData => {
+        setPricing(pricingData);
+      });
+
+      return () => unsubscribe();
+    }, []);
 
     const handleCheckboxChange = (id: string, checked: boolean) => {
         setSelectedRegisters(prev => 
@@ -111,8 +143,26 @@ export default function StatutoryRegisters() {
         }
     };
 
+    const basePrice = pricing?.company_documents?.find(s => s.id === 'statutory_registers')?.price || 0;
+    const effectivePrice = userSubscriptionInfo
+      ? getEffectiveServicePrice(
+          basePrice,
+          userSubscriptionInfo.userType,
+          userSubscriptionInfo.subscriptionPlan,
+          "company_documents"
+        )
+      : basePrice;
+
+    if (!showDocument && effectivePrice === 0) {
+      setShowDocument(true);
+    }
+
     return (
         <div className="space-y-8 max-w-2xl mx-auto">
+            <Link href="/legal-documents" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="size-4" />
+              Back to Document Selection
+            </Link>
             <div className="text-center">
                  <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4 mx-auto">
                     <FileArchive className="h-8 w-8 text-primary" />
@@ -141,10 +191,35 @@ export default function StatutoryRegisters() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleGenerate}>
+                  {effectivePrice > 0 && !showDocument ? (
+                    <CashfreeCheckout
+                      amount={effectivePrice}
+                      planId="statutory_registers_download"
+                      planName="Statutory Registers Download"
+                      userId={user?.uid || ''}
+                      userEmail={user?.email || ''}
+                      userName={user?.displayName || ''}
+                      onSuccess={(paymentId) => {
+                        setShowDocument(true);
+                        toast({
+                          title: "Payment Successful",
+                          description: "You can now generate the registers."
+                        });
+                      }}
+                      onFailure={() => {
+                        toast({
+                          variant: "destructive",
+                          title: "Payment Failed",
+                          description: "Payment was not completed. Please try again."
+                        });
+                      }}
+                    />
+                  ) : (
+                    <Button onClick={handleGenerate} disabled={!showDocument && effectivePrice > 0}>
                         <FileDown className="mr-2"/>
                         Generate Selected Registers
                     </Button>
+                  )}
                 </CardFooter>
             </Card>
         </div>

@@ -10,10 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
-import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useReactToPrint } from "react-to-print";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
+import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect } from "react";
 
 const trusteeSchema = z.object({
   name: z.string().min(2, "Trustee name is required."),
@@ -38,6 +46,37 @@ export default function TrustDeedPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+
+  const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
+    pricing,
+    serviceId: 'trust_deed'
+  });
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
+
+  // Load pricing data with real-time updates
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -145,7 +184,57 @@ export default function TrustDeedPage() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={handlePrint}><Printer className="mr-2"/> Print/Save as PDF</Button>
+              {(() => {
+                const basePrice = pricing?.registration_deeds?.find(s => s.id === 'trust_deed')?.price || 0;
+                const effectivePrice = userSubscriptionInfo
+                  ? getEffectiveServicePrice(
+                      basePrice,
+                      userSubscriptionInfo.userType,
+                      userSubscriptionInfo.subscriptionPlan,
+                      "registration_deeds"
+                    )
+                  : basePrice;
+                
+                if (effectivePrice > 0 && !showDocument) {
+                  return (
+                    <CashfreeCheckout
+                      amount={effectivePrice}
+                      planId="trust_deed_download"
+                      planName="Trust Deed Download"
+                      userId={user?.uid || ''}
+                      userEmail={user?.email || ''}
+                      userName={user?.displayName || ''}
+                      onSuccess={(paymentId) => {
+                        setShowDocument(true);
+                        toast({
+                          title: "Payment Successful",
+                          description: "Your document is ready for download."
+                        });
+                      }}
+                      onFailure={() => {
+                        toast({
+                          variant: "destructive",
+                          title: "Payment Failed",
+                          description: "Payment was not completed. Please try again."
+                        });
+                      }}
+                    />
+                  );
+                } else {
+                  if (!showDocument && effectivePrice === 0) {
+                    setShowDocument(true);
+                  }
+                  return showDocument ? (
+                    <div className="flex gap-2">
+                      <Button type="button" onClick={handlePrint}><Printer className="mr-2"/> Print/Save as PDF</Button>
+                      <ShareButtons
+                        contentRef={printRef}
+                        fileName={`Trust_Deed_${formData.trustName}`}
+                      />
+                    </div>
+                  ) : null;
+                }
+              })()}
             </CardFooter>
           </Card>
         );
