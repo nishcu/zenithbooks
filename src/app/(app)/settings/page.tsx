@@ -3,14 +3,18 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Users,
   Building,
   CreditCard,
   Briefcase,
   ShieldCheck,
-  Paintbrush
+  Paintbrush,
+  User,
+  BadgeCheck
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRoleSimulator } from "@/context/role-simulator-context";
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -45,12 +49,90 @@ export default function SettingsPage() {
     { title: "Professional Profile", description: "Set up your public profile for clients to see.", icon: Briefcase, href: "/settings/professional-profile", roles: ['professional'] },
   ];
   
+  const getUserTypeLabel = (userType: string | undefined) => {
+    if (userType === 'professional') return 'Professional';
+    if (userType === 'business') return 'Business';
+    return 'Business'; // Default
+  };
+
+  const getSubscriptionPlanLabel = (plan: string | undefined) => {
+    if (plan === 'professional') return 'Professional Plan';
+    if (plan === 'business') return 'Business Plan';
+    if (plan === 'freemium') return 'Freemium Plan';
+    return 'Not Subscribed';
+  };
+
+  const getSubscriptionPlanBadgeVariant = (plan: string | undefined) => {
+    if (plan === 'professional') return 'default';
+    if (plan === 'business') return 'secondary';
+    return 'outline';
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div className="text-center">
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="mt-2 text-muted-foreground">Manage your account, organization, and billing preferences.</p>
       </div>
+
+      {/* Account Information Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            <User className="text-primary" />
+            Account Information
+          </CardTitle>
+          <CardDescription>View your account type and subscription details.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-medium text-muted-foreground">User Type</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={userRole === 'professional' ? 'default' : 'secondary'} className="text-sm">
+                  {getUserTypeLabel(userData?.userType)}
+                </Badge>
+                {userRole === 'professional' && (
+                  <span className="text-xs text-muted-foreground">(Cannot be changed)</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {userRole === 'professional' 
+                  ? 'You are registered as a Professional (CA, Tax Consultant, etc.)' 
+                  : 'You are registered as a Business Owner'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-medium text-muted-foreground">Subscription Plan</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={getSubscriptionPlanBadgeVariant(userData?.subscriptionPlan)} className="text-sm">
+                  {getSubscriptionPlanLabel(userData?.subscriptionPlan)}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {userData?.subscriptionPlan === 'professional'
+                  ? 'Full access to all features including client management'
+                  : userData?.subscriptionPlan === 'business'
+                  ? 'Access to accounting, GST, and compliance features'
+                  : 'Basic billing features only'}
+              </p>
+            </div>
+          </div>
+          {userRole === 'professional' && userData?.subscriptionPlan !== 'professional' && (
+            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Note:</strong> As a Professional user, you must subscribe to the Professional Plan to access client management features.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       
       <div className="grid md:grid-cols-2 gap-6">
         {settingsCards.map(card => {
