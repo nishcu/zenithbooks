@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Check, X, Edit, Save, IndianRupee } from "lucide-react";
+import { Check, X, Edit, Save, IndianRupee, Sparkles } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -41,8 +41,10 @@ const initialTiers = [
       { text: "Customer & Vendor Management", included: true },
       { text: "Basic Billing Reports", included: true },
       { text: "Bulk Invoice Upload", included: false },
-      { text: "Financial Statements", included: false },
+      { text: "Financial Statements (P&L, Balance Sheet)", included: false },
       { text: "GST & TDS Compliance Tools", included: false },
+      { text: "Accounting Suite (Ledgers, Journals, Trial Balance)", included: false },
+      { text: "CA Certificates & Legal Documents", included: false },
       { text: "Admin Panel / Client Management", included: false },
     ],
     cta: "Start for Free",
@@ -50,18 +52,21 @@ const initialTiers = [
   {
     id: "business",
     name: "Business",
-    priceMonthly: 1,
-    priceAnnual: 1,
+    priceMonthly: 199,
+    priceAnnual: 1999,
     description: "For businesses needing comprehensive accounting, financial reporting, and tax compliance.",
     features: [
       { text: "Unlimited Invoices & Purchases", included: true },
-      { text: "Voice to Invoice", included: true },
-      { text: "Rapid Invoice Entry", included: true },
+      { text: "Unlimited Items & Parties Management", included: true },
+      { text: "Voice to Invoice & Rapid Entry", included: true },
       { text: "Bulk Invoice Upload", included: true },
-      { text: "Full Accounting Suite", included: true },
-      { text: "Financial Statement Generation", included: true },
-      { text: "Basic GST Reporting", included: true },
-      { text: "TDS/TCS Reports", included: true },
+      { text: "Full Accounting Suite (Ledgers, Journals, Trial Balance)", included: true },
+      { text: "Financial Statements (P&L, Balance Sheet)", included: true },
+      { text: "GST Filing & Compliance Tools", included: true },
+      { text: "TDS/TCS Reports & Form 16", included: true },
+      { text: "CMA Report Generator", included: true },
+      { text: "CA Certificates & Legal Documents (Pay-per-use)", included: true },
+      { text: "Notice Handling Services (Pay-per-use)", included: true },
       { text: "Admin Panel / Client Management", included: false },
     ],
     cta: "Choose Business Plan",
@@ -70,15 +75,18 @@ const initialTiers = [
   {
     id: "professional",
     name: "Professional",
-    priceMonthly: 1,
-    priceAnnual: 1,
+    priceMonthly: 499,
+    priceAnnual: 4999,
     description: "For CAs, tax consultants, and firms managing multiple clients.",
     features: [
-      { text: "All Business Features", included: true },
+      { text: "All Business Plan Features", included: true },
       { text: "Full GST Filing & Reconciliation Suite", included: true },
-      { text: "Legal & CA Certificate Generators", included: true },
-      { text: "CMA Report Generator", included: true },
       { text: "Admin Panel with Client Management", included: true },
+      { text: "Manage Multiple Client Businesses", included: true },
+      { text: "CA Certificates: FREE (All Types)", included: true },
+      { text: "Legal Documents: FREE (All Types)", included: true },
+      { text: "CMA Reports: FREE", included: true },
+      { text: "Notice Handling: FREE", included: true },
       { text: "Priority Support", included: true },
     ],
     cta: "Choose Professional Plan",
@@ -177,7 +185,15 @@ export default function PricingPage() {
           <Alert className="max-w-2xl mx-auto mt-4">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              As a professional user, you can only subscribe to the <strong>Professional Plan</strong>. This plan includes Client Management features required to manage multiple business clients.
+              As a professional user, you can only subscribe to the <strong>Professional Plan</strong>. This plan includes Client Management features required to manage multiple business clients. <strong>Plus, all premium services (CA Certificates, Legal Documents, CMA Reports, Notice Handling) are FREE for Professional users.</strong>
+            </AlertDescription>
+          </Alert>
+        )}
+        {userType !== 'professional' && !isSuperAdmin && (
+          <Alert className="max-w-2xl mx-auto mt-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Premium Services:</strong> CA Certificates, Legal Documents, CMA Reports, and Notice Handling are available with on-demand pricing. Professional users with Professional Plan get these services <strong>FREE</strong>.
             </AlertDescription>
           </Alert>
         )}
@@ -262,10 +278,26 @@ export default function PricingPage() {
                     ) : (
                       <X className="size-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                     )}
-                    <span>{feature.text}</span>
+                    <span className={cn(feature.text.includes("FREE") && "font-semibold text-green-600 dark:text-green-400")}>
+                      {feature.text}
+                    </span>
                   </li>
                 ))}
               </ul>
+              {tier.id === 'professional' && !isEditing && (
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    <strong>Special Benefit:</strong> Professional users with Professional Plan get all premium services (CA Certificates, Legal Documents, CMA Reports, Notice Handling) completely FREE - no additional charges!
+                  </p>
+                </div>
+              )}
+              {tier.id === 'business' && !isEditing && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Premium Services:</strong> CA Certificates (₹1,499-₹3,999), Legal Documents (₹499-₹19,999), CMA Reports (₹4,999), and Notice Handling (₹2,999-₹3,999) are available with pay-per-use pricing.
+                  </p>
+                </div>
+              )}
             </CardContent>
             <CardFooter>
               {isSuperAdmin ? (
@@ -340,6 +372,53 @@ export default function PricingPage() {
           </Card>
         )})}
       </div>
+
+      {/* Premium Services Information Section */}
+      {!isSuperAdmin && (
+        <div className="mt-12 max-w-4xl mx-auto">
+          <Card className="bg-muted/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Premium Services Pricing Information
+              </CardTitle>
+              <CardDescription>
+                Understanding on-demand pricing for premium services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Premium Services Available:</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
+                    <li>CA Certificates (₹1,499 - ₹3,999 per certificate)</li>
+                    <li>Legal Documents (₹499 - ₹19,999 per document)</li>
+                    <li>CMA Reports (₹4,999 per report)</li>
+                    <li>Notice Handling (₹2,999 - ₹3,999 per notice)</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-green-600 dark:text-green-400">
+                    Special Benefit for Professionals:
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    If you are a <strong>Professional user</strong> (CA, Tax Consultant, etc.) with a <strong>Professional Plan</strong> subscription, 
+                    all premium services listed above are <strong className="text-green-600 dark:text-green-400">completely FREE</strong> - 
+                    no additional payment required!
+                  </p>
+                </div>
+              </div>
+              <Alert className="mt-4">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Note:</strong> Premium services require Business Plan or higher for access. 
+                  Freemium users can access these services after upgrading their subscription plan.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
