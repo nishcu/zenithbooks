@@ -390,7 +390,29 @@ export default function BankReconciliationPage() {
             
             // Filter by date range if provided
             if (reconDateRange?.from || reconDateRange?.to) {
-                const voucherDate = new Date(v.date);
+                // Robust date parsing
+                let voucherDate: Date;
+                if (typeof v.date === 'string') {
+                    // Try parsing as yyyy-MM-dd first
+                    const dateParts = v.date.split('-');
+                    if (dateParts.length === 3) {
+                        const year = parseInt(dateParts[0], 10);
+                        const month = parseInt(dateParts[1], 10) - 1;
+                        const day = parseInt(dateParts[2], 10);
+                        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                            voucherDate = new Date(year, month, day);
+                        } else {
+                            voucherDate = new Date(v.date);
+                        }
+                    } else {
+                        voucherDate = new Date(v.date);
+                    }
+                } else {
+                    voucherDate = new Date(v.date);
+                }
+                
+                if (isNaN(voucherDate.getTime())) return false;
+                
                 if (reconDateRange.from && voucherDate < reconDateRange.from) return false;
                 if (reconDateRange.to) {
                     // Include the entire end date (set to end of day)
@@ -405,20 +427,36 @@ export default function BankReconciliationPage() {
         
         const derivedTransactions = filteredVouchers
             .map(v => {
-                const bankLine = v.lines.find(l => l.account === bankAccount);
-                if (!bankLine) return null;
-                const isDebit = parseFloat(bankLine.debit || '0') > 0;
+                // Handle multiple bank lines in same voucher by summing them
+                const bankLines = v.lines.filter(l => l.account === bankAccount);
+                if (bankLines.length === 0) return null;
+                
+                // Calculate total debit and credit for this bank account
+                const totalDebit = bankLines.reduce((sum, line) => sum + parseFloat(line.debit || '0'), 0);
+                const totalCredit = bankLines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
+                
+                // Determine transaction type and amount
+                const isReceipt = totalDebit > totalCredit;
+                const amount = Math.abs(totalDebit - totalCredit);
+                
+                if (amount === 0) return null; // Skip zero-amount transactions
+                
                 return {
                     id: v.id,
                     date: v.date,
                     description: v.narration,
-                    type: isDebit ? 'Receipt' : 'Payment',
-                    amount: v.amount,
+                    type: isReceipt ? 'Receipt' : 'Payment' as 'Receipt' | 'Payment',
+                    amount: amount,
                     matchedId: null,
                 };
             })
             .filter((tx): tx is BookTransaction => tx !== null)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            .sort((a, b) => {
+                // Robust date sorting
+                const dateA = parseDateString(a.date) || new Date(0);
+                const dateB = parseDateString(b.date) || new Date(0);
+                return dateA.getTime() - dateB.getTime();
+            });
         setBookTransactions(derivedTransactions);
     }, [journalVouchers, bankAccount, reconDateRange]);
 
@@ -465,8 +503,29 @@ export default function BankReconciliationPage() {
         }
     }, []);
 
+    // Filter statement transactions by date range if provided
+    const filteredStatementTransactions = useMemo(() => {
+        if (!reconDateRange?.from && !reconDateRange?.to) {
+            return statementTransactions;
+        }
+        
+        return statementTransactions.filter(tx => {
+            const txDate = parseDateString(tx.date);
+            if (!txDate) return false;
+            
+            if (reconDateRange.from && txDate < reconDateRange.from) return false;
+            if (reconDateRange.to) {
+                const endDate = new Date(reconDateRange.to);
+                endDate.setHours(23, 59, 59, 999);
+                if (txDate > endDate) return false;
+            }
+            
+            return true;
+        });
+    }, [statementTransactions, reconDateRange]);
+    
     const bookBalance = useMemo(() => bookTransactions.reduce((acc, tx) => acc + (tx.type === 'Receipt' ? tx.amount : -tx.amount), 0), [bookTransactions]);
-    const statementBalance = useMemo(() => statementTransactions.reduce((acc, tx) => acc + (tx.deposit || 0) - (tx.withdrawal || 0), 0), [statementTransactions]);
+    const statementBalance = useMemo(() => filteredStatementTransactions.reduce((acc, tx) => acc + (tx.deposit || 0) - (tx.withdrawal || 0), 0), [filteredStatementTransactions]);
     const skippedRowsPreview = useMemo(() => skippedRowsDetail.slice(0, 100), [skippedRowsDetail]);
 
     // Early return AFTER all hooks are called
@@ -612,7 +671,7 @@ export default function BankReconciliationPage() {
         }
 
         const totalStatement = currentlySelectedStatementTxs.reduce((acc, id) => {
-            const tx = statementTransactions.find(t => t.id === id);
+            const tx = filteredStatementTransactions.find(t => t.id === id);
             return acc + (tx?.deposit || 0) - (tx?.withdrawal || 0);
         }, 0);
 
@@ -957,12 +1016,12 @@ export default function BankReconciliationPage() {
                 <CardTitle>Bank Statement Transactions</CardTitle>
                 <CardDescription>Transactions from your uploaded statement.</CardDescription>
               </div>
-              {statementTransactions.length > 0 && (
+              {filteredStatementTransactions.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const unmatched = statementTransactions.filter(tx => !matchedPairs.has(tx.id));
+                    const unmatched = filteredStatementTransactions.filter(tx => !matchedPairs.has(tx.id));
                     if (unmatched.length > 0) {
                       setBulkTransactions(unmatched);
                       setIsBulkEntryDialogOpen(true);
@@ -980,7 +1039,7 @@ export default function BankReconciliationPage() {
           </CardHeader>
           <CardContent>
             <TransactionTable
-                transactions={statementTransactions.map(tx => ({
+                transactions={filteredStatementTransactions.map(tx => ({
                     id: tx.id,
                     date: tx.date,
                     description: tx.description,

@@ -75,8 +75,15 @@ export function ShareCodeDialog({
     }
   }, [open, editingCode]);
 
-  // Removed auto-generation - user must enter their own code
-  // Codes will automatically get user prefix when saved
+  // Generate a random code for the user
+  const generateRandomCode = (): string => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars like 0, O, I, 1
+    let result = '';
+    for (let i = 0; i < 10; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
 
   const validateCode = (code: string): boolean => {
     // Check if user entered code with prefix (old format or manual entry)
@@ -314,7 +321,23 @@ export function ShareCodeDialog({
           {/* Secret Code (only for new codes) */}
           {!editingCode && (
             <div className="space-y-2">
-              <Label htmlFor="secretCode">Secret Code *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="secretCode">Secret Code *</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const randomCode = generateRandomCode();
+                    setSecretCode(randomCode);
+                    setGeneratedCode(null);
+                  }}
+                  disabled={isSaving || !!generatedCode}
+                  className="text-xs"
+                >
+                  Generate Random
+                </Button>
+              </div>
               <Input
                 id="secretCode"
                 value={secretCode}

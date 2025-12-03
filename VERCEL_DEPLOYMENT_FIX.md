@@ -2,29 +2,36 @@
 
 ## Method 1: Using Vercel Dashboard (Recommended)
 
-### Step 1: Clear Build Cache
+### Step 1: Purge Data Cache (CRITICAL for API Routes)
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Select your project: **zenithbooks** (or your project name)
 3. Click on **Settings** (gear icon in the top navigation)
-4. Scroll down to **General** section
-5. Look for **"Clear Build Cache"** or **"Build & Development Settings"**
-6. Click **"Clear Build Cache"** button
-7. Confirm the action
+4. Click on **Cache** in the left sidebar
+5. Find the **"Data Cache"** section
+6. Click **"Purge Cache"** button under Data Cache
+7. Confirm the action (this deletes all cached data and components)
 
-### Step 2: Trigger Fresh Deployment
+### Step 2: Purge CDN Cache (Optional but Recommended)
+1. Still in the **Cache** settings page
+2. Find the **"CDN Cache"** section
+3. Click **"Purge Cache"** button under CDN Cache
+4. Confirm the action (this invalidates cached responses)
+
+### Step 3: Trigger Fresh Deployment
 1. Go to **Deployments** tab (in the top navigation)
-2. Find your latest deployment
+2. Find your latest deployment (should be the one we just pushed - commit message: "chore: Trigger fresh Vercel rebuild...")
 3. Click the **three dots (⋮)** menu on the right side of the deployment
 4. Select **"Redeploy"**
 5. **IMPORTANT**: In the redeploy dialog:
-   - Uncheck **"Use existing Build Cache"** (if available)
-   - Or select **"Redeploy with fresh build"**
+   - If there's an option to **"Use existing Build Cache"**, make sure it's **UNCHECKED**
+   - Or look for **"Redeploy with fresh build"** option
 6. Click **"Redeploy"**
 
-### Step 3: Monitor the Build
+### Step 4: Monitor the Build
 1. Watch the build logs in real-time
-2. Look for any errors related to `/api/vault/validate-code`
+2. Look for: `✓ Compiled /api/vault/validate-code successfully`
 3. Verify the build completes successfully
+4. Wait for deployment to finish (usually 2-5 minutes)
 
 ---
 

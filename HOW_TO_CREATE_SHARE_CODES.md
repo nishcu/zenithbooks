@@ -31,9 +31,10 @@
 1. **Code Name** (e.g., "Housing Loan - HDFC Bank")
    - A descriptive name to identify the purpose
    
-2. **Secret Code** (minimum 8 characters)
-   - Option 1: Enter your own code manually
-   - Option 2: Click "Generate Random Code" for auto-generation
+2. **Secret Code** (minimum 8 characters, alphanumeric only)
+   - Option 1: Enter your own unique secret code manually
+   - Option 2: Click "Generate Random" to auto-generate a secure code
+   - Must be at least 8 characters long and contain only letters and numbers
    
 3. **Categories to Share** (Checkboxes)
    - Select which document categories to share
@@ -106,19 +107,19 @@
 ### Example 1: Housing Loan
 **Code Name:** "Housing Loan - HDFC Bank"
 **Categories:** Income Tax, GST, MCA, Banking & Financial
-**Secret Code:** "HOUSE2024"
+**Secret Code:** "HOUSE2024" (10 characters)
 **Purpose:** Share financial documents with bank for loan approval
 
 ### Example 2: Tax Audit
 **Code Name:** "Tax Audit 2024"
 **Categories:** Income Tax, GST, MCA, Registrations & Licenses
-**Secret Code:** (Auto-generated)
+**Secret Code:** "TAXAUDIT2024" (12 characters) or use "Generate Random"
 **Purpose:** Share tax documents with auditor
 
 ### Example 3: Business Loan
 **Code Name:** "Business Loan - ICICI"
 **Categories:** GST, MCA, Banking, Financial Statements
-**Secret Code:** "BL2024ICICI"
+**Secret Code:** "BL2024ICICI" (11 characters)
 **Purpose:** Share business documents for loan processing
 
 ---
@@ -133,10 +134,11 @@
 5. ✅ Access count starts at 0
 
 ### Important Notes:
-- ⚠️ **Copy the code immediately** - it won't be shown again
+- ⚠️ **Copy the code immediately** - it won't be shown again after creation
 - ⚠️ **5-day expiry** - codes expire automatically
 - ⚠️ **Category-specific** - only selected categories are shared
 - ⚠️ **Secure** - codes are hashed, not stored in plain text
+- 💡 **Generate or enter** - Use "Generate Random" for convenience or enter your own code
 
 ---
 
