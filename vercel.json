@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "src/app/api/vault/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/vault/:path*",
