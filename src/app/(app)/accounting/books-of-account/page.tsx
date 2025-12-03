@@ -145,66 +145,254 @@ export default function BooksOfAccountPage() {
         return { headers, rows };
     };
 
-    // Generate Cash Book
+    // Generate Cash Book (Tally Format - showing other side account details)
     const generateCashBook = (vouchers: JournalVoucher[]) => {
         const cashAccount = "1510"; // Cash on Hand
-        const headers = ["Date", "Voucher No.", "Particulars", "Receipt", "Payment", "Balance"];
+        // Tally format: Double column format with Receipt side (left) and Payment side (right)
+        const headers = ["Date", "Particulars", "Voucher No.", "Receipt", "Date", "Particulars", "Voucher No.", "Payment", "Balance"];
         const rows: (string | number)[][] = [];
         let balance = 0;
 
-        vouchers.forEach(v => {
-            const cashLines = v.lines.filter(l => l.account === cashAccount);
-            if (cashLines.length > 0) {
-                cashLines.forEach((line, index) => {
-                    const receipt = parseFloat(line.debit) || 0;
-                    const payment = parseFloat(line.credit) || 0;
-                    balance += receipt - payment;
+        // Process each voucher and extract cash transactions
+        const cashTransactions: Array<{
+            date: string;
+            voucherId: string;
+            receipt: number;
+            payment: number;
+            receiptParticulars: string;
+            paymentParticulars: string;
+        }> = [];
 
-                    rows.push([
-                        index === 0 ? format(new Date(v.date), "dd-MMM-yyyy") : "",
-                        index === 0 ? v.id : "",
-                        index === 0 ? v.narration : `  ${getAccountName(line.account)}`,
-                        receipt > 0 ? receipt.toFixed(2) : "",
-                        payment > 0 ? payment.toFixed(2) : "",
-                        balance.toFixed(2)
-                    ]);
-                });
+        vouchers.forEach(v => {
+            const cashLine = v.lines.find(l => String(l.account).trim() === cashAccount);
+            if (cashLine) {
+                const receipt = parseFloat(String(cashLine.debit).replace(/,/g, '')) || 0;
+                const payment = parseFloat(String(cashLine.credit).replace(/,/g, '')) || 0;
+                
+                if (receipt > 0 || payment > 0) {
+                    // Find the other side accounts (contra accounts)
+                    const otherSideLines = v.lines.filter(l => String(l.account).trim() !== cashAccount);
+                    
+                    // For receipts: Cash debited, so other accounts are credited - show "To [Account]"
+                    const receiptAccounts = otherSideLines
+                        .filter(l => parseFloat(String(l.credit).replace(/,/g, '')) > 0)
+                        .map(l => {
+                            const accountName = getAccountName(String(l.account).trim());
+                            return accountName;
+                        })
+                        .filter(Boolean);
+                    
+                    // For payments: Cash credited, so other accounts are debited - show "By [Account]"
+                    const paymentAccounts = otherSideLines
+                        .filter(l => parseFloat(String(l.debit).replace(/,/g, '')) > 0)
+                        .map(l => {
+                            const accountName = getAccountName(String(l.account).trim());
+                            return accountName;
+                        })
+                        .filter(Boolean);
+                    
+                    const receiptParticulars = receiptAccounts.length > 0 
+                        ? receiptAccounts.map(acc => `To ${acc}`).join(", ")
+                        : (v.narration || "Cash Receipt");
+                    
+                    const paymentParticulars = paymentAccounts.length > 0
+                        ? paymentAccounts.map(acc => `By ${acc}`).join(", ")
+                        : (v.narration || "Cash Payment");
+
+                    cashTransactions.push({
+                        date: format(new Date(v.date), "dd-MMM-yyyy"),
+                        voucherId: v.id,
+                        receipt,
+                        payment,
+                        receiptParticulars,
+                        paymentParticulars
+                    });
+                }
+            }
+        });
+
+        // Sort by date
+        cashTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Generate rows in Tally format
+        cashTransactions.forEach(trans => {
+            if (trans.receipt > 0) {
+                balance += trans.receipt;
+                rows.push([
+                    trans.date,
+                    trans.receiptParticulars,
+                    trans.voucherId,
+                    trans.receipt.toFixed(2),
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    balance.toFixed(2)
+                ]);
+            }
+            
+            if (trans.payment > 0) {
+                balance -= trans.payment;
+                rows.push([
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    trans.date,
+                    trans.paymentParticulars,
+                    trans.voucherId,
+                    trans.payment.toFixed(2),
+                    balance.toFixed(2)
+                ]);
             }
         });
 
         return { headers, rows };
     };
 
-    // Generate Bank Book
+    // Generate Bank Book (Tally Format - showing other side account details, combined for all banks)
     const generateBankBook = (vouchers: JournalVoucher[]) => {
-        const bankAccounts = ["1520", "1521", "1522"]; // Bank accounts
-        const headers = ["Date", "Voucher No.", "Bank Account", "Particulars", "Receipt", "Payment", "Balance"];
-        const rows: (string | number)[][] = [];
-        const balances: Record<string, number> = {};
-
-        bankAccounts.forEach(acc => balances[acc] = 0);
-
+        // Find all bank accounts used in transactions
+        const bankAccounts = ["1520", "1521", "1522"]; // Default bank accounts
+        const usedBankAccounts = new Set<string>();
+        
+        // Also check for any account that might be a bank account
         vouchers.forEach(v => {
             v.lines.forEach(line => {
-                if (bankAccounts.includes(line.account)) {
-                    const receipt = parseFloat(line.debit) || 0;
-                    const payment = parseFloat(line.credit) || 0;
-                    balances[line.account] += receipt - payment;
-
-                    rows.push([
-                        format(new Date(v.date), "dd-MMM-yyyy"),
-                        v.id,
-                        getAccountName(line.account),
-                        v.narration,
-                        receipt > 0 ? receipt.toFixed(2) : "",
-                        payment > 0 ? payment.toFixed(2) : "",
-                        balances[line.account].toFixed(2)
-                    ]);
+                const accountCode = String(line.account).trim();
+                // Check if it's a bank account (starts with 152 or is in our list, or type is Bank)
+                const account = allAccounts.find(a => a.code === accountCode);
+                if (bankAccounts.includes(accountCode) || 
+                    (accountCode.startsWith('152')) ||
+                    (account && account.type === 'Bank')) {
+                    usedBankAccounts.add(accountCode);
                 }
             });
         });
 
-        return { headers, rows };
+        // Tally format: Double column format with Receipt side (left) and Payment side (right)
+        const headers = ["Date", "Particulars", "Voucher No.", "Receipt", "Date", "Particulars", "Voucher No.", "Payment", "Balance"];
+        const allRows: (string | number)[][] = [];
+        const bankBalances: Record<string, number> = {};
+        
+        // Initialize balances
+        Array.from(usedBankAccounts).forEach(acc => bankBalances[acc] = 0);
+
+        // Process each voucher and extract bank transactions
+        const bankTransactions: Array<{
+            date: string;
+            voucherId: string;
+            bankAccount: string;
+            bankName: string;
+            receipt: number;
+            payment: number;
+            receiptParticulars: string;
+            paymentParticulars: string;
+        }> = [];
+
+        vouchers.forEach(v => {
+            v.lines.forEach(line => {
+                const accountCode = String(line.account).trim();
+                if (usedBankAccounts.has(accountCode)) {
+                    const receipt = parseFloat(String(line.debit).replace(/,/g, '')) || 0;
+                    const payment = parseFloat(String(line.credit).replace(/,/g, '')) || 0;
+                    
+                    if (receipt > 0 || payment > 0) {
+                        // Find the other side accounts (contra accounts)
+                        const otherSideLines = v.lines.filter(l => String(l.account).trim() !== accountCode);
+                        
+                        // For receipts: Bank debited, so other accounts are credited - show "To [Account]"
+                        const receiptAccounts = otherSideLines
+                            .filter(l => parseFloat(String(l.credit).replace(/,/g, '')) > 0)
+                            .map(l => {
+                                const accountName = getAccountName(String(l.account).trim());
+                                return accountName;
+                            })
+                            .filter(Boolean);
+                        
+                        // For payments: Bank credited, so other accounts are debited - show "By [Account]"
+                        const paymentAccounts = otherSideLines
+                            .filter(l => parseFloat(String(l.debit).replace(/,/g, '')) > 0)
+                            .map(l => {
+                                const accountName = getAccountName(String(l.account).trim());
+                                return accountName;
+                            })
+                            .filter(Boolean);
+                        
+                        const receiptParticulars = receiptAccounts.length > 0 
+                            ? receiptAccounts.map(acc => `To ${acc}`).join(", ")
+                            : (v.narration || "Bank Receipt");
+                        
+                        const paymentParticulars = paymentAccounts.length > 0
+                            ? paymentAccounts.map(acc => `By ${acc}`).join(", ")
+                            : (v.narration || "Bank Payment");
+
+                        bankTransactions.push({
+                            date: format(new Date(v.date), "dd-MMM-yyyy"),
+                            voucherId: v.id,
+                            bankAccount: accountCode,
+                            bankName: getAccountName(accountCode),
+                            receipt,
+                            payment,
+                            receiptParticulars,
+                            paymentParticulars
+                        });
+                    }
+                }
+            });
+        });
+
+        // Sort by date, then by bank account
+        bankTransactions.sort((a, b) => {
+            const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (dateCompare !== 0) return dateCompare;
+            return a.bankAccount.localeCompare(b.bankAccount);
+        });
+
+        // Generate rows in Tally format - combine all banks in one book
+        let currentBank = "";
+        bankTransactions.forEach(trans => {
+            // Add bank name header when bank changes
+            if (trans.bankAccount !== currentBank) {
+                if (currentBank !== "") {
+                    allRows.push(["", "", "", "", "", "", "", "", ""]); // Separator
+                }
+                allRows.push([`Bank: ${trans.bankName}`, "", "", "", "", "", "", "", ""]);
+                currentBank = trans.bankAccount;
+            }
+
+            if (trans.receipt > 0) {
+                bankBalances[trans.bankAccount] = (bankBalances[trans.bankAccount] || 0) + trans.receipt;
+                allRows.push([
+                    trans.date,
+                    trans.receiptParticulars,
+                    trans.voucherId,
+                    trans.receipt.toFixed(2),
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    "", // Empty for payment side
+                    bankBalances[trans.bankAccount].toFixed(2)
+                ]);
+            }
+            
+            if (trans.payment > 0) {
+                bankBalances[trans.bankAccount] = (bankBalances[trans.bankAccount] || 0) - trans.payment;
+                allRows.push([
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    "", // Empty for receipt side
+                    trans.date,
+                    trans.paymentParticulars,
+                    trans.voucherId,
+                    trans.payment.toFixed(2),
+                    bankBalances[trans.bankAccount].toFixed(2)
+                ]);
+            }
+        });
+
+        return { headers, rows: allRows };
     };
 
     // Generate Purchase Book
