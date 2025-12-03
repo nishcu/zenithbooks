@@ -11,8 +11,14 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
+import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 const formSchema = z.object({
   companyName: z.string().min(3, "Company name is required."),
@@ -31,6 +37,32 @@ type FormData = z.infer<typeof formSchema>;
 export default function BankAccountResolutionPage() {
   const { toast } = useToast();
   const printRef = useRef(null);
+  const [user] = useAuthState(auth);
+  const [pricing, setPricing] = useState(null);
+  const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
+
+  // Load pricing data with real-time updates
+  useEffect(() => {
+    getServicePricing().then(pricingData => {
+      setPricing(pricingData);
+    }).catch(error => {
+      console.error('Error loading pricing:', error);
+    });
+
+    const unsubscribe = onPricingUpdate(pricingData => {
+      setPricing(pricingData);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -129,7 +161,58 @@ export default function BankAccountResolutionPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handlePrint}><Printer className="mr-2" /> Print / Save as PDF</Button>
+                  {(() => {
+                    const basePrice = pricing?.company_documents?.find(s => s.id === 'board_resolutions')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "company_documents"
+                        )
+                      : basePrice;
+                    
+                    if (!showDocument && effectivePrice === 0) {
+                      setShowDocument(true);
+                    }
+                    
+                    if (effectivePrice > 0 && !showDocument) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="board_resolutions_download"
+                          planName="Board Resolution Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      return showDocument ? (
+                        <div className="flex gap-2">
+                          <Button onClick={handlePrint}><Printer className="mr-2" /> Print / Save as PDF</Button>
+                          <ShareButtons
+                            contentRef={printRef}
+                            fileName={`Board_Resolution_Bank_Account_${formData.companyName}`}
+                          />
+                        </div>
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         </div>
