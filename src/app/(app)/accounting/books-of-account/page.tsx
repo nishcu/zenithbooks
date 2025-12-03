@@ -119,28 +119,53 @@ export default function BooksOfAccountPage() {
         }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     };
 
-    // Generate Day Book
+    // Generate Day Book (Tally Format)
     const generateDayBook = (vouchers: JournalVoucher[]) => {
-        const headers = ["Date", "Voucher No.", "Particulars", "Debit", "Credit", "Balance"];
+        const headers = ["Date", "Voucher Type", "Voucher No.", "Particulars", "Debit", "Credit"];
         const rows: (string | number)[][] = [];
-        let runningBalance = 0;
+        let totalDebit = 0;
+        let totalCredit = 0;
 
         vouchers.forEach(v => {
-            v.lines.forEach((line, index) => {
-                const debit = parseFloat(line.debit) || 0;
-                const credit = parseFloat(line.credit) || 0;
-                runningBalance += debit - credit;
+            const voucherDate = format(new Date(v.date), "dd-MMM-yyyy");
+            const voucherType = v.id?.startsWith("INV-") ? "Sales" : 
+                               v.id?.startsWith("PV-") ? "Payment" :
+                               v.id?.startsWith("RV-") ? "Receipt" : "Journal";
+            
+            // First row: Narration
+            rows.push([
+                voucherDate,
+                voucherType,
+                v.id,
+                v.narration || "Journal Entry",
+                "",
+                ""
+            ]);
 
+            // Subsequent rows: Account details with indentation
+            v.lines.forEach((line) => {
+                const debit = parseFloat(String(line.debit).replace(/,/g, '')) || 0;
+                const credit = parseFloat(String(line.credit).replace(/,/g, '')) || 0;
+                totalDebit += debit;
+                totalCredit += credit;
+
+                const accountName = getAccountName(String(line.account).trim());
                 rows.push([
-                    index === 0 ? format(new Date(v.date), "dd-MMM-yyyy") : "",
-                    index === 0 ? v.id : "",
-                    index === 0 ? v.narration : `  ${getAccountName(line.account)}`,
+                    "",
+                    "",
+                    "",
+                    `    ${accountName}`, // Indented for account names
                     debit > 0 ? debit.toFixed(2) : "",
-                    credit > 0 ? credit.toFixed(2) : "",
-                    runningBalance.toFixed(2)
+                    credit > 0 ? credit.toFixed(2) : ""
                 ]);
             });
+
+            // Add blank row between vouchers
+            rows.push(["", "", "", "", "", ""]);
         });
+
+        // Add totals row
+        rows.push(["", "", "", "TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
 
         return { headers, rows };
     };
@@ -395,28 +420,48 @@ export default function BooksOfAccountPage() {
         return { headers, rows: allRows };
     };
 
-    // Generate Purchase Book
+    // Generate Purchase Book (Tally Format)
     const generatePurchaseBook = (vouchers: JournalVoucher[]) => {
         const purchaseAccounts = ["5010", "5050"]; // Purchase accounts
-        const headers = ["Date", "Voucher No.", "Party", "Particulars", "Amount", "GST", "Total"];
+        const headers = ["Date", "Voucher No.", "Supplier Name", "Bill No./Ref", "Particulars", "Purchase Amount", "GST Amount", "Total Amount"];
         const rows: (string | number)[][] = [];
+        let totalPurchase = 0;
+        let totalGST = 0;
+        let grandTotal = 0;
 
         vouchers.forEach(v => {
-            const purchaseLines = v.lines.filter(l => purchaseAccounts.includes(l.account));
+            const purchaseLines = v.lines.filter(l => purchaseAccounts.includes(String(l.account).trim()));
             if (purchaseLines.length > 0) {
-                const purchaseAmount = purchaseLines.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0);
-                const gstAmount = v.lines.find(l => l.account === "2110" || l.account === "2421") ? 
-                    v.lines.filter(l => l.account === "2110" || l.account === "2421").reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0) : 0;
+                const purchaseAmount = purchaseLines.reduce((sum, l) => 
+                    sum + (parseFloat(String(l.debit).replace(/,/g, '')) || 0), 0);
+                
+                // Find GST accounts (Input CGST, Input SGST, Input IGST)
+                const gstAccounts = ["2110", "2421", "2111", "2422", "2112", "2423"]; // CGST, SGST, IGST Input
+                const gstAmount = v.lines
+                    .filter(l => gstAccounts.includes(String(l.account).trim()))
+                    .reduce((sum, l) => sum + (parseFloat(String(l.debit).replace(/,/g, '')) || 0), 0);
+                
                 const total = purchaseAmount + gstAmount;
+                totalPurchase += purchaseAmount;
+                totalGST += gstAmount;
+                grandTotal += total;
 
-                const partyLine = v.lines.find(l => vendors.find(v => v.id === l.account));
-                const party = partyLine ? getAccountName(partyLine.account) : "";
+                // Find vendor/party
+                const vendorLine = v.lines.find(l => 
+                    vendors.some(vendor => vendor.id === String(l.account).trim())
+                );
+                const supplierName = vendorLine ? getAccountName(String(vendorLine.account).trim()) : 
+                    (v.narration?.includes('from') ? v.narration.split('from')[1]?.trim() : '');
+
+                // Extract bill number from narration if available
+                const billRef = v.id || (v.narration?.match(/Bill[#\s:]*([A-Z0-9\-]+)/i)?.[1] || '');
 
                 rows.push([
                     format(new Date(v.date), "dd-MMM-yyyy"),
                     v.id,
-                    party,
-                    v.narration,
+                    supplierName || "Not Specified",
+                    billRef,
+                    v.narration || "Purchase",
                     purchaseAmount.toFixed(2),
                     gstAmount.toFixed(2),
                     total.toFixed(2)
@@ -424,155 +469,344 @@ export default function BooksOfAccountPage() {
             }
         });
 
+        // Sort by date
+        rows.sort((a, b) => {
+            const dateA = new Date(a[0] as string);
+            const dateB = new Date(b[0] as string);
+            return dateA.getTime() - dateB.getTime();
+        });
+
+        // Add totals row
+        if (rows.length > 0) {
+            rows.push(["", "", "", "", "TOTAL", totalPurchase.toFixed(2), totalGST.toFixed(2), grandTotal.toFixed(2)]);
+        }
+
         return { headers, rows };
     };
 
-    // Generate Sales Book
+    // Generate Sales Book (Tally Format)
     const generateSalesBook = (vouchers: JournalVoucher[]) => {
         const salesAccount = "4010"; // Sales Revenue
-        const headers = ["Date", "Invoice No.", "Party", "Particulars", "Amount", "GST", "Total"];
+        const headers = ["Date", "Invoice No.", "Customer Name", "Ref No.", "Particulars", "Sales Amount", "GST Amount", "Total Amount"];
         const rows: (string | number)[][] = [];
+        let totalSales = 0;
+        let totalGST = 0;
+        let grandTotal = 0;
 
-        vouchers.filter(v => v.id && v.id.startsWith("INV-") && !v.reverses).forEach(v => {
-            const salesAmount = v.lines.find(l => l.account === salesAccount) ? 
-                parseFloat(v.lines.find(l => l.account === salesAccount)!.credit) : 0;
-            const gstAmount = v.lines.find(l => l.account === "2110" || l.account === "2421") ? 
-                parseFloat(v.lines.find(l => l.account === "2110" || l.account === "2421")!.credit) : 0;
+        const salesVouchers = vouchers.filter(v => 
+            v.id && (v.id.startsWith("INV-") || v.id.startsWith("SI-")) && !v.reverses
+        );
+
+        salesVouchers.forEach(v => {
+            // Find sales account line
+            const salesLine = v.lines.find(l => String(l.account).trim() === salesAccount);
+            const salesAmount = salesLine ? 
+                parseFloat(String(salesLine.credit).replace(/,/g, '')) || 0 : 0;
+            
+            // Find GST accounts (Output CGST, Output SGST, Output IGST)
+            const gstAccounts = ["2110", "2421", "2111", "2422", "2112", "2423"]; // CGST, SGST, IGST Output
+            const gstAmount = v.lines
+                .filter(l => gstAccounts.includes(String(l.account).trim()))
+                .reduce((sum, l) => sum + (parseFloat(String(l.credit).replace(/,/g, '')) || 0), 0);
+            
             const total = salesAmount + gstAmount;
+            totalSales += salesAmount;
+            totalGST += gstAmount;
+            grandTotal += total;
 
-            const partyLine = v.lines.find(l => customers.find(c => c.id === l.account));
-            const party = partyLine ? getAccountName(partyLine.account) : "";
+            // Find customer/party
+            const customerLine = v.lines.find(l => 
+                customers.some(customer => customer.id === String(l.account).trim())
+            );
+            const customerName = customerLine ? getAccountName(String(customerLine.account).trim()) : 
+                (v.narration?.includes('to') ? v.narration.split('to')[1]?.trim() : '');
 
             rows.push([
                 format(new Date(v.date), "dd-MMM-yyyy"),
                 v.id,
-                party,
-                v.narration,
+                customerName || "Not Specified",
+                "", // Ref No. - can be extracted from narration if available
+                v.narration || "Sales Invoice",
                 salesAmount.toFixed(2),
                 gstAmount.toFixed(2),
                 total.toFixed(2)
             ]);
         });
 
+        // Sort by date
+        rows.sort((a, b) => {
+            const dateA = new Date(a[0] as string);
+            const dateB = new Date(b[0] as string);
+            return dateA.getTime() - dateB.getTime();
+        });
+
+        // Add totals row
+        if (rows.length > 0) {
+            rows.push(["", "", "", "", "TOTAL", totalSales.toFixed(2), totalGST.toFixed(2), grandTotal.toFixed(2)]);
+        }
+
         return { headers, rows };
     };
 
-    // Generate Journal Register
+    // Generate Journal Register (Tally Format)
     const generateJournalRegister = (vouchers: JournalVoucher[]) => {
-        const headers = ["Date", "Voucher No.", "Narration", "Account", "Debit", "Credit"];
+        const headers = ["Date", "Voucher Type", "Voucher No.", "Narration", "Ledger Account", "Debit", "Credit"];
         const rows: (string | number)[][] = [];
+        let totalDebit = 0;
+        let totalCredit = 0;
 
         vouchers.forEach(v => {
-            v.lines.forEach((line, index) => {
+            const voucherDate = format(new Date(v.date), "dd-MMM-yyyy");
+            const voucherType = v.id?.startsWith("INV-") ? "Sales" : 
+                               v.id?.startsWith("PV-") ? "Payment" :
+                               v.id?.startsWith("RV-") ? "Receipt" : 
+                               v.id?.startsWith("JV-") ? "Journal" : "Journal";
+            
+            // First row: Voucher header with narration
+            rows.push([
+                voucherDate,
+                voucherType,
+                v.id,
+                v.narration || "Journal Entry",
+                "",
+                "",
+                ""
+            ]);
+
+            // Account lines with indentation
+            v.lines.forEach((line) => {
+                const debit = parseFloat(String(line.debit).replace(/,/g, '')) || 0;
+                const credit = parseFloat(String(line.credit).replace(/,/g, '')) || 0;
+                totalDebit += debit;
+                totalCredit += credit;
+
+                const accountName = getAccountName(String(line.account).trim());
                 rows.push([
-                    index === 0 ? format(new Date(v.date), "dd-MMM-yyyy") : "",
-                    index === 0 ? v.id : "",
-                    index === 0 ? v.narration : "",
-                    getAccountName(line.account),
-                    parseFloat(line.debit) > 0 ? parseFloat(line.debit).toFixed(2) : "",
-                    parseFloat(line.credit) > 0 ? parseFloat(line.credit).toFixed(2) : ""
+                    "",
+                    "",
+                    "",
+                    "",
+                    `    ${accountName}`, // Indented for ledger accounts
+                    debit > 0 ? debit.toFixed(2) : "",
+                    credit > 0 ? credit.toFixed(2) : ""
                 ]);
             });
+
+            // Blank row between vouchers
+            rows.push(["", "", "", "", "", "", ""]);
         });
+
+        // Add totals row
+        rows.push(["", "", "", "", "TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
 
         return { headers, rows };
     };
 
-    // Generate Ledger Summary
+    // Generate Ledger Summary (Tally Format)
     const generateLedgerSummary = (vouchers: JournalVoucher[]) => {
-        const headers = ["Account Code", "Account Name", "Type", "Opening", "Debit", "Credit", "Closing"];
+        const headers = ["Ledger Name", "Group/Type", "Opening Balance", "Debit Total", "Credit Total", "Closing Balance"];
         const rows: (string | number)[][] = [];
-        const accountBalances: Record<string, { debit: number; credit: number; opening: number }> = {};
+        const accountBalances: Record<string, { debit: number; credit: number; opening: number; type: string }> = {};
 
-        // Initialize all accounts
+        // Initialize all accounts with their types
         allAccounts.forEach(acc => {
-            accountBalances[acc.code] = { debit: 0, credit: 0, opening: 0 };
+            accountBalances[acc.code] = { debit: 0, credit: 0, opening: 0, type: acc.type };
         });
         customers.forEach(c => {
-            accountBalances[c.id] = { debit: 0, credit: 0, opening: 0 };
+            accountBalances[c.id] = { debit: 0, credit: 0, opening: 0, type: "Customer" };
         });
         vendors.forEach(v => {
-            accountBalances[v.id] = { debit: 0, credit: 0, opening: 0 };
+            accountBalances[v.id] = { debit: 0, credit: 0, opening: 0, type: "Vendor" };
         });
 
-        // Calculate balances
+        // Calculate balances from vouchers
         vouchers.forEach(v => {
             v.lines.forEach(line => {
-                if (!accountBalances[line.account]) {
-                    accountBalances[line.account] = { debit: 0, credit: 0, opening: 0 };
+                const accountCode = String(line.account).trim();
+                if (!accountBalances[accountCode]) {
+                    const account = allAccounts.find(a => a.code === accountCode);
+                    accountBalances[accountCode] = { 
+                        debit: 0, 
+                        credit: 0, 
+                        opening: 0,
+                        type: account?.type || "Other"
+                    };
                 }
-                accountBalances[line.account].debit += parseFloat(line.debit) || 0;
-                accountBalances[line.account].credit += parseFloat(line.credit) || 0;
+                accountBalances[accountCode].debit += parseFloat(String(line.debit).replace(/,/g, '')) || 0;
+                accountBalances[accountCode].credit += parseFloat(String(line.credit).replace(/,/g, '')) || 0;
             });
         });
 
-        // Generate rows
+        // Group accounts by type and sort
+        const accountsByType: Record<string, Array<[string, typeof accountBalances[string]]>> = {};
+        
         Object.entries(accountBalances).forEach(([code, balance]) => {
-            if (balance.debit > 0 || balance.credit > 0) {
-                const account = allAccounts.find(a => a.code === code);
-                const customer = customers.find(c => c.id === code);
-                const vendor = vendors.find(v => v.id === code);
-                const closing = balance.debit - balance.credit;
+            if (balance.debit > 0 || balance.credit > 0 || balance.opening !== 0) {
+                const type = balance.type;
+                if (!accountsByType[type]) {
+                    accountsByType[type] = [];
+                }
+                accountsByType[type].push([code, balance]);
+            }
+        });
 
+        // Sort types and accounts within each type
+        const typeOrder = ["Assets", "Cash", "Bank", "Customer", "Vendor", "Liabilities", "Equity", "Revenue", "Expense", "Other"];
+        const sortedTypes = Object.keys(accountsByType).sort((a, b) => {
+            const indexA = typeOrder.indexOf(a);
+            const indexB = typeOrder.indexOf(b);
+            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+
+        // Generate rows grouped by type
+        sortedTypes.forEach(type => {
+            // Add type header
+            rows.push([type, "", "", "", "", ""]);
+            
+            const accounts = accountsByType[type].sort((a, b) => 
+                getAccountName(a[0]).localeCompare(getAccountName(b[0]))
+            );
+
+            accounts.forEach(([code, balance]) => {
+                const closing = balance.opening + balance.debit - balance.credit;
                 rows.push([
-                    code,
                     getAccountName(code),
-                    account?.type || customer ? "Customer" : vendor ? "Vendor" : "Other",
+                    "",
                     balance.opening.toFixed(2),
                     balance.debit.toFixed(2),
                     balance.credit.toFixed(2),
                     closing.toFixed(2)
                 ]);
-            }
+            });
+
+            // Add blank row after each group
+            rows.push(["", "", "", "", "", ""]);
         });
 
         return { headers, rows };
     };
 
-    // Generate Trial Balance
+    // Generate Trial Balance (Tally Format)
     const generateTrialBalance = (vouchers: JournalVoucher[]) => {
-        const headers = ["Account Code", "Account Name", "Debit", "Credit"];
+        const headers = ["Particulars", "Debit", "Credit"];
         const rows: (string | number)[][] = [];
-        const accountBalances: Record<string, { debit: number; credit: number }> = {};
+        const accountBalances: Record<string, { debit: number; credit: number; type: string }> = {};
 
-        // Initialize all accounts
+        // Initialize all accounts with their types
         allAccounts.forEach(acc => {
-            accountBalances[acc.code] = { debit: 0, credit: 0 };
+            accountBalances[acc.code] = { debit: 0, credit: 0, type: acc.type };
         });
         customers.forEach(c => {
-            accountBalances[c.id] = { debit: 0, credit: 0 };
+            accountBalances[c.id] = { debit: 0, credit: 0, type: "Customer" };
         });
         vendors.forEach(v => {
-            accountBalances[v.id] = { debit: 0, credit: 0 };
+            accountBalances[v.id] = { debit: 0, credit: 0, type: "Vendor" };
         });
 
-        // Calculate balances
+        // Calculate balances from vouchers
         vouchers.forEach(v => {
             v.lines.forEach(line => {
-                if (!accountBalances[line.account]) {
-                    accountBalances[line.account] = { debit: 0, credit: 0 };
+                const accountCode = String(line.account).trim();
+                if (!accountBalances[accountCode]) {
+                    const account = allAccounts.find(a => a.code === accountCode);
+                    accountBalances[accountCode] = { 
+                        debit: 0, 
+                        credit: 0,
+                        type: account?.type || "Other"
+                    };
                 }
-                accountBalances[line.account].debit += parseFloat(line.debit) || 0;
-                accountBalances[line.account].credit += parseFloat(line.credit) || 0;
+                accountBalances[accountCode].debit += parseFloat(String(line.debit).replace(/,/g, '')) || 0;
+                accountBalances[accountCode].credit += parseFloat(String(line.credit).replace(/,/g, '')) || 0;
             });
         });
 
-        // Generate rows
+        // Group by account type (like Tally)
+        const accountsByType: Record<string, Array<[string, typeof accountBalances[string]]>> = {};
+        
         Object.entries(accountBalances).forEach(([code, balance]) => {
+            // Only include accounts with non-zero balances
             if (balance.debit > 0 || balance.credit > 0) {
-                rows.push([
-                    code,
-                    getAccountName(code),
-                    balance.debit > 0 ? balance.debit.toFixed(2) : "",
-                    balance.credit > 0 ? balance.credit.toFixed(2) : ""
-                ]);
+                const type = balance.type;
+                if (!accountsByType[type]) {
+                    accountsByType[type] = [];
+                }
+                accountsByType[type].push([code, balance]);
             }
         });
 
-        // Add totals
-        const totalDebit = Object.values(accountBalances).reduce((sum, b) => sum + b.debit, 0);
-        const totalCredit = Object.values(accountBalances).reduce((sum, b) => sum + b.credit, 0);
-        rows.push(["", "TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
+        // Sort types in Tally order (Assets, Liabilities, Equity, Income, Expenses)
+        const typeOrder = ["Assets", "Cash", "Bank", "Customer", "Vendor", "Liabilities", "Equity", "Revenue", "Expense", "Other"];
+        const sortedTypes = Object.keys(accountsByType).sort((a, b) => {
+            const indexA = typeOrder.indexOf(a);
+            const indexB = typeOrder.indexOf(b);
+            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+
+        // Generate rows grouped by type (Tally format)
+        sortedTypes.forEach(type => {
+            // Add type header (like Tally groups)
+            rows.push([type, "", ""]);
+            
+            const accounts = accountsByType[type].sort((a, b) => 
+                getAccountName(a[0]).localeCompare(getAccountName(b[0]))
+            );
+
+            accounts.forEach(([code, balance]) => {
+                const accountName = getAccountName(code);
+                // Determine debit or credit balance
+                const netBalance = balance.debit - balance.credit;
+                
+                if (netBalance > 0) {
+                    rows.push([
+                        accountName,
+                        netBalance.toFixed(2),
+                        ""
+                    ]);
+                } else if (netBalance < 0) {
+                    rows.push([
+                        accountName,
+                        "",
+                        Math.abs(netBalance).toFixed(2)
+                    ]);
+                } else {
+                    // If both sides are equal but non-zero, show both
+                    if (balance.debit > 0) {
+                        rows.push([
+                            accountName,
+                            balance.debit.toFixed(2),
+                            balance.credit.toFixed(2)
+                        ]);
+                    }
+                }
+            });
+        });
+
+        // Calculate totals
+        let totalDebit = 0;
+        let totalCredit = 0;
+        
+        Object.values(accountBalances).forEach(balance => {
+            const netBalance = balance.debit - balance.credit;
+            if (netBalance > 0) {
+                totalDebit += netBalance;
+            } else if (netBalance < 0) {
+                totalCredit += Math.abs(netBalance);
+            } else {
+                totalDebit += balance.debit;
+                totalCredit += balance.credit;
+            }
+        });
+
+        // Add blank row before totals
+        rows.push(["", "", ""]);
+        // Add totals row (Tally format)
+        rows.push(["TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
 
         return { headers, rows };
     };
