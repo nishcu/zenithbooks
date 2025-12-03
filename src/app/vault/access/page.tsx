@@ -67,6 +67,12 @@ export default function VaultAccessPage() {
       }
 
       if (!response.ok) {
+        // Check for code collision (409 Conflict)
+        if (response.status === 409) {
+          setError(data?.error || "This share code exists for multiple users. Please contact the document owner to recreate the code with a new code.");
+          setValidated(false);
+          return;
+        }
         // Check if it's a route 404 (route doesn't exist) vs application 404 (invalid code)
         if (response.status === 404) {
           // Try to parse error message to distinguish route 404 from invalid code

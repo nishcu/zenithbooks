@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
     // Find the matching code by checking hash for each user
     let matchingCode = null;
     const trimmedCode = code.trim();
+    const oldFormatHash = await hashString(trimmedCode);
+    const potentialOldFormatMatches: Array<{ doc: any; data: any }> = [];
     
+    // First pass: Check new format (secure, user-specific)
     for (const doc of allActiveCodes.docs) {
       const codeData = doc.data();
       const userId = codeData.userId;
@@ -80,17 +83,34 @@ export async function POST(request: NextRequest) {
       const newFormatHash = await hashString(codeWithUserId);
       
       if (storedHash === newFormatHash) {
+        // Found match with new secure format - this is unique per user
         matchingCode = { doc, data: codeData };
         break;
       }
       
-      // Backward compatibility: Try old format H(code) for existing codes
-      // This allows old codes to still work, but new codes will use secure format
-      const oldFormatHash = await hashString(trimmedCode);
+      // Collect potential old format matches (for backward compatibility check)
       if (storedHash === oldFormatHash) {
-        matchingCode = { doc, data: codeData };
-        break;
+        potentialOldFormatMatches.push({ doc, data: codeData });
       }
+    }
+    
+    // If no new format match found, check old format (backward compatibility)
+    if (!matchingCode && potentialOldFormatMatches.length > 0) {
+      // SECURITY CHECK: If multiple codes match old format, there's a collision risk
+      if (potentialOldFormatMatches.length > 1) {
+        // Multiple codes with same hash - security risk!
+        // Return error asking user to recreate codes
+        return NextResponse.json(
+          { 
+            error: "Code collision detected. This code exists for multiple users. Please ask the document owner to recreate the share code with a new code.",
+            requiresRecreation: true
+          },
+          { status: 409 } // Conflict status
+        );
+      }
+      
+      // Only one match with old format - safe to use
+      matchingCode = potentialOldFormatMatches[0];
     }
     
     const snapshot = matchingCode 
