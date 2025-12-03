@@ -52,8 +52,8 @@ const initialTiers = [
   {
     id: "business",
     name: "Business",
-    priceMonthly: 199,
-    priceAnnual: 1999,
+    priceMonthly: 99,
+    priceAnnual: 499,
     description: "For businesses needing comprehensive accounting, financial reporting, and tax compliance.",
     features: [
       { text: "Unlimited Invoices & Purchases", included: true },
@@ -76,7 +76,7 @@ const initialTiers = [
     id: "professional",
     name: "Professional",
     priceMonthly: 499,
-    priceAnnual: 4999,
+    priceAnnual: 1999,
     description: "For CAs, tax consultants, and firms managing multiple clients.",
     features: [
       { text: "All Business Plan Features", included: true },
@@ -181,6 +181,13 @@ export default function PricingPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">
           {isSuperAdmin ? 'Edit the pricing and features for each subscription tier.' : 'Choose the plan that\'s right for you. From simple billing to comprehensive professional tools.'}
         </p>
+        {!isSuperAdmin && (
+          <div className="mt-4">
+            <Badge variant="destructive" className="text-sm px-4 py-1">
+              🎉 Launch Offer - Limited Time Pricing!
+            </Badge>
+          </div>
+        )}
         {userType === 'professional' && !isSuperAdmin && (
           <Alert className="max-w-2xl mx-auto mt-4">
             <Info className="h-4 w-4" />
