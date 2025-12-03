@@ -382,8 +382,28 @@ export default function BankReconciliationPage() {
       ]);
 
     useEffect(() => {
-        const derivedTransactions = journalVouchers
-            .filter(v => v.lines.some(l => l.account === bankAccount))
+        // Filter journal vouchers by bank account and date range
+        const filteredVouchers = journalVouchers.filter(v => {
+            // Must have the selected bank account in its lines
+            const hasBankAccount = v.lines.some(l => l.account === bankAccount);
+            if (!hasBankAccount) return false;
+            
+            // Filter by date range if provided
+            if (reconDateRange?.from || reconDateRange?.to) {
+                const voucherDate = new Date(v.date);
+                if (reconDateRange.from && voucherDate < reconDateRange.from) return false;
+                if (reconDateRange.to) {
+                    // Include the entire end date (set to end of day)
+                    const endDate = new Date(reconDateRange.to);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (voucherDate > endDate) return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        const derivedTransactions = filteredVouchers
             .map(v => {
                 const bankLine = v.lines.find(l => l.account === bankAccount);
                 if (!bankLine) return null;
@@ -400,7 +420,7 @@ export default function BankReconciliationPage() {
             .filter((tx): tx is BookTransaction => tx !== null)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setBookTransactions(derivedTransactions);
-    }, [journalVouchers, bankAccount]);
+    }, [journalVouchers, bankAccount, reconDateRange]);
 
     useEffect(() => {
         setJvDateInput(jvDate ? format(jvDate, 'yyyy-MM-dd') : '');
