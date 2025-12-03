@@ -34,99 +34,171 @@ export function GlobalSearch() {
   const router = useRouter();
   const [user] = useAuthState(auth);
 
-  // Add loading state for better UX
-  const isLoading = customersLoading || vendorsLoading || itemsLoading;
-
+  // Declare Firestore queries and hooks first
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
-  const customers = useMemo(() => {
-    if (!customersSnapshot) return [];
-    return customersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  }, [customersSnapshot]);
 
   const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
-  const vendors = useMemo(() => {
-    if (!vendorsSnapshot) return [];
-    return vendorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  }, [vendorsSnapshot]);
 
   const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
+
+  // Add loading state for better UX (after all hooks are declared)
+  const isLoading = customersLoading || vendorsLoading || itemsLoading;
+
+  // Data processing hooks with safe access
+  const customers = useMemo(() => {
+    try {
+      if (!customersSnapshot || !customersSnapshot.docs) return [];
+      return customersSnapshot.docs
+        .map(doc => {
+          try {
+            return { id: doc.id, ...doc.data() };
+          } catch (error) {
+            console.warn('Error processing customer doc:', error);
+            return null;
+          }
+        })
+        .filter(Boolean);
+    } catch (error) {
+      console.warn('Error processing customers:', error);
+      return [];
+    }
+  }, [customersSnapshot]);
+
+  const vendors = useMemo(() => {
+    try {
+      if (!vendorsSnapshot || !vendorsSnapshot.docs) return [];
+      return vendorsSnapshot.docs
+        .map(doc => {
+          try {
+            return { id: doc.id, ...doc.data() };
+          } catch (error) {
+            console.warn('Error processing vendor doc:', error);
+            return null;
+          }
+        })
+        .filter(Boolean);
+    } catch (error) {
+      console.warn('Error processing vendors:', error);
+      return [];
+    }
+  }, [vendorsSnapshot]);
+
   const items = useMemo(() => {
-    if (!itemsSnapshot) return [];
-    return itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      if (!itemsSnapshot || !itemsSnapshot.docs) return [];
+      return itemsSnapshot.docs
+        .map(doc => {
+          try {
+            return { id: doc.id, ...doc.data() };
+          } catch (error) {
+            console.warn('Error processing item doc:', error);
+            return null;
+          }
+        })
+        .filter(Boolean);
+    } catch (error) {
+      console.warn('Error processing items:', error);
+      return [];
+    }
   }, [itemsSnapshot]);
 
   const searchResults = useMemo(() => {
-    if (!searchTerm.trim()) return [];
+    try {
+      if (!searchTerm.trim()) return [];
 
-    const term = searchTerm.toLowerCase();
-    const results: SearchResult[] = [];
+      const term = searchTerm.toLowerCase();
+      const results: SearchResult[] = [];
 
     // Search customers (only if not loading and data exists)
     if (!customersLoading && customers && Array.isArray(customers)) {
-      customers.forEach((customer: any) => {
-        if (customer && typeof customer === 'object' && customer.name && typeof customer.name === 'string') {
-          const name = customer.name.toLowerCase();
-          const gstin = customer.gstin && typeof customer.gstin === 'string' ? customer.gstin.toLowerCase() : '';
-          const email = customer.email && typeof customer.email === 'string' ? customer.email.toLowerCase() : '';
+      try {
+        customers.forEach((customer: any) => {
+          try {
+            if (customer && typeof customer === 'object' && customer.name && typeof customer.name === 'string') {
+              const name = customer.name.toLowerCase();
+              const gstin = customer.gstin && typeof customer.gstin === 'string' ? customer.gstin.toLowerCase() : '';
+              const email = customer.email && typeof customer.email === 'string' ? customer.email.toLowerCase() : '';
 
-          if (name.includes(term) || gstin.includes(term) || email.includes(term)) {
-            results.push({
-              id: customer.id || '',
-              type: 'customer',
-              title: customer.name,
-              description: customer.gstin || customer.email || '',
-              href: `/parties?customer=${customer.id || ''}`,
-              icon: Users,
-            });
+              if (name.includes(term) || gstin.includes(term) || email.includes(term)) {
+                results.push({
+                  id: customer.id || `customer-${Math.random()}`,
+                  type: 'customer',
+                  title: customer.name,
+                  description: customer.gstin || customer.email || '',
+                  href: `/parties?customer=${customer.id || ''}`,
+                  icon: Users,
+                });
+              }
+            }
+          } catch (error) {
+            console.warn('Error processing customer in search:', error);
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.warn('Error in customers search:', error);
+      }
     }
 
     // Search vendors (only if not loading and data exists)
     if (!vendorsLoading && vendors && Array.isArray(vendors)) {
-      vendors.forEach((vendor: any) => {
-        if (vendor && typeof vendor === 'object' && vendor.name && typeof vendor.name === 'string') {
-          const name = vendor.name.toLowerCase();
-          const gstin = vendor.gstin && typeof vendor.gstin === 'string' ? vendor.gstin.toLowerCase() : '';
-          const email = vendor.email && typeof vendor.email === 'string' ? vendor.email.toLowerCase() : '';
+      try {
+        vendors.forEach((vendor: any) => {
+          try {
+            if (vendor && typeof vendor === 'object' && vendor.name && typeof vendor.name === 'string') {
+              const name = vendor.name.toLowerCase();
+              const gstin = vendor.gstin && typeof vendor.gstin === 'string' ? vendor.gstin.toLowerCase() : '';
+              const email = vendor.email && typeof vendor.email === 'string' ? vendor.email.toLowerCase() : '';
 
-          if (name.includes(term) || gstin.includes(term) || email.includes(term)) {
-            results.push({
-              id: vendor.id || '',
-              type: 'vendor',
-              title: vendor.name,
-              description: vendor.gstin || vendor.email || '',
-              href: `/parties?vendor=${vendor.id || ''}`,
-              icon: Users,
-            });
+              if (name.includes(term) || gstin.includes(term) || email.includes(term)) {
+                results.push({
+                  id: vendor.id || `vendor-${Math.random()}`,
+                  type: 'vendor',
+                  title: vendor.name,
+                  description: vendor.gstin || vendor.email || '',
+                  href: `/parties?vendor=${vendor.id || ''}`,
+                  icon: Users,
+                });
+              }
+            }
+          } catch (error) {
+            console.warn('Error processing vendor in search:', error);
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.warn('Error in vendors search:', error);
+      }
     }
 
     // Search items (only if not loading and data exists)
     if (!itemsLoading && items && Array.isArray(items)) {
-      items.forEach((item: any) => {
-        if (item && typeof item === 'object' && item.name && typeof item.name === 'string') {
-          const name = item.name.toLowerCase();
-          const hsn = item.hsn && typeof item.hsn === 'string' ? item.hsn.toLowerCase() : '';
+      try {
+        items.forEach((item: any) => {
+          try {
+            if (item && typeof item === 'object' && item.name && typeof item.name === 'string') {
+              const name = item.name.toLowerCase();
+              const hsn = item.hsn && typeof item.hsn === 'string' ? item.hsn.toLowerCase() : '';
 
-          if (name.includes(term) || hsn.includes(term)) {
-            results.push({
-              id: item.id || '',
-              type: 'item',
-              title: item.name,
-              description: item.hsn || `₹${item.price || item.sellingPrice || 0}`,
-              href: `/items?item=${item.id || ''}`,
-              icon: Warehouse,
-            });
+              if (name.includes(term) || hsn.includes(term)) {
+                results.push({
+                  id: item.id || `item-${Math.random()}`,
+                  type: 'item',
+                  title: item.name,
+                  description: item.hsn || `₹${item.price || item.sellingPrice || 0}`,
+                  href: `/items?item=${item.id || ''}`,
+                  icon: Warehouse,
+                });
+              }
+            }
+          } catch (error) {
+            console.warn('Error processing item in search:', error);
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.warn('Error in items search:', error);
+      }
     }
 
     // Search pages
@@ -142,15 +214,27 @@ export function GlobalSearch() {
       { id: 'profit-loss', type: 'page', title: 'Profit & Loss', description: 'View profit and loss statement', href: '/accounting/financial-statements/profit-and-loss', icon: TrendingUp },
     ];
 
-    pages.forEach(page => {
-      if (page.title.toLowerCase().includes(term) || (page.description && page.description.toLowerCase().includes(term))) {
-        results.push(page);
-      }
-    });
+    try {
+      pages.forEach(page => {
+        try {
+          if (page.title.toLowerCase().includes(term) || (page.description && page.description.toLowerCase().includes(term))) {
+            results.push(page);
+          }
+        } catch (error) {
+          console.warn('Error processing page in search:', error);
+        }
+      });
+    } catch (error) {
+      console.warn('Error in pages search:', error);
+    }
 
-    // Return up to 15 results for better coverage
-    return results.slice(0, 15);
-  }, [searchTerm, customers, vendors, items]);
+      // Return up to 15 results for better coverage
+      return results.slice(0, 15);
+    } catch (error) {
+      console.error('Error in search results computation:', error);
+      return [];
+    }
+  }, [searchTerm, customers, vendors, items, customersLoading, vendorsLoading, itemsLoading]);
 
   const handleSelect = useCallback((href: string) => {
     router.push(href);
