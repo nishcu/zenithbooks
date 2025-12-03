@@ -69,6 +69,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
+import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
 
 export default function JournalVoucherPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -142,6 +143,27 @@ export default function JournalVoucherPage() {
       ]);
     }
   }, [editingVoucher]);
+
+  // Auto-generate narration when lines change (if narration is empty or default)
+  useEffect(() => {
+    // Only auto-generate if narration is empty/default and not editing
+    if (!editingVoucher && shouldAutoGenerateNarration(narration)) {
+      const hasValidLines = lines.some((line: any) => {
+        const debit = parseFloat(line.debit || "0");
+        const credit = parseFloat(line.credit || "0");
+        return line.account && (debit > 0 || credit > 0);
+      });
+
+      if (hasValidLines) {
+        const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+        const customersList = customers.map((c: any) => ({ id: c.value, name: c.label.split(" (")[0] }));
+        const vendorsList = vendors.map((v: any) => ({ id: v.value, name: v.label.split(" (")[0] }));
+        
+        const autoNarration = generateAutoNarration(lines, accounts, customersList, vendorsList);
+        setNarration(autoNarration);
+      }
+    }
+  }, [lines, narration, editingVoucher, customers, vendors]);
 
   // Get context values (but don't use them in hooks if context is null)
   const { journalVouchers: allVouchers, addJournalVoucher, updateJournalVoucher, loading } = accountingContext || { 
@@ -285,8 +307,8 @@ export default function JournalVoucherPage() {
   };
 
   const handleSaveVoucher = async () => {
-    if (!date || !narration) {
-      toast({ variant: "destructive", title: "Missing Details", description: "Please provide a date and narration." });
+    if (!date) {
+      toast({ variant: "destructive", title: "Missing Details", description: "Please provide a date." });
       return;
     }
 
@@ -298,9 +320,18 @@ export default function JournalVoucherPage() {
       return;
     }
 
+    // Auto-generate narration if empty or default
+    let finalNarration = narration?.trim() || "";
+    if (shouldAutoGenerateNarration(finalNarration)) {
+      const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+      const customersList = customers.map((c: any) => ({ id: c.value, name: c.label.split(" (")[0] }));
+      const vendorsList = vendors.map((v: any) => ({ id: v.value, name: v.label.split(" (")[0] }));
+      finalNarration = generateAutoNarration(lines, accounts, customersList, vendorsList);
+    }
+
     const voucherData = {
       date: format(date, "yyyy-MM-dd"),
-      narration: narration,
+      narration: finalNarration,
       lines: lines,
       amount: totalDebits,
     };
@@ -379,12 +410,34 @@ export default function JournalVoucherPage() {
                     </Popover>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="narration">Narration</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="narration">Narration</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+                          const customersList = customers.map((c: any) => ({ id: c.value, name: c.label.split(" (")[0] }));
+                          const vendorsList = vendors.map((v: any) => ({ id: v.value, name: v.label.split(" (")[0] }));
+                          const autoNarration = generateAutoNarration(lines, accounts, customersList, vendorsList);
+                          setNarration(autoNarration);
+                        }}
+                        disabled={!lines.some((line: any) => {
+                          const debit = parseFloat(line.debit || "0");
+                          const credit = parseFloat(line.credit || "0");
+                          return line.account && (debit > 0 || credit > 0);
+                        })}
+                        className="text-xs"
+                      >
+                        Auto-generate
+                      </Button>
+                    </div>
                     <Textarea
                       id="narration"
                       value={narration}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNarration(e.target.value)}
-                      placeholder="e.g., To record monthly depreciation expense"
+                      placeholder="Leave empty for auto-generated narration based on accounts..."
                     />
                   </div>
                 </div>

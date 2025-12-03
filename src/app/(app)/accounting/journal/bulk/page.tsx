@@ -44,6 +44,7 @@ import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { formatExcelFromJson } from "@/lib/export-utils";
+import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
 
 interface BulkJournalEntry {
     date: string;
@@ -864,7 +865,15 @@ export default function BulkJournalEntryPage() {
                     }
 
                     const voucherId = `JV-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-                    const narration = entries[0].narration || 'Bulk Journal Entry';
+                    
+                    // Auto-generate narration if empty or default
+                    let narration = entries[0].narration?.trim() || '';
+                    if (shouldAutoGenerateNarration(narration)) {
+                        const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
+                        const customersList = customers.map(c => ({ id: c.id, name: c.name }));
+                        const vendorsList = vendors.map(v => ({ id: v.id, name: v.name }));
+                        narration = generateAutoNarration(lines, accounts, customersList, vendorsList);
+                    }
 
                     const voucher: any = {
                         id: voucherId,
