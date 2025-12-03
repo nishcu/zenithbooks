@@ -16,13 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect, SelectOption } from "@/components/ui/searchable-select";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -303,38 +297,35 @@ export function DocumentUploadDialog({
               <Label htmlFor="category">Category</Label>
               <TooltipHelp content="Select the appropriate category to organize your document. You can change this later if needed." />
             </div>
-            <Select
+            <SearchableSelect
+              options={VAULT_CATEGORIES_LIST.map((cat) => ({
+                value: cat.value,
+                label: cat.label,
+                group: cat.label.startsWith('Income') ? 'Tax & Compliance' :
+                       cat.label.startsWith('GST') ? 'Tax & Compliance' :
+                       cat.label.startsWith('MCA') ? 'Company Registration' :
+                       cat.label.startsWith('Registrations') ? 'Licenses & Permits' :
+                       cat.label.startsWith('Policies') ? 'Insurance & Policies' :
+                       cat.label.startsWith('Personal') ? 'Personal Documents' :
+                       cat.label.startsWith('Banking') ? 'Financial Documents' :
+                       cat.label.startsWith('Legal') ? 'Legal Documents' :
+                       cat.label.startsWith('Property') ? 'Property & Real Estate' :
+                       cat.label.startsWith('Compliance') ? 'Certifications' :
+                       cat.label.startsWith('Contracts') ? 'Agreements' :
+                       cat.label.startsWith('Financial') ? 'Business Reports' :
+                       cat.label.startsWith('Payroll') ? 'HR Documents' :
+                       'Miscellaneous'
+              }))}
               value={category}
               onValueChange={(value) => {
                 setCategory(value as VaultCategory);
               }}
+              placeholder="Select a category"
+              searchPlaceholder="Search categories..."
+              emptyMessage="No categories found."
+              groupBy={true}
               disabled={isUploading}
-            >
-              <SelectTrigger id="category" className="w-full">
-                <SelectValue placeholder="Select a category">
-                  {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label || "Select a category"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent
-                className="max-h-[300px] z-[99999] bg-background border shadow-2xl"
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
-              >
-                {VAULT_CATEGORIES_LIST.map((cat) => (
-                  <SelectItem
-                    key={cat.value}
-                    value={cat.value}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{cat.label}</span>
-                      <span className="text-xs text-muted-foreground">{cat.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             {category && (
               <p className="text-xs text-muted-foreground">
                 {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.description}
