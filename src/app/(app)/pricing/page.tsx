@@ -64,7 +64,7 @@ const initialTiers = [
       { text: "Financial Statements (P&L, Balance Sheet)", included: true },
       { text: "GST Filing & Compliance Tools", included: true },
       { text: "TDS/TCS Reports & Form 16", included: true },
-      { text: "CMA Report Generator", included: true },
+      { text: "CMA Report Generator (Pay-per-use)", included: true },
       { text: "CA Certificates & Legal Documents (Pay-per-use)", included: true },
       { text: "Notice Handling Services (Pay-per-use)", included: true },
       { text: "Admin Panel / Client Management", included: false },
