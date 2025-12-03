@@ -4,6 +4,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { checkRateLimit, resetRateLimit } from "@/lib/vault-security";
 
 // Ensure this route is included in the build
+// Build timestamp: 2025-12-03-16-00 - Force fresh rebuild
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
