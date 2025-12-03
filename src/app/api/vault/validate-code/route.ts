@@ -49,17 +49,53 @@ export async function POST(request: NextRequest) {
                      request.ip || 
                      "unknown";
 
-    // Hash the provided code using SHA-256 (same as client)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(code.trim());
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const codeHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
-    // Find matching share code
+    // CRITICAL SECURITY FIX: Hash includes userId to prevent collisions between users
+    // We need to check all active codes since we don't know userId yet
     const codesRef = collection(db, "vaultShareCodes");
-    const q = query(codesRef, where("codeHash", "==", codeHash), where("isActive", "==", true));
-    const snapshot = await getDocs(q);
+    const activeCodesQuery = query(codesRef, where("isActive", "==", true));
+    const allActiveCodes = await getDocs(activeCodesQuery);
+    
+    // Hash functions
+    const hashString = async (input: string): Promise<string> => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(input);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    };
+    
+    // Find the matching code by checking hash for each user
+    let matchingCode = null;
+    const trimmedCode = code.trim();
+    
+    for (const doc of allActiveCodes.docs) {
+      const codeData = doc.data();
+      const userId = codeData.userId;
+      const storedHash = codeData.codeHash;
+      
+      if (!storedHash) continue;
+      
+      // Try new format: H(code + userId) - SECURE, prevents collisions
+      const codeWithUserId = `${trimmedCode}:${userId}`;
+      const newFormatHash = await hashString(codeWithUserId);
+      
+      if (storedHash === newFormatHash) {
+        matchingCode = { doc, data: codeData };
+        break;
+      }
+      
+      // Backward compatibility: Try old format H(code) for existing codes
+      // This allows old codes to still work, but new codes will use secure format
+      const oldFormatHash = await hashString(trimmedCode);
+      if (storedHash === oldFormatHash) {
+        matchingCode = { doc, data: codeData };
+        break;
+      }
+    }
+    
+    const snapshot = matchingCode 
+      ? { empty: false, docs: [matchingCode.doc] } 
+      : { empty: true, docs: [] };
 
     if (snapshot.empty) {
       // Invalid code - check and apply rate limiting for FAILED attempts only

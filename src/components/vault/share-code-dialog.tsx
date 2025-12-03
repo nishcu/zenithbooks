@@ -155,9 +155,10 @@ export function ShareCodeDialog({
         return;
       }
 
-      // Check if code already exists (basic check - in production, check hash)
-      // For now, we'll allow duplicate codes but hash them individually
-      codeHash = await hashCode(secretCode.trim());
+      // CRITICAL SECURITY FIX: Include userId in hash to prevent collisions between users
+      // Hash format: H(code + userId) ensures each user's codes are unique
+      const codeWithUserId = `${secretCode.trim()}:${user.uid}`;
+      codeHash = await hashCode(codeWithUserId);
     }
 
     setIsSaving(true);
@@ -207,7 +208,8 @@ export function ShareCodeDialog({
       }
 
       // Don't close dialog if code was just generated - let user copy it
-      if (!editingCode && generatedCode) {
+      // Use secretCode to ensure we check the actual saved code
+      if (!editingCode && secretCode.trim()) {
         // Keep dialog open so user can copy
         return;
       }
