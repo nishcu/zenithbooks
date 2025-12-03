@@ -246,7 +246,7 @@ export function DocumentUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] overflow-visible">
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
@@ -315,7 +315,11 @@ export function DocumentUploadDialog({
                   {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label || "Select a category"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="max-h-[300px] z-[110]">
+              <SelectContent 
+                className="max-h-[300px] z-[200]" 
+                position="popper"
+                sideOffset={4}
+              >
                 {VAULT_CATEGORIES_LIST.map((cat) => (
                   <SelectItem 
                     key={cat.value} 
