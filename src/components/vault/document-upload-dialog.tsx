@@ -23,6 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +51,7 @@ export function DocumentUploadDialog({
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<VaultCategory>(VAULT_CATEGORIES_LIST[0].value);
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -303,37 +308,53 @@ export function DocumentUploadDialog({
               <Label htmlFor="category">Category</Label>
               <TooltipHelp content="Select the appropriate category to organize your document. You can change this later if needed." />
             </div>
-            <Select
-              value={category}
-              onValueChange={(value) => {
-                setCategory(value as VaultCategory);
-              }}
-              disabled={isUploading}
-            >
-              <SelectTrigger id="category" className="w-full">
-                <SelectValue placeholder="Select a category">
-                  {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label || "Select a category"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent
-                className="max-h-[300px] z-[9999] bg-background border shadow-lg"
-                position="popper"
-                sideOffset={4}
-              >
-                {VAULT_CATEGORIES_LIST.map((cat) => (
-                  <SelectItem 
-                    key={cat.value} 
-                    value={cat.value}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{cat.label}</span>
-                      <span className="text-xs text-muted-foreground">{cat.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={categoryOpen}
+                  className="w-full justify-between"
+                  disabled={isUploading}
+                >
+                  {category
+                    ? VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.label
+                    : "Select a category"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0 z-[10000]" align="start">
+                <Command>
+                  <CommandInput placeholder="Search categories..." />
+                  <CommandList className="max-h-[300px]">
+                    <CommandEmpty>No category found.</CommandEmpty>
+                    <CommandGroup>
+                      {VAULT_CATEGORIES_LIST.map((cat) => (
+                        <CommandItem
+                          key={cat.value}
+                          value={cat.value}
+                          onSelect={(value) => {
+                            setCategory(value as VaultCategory);
+                            setCategoryOpen(false);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              category === cat.value ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
+                          <div className="flex flex-col flex-1">
+                            <span className="font-medium">{cat.label}</span>
+                            <span className="text-xs text-muted-foreground">{cat.description}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             {category && (
               <p className="text-xs text-muted-foreground">
                 {VAULT_CATEGORIES_LIST.find((c) => c.value === category)?.description}
