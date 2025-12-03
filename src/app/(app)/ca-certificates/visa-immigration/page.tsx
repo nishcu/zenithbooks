@@ -117,6 +117,13 @@ export default function VisaImmigrationCertificatePage() {
     }
   }, [docId, user, form, router, toast]);
 
+  // Fetch user subscription info
+  useEffect(() => {
+    if (user) {
+      getUserSubscriptionInfo(user.uid).then(setUserSubscriptionInfo);
+    }
+  }, [user]);
+
   // Load pricing data
   useEffect(() => {
     getServicePricing().then(pricingData => {
