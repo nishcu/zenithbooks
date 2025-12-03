@@ -34,65 +34,85 @@ export function GlobalSearch() {
   const router = useRouter();
   const [user] = useAuthState(auth);
 
+  // Add loading state for better UX
+  const isLoading = customersLoading || vendorsLoading || itemsLoading;
+
   const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
-  const [customersSnapshot] = useCollection(customersQuery);
+  const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
   const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
-  const [vendorsSnapshot] = useCollection(vendorsQuery);
+  const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
   const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
 
   const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
-  const [itemsSnapshot] = useCollection(itemsQuery);
+  const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
 
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
-    
+
     const term = searchTerm.toLowerCase();
     const results: SearchResult[] = [];
 
-    // Search customers
-    customers.forEach((customer: any) => {
-      if (customer.name?.toLowerCase().includes(term) || customer.gstin?.toLowerCase().includes(term)) {
-        results.push({
-          id: customer.id,
-          type: 'customer',
-          title: customer.name,
-          description: customer.gstin || customer.email || '',
-          href: `/parties?customer=${customer.id}`,
-          icon: Users,
-        });
-      }
-    });
+    // Search customers (only if not loading and data exists)
+    if (!customersLoading && customers) {
+      customers.forEach((customer: any) => {
+        if (customer && customer.name && (
+          customer.name.toLowerCase().includes(term) ||
+          (customer.gstin && customer.gstin.toLowerCase().includes(term)) ||
+          (customer.email && customer.email.toLowerCase().includes(term))
+        )) {
+          results.push({
+            id: customer.id,
+            type: 'customer',
+            title: customer.name,
+            description: customer.gstin || customer.email || '',
+            href: `/parties?customer=${customer.id}`,
+            icon: Users,
+          });
+        }
+      });
+    }
 
-    // Search vendors
-    vendors.forEach((vendor: any) => {
-      if (vendor.name?.toLowerCase().includes(term) || vendor.gstin?.toLowerCase().includes(term)) {
-        results.push({
-          id: vendor.id,
-          type: 'vendor',
-          title: vendor.name,
-          description: vendor.gstin || vendor.email || '',
-          href: `/parties?vendor=${vendor.id}`,
-          icon: Users,
-        });
-      }
-    });
+    // Search vendors (only if not loading and data exists)
+    if (!vendorsLoading && vendors) {
+      vendors.forEach((vendor: any) => {
+        if (vendor && vendor.name && (
+          vendor.name.toLowerCase().includes(term) ||
+          (vendor.gstin && vendor.gstin.toLowerCase().includes(term)) ||
+          (vendor.email && vendor.email.toLowerCase().includes(term))
+        )) {
+          results.push({
+            id: vendor.id,
+            type: 'vendor',
+            title: vendor.name,
+            description: vendor.gstin || vendor.email || '',
+            href: `/parties?vendor=${vendor.id}`,
+            icon: Users,
+          });
+        }
+      });
+    }
 
-    // Search items
-    items.forEach((item: any) => {
-      if (item.name?.toLowerCase().includes(term) || item.hsn?.toLowerCase().includes(term)) {
-        results.push({
-          id: item.id,
-          type: 'item',
-          title: item.name,
-          description: item.hsn || `₹${item.price || item.sellingPrice || 0}`,
-          href: `/items?item=${item.id}`,
-          icon: Warehouse,
-        });
-      }
-    });
+    // Search items (only if not loading and data exists)
+    if (!itemsLoading && items) {
+      items.forEach((item: any) => {
+        if (item && item.name && (
+          item.name.toLowerCase().includes(term) ||
+          (item.hsn && item.hsn.toLowerCase().includes(term))
+        )) {
+          results.push({
+            id: item.id,
+            type: 'item',
+            title: item.name,
+            description: item.hsn || `₹${item.price || item.sellingPrice || 0}`,
+            href: `/items?item=${item.id}`,
+            icon: Warehouse,
+          });
+        }
+      });
+    }
 
     // Search pages
     const pages: SearchResult[] = [
@@ -108,13 +128,14 @@ export function GlobalSearch() {
     ];
 
     pages.forEach(page => {
-      if (page.title.toLowerCase().includes(term) || page.description?.toLowerCase().includes(term)) {
+      if (page.title.toLowerCase().includes(term) || (page.description && page.description.toLowerCase().includes(term))) {
         results.push(page);
       }
     });
 
-    return results.slice(0, 10); // Limit to 10 results
-  }, [searchTerm, customers, vendors, items]);
+    // Return up to 15 results for better coverage
+    return results.slice(0, 15);
+  }, [searchTerm, customers, vendors, items, customersLoading, vendorsLoading, itemsLoading]);
 
   const handleSelect = useCallback((href: string) => {
     router.push(href);
@@ -159,7 +180,7 @@ export function GlobalSearch() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search customers, items, invoices, reports..."
+                placeholder="Search customers, vendors, items, invoices..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -167,12 +188,20 @@ export function GlobalSearch() {
               />
             </div>
             <ScrollArea className="h-[400px]">
-              {searchResults.length === 0 && searchTerm.trim() && (
+              {isLoading && searchTerm.trim() && (
                 <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                  No results found.
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    Searching...
+                  </div>
                 </div>
               )}
-              {searchResults.length > 0 && (
+              {!isLoading && searchResults.length === 0 && searchTerm.trim() && (
+                <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                  No results found for "{searchTerm}"
+                </div>
+              )}
+              {!isLoading && searchResults.length > 0 && (
                 <div className="space-y-2">
                   {searchResults.map((result) => (
                     <Link
