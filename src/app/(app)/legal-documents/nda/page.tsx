@@ -31,7 +31,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
-
 const formSchema = z.object({
   disclosingPartyName: z.string().min(3, "Disclosing party name is required."),
   disclosingPartyAddress: z.string().min(10, "Address is required."),
@@ -57,6 +56,7 @@ export default function NdaPage() {
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -246,10 +246,56 @@ export default function NdaPage() {
                 </CardContent>
                 <CardFooter className="justify-between mt-6">
                   <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-                   <ShareButtons
-                    contentRef={printRef}
-                    fileName={`NDA_${formData.disclosingPartyName}_${formData.receivingPartyName}`}
-                  />
+                  {(() => {
+                    const basePrice = pricing?.agreements?.find(s => s.id === 'nda')?.price || 0;
+                    const effectivePrice = userSubscriptionInfo
+                      ? getEffectiveServicePrice(
+                          basePrice,
+                          userSubscriptionInfo.userType,
+                          userSubscriptionInfo.subscriptionPlan,
+                          "agreements"
+                        )
+                      : basePrice;
+                    const requiresPayment = effectivePrice > 0 && !showDocument;
+
+                    if (requiresPayment) {
+                      return (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="nda_download"
+                          planName="NDA Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      );
+                    } else {
+                      // Show download buttons (either free or already paid)
+                      if (!showDocument && effectivePrice === 0) {
+                        setShowDocument(true);
+                      }
+                      return showDocument ? (
+                        <ShareButtons
+                          contentRef={printRef}
+                          fileName={`NDA_${formData.disclosingPartyName}_${formData.receivingPartyName}`}
+                        />
+                      ) : null;
+                    }
+                  })()}
                 </CardFooter>
             </Card>
         );
