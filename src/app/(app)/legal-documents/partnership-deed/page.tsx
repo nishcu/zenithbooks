@@ -91,8 +91,12 @@ const formSchema = z.object({
   interestOnCapital: z.coerce.number().min(0).max(12, "As per IT Act, max 12% is allowed.").optional().default(12),
   partnerRemuneration: z.coerce.number().min(0).optional().default(0),
   
+  managingPartner: z.string().optional(),
+  managingPartnerAuthority: z.string().optional(),
+  
   bankAuthority: z.enum(["joint", "single", "specific"]),
   specificPartner: z.string().optional(),
+  bankAccountDetails: z.string().optional(),
 
   admissionProcedure: z.string().optional(),
   retirementProcedure: z.string().optional(),
@@ -259,8 +263,40 @@ const PartnershipDeedToPrint = React.forwardRef<HTMLDivElement, { formData: Form
                     </table>
                     The divisible profits and losses shall be arrived at after providing for the interest on the accounts of the partners and remuneration to working partners as hereinafter provided for as per the terms of this partnership deed.
                 </li>
-                <li>The Partners shall be entitled for interest at the rate of <strong>{formData.interestOnCapital}% per annum</strong> or such other higher rate as may be prescribed under the Income Tax Act on the amount outstanding to their respective capital accounts. In case of Loss or lower income, the interest can be NIL or lower than aforementioned rate, as the partners may decide from time to time.</li>
-                <li>The firm shall not be dissolved on death or retirement of any one or more of the partners unless the remaining partners with mutual consent decide otherwise.</li>
+                <li>The Partners shall be entitled for interest at the rate of <strong>{formData.interestOnCapital}% per annum</strong> or such other higher rate as may be prescribed under the Income Tax Act on the amount outstanding to their respective capital accounts. And the amount of interest so payable shall be calculated and credited to their respective capital accounts at the end of every financial year. In case of Loss or lower income, the interest can be NIL or lower than aforementioned rate, as the partners may decide from time to time.</li>
+                <li>The Partners are at liberty to raise any type of loans from any scheduled Banks, any other Financial Institutions, Government or Non Government for furtherance of the partnership business.</li>
+                {formData.managingPartner && (
+                    <li>The {formData.partners.findIndex(p => p.name === formData.managingPartner) + 1 === 1 ? '1st' : formData.partners.findIndex(p => p.name === formData.managingPartner) + 1 === 2 ? '2nd' : `${formData.partners.findIndex(p => p.name === formData.managingPartner) + 1}th`} partner i.e. <strong>{formData.managingPartner}</strong>, hereto shall be the managing partner, who have agreed to manage the affairs of the partnership business. {formData.managingPartnerAuthority || 'The above mentioned managing partner is authorized to approach all the official authorities and sign the documents, application, paper, etc on behalf of partnership to obtain the required licenses, approvals and permissions to carry on the partnership business. He is also authorized to approach any bank/s or financial institution/s to borrow monies for the purpose of the partnership business. In this connection, he is authorized to sign any application and execute necessary documents, papers, conveyance, etc on behalf of partnership.'}</li>
+                )}
+                {formData.partners.filter(p => p.isDesignated).length > 0 && formData.partners.filter(p => p.isDesignated).some(p => {
+                    const workingPartners = formData.partners.filter(p => p.isDesignated);
+                    return workingPartners.length > 0;
+                }) && (
+                    <li>That the {formData.partners.filter(p => p.isDesignated).map((p, idx, arr) => {
+                        const partnerIndex = formData.partners.findIndex(partner => partner.name === p.name) + 1;
+                        const ordinal = partnerIndex === 1 ? '1st' : partnerIndex === 2 ? '2nd' : `${partnerIndex}th`;
+                        return idx === arr.length - 1 && arr.length > 1 ? ` and ${ordinal}` : idx === 0 ? `${ordinal}` : `, ${ordinal}`;
+                    }).join('')} partner{formData.partners.filter(p => p.isDesignated).length > 1 ? 's' : ''} {formData.partners.filter(p => p.isDesignated).length > 1 ? 'shall be' : 'shall be'} working partner{formData.partners.filter(p => p.isDesignated).length > 1 ? 's' : ''} who {formData.partners.filter(p => p.isDesignated).length > 1 ? 'have' : 'has'} agreed to actively engage {formData.partners.filter(p => p.isDesignated).length > 1 ? 'themselves' : 'himself/herself'} in conducting the affairs of the partnership business. {formData.partners.filter(p => p.isDesignated).length > 1 ? 'They' : 'He/She'} shall {formData.partners.filter(p => p.isDesignated).length > 1 ? 'be' : ''} be entitled to remuneration and each of {formData.partners.filter(p => p.isDesignated).length > 1 ? 'them' : 'him/her'} shall be paid Rs.{formData.partnerRemuneration || 0}/- per month as Remuneration. In the event of loss or lower or higher book profits the remuneration so payable can be Nil or lower or higher than the above mentioned amount as the partners may decide from time to time. In case of any of the partners does not take active or take less active part in the affairs of the partnership business, {formData.partners.filter(p => p.isDesignated).length > 1 ? 'they' : 'he/she'} shall not be paid by any remuneration or paid lower than the above mentioned remuneration.</li>
+                )}
+                {formData.bankAuthority && (
+                    <li>The Partners may open one or more accounts in the name of the partnership with one or more banks and such account(s), including loan accounts shall be operated {formData.bankAuthority === 'joint' ? 'jointly by all partners' : formData.bankAuthority === 'single' ? 'singly by any partner' : formData.specificPartner ? `by ${formData.specificPartner}` : 'as per the terms agreed upon'}. {formData.bankAccountDetails || ''}</li>
+                )}
+                <li>The accounts of the partnership shall be made up on 31st day of March every year or any other day as the partners may decide from time to time.</li>
+                <li>The firm shall continue but shall not be deemed to have been dissolved on death or retirement of any one or more of the partners unless the partners may with mutual consent decide otherwise.</li>
+                {formData.admissionProcedure && (
+                    <li><strong>Admission of a New Partner:</strong> {formData.admissionProcedure}</li>
+                )}
+                {formData.retirementProcedure && (
+                    <li><strong>Retirement of a Partner:</strong> {formData.retirementProcedure}</li>
+                )}
+                {formData.dissolutionGrounds && (
+                    <li><strong>Dissolution of the Firm:</strong> {formData.dissolutionGrounds}</li>
+                )}
+                {formData.arbitration && formData.arbitrationCity && (
+                    <li>Any dispute or difference arising out of or in connection with this partnership deed shall be referred to arbitration in accordance with the Arbitration and Conciliation Act, 2015. The arbitration shall be conducted at <strong>{formData.arbitrationCity}</strong> and the decision of the arbitrator shall be final and binding on all partners.</li>
+                )}
+                <li>The provisions relating to law of partnership as applicable to {formData.firmAddress?.split(',').pop()?.trim() || 'the State'} shall apply to any matter not provided for in this deed.</li>
+                <li>The partners shall be entitled to modify the terms and conditions by executing a supplementary deed and the same shall form part and parcel of this deed of Partnership.</li>
                 {formData.extraClauses && <li><strong>ADDITIONAL CLAUSES:</strong> {formData.extraClauses}</li>}
             </ol>
 
@@ -379,7 +415,11 @@ export default function PartnershipDeedPage() {
       totalCapital: 100000,
       interestOnCapital: 12,
       partnerRemuneration: 0,
+      managingPartner: "",
+      managingPartnerAuthority: "",
       bankAuthority: "joint",
+      specificPartner: "",
+      bankAccountDetails: "",
       admissionProcedure: "A new partner may be admitted with the mutual consent of all existing partners.",
       retirementProcedure: "A partner may retire by giving a written notice of at least 90 days to other partners.",
       dissolutionGrounds: "The firm shall be dissolved by mutual consent of all partners.",
@@ -642,7 +682,7 @@ export default function PartnershipDeedPage() {
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormField control={form.control} name={`partners.${index}.designation`} render={({ field }) => ( <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="President, Member..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={form.control} name={`partners.${index}.isDesignated`} render={({ field }) => ( <FormItem className="flex flex-row items-center justify-start gap-2 pt-8"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} id={`isDesignated-${index}`} /></FormControl><Label className="font-normal" htmlFor={`isDesignated-${index}`}>Designated Partner</Label></FormItem> )}/>
+                    <FormField control={form.control} name={`partners.${index}.isDesignated`} render={({ field }) => ( <FormItem className="flex flex-row items-center gap-2 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} id={`isDesignated-${index}`} className="h-4 w-4" /></FormControl><Label className="font-normal cursor-pointer text-sm whitespace-nowrap" htmlFor={`isDesignated-${index}`}>Designated Partner</Label></FormItem> )}/>
                   </div>
                 </div>
               ))}
@@ -683,8 +723,37 @@ export default function PartnershipDeedPage() {
       case 4:
         return (
           <Card>
-            <CardHeader><CardTitle>Step 4: Banking & Operations</CardTitle><CardDescription>Define how the firm's bank account will be operated.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Step 4: Managing Partner & Banking</CardTitle><CardDescription>Define managing partner and bank account operations.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
+               <FormField control={form.control} name="managingPartner" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Managing Partner</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl><SelectTrigger><SelectValue placeholder="Select managing partner"/></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {form.getValues("partners").map((p, i) => p.name && <SelectItem key={i} value={p.name}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>The managing partner will have authority to manage the affairs of the partnership business, sign documents, and approach authorities.</FormDescription>
+                    <FormMessage/>
+                </FormItem>
+               )}/>
+               {form.watch("managingPartner") && (
+                   <FormField control={form.control} name="managingPartnerAuthority" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Managing Partner Authority Details (Optional)</FormLabel>
+                        <FormControl>
+                            <Textarea 
+                                placeholder="e.g., Authorized to approach all official authorities, sign documents, applications, papers, etc. on behalf of partnership to obtain licenses, approvals and permissions. Also authorized to approach banks/financial institutions to borrow monies for the partnership business."
+                                {...field} 
+                            />
+                        </FormControl>
+                        <FormDescription>Specify additional authorities for the managing partner, if any.</FormDescription>
+                        <FormMessage/>
+                    </FormItem>
+                   )}/>
+               )}
+               <Separator />
                <FormField control={form.control} name="bankAuthority" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Bank Account Operation Authority</FormLabel>
@@ -702,7 +771,7 @@ export default function PartnershipDeedPage() {
                {form.watch("bankAuthority") === "specific" && (
                    <FormField control={form.control} name="specificPartner" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Select Specific Partner</FormLabel>
+                        <FormLabel>Select Specific Partner for Bank Operations</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a partner"/></SelectTrigger></FormControl>
                             <SelectContent>
@@ -713,6 +782,19 @@ export default function PartnershipDeedPage() {
                     </FormItem>
                    )}/>
                )}
+               <FormField control={form.control} name="bankAccountDetails" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Bank Account Details (Optional)</FormLabel>
+                    <FormControl>
+                        <Textarea 
+                            placeholder="e.g., The Partners may open one or more accounts in the name of the partnership with one or more banks and such account(s), including loan accounts shall be operated jointly by all partners."
+                            {...field} 
+                        />
+                    </FormControl>
+                    <FormDescription>Specify additional details about bank account operations, if any.</FormDescription>
+                    <FormMessage/>
+                </FormItem>
+               )}/>
             </CardContent>
              <CardFooter className="justify-between"><Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button><Button type="button" onClick={processStep}>Next <ArrowRight className="mr-2"/></Button></CardFooter>
           </Card>
@@ -753,7 +835,12 @@ export default function PartnershipDeedPage() {
                 <CardHeader><CardTitle>Step 6: Dispute Resolution</CardTitle><CardDescription>Define how disputes among partners will be handled.</CardDescription></CardHeader>
                 <CardContent className="space-y-4">
                      <FormField control={form.control} name="arbitration" render={({ field }) => (
-                        <FormItem className="flex items-center gap-2"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl> <Label>Include Arbitration Clause</Label></FormItem>
+                        <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                            <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-4 w-4" />
+                            </FormControl>
+                            <Label className="font-normal cursor-pointer text-sm">Include Arbitration Clause</Label>
+                        </FormItem>
                     )}/>
                     {form.watch("arbitration") && (
                         <FormField control={form.control} name="arbitrationCity" render={({ field }) => (
