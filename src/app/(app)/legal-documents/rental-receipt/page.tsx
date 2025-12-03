@@ -13,7 +13,6 @@ import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
-import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -30,11 +29,6 @@ export default function RentalReceiptPage() {
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
     const [showReceipt, setShowReceipt] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-
-    const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
-        pricing,
-        serviceId: 'rental_receipt_hra'
-    });
 
     useEffect(() => {
         getServicePricing().then(setPricing);
@@ -76,17 +70,6 @@ export default function RentalReceiptPage() {
     const handlePaymentSuccessCallback = (paymentId: string) => {
         // After successful payment, show the receipt
         setShowReceipt(true);
-        handlePaymentSuccess(paymentId, {
-            reportType: "Rental Receipt for HRA",
-            clientName: tenantName,
-            formData: {
-                tenantName,
-                landlordName,
-                rentAmount,
-                address,
-                rentalMonth,
-            },
-        });
         
         toast({
             title: "Payment Successful",
