@@ -25,6 +25,7 @@ import { doc } from "firebase/firestore";
 import { db, auth as firebaseAuth } from "@/lib/firebase";
 import { readBrandingSettings } from "@/lib/branding";
 import { useState, useEffect } from "react";
+import { ZENITH_BOOKS_VERSION } from "@/lib/constants";
 
 export function Header() {
   const pathname = usePathname();
@@ -62,6 +63,9 @@ export function Header() {
             <h1 className="text-lg font-semibold truncate">{companyInfo.name}</h1>
             <Badge variant="outline" className="hidden lg:inline-flex text-xs font-mono">
               {companyInfo.gstin}
+            </Badge>
+            <Badge variant="secondary" className="hidden xl:inline-flex text-xs font-mono">
+              v{ZENITH_BOOKS_VERSION}
             </Badge>
           </div>
         </div>

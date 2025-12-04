@@ -13,6 +13,9 @@ export const USER_ROLES = {
 // Super Admin UID
 export const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
 
+// Application Version (like Tally: 0.9, 1.8, 7.2, 8.1, etc.)
+export const ZENITH_BOOKS_VERSION = "0.9";
+
 // Toast Messages
 export const TOAST_MESSAGES = {
   SUCCESS: {

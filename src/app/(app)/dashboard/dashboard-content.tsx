@@ -29,6 +29,7 @@ import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 import { VaultStatistics } from "@/components/dashboard/vault-statistics";
+import { AppDownloads } from "@/components/dashboard/app-downloads";
 
 
 function DashboardContent() {
@@ -207,7 +208,10 @@ function DashboardContent() {
               {/* Render the main business dashboard below the client manager */}
                <div className="space-y-8 mt-8">
                   <MarketingCarousel />
-                  
+
+                  {/* Mobile Apps & Version Section */}
+                  <AppDownloads />
+
                   {/* Core Features Section */}
                   <Card className="border-2 border-primary/20 shadow-lg">
                     <CardHeader>
@@ -255,7 +259,10 @@ function DashboardContent() {
                       </div>
                     </CardContent>
                   </Card>
-                  
+
+                  {/* Mobile Apps & Version Section */}
+                  <AppDownloads />
+
                   <div className="grid gap-8 lg:grid-cols-3 items-start">
                     <div className="lg:col-span-2 space-y-8">
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
