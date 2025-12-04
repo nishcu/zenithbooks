@@ -262,13 +262,13 @@ export function LoginForm() {
                                 </div>
                                 <FormControl>
                                 <div className="relative flex">
-                                    <Input
+                                    <Input 
                                         id="password"
-                                        type={showPassword ? "text" : "password"}
+                                        type={showPassword ? "text" : "password"} 
                                         aria-label="Password"
                                         aria-required="true"
                                         className="pr-12"
-                                        {...field}
+                                        {...field} 
                                     />
                                     <Button
                                         type="button"

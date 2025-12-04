@@ -322,7 +322,7 @@ export function ShareCodeDialog({
           {!editingCode && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="secretCode">Secret Code *</Label>
+              <Label htmlFor="secretCode">Secret Code *</Label>
                 <Button
                   type="button"
                   variant="outline"

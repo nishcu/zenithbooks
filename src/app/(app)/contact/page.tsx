@@ -52,20 +52,20 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Legal Business Name</h3>
-                <p className="text-muted-foreground font-medium">NAGA SRUTHI PULLURU</p>
+                <h3 className="font-semibold text-lg">Team ZenithBooks</h3>
+                <p className="text-muted-foreground font-medium">Mr. Eshwara Chandra</p>
               </div>
               <div className="space-y-2">
                 <h3 className="font-semibold">Merchant Legal Entity Name</h3>
-                <p className="text-muted-foreground">zenithbooks</p>
+                <p className="text-muted-foreground">ZenithBooks</p>
               </div>
               <div className="space-y-2">
                 <h3 className="font-semibold">Registered Address</h3>
-                <p className="text-muted-foreground">Block D 1805 IndisoneCity, Hyderabad, Telangana, PIN: 500081</p>
+                <p className="text-muted-foreground">Flat 301, HariHaranHomes, Balaji Nagar, Nizampet, Hyderabad, Telangana, PIN: 500081</p>
               </div>
               <div className="space-y-2">
                 <h3 className="font-semibold">Operational Address</h3>
-                <p className="text-muted-foreground">Block D 1805 IndisoneCity, Hyderabad, Telangana, PIN: 500081</p>
+                <p className="text-muted-foreground">Flat 301, HariHaranHomes, Balaji Nagar, Nizampet, Hyderabad, Telangana, PIN: 500081</p>
               </div>
               <div className="flex items-start gap-4">
                 <Phone className="text-primary mt-1 flex-shrink-0" />
@@ -78,7 +78,7 @@ export default function ContactPage() {
                 <Mail className="text-primary mt-1 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold">E-Mail ID</h3>
-                  <p className="text-muted-foreground">kranthisuryadevara25@gmail.com</p>
+                  <p className="text-muted-foreground">info@zenithbooks.in</p>
                 </div>
               </div>
             </CardContent>

@@ -260,10 +260,10 @@ export function SignupForm() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative flex">
-                        <Input
-                          type={showPassword ? "text" : "password"}
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
                           className="pr-12"
-                          {...field}
+                          {...field} 
                         />
                         <Button
                           type="button"
