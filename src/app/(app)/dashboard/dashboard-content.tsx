@@ -286,7 +286,10 @@ function DashboardContent() {
   return (
     <div className="space-y-8">
       <MarketingCarousel />
-      
+
+      {/* Mobile Apps & Version Section */}
+      <AppDownloads />
+
       {/* Core Features Section */}
       <Card className="border-2 border-primary/20 shadow-lg">
         <CardHeader>
