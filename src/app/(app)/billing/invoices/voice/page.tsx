@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
@@ -702,6 +703,16 @@ export default function VoiceInvoiceEntryPage() {
         </h1>
         <p className="text-muted-foreground">Create invoices using voice commands. Perfect for mobile users!</p>
       </div>
+
+      {/* Important Alert */}
+      <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertTitle className="text-amber-800 dark:text-amber-200">Important: Prerequisites Required</AlertTitle>
+        <AlertDescription className="text-amber-700 dark:text-amber-300">
+          Before using this voice-to-invoice feature, make sure that Customer and Item have been already created in the application.
+          If not, create customer and items for one time to ensure voice recognition works properly.
+        </AlertDescription>
+      </Alert>
 
       {/* Voice Input Section */}
       <Card className="border-primary/20">
