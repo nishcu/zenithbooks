@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Users, Eye, KeyRound, Ban, Edit, Trash2, CheckCircle2, Loader2 } from "lucide-react";
+import { MoreHorizontal, Users, Eye, KeyRound, Ban, Edit, Trash2, CheckCircle2, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,24 +28,23 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 type User = {
   id: string;
-  name: string;
   email: string;
-  type: 'Professional' | 'Business';
-  joinedOn: Date;
-  status: 'Active' | 'Inactive' | 'Suspended';
+  userType: 'business' | 'professional' | 'freemium';
+  companyName: string;
+  createdAt: any;
+  status?: 'Active' | 'Inactive' | 'Suspended';
 };
 
-const initialUsers: User[] = [
-    { id: 'USR-001', name: 'Rohan Sharma', email: 'rohan.sharma@example.com', type: 'Professional', joinedOn: new Date(2024, 6, 1), status: 'Active' },
-    { id: 'USR-002', name: 'Priya Mehta', email: 'priya.mehta@example.com', type: 'Business', joinedOn: new Date(2024, 5, 15), status: 'Active' },
-    { id: 'USR-003', name: 'Anjali Singh', email: 'anjali.singh@example.com', type: 'Business', joinedOn: new Date(2024, 5, 10), status: 'Inactive' },
-];
-
 export default function AdminUsers() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [user] = useAuthState(auth);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -53,11 +52,97 @@ export default function AdminUsers() {
   const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState(false);
   const [isUnsuspendDialogOpen, setIsUnsuspendDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState({ name: '', email: '', type: 'Professional' as 'Professional' | 'Business', status: 'Active' as User['status'] });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAction, setIsLoadingAction] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'freemium' | 'business' | 'professional'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editFormData, setEditFormData] = useState({
+    email: '',
+    userType: 'business' as 'business' | 'professional' | 'freemium',
+    companyName: ''
+  });
   const { toast } = useToast();
 
-  const getStatusBadge = (status: string) => {
+  // Check if user is super admin
+  const isSuperAdmin = user?.uid === SUPER_ADMIN_UID;
+
+  // Fetch users on component mount
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetchUsers();
+    }
+  }, [isSuperAdmin]);
+
+  // Filter users based on type and search term
+  useEffect(() => {
+    let filtered = users;
+
+    // Filter by user type
+    if (filterType !== 'all') {
+      filtered = filtered.filter(user => user.userType === filterType);
+    }
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.email.toLowerCase().includes(term) ||
+        user.companyName.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredUsers(filtered);
+  }, [users, filterType, searchTerm]);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'x-user-id': user?.uid || '',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const usersWithStatus = data.users.map((user: User) => ({
+          ...user,
+          status: 'Active' as const, // Default status for now
+        }));
+        setUsers(usersWithStatus);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch users. You may not have admin privileges.",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load users. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getUserTypeBadge = (userType: string) => {
+    switch (userType) {
+      case "freemium":
+        return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Freemium</Badge>;
+      case "business":
+        return <Badge className="bg-green-600 hover:bg-green-700">Business</Badge>;
+      case "professional":
+        return <Badge className="bg-purple-600 hover:bg-purple-700">Professional</Badge>;
+      default:
+        return <Badge variant="outline">{userType}</Badge>;
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case "Active":
         return <Badge className="bg-green-600 hover:bg-green-700">Active</Badge>;
@@ -66,7 +151,7 @@ export default function AdminUsers() {
       case "Suspended":
          return <Badge variant="destructive">Suspended</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-green-600 hover:bg-green-700">Active</Badge>;
     }
   };
 
@@ -78,101 +163,205 @@ export default function AdminUsers() {
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setEditFormData({
-      name: user.name,
       email: user.email,
-      type: user.type,
-      status: user.status
+      userType: user.userType,
+      companyName: user.companyName
     });
     setIsEditDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
     if (!selectedUser) return;
-    setIsLoading('edit');
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setUsers(users.map((u: User) => 
-      u.id === selectedUser.id 
-        ? { ...u, ...editFormData }
-        : u
-    ));
-    toast({
-      title: "User Updated",
-      description: `User ${editFormData.name} has been updated successfully.`,
-    });
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-    setIsLoading(null);
+    setIsLoadingAction('edit');
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || '',
+        },
+        body: JSON.stringify({
+          targetUserId: selectedUser.id,
+          updates: editFormData,
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(users.map((u: User) =>
+          u.id === selectedUser.id
+            ? { ...u, ...editFormData }
+            : u
+        ));
+        toast({
+          title: "User Updated",
+          description: `User ${editFormData.email} has been updated successfully.`,
+        });
+        setIsEditDialogOpen(false);
+        setSelectedUser(null);
+      } else {
+        const error = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.error || "Failed to update user.",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update user. Please try again.",
+      });
+    } finally {
+      setIsLoadingAction(null);
+    }
   };
 
   const handleResetPassword = async () => {
     if (!selectedUser) return;
-    setIsLoading('reset');
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    toast({
-      title: "Password Reset",
-      description: `Password reset email has been sent to ${selectedUser.email}.`,
-    });
-    setIsResetPasswordDialogOpen(false);
-    setSelectedUser(null);
-    setIsLoading(null);
+    setIsLoadingAction('reset');
+
+    try {
+      // For now, simulate password reset since we don't have the actual implementation
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast({
+        title: "Password Reset",
+        description: `Password reset functionality will be implemented soon.`,
+      });
+      setIsResetPasswordDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to reset password.",
+      });
+    } finally {
+      setIsLoadingAction(null);
+    }
   };
 
   const handleSuspendUser = async () => {
     if (!selectedUser) return;
-    setIsLoading('suspend');
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 600));
-    setUsers(users.map((u: User) => 
-      u.id === selectedUser.id 
-        ? { ...u, status: 'Suspended' as User['status'] }
-        : u
-    ));
-    toast({
-      title: "User Suspended",
-      description: `${selectedUser.name} has been suspended.`,
-      variant: "destructive",
-    });
-    setIsSuspendDialogOpen(false);
-    setSelectedUser(null);
-    setIsLoading(null);
+    setIsLoadingAction('suspend');
+
+    try {
+      // Update user status in local state for now
+      setUsers(users.map((u: User) =>
+        u.id === selectedUser.id
+          ? { ...u, status: 'Suspended' as User['status'] }
+          : u
+      ));
+      toast({
+        title: "User Suspended",
+        description: `${selectedUser.email} has been suspended.`,
+        variant: "destructive",
+      });
+      setIsSuspendDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to suspend user.",
+      });
+    } finally {
+      setIsLoadingAction(null);
+    }
   };
 
   const handleUnsuspendUser = async () => {
     if (!selectedUser) return;
-    setIsLoading('unsuspend');
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 600));
-    setUsers(users.map((u: User) => 
-      u.id === selectedUser.id 
-        ? { ...u, status: 'Active' as User['status'] }
-        : u
-    ));
-    toast({
-      title: "User Unsuspended",
-      description: `${selectedUser.name} has been unsuspended and can now access the platform.`,
-    });
-    setIsUnsuspendDialogOpen(false);
-    setSelectedUser(null);
-    setIsLoading(null);
+    setIsLoadingAction('unsuspend');
+
+    try {
+      // Update user status in local state for now
+      setUsers(users.map((u: User) =>
+        u.id === selectedUser.id
+          ? { ...u, status: 'Active' as User['status'] }
+          : u
+      ));
+      toast({
+        title: "User Unsuspended",
+        description: `${selectedUser.email} has been unsuspended and can now access the platform.`,
+      });
+      setIsUnsuspendDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to unsuspend user.",
+      });
+    } finally {
+      setIsLoadingAction(null);
+    }
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    setIsLoading('delete');
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setUsers(users.filter((u: User) => u.id !== selectedUser.id));
-    toast({
-      title: "User Deleted",
-      description: `${selectedUser.name} has been deleted from the system.`,
-      variant: "destructive",
-    });
-    setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
-    setIsLoading(null);
+    setIsLoadingAction('delete');
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || '',
+        },
+        body: JSON.stringify({
+          targetUserId: selectedUser.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove user from local state
+        setUsers(users.filter((u: User) => u.id !== selectedUser.id));
+        toast({
+          title: "User Deleted",
+          description: `${selectedUser.email} has been deleted from the system.`,
+          variant: "destructive",
+        });
+        setIsDeleteDialogOpen(false);
+        setSelectedUser(null);
+      } else {
+        const error = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.error || "Failed to delete user.",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete user. Please try again.",
+      });
+    } finally {
+      setIsLoadingAction(null);
+    }
   };
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center size-12 rounded-full bg-destructive/10">
+            <Ban className="size-6 text-destructive" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Access Denied</h1>
+            <p className="text-muted-foreground">You don't have permission to access the admin users panel.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -185,19 +374,87 @@ export default function AdminUsers() {
             <p className="text-muted-foreground">View and manage all registered users on the platform.</p>
         </div>
       </div>
-      
+
+      {/* User Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Freemium Users</CardTitle>
+            <Badge variant="outline" className="text-blue-600">F</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.filter(u => u.userType === 'freemium').length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Business Users</CardTitle>
+            <Badge className="bg-green-600">B</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.filter(u => u.userType === 'business').length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Professional Users</CardTitle>
+            <Badge className="bg-purple-600">P</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users.filter(u => u.userType === 'professional').length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>User List</CardTitle>
           <CardDescription>Manage user accounts, permissions, and status</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <Input
+                placeholder="Search by email or company name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="freemium">Freemium Users</SelectItem>
+                <SelectItem value="business">Business Users</SelectItem>
+                <SelectItem value="professional">Professional Users</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={fetchUsers} disabled={isLoading} variant="outline">
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Refresh
+            </Button>
+          </div>
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[150px]">User</TableHead>
                   <TableHead className="min-w-[200px]">Email</TableHead>
+                  <TableHead className="min-w-[150px]">Company</TableHead>
                   <TableHead className="min-w-[120px]">User Type</TableHead>
                   <TableHead className="min-w-[120px]">Joined On</TableHead>
                   <TableHead className="min-w-[100px]">Status</TableHead>
@@ -205,21 +462,28 @@ export default function AdminUsers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                      <p className="mt-2 text-muted-foreground">Loading users...</p>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      No users found.
+                      {users.length === 0 ? "No users found." : "No users match your filters."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user: User) => (
+                  filteredUsers.map((user: User) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{user.email}</TableCell>
+                      <TableCell className="font-medium max-w-[200px] truncate">{user.email}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{user.companyName || 'Not specified'}</TableCell>
+                      <TableCell>{getUserTypeBadge(user.userType)}</TableCell>
                       <TableCell>
-                          <Badge variant={user.type === 'Professional' ? 'default' : 'outline'}>{user.type}</Badge>
+                        {user.createdAt ? format(new Date(user.createdAt.seconds * 1000), 'dd MMM, yyyy') : 'N/A'}
                       </TableCell>
-                      <TableCell>{format(user.joinedOn, 'dd MMM, yyyy')}</TableCell>
                       <TableCell>{getStatusBadge(user.status)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -229,55 +493,55 @@ export default function AdminUsers() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => handleViewUser(user)} disabled={isLoading !== null}>
+                            <DropdownMenuItem onClick={() => handleViewUser(user)} disabled={isLoadingAction !== null}>
                               <Eye className="mr-2 h-4 w-4" />
                               View User Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditUser(user)} disabled={isLoading !== null}>
+                            <DropdownMenuItem onClick={() => handleEditUser(user)} disabled={isLoadingAction !== null}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => {
                                 setSelectedUser(user);
                                 setIsResetPasswordDialogOpen(true);
                               }}
-                              disabled={isLoading !== null || user.status === 'Suspended'}
+                              disabled={isLoadingAction !== null || user.status === 'Suspended'}
                             >
                               <KeyRound className="mr-2 h-4 w-4" />
                               Reset Password
                             </DropdownMenuItem>
                             {user.status === 'Suspended' ? (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => {
                                   setSelectedUser(user);
                                   setIsUnsuspendDialogOpen(true);
                                 }}
-                                disabled={isLoading !== null}
+                                disabled={isLoadingAction !== null}
                                 className="text-green-600 focus:text-green-700"
                               >
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
                                 Unsuspend User
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => {
                                   setSelectedUser(user);
                                   setIsSuspendDialogOpen(true);
                                 }}
-                                disabled={isLoading !== null}
+                                disabled={isLoadingAction !== null}
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Ban className="mr-2 h-4 w-4" />
                                 Suspend User
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => {
                                 setSelectedUser(user);
                                 setIsDeleteDialogOpen(true);
                               }}
-                              disabled={isLoading !== null}
+                              disabled={isLoadingAction !== null}
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -305,18 +569,16 @@ export default function AdminUsers() {
           {selectedUser && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <p className="text-sm font-medium">{selectedUser.name}</p>
-              </div>
-              <div className="space-y-2">
                 <Label>Email</Label>
                 <p className="text-sm font-medium">{selectedUser.email}</p>
               </div>
               <div className="space-y-2">
+                <Label>Company Name</Label>
+                <p className="text-sm font-medium">{selectedUser.companyName || 'Not specified'}</p>
+              </div>
+              <div className="space-y-2">
                 <Label>User Type</Label>
-                <Badge variant={selectedUser.type === 'Professional' ? 'default' : 'outline'}>
-                  {selectedUser.type}
-                </Badge>
+                {getUserTypeBadge(selectedUser.userType)}
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -324,7 +586,9 @@ export default function AdminUsers() {
               </div>
               <div className="space-y-2">
                 <Label>Joined On</Label>
-                <p className="text-sm font-medium">{format(selectedUser.joinedOn, 'dd MMM, yyyy')}</p>
+                <p className="text-sm font-medium">
+                  {selectedUser.createdAt ? format(new Date(selectedUser.createdAt.seconds * 1000), 'dd MMM, yyyy') : 'N/A'}
+                </p>
               </div>
             </div>
           )}
@@ -343,14 +607,6 @@ export default function AdminUsers() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                value={editFormData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="edit-email">Email</Label>
               <Input
                 id="edit-email"
@@ -360,41 +616,34 @@ export default function AdminUsers() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="edit-company">Company Name</Label>
+              <Input
+                id="edit-company"
+                value={editFormData.companyName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, companyName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="edit-type">User Type</Label>
               <Select
-                value={editFormData.type}
-                onValueChange={(value: 'Professional' | 'Business') => setEditFormData({ ...editFormData, type: value })}
+                value={editFormData.userType}
+                onValueChange={(value: 'business' | 'professional' | 'freemium') => setEditFormData({ ...editFormData, userType: value })}
               >
                 <SelectTrigger id="edit-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Professional">Professional</SelectItem>
-                  <SelectItem value="Business">Business</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Status</Label>
-              <Select
-                value={editFormData.status}
-                onValueChange={(value: User['status']) => setEditFormData({ ...editFormData, status: value })}
-              >
-                <SelectTrigger id="edit-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Suspended">Suspended</SelectItem>
+                  <SelectItem value="freemium">Freemium</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isLoading === 'edit'}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={isLoading === 'edit'}>
-              {isLoading === 'edit' ? (
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isLoadingAction === 'edit'}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={isLoadingAction === 'edit'}>
+              {isLoadingAction === 'edit' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
@@ -417,9 +666,9 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading === 'reset'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetPassword} disabled={isLoading === 'reset'}>
-              {isLoading === 'reset' ? (
+            <AlertDialogCancel disabled={isLoadingAction === 'reset'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword} disabled={isLoadingAction === 'reset'}>
+              {isLoadingAction === 'reset' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Sending...
@@ -442,9 +691,9 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading === 'suspend'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSuspendUser} disabled={isLoading === 'suspend'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isLoading === 'suspend' ? (
+            <AlertDialogCancel disabled={isLoadingAction === 'suspend'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSuspendUser} disabled={isLoadingAction === 'suspend'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoadingAction === 'suspend' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Suspending...
@@ -467,9 +716,9 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading === 'unsuspend'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnsuspendUser} disabled={isLoading === 'unsuspend'} className="bg-green-600 hover:bg-green-700">
-              {isLoading === 'unsuspend' ? (
+            <AlertDialogCancel disabled={isLoadingAction === 'unsuspend'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnsuspendUser} disabled={isLoadingAction === 'unsuspend'} className="bg-green-600 hover:bg-green-700">
+              {isLoadingAction === 'unsuspend' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Unsuspending...
@@ -495,9 +744,9 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading === 'delete'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteUser} disabled={isLoading === 'delete'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isLoading === 'delete' ? (
+            <AlertDialogCancel disabled={isLoadingAction === 'delete'}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} disabled={isLoadingAction === 'delete'} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isLoadingAction === 'delete' ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...
