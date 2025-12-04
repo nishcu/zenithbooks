@@ -209,9 +209,6 @@ function DashboardContent() {
                <div className="space-y-8 mt-8">
                   <MarketingCarousel />
 
-                  {/* Mobile Apps & Version Section */}
-                  <AppDownloads />
-
                   {/* Core Features Section */}
                   <Card className="border-2 border-primary/20 shadow-lg">
                     <CardHeader>
@@ -286,9 +283,6 @@ function DashboardContent() {
   return (
     <div className="space-y-8">
       <MarketingCarousel />
-
-      {/* Mobile Apps & Version Section */}
-      <AppDownloads />
 
       {/* Core Features Section */}
       <Card className="border-2 border-primary/20 shadow-lg">
@@ -395,6 +389,10 @@ function DashboardContent() {
           <ComplianceCalendar />
         </div>
       </div>
+
+      {/* Mobile Apps & Version Section - Informational */}
+      <AppDownloads />
+
       <QuickInvoiceDialog open={isQuickInvoiceOpen} onOpenChange={setIsQuickInvoiceOpen} />
     </div>
   );
