@@ -108,12 +108,6 @@ export function AppDownloads() {
             </Badge>
           </div>
 
-          {/* Version History Note */}
-          <div className="text-center text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
-            <p className="font-medium mb-1">Version History</p>
-            <p>Following accounting software tradition with versions like Tally (9.x series)</p>
-            <p className="text-xs mt-1">Next major update: v1.0 with enhanced mobile features</p>
-          </div>
         </div>
       </CardContent>
     </Card>
