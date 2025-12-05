@@ -343,6 +343,7 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             </motion.div>
+            </motion.div>
           </ClientOnly>
 
           {/* Two-User Persona Strip */}
