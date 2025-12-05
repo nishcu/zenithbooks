@@ -69,6 +69,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
     try {
       const latestVersion = document.versions?.[document.currentVersion];
       if (!latestVersion?.fileUrl) {
+        console.error("Document URL not found for:", document.fileName);
         toast({
           variant: "destructive",
           title: "Error",
@@ -77,34 +78,71 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         return;
       }
 
-      // Properly download the file
-      const response = await fetch(latestVersion.fileUrl);
+      console.log("Starting download for:", document.fileName);
+
+      // Properly download the file with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(latestVersion.fileUrl, {
+        signal: controller.signal,
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Failed to fetch file");
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = document.fileName;
+      link.style.display = 'none';
+
+      // Ensure body exists
+      if (!document.body) {
+        throw new Error("Document body not available");
+      }
+
       document.body.appendChild(link);
+
+      // Trigger download
       link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Download Started",
-        description: "Your document download has started.",
-      });
-    } catch (error) {
+
+      // Cleanup with delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      console.log("Download completed for:", document.fileName);
+
+      // Defer toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          title: "Download Started",
+          description: `Downloading ${document.fileName}`,
+        });
+      }, 0);
+    } catch (error: any) {
       console.error("Download error:", error);
+
+      let errorMessage = "Failed to download document. Please try again.";
+      if (error.name === 'AbortError') {
+        errorMessage = "Download timed out. Please try again.";
+      } else if (error.message) {
+        errorMessage = `Download failed: ${error.message}`;
+      }
+
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "Failed to download document. Please try again.",
+        description: errorMessage,
       });
     }
   };
