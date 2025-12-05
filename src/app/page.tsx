@@ -4,6 +4,7 @@
 import * as React from "react";
 import { ZenithBooksLogo, Receipt, TrendingUp, Shield, Zap, CheckCircle } from "@/components/icons";
 import { AnimatePresence, motion } from "framer-motion";
+import { ClientOnly } from "@/components/client-only";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,26 +21,29 @@ export default function LandingPage() {
       <div className="flex-1 lg:w-3/5 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-6 lg:p-12 flex flex-col justify-between order-2 lg:order-1">
         <div className="space-y-12">
           {/* Brand Block */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <ClientOnly>
+            <motion.div
+              className="space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
             <div className="flex items-center gap-3">
               <ZenithBooksLogo className="h-10 w-10 text-primary" />
               <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
             </div>
             <p className="text-xl text-muted-foreground">Beyond Books. Smart Accounting for India.</p>
-          </motion.div>
+            </motion.div>
+          </ClientOnly>
 
           {/* Hero Section */}
-          <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <ClientOnly>
+            <motion.div
+              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
             <div className="space-y-4">
               <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
                 One Platform for GST Billing, Books & Compliance
@@ -57,15 +61,17 @@ export default function LandingPage() {
                 <Link href="#login">or Login to your account</Link>
               </Button>
             </div>
-          </motion.div>
+            </motion.div>
+          </ClientOnly>
 
           {/* Key USPs - 2x2 Grid */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          <ClientOnly>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
             {/* For Business Users */}
             <Card className="border-2">
               <CardContent className="p-6 space-y-4">
@@ -161,15 +167,17 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
-          </motion.div>
+            </motion.div>
+          </ClientOnly>
 
           {/* Two-User Persona Strip */}
-          <motion.div
-            className="bg-primary/10 rounded-lg p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
+          <ClientOnly>
+            <motion.div
+              className="bg-primary/10 rounded-lg p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
             <h3 className="text-lg font-semibold mb-4">Who is ZenithBooks for?</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
@@ -191,18 +199,21 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-          </motion.div>
+            </motion.div>
+          </ClientOnly>
         </div>
 
         {/* Trust Line - Footer */}
-        <motion.div
-          className="text-center text-sm text-muted-foreground border-t pt-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
+        <ClientOnly>
+          <motion.div
+            className="text-center text-sm text-muted-foreground border-t pt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
           <p>Hosted in India • GST & Compliance Ready • Designed by Finance Professionals</p>
-        </motion.div>
+          </motion.div>
+        </ClientOnly>
       </div>
 
       {/* Right Side - Auth Panel (40%) */}
