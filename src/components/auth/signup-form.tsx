@@ -230,11 +230,12 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
+              <div className="mt-12"></div>
               <FormField
                 control={form.control}
                 name="companyName"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
+                  <FormItem>
                     <FormLabel className="text-base">Company / Firm Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Acme Inc." {...field} />
