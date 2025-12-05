@@ -193,7 +193,7 @@ export function SignupForm() {
       ) : (
         <>
               <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
                <FormField
                 control={form.control}
                 name="userType"
@@ -201,7 +201,7 @@ export function SignupForm() {
                   <FormItem className="space-y-4">
                     <FormLabel className="text-base">I am signing up as:</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <RadioGroup
                           onValueChange={field.onChange}
                           value={field.value}
@@ -232,7 +232,13 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <div className="h-16 md:h-20"></div>
+              {/* Mobile-optimized spacing and visual separator */}
+              <div className="relative py-8 md:py-10">
+                <div className="absolute inset-x-0 top-1/2 border-t border-border/30 md:border-border/50"></div>
+                <div className="relative bg-background px-4 md:px-0">
+                  <span className="text-xs text-muted-foreground bg-background px-2">Business Details</span>
+                </div>
+              </div>
               <FormField
                 control={form.control}
                 name="companyName"
