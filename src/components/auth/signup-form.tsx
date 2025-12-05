@@ -201,11 +201,12 @@ export function SignupForm() {
                   <FormItem className="space-y-4">
                     <FormLabel className="text-base">I am signing up as:</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                      >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="contents"
+                        >
                         <FormItem>
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
                             <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[80px]">
@@ -224,13 +225,14 @@ export function SignupForm() {
                                 </p>
                             </Label>
                         </FormItem>
-                      </RadioGroup>
+                        </RadioGroup>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="mt-12"></div>
+              <div className="mt-16"></div>
               <FormField
                 control={form.control}
                 name="companyName"
