@@ -203,8 +203,8 @@ export function SignupForm() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="space-y-4"
+                        value={field.value}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
                         <FormItem>
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
