@@ -201,28 +201,23 @@ export function LoginForm() {
 
   return (
     <>
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="mx-auto w-full max-w-sm">
-          <CardHeader className="text-center space-y-4">
-            <ZenithBooksLogo className="mx-auto h-12 w-12 text-primary" />
-             <div className="text-center">
-                <h1 className="text-2xl font-bold tracking-tight">ZenithBooks</h1>
-            </div>
-            <CardTitle className="text-2xl !mt-2">Welcome Back</CardTitle>
-            <CardDescription>
-              Enter your email below to login to your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isCheckingRedirect ? (
-                 <div className="flex flex-col items-center justify-center h-48">
-                    <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" />
-                    <p className="mt-2 text-muted-foreground">Checking for login...</p>
-                </div>
-            ) : (
-                <>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h3 className="text-xl font-semibold">Welcome Back</h3>
+          <p className="text-sm text-muted-foreground">
+            Enter your email below to login to your account
+          </p>
+        </div>
+
+        {isCheckingRedirect ? (
+          <div className="flex flex-col items-center justify-center h-32">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+            <p className="mt-2 text-sm text-muted-foreground">Checking for login...</p>
+          </div>
+        ) : (
+          <>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="email"
@@ -349,46 +344,44 @@ export function LoginForm() {
                         {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                         Login with Google
                     </Button>
-                    <div className="mt-4 text-center text-sm">
-                        Don&apos;t have an account?{" "}
-                        <Link href="/signup" className="underline">
-                        Sign up
-                        </Link>
-                    </div>
-                </>
-            )}
-          </CardContent>
-        </Card>
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Link href="#signup" className="underline">
+                Sign up
+              </Link>
+            </div>
+          </>
+        )}
       </div>
 
-       <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Forgot Password</DialogTitle>
-                    <DialogDescription>
-                        Enter your email address and we'll send you a link to reset your password.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                     <Label htmlFor="reset-email">Email Address</Label>
-                    <Input 
-                        id="reset-email" 
-                        type="email" 
-                        placeholder="you@example.com" 
-                        value={resetEmail} 
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        aria-label="Email address for password reset"
-                        aria-required="true"
-                    />
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>
-                    <Button onClick={handlePasswordReset}>Send Reset Link</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Forgot Password</DialogTitle>
+            <DialogDescription>
+              Enter your email address and we'll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="reset-email">Email Address</Label>
+            <Input
+              id="reset-email"
+              type="email"
+              placeholder="you@example.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              aria-label="Email address for password reset"
+              aria-required="true"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsForgotPasswordOpen(false)}>Cancel</Button>
+            <Button onClick={handlePasswordReset}>Send Reset Link</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <Dialog open={isPoliciesModalOpen} onOpenChange={setIsPoliciesModalOpen}>
+      <Dialog open={isPoliciesModalOpen} onOpenChange={setIsPoliciesModalOpen}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Terms & Conditions and Cancellation & Refund Policy</DialogTitle>

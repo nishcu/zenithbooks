@@ -177,48 +177,52 @@ export function SignupForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="mx-auto w-full max-w-sm">
-        <CardHeader className="text-center">
-            <ZenithBooksLogo className="mx-auto h-12 w-12" />
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>
-            Enter your information to create an account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isCheckingRedirect ? (
-            <div className="flex flex-col items-center justify-center h-48">
-              <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" />
-              <p className="mt-2 text-muted-foreground">Checking for signup...</p>
-            </div>
-          ) : (
-            <>
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <h3 className="text-xl font-semibold">Create an Account</h3>
+        <p className="text-sm text-muted-foreground">
+          Enter your information to create an account
+        </p>
+      </div>
+
+      {isCheckingRedirect ? (
+        <div className="flex flex-col items-center justify-center h-32">
+          <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+          <p className="mt-2 text-sm text-muted-foreground">Checking for signup...</p>
+        </div>
+      ) : (
+        <>
               <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                <FormField
                 control={form.control}
                 name="userType"
                 render={({ field }) => (
-                  <FormItem className="space-y-3 mb-6">
-                    <FormLabel className="text-base">I am a...</FormLabel>
+                  <FormItem className="space-y-4 mb-6">
+                    <FormLabel className="text-base">I am signing up as:</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
+                        className="space-y-3"
                       >
-                        <FormItem className="space-y-0">
+                        <FormItem className="space-y-2">
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-3 sm:p-4 min-h-[60px] text-center hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <span className="text-sm sm:text-base font-medium whitespace-nowrap">Business Owner</span>
+                            <Label htmlFor="business" className="flex items-start space-x-3 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <span className="text-sm font-medium">Business User (Company / Firm / Individual)</span>
                             </Label>
+                            <p className="text-xs text-muted-foreground ml-7">
+                              Create invoices, manage accounts & securely share data with your CA/auditor.
+                            </p>
                         </FormItem>
-                         <FormItem className="space-y-0">
+                         <FormItem className="space-y-2">
                            <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-3 sm:p-4 min-h-[60px] text-center hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <span className="text-sm sm:text-base font-medium whitespace-nowrap">Professional</span>
+                            <Label htmlFor="professional" className="flex items-start space-x-3 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                <span className="text-sm font-medium">Professional (CA / CS / CMA / Tax Consultant / Auditor)</span>
                             </Label>
+                            <p className="text-xs text-muted-foreground ml-7">
+                              Manage multiple clients, review books, and streamline audits from one dashboard.
+                            </p>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -339,16 +343,14 @@ export function SignupForm() {
             {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
             Sign up with Google
           </Button>
-          <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="underline">
-              Sign in
-            </Link>
-          </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+        <div className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <Link href="#login" className="underline">
+            Sign in
+          </Link>
+        </div>
+      </>
+      )}
 
       <Dialog open={isPoliciesModalOpen} onOpenChange={setIsPoliciesModalOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
