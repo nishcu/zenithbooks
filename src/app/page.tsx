@@ -73,10 +73,10 @@ export default function LandingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                One Platform For GST Billing, Books & Compliance
+                One Cloud Platform For Business Owners & Accounting Professionals
               </motion.h2>
               <p className="text-xl text-muted-foreground max-w-2xl">
-                One Cloud Platform For Business Owners & Accounting Professionals Now – Create GST Invoices, Maintain Books, Share Data With CAs & Bankers.
+                Create GST Invoices, Maintain Books, Share Data With CAs & Bankers – All On A Secure Cloud Platform.
               </p>
             </div>
 
