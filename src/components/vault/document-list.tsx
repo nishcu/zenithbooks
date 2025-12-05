@@ -70,11 +70,14 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       const latestVersion = document.versions?.[document.currentVersion];
       if (!latestVersion?.fileUrl) {
         console.error("Document URL not found for:", document.fileName);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Document URL not found.",
-        });
+        // Defer toast to next tick to avoid React context issues
+        setTimeout(() => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Document URL not found.",
+          });
+        }, 0);
         return;
       }
 
@@ -153,11 +156,14 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
   const handleView = (document: Document) => {
     const latestVersion = document.versions?.[document.currentVersion];
     if (!latestVersion?.fileUrl) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Document URL not found.",
-      });
+      // Defer toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Document URL not found.",
+        });
+      }, 0);
       return;
     }
 
@@ -166,11 +172,14 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
 
   const handleDelete = async (document: Document) => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "User not authenticated.",
-      });
+      // Defer toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User not authenticated.",
+        });
+      }, 0);
       return;
     }
 
@@ -216,21 +225,27 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         });
       }
 
-      toast({
-        title: "Document Deleted",
-        description: `"${document.fileName}" has been deleted successfully.`,
-      });
+      // Defer success toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          title: "Document Deleted",
+          description: `"${document.fileName}" has been deleted successfully.`,
+        });
+      }, 0);
 
       if (onRefresh) {
         onRefresh();
       }
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
-        description: "Failed to delete document. Please try again.",
-      });
+      // Defer error toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "Delete Failed",
+          description: "Failed to delete document. Please try again.",
+        });
+      }, 0);
     }
   };
 
