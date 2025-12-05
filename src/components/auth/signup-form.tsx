@@ -234,7 +234,7 @@ export function SignupForm() {
                 control={form.control}
                 name="companyName"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="mt-8">
                     <FormLabel className="text-base">Company / Firm Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Acme Inc." {...field} />
