@@ -45,11 +45,11 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
             <div className="space-y-4">
-              <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
-                One Platform for GST Billing, Books & Compliance
+                <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
+                One Platform For GST Billing, Books & Compliance
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl">
-                Built for Business Owners and Accounting Professionals – create GST invoices, maintain books, share data with CAs & bankers, all on a secure cloud platform.
+                Built For Business Owners And Accounting Professionals – Create GST Invoices, Maintain Books, Share Data With CAs & Bankers, All On A Secure Cloud Platform.
               </p>
             </div>
 
@@ -58,7 +58,7 @@ export default function LandingPage() {
                 <Link href="#signup">Create Free Account</Link>
               </Button>
               <Button asChild variant="link" size="lg" className="text-lg">
-                <Link href="#login">or Login to your account</Link>
+                <Link href="#login">Or Login To Your Account</Link>
               </Button>
             </div>
         </motion.div>
@@ -82,15 +82,15 @@ export default function LandingPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Create GST invoices in seconds
+                    Create GST invoices in seconds by Voice & Rapid
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Track sales, purchases & expenses
+                    Generate Bulk Invoices, Bulk Journals & Booking Keeping on a click
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    See profit & tax-ready reports anytime
+                    Select your professional (CA/CS/CWA/Auditor/Accountant/etc)
                   </li>
                 </ul>
               </CardContent>
@@ -106,15 +106,15 @@ export default function LandingPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Manage multiple clients from one dashboard
+                    Manage Multiple Clients From One Dashboard
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Review uploaded books & documents
+                    Review Uploaded Books & Documents
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Speed up audits, filings & reconciliations
+                    Speed Up Audits, Filings & Reconciliations
                   </li>
                 </ul>
               </CardContent>
@@ -130,15 +130,15 @@ export default function LandingPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    AI-assisted HSN/SAC suggestions
+                    AI-Assisted HSN/SAC Suggestions
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Bulk invoice & journal uploads
+                    Bulk Invoice & Journal Uploads
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    One-click ledger and trial balance views
+                    One-Click Ledger And Trial Balance Views
                   </li>
                 </ul>
               </CardContent>
@@ -154,15 +154,15 @@ export default function LandingPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Store IT, GST, MCA, bank & loan documents
+                    Store IT, GST, MCA, Bank & Loan Documents
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Share with lenders via secret codes
+                    Share With Lenders Via Secret Codes
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Auto-expire access without follow-up
+                    Auto-Expire Access Without Follow-Up
                   </li>
                 </ul>
               </CardContent>
@@ -186,7 +186,7 @@ export default function LandingPage() {
                   <strong>Business Owners</strong> – SMEs, startups, traders, service providers
                 </div>
                 <p className="text-muted-foreground ml-6">
-                  You focus on business & advisory. ZenithBooks handles the books & documents.
+                  You Focus On Business & Advisory. ZenithBooks Handles The Books & Documents.
                 </p>
               </div>
               <div className="space-y-2">
@@ -195,7 +195,7 @@ export default function LandingPage() {
                   <strong>Professionals</strong> – CA, CS, CMA, tax practitioners, auditors
                 </div>
                 <p className="text-muted-foreground ml-6">
-                  Manage multiple clients, review books, and streamline audits from one dashboard.
+                  Manage Multiple Clients, Review Books, And Streamline Audits From One Dashboard.
                 </p>
               </div>
             </div>
