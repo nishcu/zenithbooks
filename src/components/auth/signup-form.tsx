@@ -198,7 +198,7 @@ export function SignupForm() {
                 control={form.control}
                 name="userType"
                 render={({ field }) => (
-                  <FormItem className="space-y-4 mb-12">
+                  <FormItem className="space-y-4">
                     <FormLabel className="text-base">I am signing up as:</FormLabel>
                     <FormControl>
                       <RadioGroup
@@ -230,12 +230,11 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <div className="my-4"></div>
               <FormField
                 control={form.control}
                 name="companyName"
                 render={({ field }) => (
-                  <FormItem className="mt-12">
+                  <FormItem>
                     <FormLabel className="text-base">Company / Firm Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Acme Inc." {...field} />
