@@ -12,6 +12,8 @@ import { LoginForm } from "@/components/auth/login-form";
 import { SignupForm } from "@/components/auth/signup-form";
 
 export default function LandingPage() {
+  const [activeTab, setActiveTab] = React.useState("login");
+
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Left Side - Marketing (60%) */}
@@ -212,7 +214,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground">Sign in to your account or create a new one</p>
           </div>
 
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
