@@ -209,7 +209,7 @@ export function SignupForm() {
                         >
                         <FormItem>
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[80px]">
+                            <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
                                 <span className="text-base font-semibold">Business Owner</span>
                                 <p className="text-xs text-muted-foreground text-center">
                                   For companies & firms
@@ -218,7 +218,7 @@ export function SignupForm() {
                         </FormItem>
                          <FormItem>
                            <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[80px]">
+                            <Label htmlFor="professional" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
                                 <span className="text-base font-semibold">Professional</span>
                                 <p className="text-xs text-muted-foreground text-center">
                                   For CA, CS, CMA & consultants
@@ -232,7 +232,7 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <div className="h-20"></div>
+              <div className="h-16 md:h-20"></div>
               <FormField
                 control={form.control}
                 name="companyName"
