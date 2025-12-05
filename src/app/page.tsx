@@ -76,8 +76,7 @@ export default function LandingPage() {
                 One Platform For GST Billing, Books & Compliance
               </motion.h2>
               <p className="text-xl text-muted-foreground max-w-2xl">
-                Built For Business Owners And Accounting Professionals – Create GST Invoices, Maintain Books, Share Data With CAs & Bankers,<br />
-                All On A Secure Cloud Platform.
+                One Cloud Platform For Business Owners & Accounting Professionals Now – Create GST Invoices, Maintain Books, Share Data With CAs & Bankers.
               </p>
             </div>
 
