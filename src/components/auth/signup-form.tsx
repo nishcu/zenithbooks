@@ -204,23 +204,23 @@ export function SignupForm() {
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="space-y-3"
+                        className="grid grid-cols-1 gap-4"
                       >
                         <FormItem>
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex flex-col space-y-1.5 rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <span className="text-sm font-medium">Business User (Company / Firm / Individual)</span>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                  Create invoices, manage accounts & securely share data with your CA/auditor.
+                            <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[80px]">
+                                <span className="text-base font-semibold">Business Owner</span>
+                                <p className="text-xs text-muted-foreground text-center">
+                                  For companies & firms
                                 </p>
                             </Label>
                         </FormItem>
                          <FormItem>
                            <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex flex-col space-y-1.5 rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                <span className="text-sm font-medium">Professional (CA / CS / CMA / Tax Consultant / Auditor)</span>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                  Manage multiple clients, review books, and streamline audits from one dashboard.
+                            <Label htmlFor="professional" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[80px]">
+                                <span className="text-base font-semibold">Professional</span>
+                                <p className="text-xs text-muted-foreground text-center">
+                                  For CA, CS, CMA & consultants
                                 </p>
                             </Label>
                         </FormItem>
@@ -234,7 +234,7 @@ export function SignupForm() {
                 control={form.control}
                 name="companyName"
                 render={({ field }) => (
-                  <FormItem className="mt-8">
+                  <FormItem className="mt-10">
                     <FormLabel className="text-base">Company / Firm Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Acme Inc." {...field} />
