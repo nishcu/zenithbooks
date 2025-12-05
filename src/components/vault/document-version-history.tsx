@@ -52,35 +52,75 @@ export function DocumentVersionHistory({
 
   const handleDownload = async (versionNumber: number, fileUrl: string, fileName: string) => {
     try {
-      // Properly download the file
-      const response = await fetch(fileUrl);
+      console.log("Starting version download:", versionNumber, fileName);
+
+      // Properly download the file with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(fileUrl, {
+        signal: controller.signal,
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Failed to fetch file");
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = fileName || `version-${versionNumber}.pdf`;
+      link.style.display = 'none';
+
+      // Ensure body exists
+      if (!document.body) {
+        throw new Error("Document body not available");
+      }
+
       document.body.appendChild(link);
+
+      // Trigger download
       link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Download Started",
-        description: `Version ${versionNumber} download has started.`,
-      });
-    } catch (error) {
-      console.error("Download error:", error);
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Failed to download version. Please try again.",
-      });
+
+      // Cleanup with delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      console.log("Version download completed:", versionNumber);
+
+      // Defer toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          title: "Download Started",
+          description: `Version ${versionNumber} download has started.`,
+        });
+      }, 0);
+    } catch (error: any) {
+      console.error("Version download error:", error);
+
+      let errorMessage = "Failed to download version. Please try again.";
+      if (error.name === 'AbortError') {
+        errorMessage = "Download timed out. Please try again.";
+      } else if (error.message) {
+        errorMessage = `Download failed: ${error.message}`;
+      }
+
+      // Defer error toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "Download Failed",
+          description: errorMessage,
+        });
+      }, 0);
     }
   };
 

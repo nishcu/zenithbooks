@@ -139,11 +139,14 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         errorMessage = `Download failed: ${error.message}`;
       }
 
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: errorMessage,
-      });
+      // Defer error toast to next tick to avoid React context issues
+      setTimeout(() => {
+        toast({
+          variant: "destructive",
+          title: "Download Failed",
+          description: errorMessage,
+        });
+      }, 0);
     }
   };
 
