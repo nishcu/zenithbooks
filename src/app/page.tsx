@@ -22,7 +22,7 @@ export default function LandingPage() {
         <div className="space-y-12">
           {/* Brand Block */}
           <ClientOnly>
-            <motion.div
+      <motion.div
               className="space-y-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function LandingPage() {
               <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
             </div>
             <p className="text-xl text-muted-foreground">Beyond Books. Smart Accounting for India.</p>
-            </motion.div>
+        </motion.div>
           </ClientOnly>
 
           {/* Hero Section */}
@@ -61,15 +61,15 @@ export default function LandingPage() {
                 <Link href="#login">or Login to your account</Link>
               </Button>
             </div>
-            </motion.div>
+        </motion.div>
           </ClientOnly>
 
           {/* Key USPs - 2x2 Grid */}
           <ClientOnly>
-            <motion.div
+                <motion.div
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
             {/* For Business Users */}
@@ -167,7 +167,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
-            </motion.div>
+                </motion.div>
           </ClientOnly>
 
           {/* Two-User Persona Strip */}
@@ -199,7 +199,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-            </motion.div>
+        </motion.div>
           </ClientOnly>
         </div>
 
@@ -212,7 +212,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.8 }}
           >
           <p>Hosted in India • GST & Compliance Ready • Designed by Finance Professionals</p>
-          </motion.div>
+        </motion.div>
         </ClientOnly>
       </div>
 

@@ -232,7 +232,7 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              <div className="mt-16"></div>
+              <div className="h-20"></div>
               <FormField
                 control={form.control}
                 name="companyName"
