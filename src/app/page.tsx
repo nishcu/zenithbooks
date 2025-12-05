@@ -28,10 +28,32 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-            <div className="flex items-center gap-3">
-              <ZenithBooksLogo className="h-10 w-10 text-primary" />
+            <motion.div
+              className="flex items-center gap-3"
+              animate={{
+                y: [0, -5, 0],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <motion.div
+                animate={{
+                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <ZenithBooksLogo className="h-10 w-10 text-primary" />
+              </motion.div>
               <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
-            </div>
+            </motion.div>
             <p className="text-xl text-muted-foreground">Beyond Books. Smart Accounting for India.</p>
         </motion.div>
           </ClientOnly>
@@ -45,23 +67,43 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
             <div className="space-y-4">
-                <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
+                <motion.h2
+                className="text-4xl lg:text-5xl font-bold leading-tight"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
                 One Platform For GST Billing, Books & Compliance
-              </h2>
+              </motion.h2>
               <p className="text-xl text-muted-foreground max-w-2xl">
                 Built For Business Owners And Accounting Professionals – Create GST Invoices, Maintain Books, Share Data With CAs & Bankers,<br />
                 All On A Secure Cloud Platform.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md">
-              <Button asChild size="lg" className="text-lg px-8">
-                <Link href="#signup">Create Free Account</Link>
-              </Button>
-              <Button asChild variant="link" size="lg" className="text-lg">
-                <Link href="#login">Or Login To Your Account</Link>
-              </Button>
-            </div>
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 max-w-md"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button asChild size="lg" className="text-lg px-8">
+                  <Link href="#signup">Create Free Account</Link>
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button asChild variant="link" size="lg" className="text-lg">
+                  <Link href="#login">Or Login To Your Account</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
         </motion.div>
           </ClientOnly>
 
@@ -69,17 +111,56 @@ export default function LandingPage() {
           <ClientOnly>
                 <motion.div
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+                    initial="hidden"
+                    animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.2,
+                    delayChildren: 0.6
+                  }
+                }
+              }}
             >
             {/* For Business Users */}
-            <Card className="border-2">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Receipt className="h-8 w-8 text-primary" />
-                  <h3 className="text-xl font-semibold">For Business Users</h3>
-                </div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 30, scale: 0.95 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                    duration: 0.6,
+                    ease: "easeOut"
+                  }
+                }
+              }}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{
+                        rotate: [0, 5, -5, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Receipt className="h-8 w-8 text-primary" />
+                    </motion.div>
+                    <h3 className="text-xl font-semibold">For Business Users</h3>
+                  </div>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -96,14 +177,45 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
+            </motion.div>
 
             {/* For Professionals */}
-            <Card className="border-2">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-8 w-8 text-primary" />
-                  <h3 className="text-xl font-semibold">For Professionals</h3>
-                </div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 30, scale: 0.95 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                    duration: 0.6,
+                    ease: "easeOut"
+                  }
+                }
+              }}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{
+                        y: [0, -3, 0],
+                        rotate: [0, 2, -2, 0]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <TrendingUp className="h-8 w-8 text-primary" />
+                    </motion.div>
+                    <h3 className="text-xl font-semibold">For Professionals</h3>
+                  </div>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -120,14 +232,45 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
+            </motion.div>
 
             {/* AI & Automation */}
-            <Card className="border-2">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Zap className="h-8 w-8 text-primary" />
-                  <h3 className="text-xl font-semibold">AI & Automation</h3>
-                </div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 30, scale: 0.95 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                    duration: 0.6,
+                    ease: "easeOut"
+                  }
+                }
+              }}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Zap className="h-8 w-8 text-primary" />
+                    </motion.div>
+                    <h3 className="text-xl font-semibold">AI & Automation</h3>
+                  </div>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -144,14 +287,45 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
+            </motion.div>
 
             {/* Secure Digital Vault */}
-            <Card className="border-2">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Shield className="h-8 w-8 text-primary" />
-                  <h3 className="text-xl font-semibold">Secure Digital Vault</h3>
-                </div>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 30, scale: 0.95 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                    duration: 0.6,
+                    ease: "easeOut"
+                  }
+                }
+              }}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow duration-300">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        opacity: [0.8, 1, 0.8]
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Shield className="h-8 w-8 text-primary" />
+                    </motion.div>
+                    <h3 className="text-xl font-semibold">Secure Digital Vault</h3>
+                  </div>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -168,7 +342,7 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
             </Card>
-                </motion.div>
+            </motion.div>
           </ClientOnly>
 
           {/* Two-User Persona Strip */}
