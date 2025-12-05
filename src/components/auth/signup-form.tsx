@@ -206,23 +206,23 @@ export function SignupForm() {
                         defaultValue={field.value}
                         className="space-y-3"
                       >
-                        <FormItem className="space-y-2">
+                        <FormItem>
                            <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex items-start space-x-3 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                            <Label htmlFor="business" className="flex flex-col space-y-2 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <span className="text-sm font-medium">Business User (Company / Firm / Individual)</span>
+                                <p className="text-xs text-muted-foreground">
+                                  Create invoices, manage accounts & securely share data with your CA/auditor.
+                                </p>
                             </Label>
-                            <p className="text-xs text-muted-foreground ml-7">
-                              Create invoices, manage accounts & securely share data with your CA/auditor.
-                            </p>
                         </FormItem>
-                         <FormItem className="space-y-2">
+                         <FormItem>
                            <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex items-start space-x-3 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                            <Label htmlFor="professional" className="flex flex-col space-y-2 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                 <span className="text-sm font-medium">Professional (CA / CS / CMA / Tax Consultant / Auditor)</span>
+                                <p className="text-xs text-muted-foreground">
+                                  Manage multiple clients, review books, and streamline audits from one dashboard.
+                                </p>
                             </Label>
-                            <p className="text-xs text-muted-foreground ml-7">
-                              Manage multiple clients, review books, and streamline audits from one dashboard.
-                            </p>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
