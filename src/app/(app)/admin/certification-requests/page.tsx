@@ -452,11 +452,11 @@ toast({
         ? { ...r, status: 'Rejected' as Request['status'] }
         : r
     ));
-    console.log(
+    console.log({
       title: "Request Rejected",
       description: `Certification request ${selectedRequest.id} has been rejected.`,
       variant: "destructive",
-    );
+    });
     setIsRejectDialogOpen(false);
     setSelectedRequest(null);
     setIsLoading(null);

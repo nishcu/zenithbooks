@@ -96,11 +96,11 @@ export default function AdminProfessionals() {
         ? { ...p, status: 'Pending Verification' as Professional['status'] }
         : p
     ));
-    console.log(
+    console.log({
       title: "Verification Revoked",
       description: `${selectedProfessional.name}'s verification has been revoked.`,
       variant: "destructive",
-    );
+    });
     setIsRevokeDialogOpen(false);
     setSelectedProfessional(null);
     setIsLoading(null);

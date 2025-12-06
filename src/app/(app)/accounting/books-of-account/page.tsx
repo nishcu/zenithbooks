@@ -950,7 +950,7 @@ toast({
                     });
                     
                     // Row 2: Address - Center
-                    const addressCell = XLSX.utils.encode_cell({ r: 1, c: 0 );
+                    const addressCell = XLSX.utils.encode_cell({ r: 1, c: 0 });
                     if (!worksheet[addressCell]) worksheet[addressCell] = { t: 's', v: sheetHeaders[1][0] };
                     worksheet[addressCell].s = {
                         alignment: { horizontal: 'center' }

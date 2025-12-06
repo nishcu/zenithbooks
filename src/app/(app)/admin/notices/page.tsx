@@ -114,10 +114,10 @@ export default function AdminNotices() {
         ? { ...n, status: selectedStatus }
         : n
     ));
-    console.log(
+    console.log({
       title: "Status Updated",
       description: `Notice ${selectedNotice.id} status has been updated to ${selectedStatus}.`,
-    );
+    });
     setIsUpdateStatusDialogOpen(false);
     setSelectedNotice(null);
     setIsLoading(null);

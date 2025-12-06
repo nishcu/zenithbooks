@@ -198,7 +198,6 @@ toast({
           }
         }
       } catch (err) {
-        const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error",
@@ -332,7 +331,6 @@ toast({
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Account Required: Please select an account first.",
@@ -341,7 +339,6 @@ toast({
     }
     
     if (!fromDate || !toDate) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Date Range Required: Please select both from and to dates.",
@@ -357,7 +354,6 @@ toast({
     
     setDateRange({ from: start, to: end });
     
-    const { toast } = require("@/hooks/use-toast");
     toast({
       title: "Generating Report",
       description: `Fetching ledger entries for ${selectedAccountDetails?.name || selectedAccount} from ${format(start, "dd MMM yyyy")} to ${format(end, "dd MMM yyyy")}.`,
@@ -366,7 +362,6 @@ toast({
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error: Please select an account to export.",
@@ -462,19 +457,16 @@ toast({
       const fileName = `Ledger_${accountCode}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       doc.save(fileName);
 
-      const { toast } = require("@/hooks/use-toast");
       toast({
         title: "PDF Exported",
         description: `Ledger for ${accountName} has been exported successfully.`,
       });
     } catch (error) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error exporting PDF",
   description: error ,
 });
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Export Failed: An error occurred while exporting the PDF. Please try again.",
