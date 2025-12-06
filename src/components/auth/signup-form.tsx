@@ -315,21 +315,21 @@ export function SignupForm() {
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      className="mt-0.5 h-5 w-5"
+                      className="mt-0.5 h-5 w-5 border-2 border-muted-foreground/30 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
                   </FormControl>
                   <div className="leading-tight">
-                    <FormLabel className="text-[10px] font-normal text-muted-foreground">
+                    <FormLabel className="text-xs font-normal text-foreground">
                       I accept the{" "}
                           <button
                             type="button"
                             onClick={() => setIsPoliciesModalOpen(true)}
-                            className="text-primary underline text-[10px] hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer"
+                            className="text-primary underline text-xs hover:text-primary/80 bg-transparent border-none p-0 cursor-pointer font-medium"
                           >
                             Terms & Conditions and Cancellation & Refund Policy
                           </button>
                     </FormLabel>
-                    <FormMessage className="text-[10px]" />
+                    <FormMessage className="text-xs" />
                   </div>
                 </FormItem>
                 )}
