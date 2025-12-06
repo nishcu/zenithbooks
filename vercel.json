@@ -2,7 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
+  "nodeVersion": "18.x",
   "regions": ["fra1"],
+  "maxLambdaSize": "50mb",
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
@@ -16,8 +18,11 @@
   ],
   "build": {
     "env": {
-      "NODE_OPTIONS": "--max-old-space-size=4096"
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "CI": "1"
     }
-  }
+  },
+  "installCommand": "npm ci --prefer-offline --no-audit"
 }
 
