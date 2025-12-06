@@ -1005,7 +1005,7 @@ toast({
                     // Sub-title row (Sheet name) - Bold
                     const subTitleRowIndex = sheetHeaders.findIndex(row => row[0] === name);
                     if (subTitleRowIndex >= 0) {
-                        const subTitleCell = XLSX.utils.encode_cell({ r: subTitleRowIndex, c: 0 );
+                        const subTitleCell = XLSX.utils.encode_cell({ r: subTitleRowIndex, c: 0 });
                         if (!worksheet[subTitleCell]) worksheet[subTitleCell] = { t: 's', v: name };
                         worksheet[subTitleCell].s = {
                             font: { bold: true, sz: 12 },

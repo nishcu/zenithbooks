@@ -289,7 +289,7 @@ export default function BulkInvoicePage() {
       };
       reader.onerror = reject;
       reader.readAsText(file);
-    );
+    });
   };
 
   const parseExcel = (file: File): Promise<BulkInvoiceRow[]> => {

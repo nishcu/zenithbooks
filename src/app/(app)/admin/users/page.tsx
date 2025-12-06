@@ -172,7 +172,7 @@ toast({
       email: user.email,
       userType: user.userType,
       companyName: user.companyName
-    );
+    });
     setIsEditDialogOpen(true);
   };
 

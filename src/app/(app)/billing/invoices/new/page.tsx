@@ -52,7 +52,7 @@ import { ItemTable, type LineItem, type Item } from "@/components/billing/item-t
 const createNewLineItem = (): LineItem => ({
   id: `${Date.now()}-${Math.random()}`,
   itemId: "", description: "", hsn: "", qty: 1, rate: 0, taxRate: 18, amount: 0,
-);
+});
 
 export default function NewInvoicePage() {
   const accountingContext = useContext(AccountingContext);

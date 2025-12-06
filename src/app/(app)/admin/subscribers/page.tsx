@@ -105,9 +105,8 @@ export default function Subscribers() {
     console.log({
       title: "Subscription Cancelled",
       description: `${selectedSubscriber.userName}'s subscription has been cancelled.`,
-    });
       variant: "destructive",
-    );
+    });
     setIsCancelDialogOpen(false);
     setSelectedSubscriber(null);
     setIsLoading(null);
