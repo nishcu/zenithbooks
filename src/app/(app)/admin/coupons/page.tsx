@@ -49,10 +49,10 @@ const couponSchema = z.object({
   appliesTo: z.object({
     subscriptions: z.array(z.string()),
     services: z.array(z.string()),
-  }).refine(data => data.subscriptions.length > 0 || data.services.length > 0, {
-      message: "Coupon must apply to at least one subscription or service."
-  })
-);
+  }),
+}).refine(data => data.appliesTo.subscriptions.length > 0 || data.appliesTo.services.length > 0, {
+  message: "Coupon must apply to at least one subscription or service.",
+});
 
 type Coupon = z.infer<typeof couponSchema> & { id: string, status: "Active" | "Expired" | "Inactive" };
 type CouponFormValues = z.infer<typeof couponSchema>;
@@ -309,11 +309,14 @@ export default function CouponsPage() {
                               value: couponToEdit.value,
                               expiryDate: new Date(couponToEdit.expiryDate).toISOString().split("T")[0],
                               appliesTo: couponToEdit.appliesTo
-                            );
+                            });
                             setCoupons(coupons.filter(c => c.id !== coupon.id));
                             setIsDialogOpen(true);
                           }
-                        }}><Edit className="mr-2"/>Edit Coupon</DropdownMenuItem>
+                        }}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Coupon
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => {
                             setCoupons(coupons.filter(c => c.id !== coupon.id));

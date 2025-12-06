@@ -89,10 +89,10 @@ export default function AdminNotices() {
         ? { ...n, assignedTo: selectedProfessional, status: 'In Progress' as Notice['status'] }
         : n
     ));
-    console.log(
+    console.log({
       title: "Notice Assigned",
       description: `Notice ${selectedNotice.id} has been assigned to ${selectedProfessional}.`,
-    );
+    });
     setIsAssignDialogOpen(false);
     setSelectedNotice(null);
     setSelectedProfessional('');

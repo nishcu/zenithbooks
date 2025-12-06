@@ -668,10 +668,8 @@ export default function BooksOfAccountPage() {
         sortedTypes.forEach(type => {
             // Add type header
             rows.push([type, "", "", "", "", ""]);
-            
-            const accounts = accountsByType[type].sort((a, b) => 
-                getAccountName(a[0]).localeCompare(getAccountName(b[0]))
-            });
+
+            const accounts = accountsByType[type].sort((a, b) => getAccountName(a[0]).localeCompare(getAccountName(b[0])));
 
             accounts.forEach(([code, balance]) => {
                 const closing = balance.opening + balance.debit - balance.credit;
@@ -754,11 +752,9 @@ export default function BooksOfAccountPage() {
         // Generate rows grouped by type (Tally format)
         sortedTypes.forEach(type => {
             // Add type header (like Tally groups)
-            rows.push([type, "", ""]);
+            rows.push([type, "", "", "", "", ""]);
             
-            const accounts = accountsByType[type].sort((a, b) => 
-                getAccountName(a[0]).localeCompare(getAccountName(b[0]))
-            });
+            const accounts = accountsByType[type].sort((a, b) => getAccountName(a[0]).localeCompare(getAccountName(b[0])));
 
             accounts.forEach(([code, balance]) => {
                 const accountName = getAccountName(code);
@@ -939,7 +935,7 @@ toast({
                     
                     // Style header rows (company name, title, etc.)
                     // Row 1: Company Name - Bold, larger font
-                    const companyCell = XLSX.utils.encode_cell({ r: 0, c: 0 );
+                    const companyCell = XLSX.utils.encode_cell({ r: 0, c: 0 });
                     if (!worksheet[companyCell]) worksheet[companyCell] = { t: 's', v: sheetHeaders[0][0] };
                     worksheet[companyCell].s = {
                         font: { bold: true, sz: 16 },

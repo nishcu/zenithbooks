@@ -626,20 +626,17 @@ export default function BulkJournalEntryPage() {
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
             const errorCount = validatedEntries.filter(e => e.status === 'error').length;
 
-            const { toast } = require("@/hooks/use-toast");
             toast({
               title: "File Processed",
               description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
             });
             setIsProcessing(false);
         } catch (error: any) {
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error processing file",
   description: error ,
 });
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Processing Failed",
@@ -660,7 +657,6 @@ toast({
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
             const errorCount = validatedEntries.filter(e => e.status === 'error').length;
             
-            const { toast } = require("@/hooks/use-toast");
             toast({
               title: "File Processed",
               description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
@@ -804,7 +800,6 @@ toast({
 
     const handleCreateEntries = async () => {
         if (!accountingContext) {
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error: Accounting context not available.",
@@ -814,7 +809,6 @@ toast({
 
         const validEntries = parsedEntries.filter(e => e.status === 'valid');
         if (validEntries.length === 0) {
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "No Valid Entries: Please fix errors before creating entries.",
@@ -894,7 +888,6 @@ toast({
                     await addJournalVoucher(voucher);
                     successCount++;
                 } catch (error: any) {
-                    const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error creating voucher",
@@ -914,13 +907,11 @@ toast({
             const fileInput = document.getElementById('file-upload') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
         } catch (error: any) {
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error creating entries",
   description: error ,
 });
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Creation Failed",

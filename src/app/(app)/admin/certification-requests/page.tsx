@@ -123,10 +123,11 @@ export default function AdminCertificationRequests() {
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
       const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Approval Failed: Invalid request data. User information is missing.",
-});
+      toast({
+        variant: "destructive",
+        title: "Approval Failed",
+        description: "Invalid request data. User information is missing.",
+      });
       return;
     }
 
@@ -143,7 +144,7 @@ toast({
     setIsLoading('approve');
 
     try {
-      console.log({ "Approving request:", selectedRequest); // Debug log
+      console.log({ "Approving request:": selectedRequest }); // Debug log
 
       // Update the certification request status to 'Certified'
       await updateDoc(doc(db, "certificationRequests", selectedRequest.id), {
@@ -174,10 +175,10 @@ toast({
 
       await addDoc(collection(db, "userDocuments"), certifiedDocData);
 
-      console.log(
+      console.log({
         title: "Request Approved",
         description: `Certification request has been approved with UDIN: ${udin}. The certified document is now available in the client's "My Documents" section.`,
-      );
+      });
 
       // Reset form fields
       setUdin('');
@@ -187,16 +188,11 @@ toast({
       setSelectedRequest(null);
     } catch (error) {
       const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error approving certification request",
-  description: error ,
-});
-      const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Approval Failed: Failed to approve the certification request. Please try again.",
-});
+      toast({
+        variant: "destructive",
+        title: "Approval Failed",
+        description: "Failed to approve the certification request. Please try again.",
+      });
     } finally {
       setIsLoading(null);
     }

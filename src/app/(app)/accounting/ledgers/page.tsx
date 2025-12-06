@@ -18,6 +18,7 @@ import { allAccounts, Account } from '@/lib/accounts';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, FileText, Download } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -130,7 +131,6 @@ export default function LedgersPage() {
             const querySnapshot2 = await getDocs(q2);
             vouchers = querySnapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher));
           } catch (err2) {
-            const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Error fetching from both collections",
@@ -191,7 +191,6 @@ toast({
               variant: "default"
              });
           } else if (filteredVouchers.length > 0) {
-             const { toast } = require("@/hooks/use-toast");
              toast({
                title: "Report Generated",
                 description: `Found ${filteredVouchers.length} entries for the selected period.`
