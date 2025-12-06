@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "lucide-react";
 
-import {  } from "@/lib/error-handler";
+import { toast } from "@/hooks/use-toast";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -47,11 +47,10 @@ function getStoredBlogPosts() {
         console.log('Loaded blog posts from storage:', posts.length, 'posts');
         return posts;
     } catch (error) {
-        const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error loading blog posts from localStorage",
-  description: error ,
+        toast({
+          variant: "destructive",
+          title: "Error loading blog posts from localStorage",
+          description: error,
 });
         return [];
     }
@@ -64,11 +63,10 @@ function saveBlogPosts(posts: any[]) {
     try {
         localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
     } catch (error) {
-        const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error saving blog posts to localStorage",
-  description: error ,
+        toast({
+          variant: "destructive",
+          title: "Error saving blog posts to localStorage",
+          description: error,
 });
     }
 }
@@ -118,7 +116,6 @@ async function updateBlogPost(postId: string, updatedData: any) {
         console.log('Blog post updated successfully in Firebase');
         return true;
     } catch (error) {
-        const { toast } = require("@/hooks/use-toast");
         toast({
           variant: "destructive",
           title: "Error updating blog post",
@@ -201,23 +198,18 @@ export default function EditBlogPostPage() {
                     authorTitle: post.authorTitle || "",
                     category: post.category,
                     contentBlocks: contentBlocks.length > 0 ? contentBlocks : [{ value: "" }],
-                );
+            });
 
                 // Set image preview if available
-                setImagePreview(post.image);
+                setImagePreview(post.imageUrl || null);
 
             } catch (error) {
-                const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error loading post",
-  description: error ,
-});
-               
-toast({
-  variant: "destructive",
-  title: "Error: Failed to load the blog post.",
-});
+                toast({
+                  variant: "destructive",
+                  title: "Error loading post",
+                  description: "Failed to load the blog post.",
+                });
+                router.push('/admin/blog');
                 router.push('/admin/blog');
             } finally {
                 setIsLoading(false);
@@ -235,12 +227,11 @@ toast({
             // Validate the image file
             const validation = validateBlogImage(file);
             if (!validation.valid) {
-                const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Invalid Image",
-  description: validation.error,
-});
+                toast({
+                  variant: "destructive",
+                  title: "Invalid Image",
+                  description: validation.error,
+                });
                 // Clear the input
                 if (imageInputRef.current) {
                     imageInputRef.current.value = '';
@@ -273,7 +264,6 @@ toast({
 
                     console.log('Image uploaded successfully:', firebaseImageUrl);
                 } catch (uploadError) {
-                    const { toast } = require("@/hooks/use-toast");
                     toast({
                       variant: "destructive",
                       title: "Upload Failed",
@@ -301,11 +291,11 @@ toast({
             const success = await updateBlogPost(postId, postData);
 
             if (!success) {
-                const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Update Failed: Failed to update the blog post. Please try again.",
-});
+                toast({
+                  variant: "destructive",
+                  title: "Update Failed",
+                  description: "Failed to update the blog post. Please try again.",
+                });
                 return;
             }
 
@@ -318,7 +308,6 @@ toast({
             router.push('/admin/blog');
 
         } catch (error) {
-            const { toast } = require("@/hooks/use-toast");
             toast({
               variant: "destructive",
               title: "Error updating post",
