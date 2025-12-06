@@ -5,11 +5,6 @@
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
 import { toast } from "@/hooks/use-toast";
 
-// Contact information for error resolution
-const ERROR_CONTACT_INFO = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
-
-// Contact information for error resolution
-const ERROR_CONTACT_INFO = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
 
 
 export interface AppError {
