@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -131,7 +132,6 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Missing Details: Please select a customer and original invoice.",
@@ -163,7 +163,6 @@ toast({
         );
         console.log({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.`  });
     } catch (e: any) {
-        const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Failed to save journal entry",
