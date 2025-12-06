@@ -144,6 +144,26 @@ export function showSuccessToast(title: string, description?: string) {
 /**
  * Async error wrapper for try-catch blocks
  */
+/**
+ * Enhanced toast function for backward compatibility
+ * Automatically adds contact info for error toasts
+ */
+export function showEnhancedToast({ variant, title, description, ...props }: any) {
+  // Add contact information for error toasts
+  let finalDescription = description;
+  if (variant === "destructive" || title?.toLowerCase().includes("error") ||
+      title?.toLowerCase().includes("failed") || title?.toLowerCase().includes("oops")) {
+    finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
+  }
+
+  toast({
+    variant,
+    title,
+    description: finalDescription,
+    ...props
+  });
+}
+
 export async function withErrorHandling<T>(
   fn: () => Promise<T>,
   context?: string
