@@ -145,7 +145,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
       if (party && open) {
         form.reset(party);
       } else if (!open) {
-        form.reset({ name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' );
+        form.reset({ name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' });
       }
     }, [party, open, form]);
 

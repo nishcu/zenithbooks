@@ -112,7 +112,7 @@ export function handleError(error: unknown, context?: string): AppError {
 }
 
 /**
- * Show error toast notification (logs to console to prevent crashes)
+ * Show error toast notification
  */
 export function showErrorToast(error: unknown, context?: string) {
   try {
@@ -121,19 +121,28 @@ export function showErrorToast(error: unknown, context?: string) {
     // Add contact information for error resolution
     const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-    // Log to console instead of showing toast to prevent crashes
-    console.error(`[${context || 'Error'}] ${appError.code}: ${appError.message}${contactMessage}`);
+    // Show actual toast notification
+    const { toast } = require("@/hooks/use-toast");
+    toast({
+      variant: "destructive",
+      title: context || "Error",
+      description: `${appError.message}${contactMessage}`,
+    });
   } catch (error) {
     console.error({ "showErrorToast failed:", error });
   }
 }
 
 /**
- * Show success toast notification (logs to console)
+ * Show success toast notification
  */
 export function showSuccessToast(title: string, description?: string) {
-  // Log to console instead of showing toast to prevent crashes
-  console.log(`[Success] ${title}${description ? ': ' + description : ''}`);
+  // Show actual toast notification
+  const { toast } = require("@/hooks/use-toast");
+  toast({
+    title,
+    description,
+  });
 }
 
 /**
@@ -141,9 +150,11 @@ export function showSuccessToast(title: string, description?: string) {
  */
 /**
  * Enhanced toast function for backward compatibility
- * Logs to console instead of showing toasts to prevent crashes
  */
-export function console.error( variant, title, description, ...props }: any) {
+export function toast({ variant, title, description, ...props }: any) {
+  // Import the toast function
+  const { toast } = require("@/hooks/use-toast");
+
   // Add contact information for error logging
   let finalDescription = description;
   if (variant === "destructive" || title?.toLowerCase().includes("error") ||
@@ -151,8 +162,13 @@ export function console.error( variant, title, description, ...props }: any) {
     finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
   }
 
-  // Log to console instead of showing toast to prevent crashes
-  console.error(`[${title || 'Error'}]`, finalDescription);
+  // Show actual toast notification
+  toast({
+    variant,
+    title,
+    description: finalDescription,
+    ...props
+  });
 }
 
 export async function withErrorHandling<T>(

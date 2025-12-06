@@ -200,7 +200,7 @@ export function ShareButtons({
           title: shareTitle || fileName,
           text: whatsappMessage || `Check out this ${fileName}`,
           url: url,
-        );
+        });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
           console.error("Error: Failed to share. Please try another method.");
