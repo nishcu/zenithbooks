@@ -132,21 +132,28 @@ export function handleError(error: unknown, context?: string): AppError {
 /**
  * Show error toast notification (friendly, non-destructive for user errors)
  */
-export function showErrorToast(error: unknown, context?: string) {
-  const appError = handleError(error, context);
-  // Only use destructive variant for security-critical errors
-  const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED &&
-                     (appError.message.includes('disabled') ||
-                      appError.message.includes('locked'));
+export async function showErrorToast(error: unknown, context?: string) {
+  try {
+    const appError = handleError(error, context);
+    // Only use destructive variant for security-critical errors
+    const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED &&
+                       (appError.message.includes('disabled') ||
+                        appError.message.includes('locked'));
 
-  // Add contact information for error resolution
-  const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
+    // Add contact information for error resolution
+    const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-  toast({
-    variant: isCritical ? "destructive" : "default",
-    title: isCritical ? "Security Alert" : "Oops!",
-    description: appError.message + contactMessage,
-  });
+    const toast = await getToastFunction();
+    toast({
+      variant: isCritical ? "destructive" : "default",
+      title: isCritical ? "Security Alert" : "Oops!",
+      description: appError.message + contactMessage,
+    });
+  } catch (error) {
+    console.error("showErrorToast failed:", error);
+    // Fallback to console logging
+    console.error("Error occurred:", context, error);
+  }
 }
 
 /**
@@ -195,7 +202,7 @@ export async function withErrorHandling<T>(
   try {
     return await fn();
   } catch (error) {
-    showErrorToast(error, context);
+    await showErrorToast(error, context);
     return null;
   }
 }

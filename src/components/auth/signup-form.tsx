@@ -165,7 +165,7 @@ export function SignupForm() {
       router.push("/dashboard");
 
     } catch (error: any) {
-      showErrorToast(error, "Signup");
+      await showErrorToast(error, "Signup");
     } finally {
         setIsLoading(false);
     }
