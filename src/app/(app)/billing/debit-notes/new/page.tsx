@@ -126,7 +126,7 @@ export default function NewDebitNotePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !originalPurchase) {
-        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill." });
+        console.error("Missing Details: Please select a vendor and original purchase bill.");
         return;
     }
     

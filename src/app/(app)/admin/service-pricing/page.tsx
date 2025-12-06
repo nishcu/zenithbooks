@@ -73,13 +73,9 @@ export default function ServicePricingPage() {
       setIsSaving(false);
       
       if (result.success) {
-        console.log({ title: "Prices Updated",
-          description: "The new service prices have been saved successfully. Changes will be live for all users."
-         });
+        console.log("Prices Updated: The new service prices have been saved successfully. Changes will be live for all users.");
       } else {
-        console.error({ variant: "destructive", title: "Save Failed",
-            description: "Could not update the pricing file. Please check server logs."
-         });
+        console.error("Save Failed: Could not update the pricing file. Please check server logs.");
       }
   }
 

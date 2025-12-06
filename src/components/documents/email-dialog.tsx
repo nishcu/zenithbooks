@@ -49,8 +49,7 @@ export function EmailDialog({
     const invalidEmails = emailAddresses.filter((email) => !isValidEmail(email));
 
     if (emailAddresses.length === 0) {
-      console.error({ variant: "destructive", title: "Email Required",
-        description: "Please enter at least one email address.", });
+      console.error("Email Required: Please enter at least one email address.");
       return;
     }
 
@@ -64,14 +63,12 @@ export function EmailDialog({
     }
 
     if (!contentRef.current) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "Could not find the content to send.", });
+      console.error("Error: Could not find the content to send.");
       return;
     }
 
     if (!subject.trim()) {
-      console.error({ variant: "destructive", title: "Subject Required",
-        description: "Please enter an email subject.", });
+      console.error("Subject Required: Please enter an email subject.");
       return;
     }
 

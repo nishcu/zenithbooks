@@ -84,7 +84,7 @@ export function VaultStatistics() {
           setStorageUsed(data.currentStorageUsed || 0);
         }
       } catch (error) {
-        console.error({ "Error fetching storage:", error });
+        console.error("Error fetching storage:", error);
       }
     };
 

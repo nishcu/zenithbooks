@@ -104,16 +104,12 @@ export default function TdsTcsReportsPage() {
 
   const generateReport = async () => {
     if (!user) {
-      console.error({ variant: "destructive", title: "Authentication Required",
-        description: "Please log in to generate reports."
-       });
+      console.error("Authentication Required: Please log in to generate reports.");
       return;
     }
 
     setReportData([]); // Clear previous data
-    console.log({ title: "Generating Report...",
-        description: "Analyzing journal entries for the selected period."
-     });
+    console.log("Generating Report...: Analyzing journal entries for the selected period.");
 
     try {
       // Determine the date range for the report
@@ -230,9 +226,7 @@ export default function TdsTcsReportsPage() {
 
     } catch (error) {
       console.error({ "Error generating report:", error });
-      console.error({ variant: "destructive", title: "Report Generation Failed",
-        description: "An error occurred while generating the report. Please try again."
-       });
+      console.error("Report Generation Failed: An error occurred while generating the report. Please try again.");
     }
   };
 
@@ -364,9 +358,7 @@ export default function TdsTcsReportsPage() {
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
 
-              console.log({ title: "Report Exported",
-                description: "The report has been downloaded as a CSV file."
-               });
+              console.log("Report Exported: The report has been downloaded as a CSV file.");
             }}
           >
             <FileDown className="mr-2" />

@@ -27,7 +27,7 @@ export function UserNav() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    console.log({ title: "Logged Out", description: "You have been successfully logged out." });
+    console.log("Logged Out: You have been successfully logged out.");
     router.push('/login');
   }
 

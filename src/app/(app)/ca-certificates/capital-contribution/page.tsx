@@ -108,11 +108,11 @@ export default function CapitalContributionCertificatePage() {
                     form.reset(data.formData);
                     console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
                 } else {
-                    console.error({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
+                    console.error("Unauthorized: You don't have permission to access this document.");
                     router.push('/ca-certificates/capital-contribution');
                 }
             } else {
-                 console.error({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
+                 console.error("Not Found: The requested document draft could not be found.");
                  router.push('/ca-certificates/capital-contribution');
             }
             setIsLoading(false);
@@ -153,9 +153,9 @@ export default function CapitalContributionCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        console.log({ title: "Draft Ready", description: "Review the certificate before printing."  });
+        console.log("Draft Ready: Review the certificate before printing.");
     } else {
-        console.error({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields." });
+        console.error("Validation Error: Please fill all required fields.");
     }
   }
 
@@ -193,7 +193,7 @@ export default function CapitalContributionCertificatePage() {
   
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request."  });
+          console.error("Authentication Error: You must be logged in to make a request.");
           return;
       }
       setIsSubmitting(true);
@@ -209,12 +209,10 @@ export default function CapitalContributionCertificatePage() {
             signedDocumentUrl: null,
             formData: form.getValues(),
         );
-        console.log({ title: "Request Sent",
-            description: "Your certification request has been sent to the admin for review."
-         });
+        console.log("Request Sent: Your certification request has been sent to the admin for review.");
       } catch (error) {
           console.error({ "Error sending request:", error });
-          console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
+          console.error("Request Failed: Could not send the request. Please try again.");
       } finally {
           setIsSubmitting(false);
       }
@@ -336,9 +334,7 @@ export default function CapitalContributionCertificatePage() {
                                   );
                                 }}
                                 onFailure={() => {
-                                  console.error({ variant: "destructive", title: "Payment Failed",
-                                    description: "Payment was not completed. Please try again."
-                                   });
+                                  console.error("Payment Failed: Payment was not completed. Please try again.");
                                 }}
                               />
                             );

@@ -108,16 +108,12 @@ export default function TdsReturns() {
 
   const generateReport = async () => {
     if (!user) {
-      console.error({ variant: "destructive", title: "Authentication Required",
-        description: "Please log in to generate reports."
-       });
+      console.error("Authentication Required: Please log in to generate reports.");
       return;
     }
 
     setReportData([]); // Clear previous data
-    console.log({ title: "Generating Report...",
-        description: "Analyzing journal entries for the selected period."
-     });
+    console.log("Generating Report...: Analyzing journal entries for the selected period.");
 
     try {
       // Determine the date range for the report
@@ -237,9 +233,7 @@ export default function TdsReturns() {
 
     } catch (error) {
       console.error({ "Error generating report:", error });
-      console.error({ variant: "destructive", title: "Report Generation Failed",
-        description: "An error occurred while generating the report. Please try again."
-       });
+      console.error("Report Generation Failed: An error occurred while generating the report. Please try again.");
     }
   };
 

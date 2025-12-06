@@ -48,7 +48,7 @@ export default function RapidPurchaseEntryPage() {
     const selectedItem: any = items.find((i:any) => i.id === values.itemId);
 
     if (!selectedParty || !selectedItem) {
-        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected."  });
+        console.error("Invalid Selection: Please ensure vendor and item are selected.");
         return;
     }
     

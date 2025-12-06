@@ -87,8 +87,7 @@ export default function VaultPage() {
       },
       (error) => {
         console.error({ "Error fetching documents:", error });
-        console.error({ variant: "destructive", title: "Error",
-          description: "Failed to load documents. Please try again.", });
+        console.error("Error: Failed to load documents. Please try again.");
         setLoading(false);
       }
     );
@@ -431,9 +430,7 @@ export default function VaultPage() {
         onOpenChange={setIsUploadDialogOpen}
         onUploadSuccess={() => {
           setIsUploadDialogOpen(false);
-          console.log({ title: "Upload Successful",
-            description: "Your document has been uploaded successfully.",
-           });
+          console.log("Upload Successful: Your document has been uploaded successfully.");
         }}
       />
     </div>

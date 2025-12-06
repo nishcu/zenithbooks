@@ -62,7 +62,7 @@ export default function PayrollEmployeesPage() {
 
     const handleAddEmployee = () => {
         if (!newEmployee.name || !newEmployee.designation) {
-            console.error({ variant: "destructive", title: "Missing Information", description: "Please provide both name and designation." });
+            console.error("Missing Information: Please provide both name and designation.");
             return;
         }
         const newId = `EMP-${String(employees.length + 1).padStart(3, '0')}`;

@@ -113,7 +113,7 @@ export default function PartiesPage() {
         await deleteDoc(partyDocRef);
         console.log({ title: "Party Deleted", description: `${party.name} has been removed.`} })
     } catch (e) {
-        console.error({ variant: "destructive", title: "Error", description: "Could not delete the party."});
+        console.error("Error: Could not delete the party.");
     }
   }
   
@@ -186,7 +186,7 @@ export default function PartiesPage() {
   
   const handleImport = async () => {
     if (!importFile || !user) {
-        console.error({ variant: "destructive", title: "No file selected", description: "Please upload a file to import." });
+        console.error("No file selected: Please upload a file to import.");
         return;
     }
     
@@ -231,7 +231,7 @@ export default function PartiesPage() {
             setIsImportDialogOpen(false);
             setImportFile(null);
         } catch (error) {
-            console.error({ variant: "destructive", title: "Import Failed", description: "There was an error writing to the database."  });
+            console.error("Import Failed: There was an error writing to the database.");
         }
     };
     reader.readAsArrayBuffer(importFile);

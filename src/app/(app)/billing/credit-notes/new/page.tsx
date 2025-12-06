@@ -131,7 +131,7 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice." });
+        console.error("Missing Details: Please select a customer and original invoice.");
         return;
     }
     

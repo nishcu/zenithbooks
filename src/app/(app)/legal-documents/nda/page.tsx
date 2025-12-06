@@ -126,8 +126,7 @@ export default function NdaPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to the next step.`  });
       }
     } else {
-      console.error({ variant: "destructive", title: "Validation Error",
-        description: "Please correct the errors before proceeding.", });
+      console.error("Validation Error: Please correct the errors before proceeding.");
     }
   };
 
@@ -267,14 +266,10 @@ export default function NdaPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            console.log({ title: "Payment Successful",
-                              description: "Your document is ready for download."
-                             });
+                            console.log("Payment Successful: Your document is ready for download.");
                           }}
                           onFailure={() => {
-                            console.error({ variant: "destructive", title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                             });
+                            console.error("Payment Failed: Payment was not completed. Please try again.");
                           }}
                         />
                       );
@@ -353,9 +348,7 @@ export default function NdaPage() {
                   );
                 }}
                 onFailure={() => {
-                  console.error({ variant: "destructive", title: "Payment Failed",
-                    description: "Payment was not completed. Please try again."
-                   });
+                  console.error("Payment Failed: Payment was not completed. Please try again.");
                 }}
               />
             ) : (

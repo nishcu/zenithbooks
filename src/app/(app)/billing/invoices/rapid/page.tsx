@@ -84,7 +84,7 @@ export default function RapidInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected."  });
+        console.error("Invalid Selection: Please ensure a customer is selected.");
         return;
     }
     

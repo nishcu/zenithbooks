@@ -176,7 +176,7 @@ export default function TrialBalancePage() {
     
     const handleFileUpload = () => {
         if (!uploadFile) {
-            console.error({ variant: "destructive", title: "Missing Information", description: "Please select a file to upload." });
+            console.error("Missing Information: Please select a file to upload.");
             return;
         }
 
@@ -200,7 +200,7 @@ export default function TrialBalancePage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log({ title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded."  });
+        console.log("Template Downloaded: Trial Balance CSV template has been downloaded.");
     }
 
     const handleExportCsv = () => {
@@ -231,7 +231,7 @@ export default function TrialBalancePage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Trial Balance");
         XLSX.writeFile(workbook, `Trial_Balance_${format(date || new Date(), 'yyyy-MM-dd')}.xlsx`);
-        console.log({ title: "Export Successful", description: "Trial Balance has been exported to Excel with proper formatting."  });
+        console.log("Export Successful: Trial Balance has been exported to Excel with proper formatting.");
     };
 
 

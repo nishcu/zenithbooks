@@ -81,7 +81,7 @@ export function LoginForm() {
       password: "",
       acceptPolicies: false,
     },
-  );
+  };
 
    useEffect(() => {
     const handleRedirectResult = async () => {
@@ -89,7 +89,7 @@ export function LoginForm() {
         const result = await getRedirectResult(auth);
         if (result) {
           // User has successfully signed in via redirect.
-          console.log({ title: "Login Successful", description: "Welcome!"  });
+          console.log("Login Successful: Welcome!");
           router.push("/dashboard");
         } else {
             // No redirect result, probably a direct page load
@@ -135,9 +135,7 @@ export function LoginForm() {
       // Check if account is locked
       const loginId = getLoginIdentifier(sanitizedEmail);
       if (isAccountLocked(loginId)) {
-        console.error({ variant: "destructive",
-          title: "Account Temporarily Locked",
-          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.", });
+        console.error("Account Temporarily Locked: For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.");
         setIsEmailLoading(false);
         return;
       }
@@ -155,9 +153,7 @@ export function LoginForm() {
       const attemptResult = recordFailedLogin(loginId);
       
       if (attemptResult.locked) {
-        console.error({ variant: "destructive",
-          title: "Account Temporarily Locked",
-          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.", });
+        console.error("Account Temporarily Locked: For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.");
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {

@@ -135,19 +135,7 @@ export default function MyDocumentsPage() {
         // For certified documents, generate PDF on-demand
         if (doc.isCertified) {
             try {
-                console.log({ title: "Generating PDF...",
-                    description: "Your certified document is being prepared for download.",
-                );
-
-                // Create a temporary element with the certificate content
-                const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.left = '-9999px';
-                tempDiv.style.top = '-9999px';
-
-                // Generate certificate HTML based on document type and data
-                const certificateHTML = generateCertificateHTML(doc);
-                console.log({ "Generated HTML:", certificateHTML }); // Debug log
+                console.log("Generating PDF...: Your certified document is being prepared for download."); // Debug log
                 console.log({ "Document data:", doc }); // Debug log
 
                 // Create a new window with the certificate HTML
@@ -201,18 +189,15 @@ export default function MyDocumentsPage() {
                 // Close the print window
                 printWindow.close();
 
-                console.log({ title: "PDF Downloaded", description: "Your certified document has been downloaded successfully." });
+                console.log("PDF Downloaded: Your certified document has been downloaded successfully.");
             } catch (error) {
                 console.error({ "PDF generation error:", error });
-                console.error({ variant: "destructive", title: "Download Failed", description: "Failed to generate PDF. Please try again or contact support." });
+                console.error("Download Failed: Failed to generate PDF. Please try again or contact support.");
             }
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');
         } else {
-            console.log({ title: "Download Not Available",
-                description: "The PDF for this document is not available. Please contact support.",
-                variant: "destructive",
-             });
+            console.log("Download Not Available: The PDF for this document is not available. Please contact support.");
         }
     };
 

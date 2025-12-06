@@ -212,9 +212,7 @@ export default function ChartOfAccountsPage() {
     // Download
     XLSX.writeFile(wb, "zenithbooks-chart-of-accounts-sample.xlsx");
     
-    console.log({ title: "Sample Excel Downloaded",
-      description: "Chart of Accounts sample file has been downloaded. Use exact account names from this file in your journal entries.",
-     });
+    console.log("Sample Excel Downloaded: Chart of Accounts sample file has been downloaded. Use exact account names from this file in your journal entries.");
   };
 
   const onSubmit = async (values: z.infer<typeof accountSchema>) => {
@@ -232,7 +230,7 @@ export default function ChartOfAccountsPage() {
         setIsAddDialogOpen(false);
     } catch (e) {
         console.error({ "Error adding document: ", e });
-        console.error({ variant: "destructive", title: "Error", description: "Could not save the account." });
+        console.error("Error: Could not save the account.");
     }
   };
 

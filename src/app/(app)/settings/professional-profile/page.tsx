@@ -37,9 +37,7 @@ export default function ProfessionalProfilePage() {
     
 
     const handleSaveChanges = () => {
-        console.log({ title: "Profile Saved",
-            description: "Your professional profile has been updated."
-         });
+        console.log("Profile Saved: Your professional profile has been updated.");
     }
 
     return (

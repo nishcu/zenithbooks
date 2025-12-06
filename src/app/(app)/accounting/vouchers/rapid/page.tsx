@@ -114,7 +114,7 @@ export default function RapidVoucherEntryPage() {
     const selectedParty = partyList.find(p => p.id === values.partyId);
 
     if (!selectedParty) {
-        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a party is selected."  });
+        console.error("Invalid Selection: Please ensure a party is selected.");
         return;
     }
     

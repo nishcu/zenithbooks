@@ -163,7 +163,7 @@ export default function NewInvoicePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !invoiceNumber) {
-        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number." });
+        console.error("Missing Details: Please select a customer and enter an invoice number.");
         return;
     }
     

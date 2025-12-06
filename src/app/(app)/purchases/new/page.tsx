@@ -155,7 +155,7 @@ export default function NewPurchasePage() {
     if (!file) return;
 
     setIsOcrLoading(true);
-    console.log({ title: "Reading Document...", description: "AI is extracting data from the uploaded bill."  });
+    console.log("Reading Document...: AI is extracting data from the uploaded bill.");
 
     // This is a placeholder for the user's actual GSTIN from their profile
     const userGstin = "27ABCDE1234F1Z5";
@@ -208,14 +208,14 @@ export default function NewPurchasePage() {
                     console.log({ title: "New Vendor Detected", description: `Consider adding "${result.vendorName}" to your vendor list.`  });
                 }
             }
-          console.log({ title: "Data Extracted!", description: "Form has been pre-filled with AI."  });
+          console.log("Data Extracted!: Form has been pre-filled with AI.");
         } else {
-            console.error({ variant: "destructive", title: "Extraction Failed", description: "Could not extract data from the document."  });
+            console.error("Extraction Failed: Could not extract data from the document.");
         }
       };
     } catch (error) {
       console.error(error);
-      console.error({ variant: "destructive", title: "Error", description: "An unexpected error occurred during OCR."  });
+      console.error("Error: An unexpected error occurred during OCR.");
     } finally {
       setIsOcrLoading(false);
       // Reset file input to allow re-uploading the same file
@@ -230,7 +230,7 @@ export default function NewPurchasePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !billNumber) {
-        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and enter a bill number." });
+        console.error("Missing Details: Please select a vendor and enter a bill number.");
         return;
     }
     

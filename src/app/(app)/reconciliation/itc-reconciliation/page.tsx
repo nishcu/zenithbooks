@@ -51,7 +51,7 @@ export default function ItcReconciliationPage() {
             const result = await reconcileItcAction({ gstr2bDataUri, purchaseBills: "" ); // Purchase bills are handled on server
             if (result?.reconciliationResults) {
                 setItcReconResult(result.reconciliationResults);
-                console.log({ title: "ITC Reconciliation Complete"  });
+                console.log("title", "ITC Reconciliation Complete");
             } else {
                 console.error({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.'  });
             }

@@ -62,7 +62,7 @@ const partySchema = z.object({
     city: z.string().optional(),
     state: z.string().optional(),
     pincode: z.string().optional(),
-);
+});
 
 const itemSchema = z.object({
     name: z.string().min(2, "Item name is required."),

@@ -112,8 +112,7 @@ export default function VaultAccessLogsPage() {
       },
       (error) => {
         console.error({ "Error fetching access logs:", error });
-        console.error({ variant: "destructive", title: "Error",
-          description: "Failed to load access logs. Please try again.", });
+        console.error("Error: Failed to load access logs. Please try again.");
         setLoading(false);
       }
     );
@@ -277,9 +276,7 @@ export default function VaultAccessLogsPage() {
               a.click();
               URL.revokeObjectURL(url);
               
-              console.log({ title: "Export Started",
-                description: "Access logs exported to CSV file.",
-               });
+              console.log("Export Started: Access logs exported to CSV file.");
             }}
           >
             <DownloadIcon className="mr-2 h-4 w-4" />

@@ -98,7 +98,7 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            console.log({ title: "E-Waybill Generated", description: "The E-Waybill JSON has been downloaded successfully."  });
+            console.log("E-Waybill Generated: The E-Waybill JSON has been downloaded successfully.");
             onOpenChange(false);
         } catch (error: any) {
             console.error({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill."  });
@@ -207,7 +207,7 @@ export default function InvoicesPage() {
         const originalVoucher = journalVouchers.find(v => v.id === invoiceId);
 
         if (!originalVoucher) {
-            console.error({ variant: "destructive", title: "Error", description: "Original invoice transaction not found."  });
+            console.error("Error: Original invoice transaction not found.");
             return false;
         }
 
@@ -275,7 +275,7 @@ export default function InvoicesPage() {
                 );
                 window.open(`https://wa.me/${customer.phone}?text=${message}`, '_blank');
             } else {
-                 console.error({ variant: "destructive", title: "Cannot Send Reminder", description: "Customer phone number is not available."  });
+                 console.error("Cannot Send Reminder: Customer phone number is not available.");
             }
         }
         else if (action === 'Ewaybill') {

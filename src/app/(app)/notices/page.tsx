@@ -98,7 +98,7 @@ export default function NoticesPage() {
 
     const handleSubmit = async (values: NoticeFormData) => {
         if (!user) {
-            console.error({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit a notice."  });
+            console.error("Authentication Error: You must be logged in to submit a notice.");
             return;
         }
 
@@ -116,10 +116,7 @@ export default function NoticesPage() {
                 requestedAt: new Date(),
             );
 
-            console.log({ title: "Request Submitted Successfully!",
-                description: "Your notice has been sent to the admin panel. A professional will be assigned shortly and will get in touch with you.",
-            );
-            form.reset( });
+            console.log("Request Submitted Successfully!: Your notice has been sent to the admin panel. A professional will be assigned shortly and will get in touch with you.");
         } catch (error) {
             console.error({ "Error submitting notice request: ", error });
             console.log({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."});;
@@ -204,9 +201,7 @@ export default function NoticesPage() {
                                 form.handleSubmit((values) => handleSubmit(values))();
                             }}
                             onFailure={() => {
-                                console.error({ variant: "destructive", title: "Payment Failed",
-                                    description: "Payment was not completed. Please try again."
-                                 });
+                                console.error("Payment Failed: Payment was not completed. Please try again.");
                             }}
                         />
                     ) : (

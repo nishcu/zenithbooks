@@ -181,7 +181,7 @@ export default function VouchersPage() {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);
 
         if (!originalVoucher) {
-            console.error({ variant: "destructive", title: "Error", description: "Original voucher transaction not found."  });
+            console.error("Error: Original voucher transaction not found.");
             return;
         }
 

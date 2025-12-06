@@ -96,7 +96,7 @@ export default function BooksVsGstr1Page() {
                  setGstr1Data(json);
                  console.log({ title: "GSTR-1 Data Loaded", description: `${json.length} records found.`  });
             } else {
-                 console.error({ variant: "destructive", title: "Invalid File", description: "The uploaded file does not seem to be a valid GSTR-1 report."  });
+                 console.error("Invalid File: The uploaded file does not seem to be a valid GSTR-1 report.");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -123,7 +123,7 @@ export default function BooksVsGstr1Page() {
         onlyInGstr1.push(...Array.from(gstr1InvoicesMap.values()));
 
         setReconciliationResult({ reconciled, onlyInBooks, onlyInGstr1 );
-        console.log({ title: "Reconciliation Complete!", description: "Review the results below."  });
+        console.log("Reconciliation Complete!: Review the results below.");
     };
 
     const bookTotal = bookSalesData.reduce((acc, curr) => acc + curr.taxableValue, 0);

@@ -183,8 +183,7 @@ export default function VaultAccessPage() {
       );
     } catch (error) {
       console.error({ "Error downloading:", error });
-      console.error({ variant: "destructive", title: "Download Failed",
-        description: "Failed to download document. Please try again.", });
+      console.error("Download Failed: Failed to download document. Please try again.");
     }
   };
 
@@ -205,8 +204,7 @@ export default function VaultAccessPage() {
       window.open(document.fileUrl, "_blank");
     } catch (error) {
       console.error({ "Error viewing:", error });
-      console.error({ variant: "destructive", title: "View Failed",
-        description: "Failed to view document. Please try again.", });
+      console.error("View Failed: Failed to view document. Please try again.");
     }
   };
 

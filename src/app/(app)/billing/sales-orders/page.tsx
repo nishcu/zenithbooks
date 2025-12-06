@@ -111,7 +111,7 @@ export default function SalesOrdersPage() {
         await deleteDoc(doc(db, "sales-orders", order.id));
         console.log({ title: "Sales Order Cancelled", description: `Sales order ${order.id} has been successfully cancelled.`  });
       } catch (error) {
-        console.error({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the sales order."  });
+        console.error("Cancellation Failed: There was an error cancelling the sales order.");
       }
     }
   };

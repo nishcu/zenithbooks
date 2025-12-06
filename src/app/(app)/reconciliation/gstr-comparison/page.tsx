@@ -55,7 +55,7 @@ export default function GstrComparisonPage() {
             const result = await compareGstrReportsAction({ gstr1DataUri, gstr3BDataUri );
             if (result?.report) {
                 setGstrCompareResult(result.report);
-                console.log({ title: "GSTR Comparison Complete"  });
+                console.log("title", "GSTR Comparison Complete");
             } else {
                 console.error({ variant: "destructive", title: 'Comparison Failed', description: 'Could not get GSTR comparison results.'  });
             }

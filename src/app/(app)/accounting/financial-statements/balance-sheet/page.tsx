@@ -298,7 +298,7 @@ export default function BalanceSheetPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    console.log({ title: "CSV downloaded", description: "Balance sheet exported successfully."  });
+    console.log("CSV downloaded: Balance sheet exported successfully.");
   };
 
 

@@ -103,7 +103,7 @@ export default function VisaImmigrationCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    console.log({ title: "Draft Loaded" });
+                    console.log("title", "Draft Loaded");
                 } else {
                     console.error({ variant: "destructive", title: "Unauthorized" });
                     router.push('/ca-certificates/visa-immigration');
@@ -161,10 +161,9 @@ export default function VisaImmigrationCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(3); // Move to preview step
-        console.log({ title: "Draft Ready", description: "Review the generated certificate below."  });
+        console.log("Draft Ready: Review the generated certificate below.");
     } else {
-         console.error({ variant: "destructive", title: "Validation Error",
-            description: "Please fill all required fields.", });
+         console.error("Validation Error: Please fill all required fields.");
     }
   }
 
@@ -179,7 +178,7 @@ export default function VisaImmigrationCertificatePage() {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
               await updateDoc(docRef, { formData, updatedAt: new Date() );
-              console.log({ title: "Draft Updated" });
+              console.log("title", "Draft Updated");
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -189,7 +188,7 @@ export default function VisaImmigrationCertificatePage() {
                   formData,
                   createdAt: new Date(),
               );
-              console.log({ title: "Draft Saved!" });
+              console.log("title", "Draft Saved!");
               router.push(`/ca-certificates/visa-immigration?id=${docRef.id}`);
           }
       } catch (e) {
@@ -202,7 +201,7 @@ export default function VisaImmigrationCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request."  });
+          console.error("Authentication Error: You must be logged in to make a request.");
           return;
       }
       setIsSubmitting(true);
@@ -218,12 +217,10 @@ export default function VisaImmigrationCertificatePage() {
             signedDocumentUrl: null,
             formData: form.getValues(),
         );
-        console.log({ title: "Request Sent",
-            description: "Your certification request has been sent to the admin for review and signature."
-         });
+        console.log("Request Sent: Your certification request has been sent to the admin for review and signature.");
       } catch (error) {
           console.error({ "Error sending request:", error });
-          console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
+          console.error("Request Failed: Could not send the request. Please try again.");
       } finally {
           setIsSubmitting(false);
       }
@@ -248,8 +245,7 @@ export default function VisaImmigrationCertificatePage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error({ variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors on this page before proceeding.", });
+        console.error("Validation Error: Please correct the errors on this page before proceeding.");
     }
   };
 
@@ -465,9 +461,7 @@ export default function VisaImmigrationCertificatePage() {
                                         );
                                       }}
                                       onFailure={() => {
-                                        console.error({ variant: "destructive", title: "Payment Failed",
-                                          description: "Payment was not completed. Please try again."
-                                         });
+                                        console.error("Payment Failed: Payment was not completed. Please try again.");
                                       }}
                                     />
                                   );

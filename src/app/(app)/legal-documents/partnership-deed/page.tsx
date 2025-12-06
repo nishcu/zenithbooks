@@ -500,11 +500,11 @@ export default function PartnershipDeedPage() {
   const handleDownloadPdf = async (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      console.error({ variant: "destructive", title: "Error", description: "Could not find the content to download." });
+      console.error("Error: Could not find the content to download.");
       return;
     }
 
-    console.log({ title: "Generating PDF...", description: "Your document is being prepared for download." });
+    console.log("Generating PDF...: Your document is being prepared for download.");
 
     const opt = {
       margin: 0.5,
@@ -567,13 +567,13 @@ export default function PartnershipDeedPage() {
         if(result?.suggestedClauses && result.suggestedClauses.length > 0) {
             const newClausesText = result.suggestedClauses.map(c => `\n\n${c.title.toUpperCase()}\n${c.clauseText}`).join('');
             form.setValue("extraClauses", (existingClauses || "") + newClausesText);
-            console.log({ title: "AI Clauses Added", description: "Suggested clauses have been appended."  });
+            console.log("AI Clauses Added: Suggested clauses have been appended.");
         } else {
-             console.error({ variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses."  });
+             console.error("Suggestion Failed: Could not generate clauses.");
         }
     } catch (error) {
         console.error(error);
-        console.error({ variant: "destructive", title: "Error", description: "An error occurred while generating clauses."  });
+        console.error("Error: An error occurred while generating clauses.");
     } finally {
         setIsSuggestingClauses(false);
     }
@@ -617,8 +617,7 @@ export default function PartnershipDeedPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error({ variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors on this page before proceeding.", });
+        console.error("Validation Error: Please correct the errors on this page before proceeding.");
     }
   };
 
@@ -926,14 +925,10 @@ export default function PartnershipDeedPage() {
                             userName={user?.displayName || ''}
                             onSuccess={(paymentId) => {
                               setShowDocument(true);
-                              console.log({ title: "Payment Successful",
-                                description: "Your documents are ready for download."
-                               });
+                              console.log("Payment Successful: Your documents are ready for download.");
                             }}
                             onFailure={() => {
-                              console.error({ variant: "destructive", title: "Payment Failed",
-                                description: "Payment was not completed. Please try again."
-                               });
+                              console.error("Payment Failed: Payment was not completed. Please try again.");
                             }}
                           />
                         </CardFooter>
@@ -1030,9 +1025,7 @@ export default function PartnershipDeedPage() {
                                     );
                                 }}
                                 onFailure={() => {
-                                    console.error({ variant: "destructive", title: "Payment Failed",
-                                        description: "Payment was not completed. Please try again."
-                                     });
+                                    console.error("Payment Failed: Payment was not completed. Please try again.");
                                 }}
                             />
                         ) : (

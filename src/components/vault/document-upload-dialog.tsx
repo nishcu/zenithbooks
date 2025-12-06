@@ -201,18 +201,7 @@ export function DocumentUploadDialog({
 
             // Success
             setUploadProgress(100);
-            console.log({ title: "Upload Successful",
-              description: "Your document has been uploaded successfully.",
-            );
-
-            // Reset form
-            setSelectedFile(null);
-            setDescription("");
-            setCategory(VAULT_CATEGORIES_LIST[0].value);
-            setUploadProgress(0);
-            
-            setIsUploading(false);
-            onUploadSuccess( });
+            console.log("Upload Successful: Your document has been uploaded successfully.");
           } catch (error) {
             console.error({ "Error saving document:", error });
             setError("Failed to save document metadata. Please try again.");

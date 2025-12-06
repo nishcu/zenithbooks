@@ -67,9 +67,7 @@ export default function StatutoryRegisters() {
 
     const handleGenerate = async () => {
         if (selectedRegisters.length === 0) {
-            console.error({ variant: "destructive", title: "No Selection",
-                description: "Please select at least one register to generate."
-             });
+            console.error("No Selection: Please select at least one register to generate.");
             return;
         }
 
@@ -105,15 +103,11 @@ export default function StatutoryRegisters() {
                 saveAs(zipBlob, "Statutory-Registers.zip");
             }
 
-            console.log({ title: "Generation Complete",
-                description: "Your files have been downloaded."
-             });
+            console.log("Generation Complete: Your files have been downloaded.");
 
         } catch (error) {
             console.error({ "Error generating files:", error });
-            console.error({ variant: "destructive", title: "Generation Failed",
-                description: "An error occurred while generating the files."
-             });
+            console.error("Generation Failed: An error occurred while generating the files.");
         }
     };
 
@@ -196,14 +190,10 @@ export default function StatutoryRegisters() {
                       userName={user?.displayName || ''}
                       onSuccess={(paymentId) => {
                         setShowDocument(true);
-                        console.log({ title: "Payment Successful",
-                          description: "You can now generate the registers."
-                         });
+                        console.log("Payment Successful: You can now generate the registers.");
                       }}
                       onFailure={() => {
-                        console.error({ variant: "destructive", title: "Payment Failed",
-                          description: "Payment was not completed. Please try again."
-                         });
+                        console.error("Payment Failed: Payment was not completed. Please try again.");
                       }}
                     />
                   ) : (

@@ -512,15 +512,13 @@ export default function BulkJournalEntryPage() {
             } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
                 entries = await parseExcel(selectedFile);
             } else {
-                console.error({ variant: "destructive", title: "Invalid File Type",
-                    description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)", });
+                console.error("Invalid File Type: Please upload a CSV or Excel file (.csv, .xlsx, .xls)");
                 setIsProcessing(false);
                 return;
             }
 
             if (entries.length === 0) {
-                console.error({ variant: "destructive", title: "No Entries Found",
-                    description: "The file appears to be empty or in an incorrect format.", });
+                console.error("No Entries Found: The file appears to be empty or in an incorrect format.");
                 setIsProcessing(false);
                 return;
             }
@@ -787,15 +785,13 @@ export default function BulkJournalEntryPage() {
 
     const handleCreateEntries = async () => {
         if (!accountingContext) {
-            console.error({ variant: "destructive", title: "Error",
-                description: "Accounting context not available.", });
+            console.error("Error: Accounting context not available.");
             return;
         }
 
         const validEntries = parsedEntries.filter(e => e.status === 'valid');
         if (validEntries.length === 0) {
-            console.error({ variant: "destructive", title: "No Valid Entries",
-                description: "Please fix errors before creating entries.", });
+            console.error("No Valid Entries: Please fix errors before creating entries.");
             return;
         }
 

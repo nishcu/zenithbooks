@@ -256,14 +256,10 @@ export default function AppointmentLetterPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            console.log({ title: "Payment Successful",
-                              description: "Your document is ready for download."
-                             });
+                            console.log("Payment Successful: Your document is ready for download.");
                           }}
                           onFailure={() => {
-                            console.error({ variant: "destructive", title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                             });
+                            console.error("Payment Failed: Payment was not completed. Please try again.");
                           }}
                         />
                       );
@@ -332,9 +328,7 @@ export default function AppointmentLetterPage() {
                   );
                 }}
                 onFailure={() => {
-                  console.error({ variant: "destructive", title: "Payment Failed",
-                    description: "Payment was not completed. Please try again."
-                   });
+                  console.error("Payment Failed: Payment was not completed. Please try again.");
                 }}
               />
             ) : (

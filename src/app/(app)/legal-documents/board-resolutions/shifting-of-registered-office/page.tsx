@@ -78,7 +78,7 @@ export default function ShiftingOfOfficePage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Shifting_Office_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" });,
+    onAfterPrint: () => console.log("title", "Print Complete");,
   );
 
   return (
@@ -168,14 +168,10 @@ export default function ShiftingOfOfficePage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            console.log({ title: "Payment Successful",
-                              description: "Your document is ready for download."
-                             });
+                            console.log("Payment Successful: Your document is ready for download.");
                           }}
                           onFailure={() => {
-                            console.error({ variant: "destructive", title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                             });
+                            console.error("Payment Failed: Payment was not completed. Please try again.");
                           }}
                         />
                       );

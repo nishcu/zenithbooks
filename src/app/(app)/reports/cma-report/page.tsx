@@ -151,9 +151,7 @@ export default function CmaReportGeneratorPage() {
     setGeneratedReport(cmaData);
     setActiveTab("report");
     setIsGenerating(false);
-    console.log({ title: "CMA Report Generated",
-        description: "Review the generated statements in the 'Generated CMA Report' tab."
-     });
+    console.log("CMA Report Generated: Review the generated statements in the 'Generated CMA Report' tab.");
   };
 
   const handleGetAiObservations = async () => {
@@ -299,15 +297,11 @@ export default function CmaReportGeneratorPage() {
     XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
     
     XLSX.writeFile(wb, `CMA_Audited_Financials_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    console.log({ title: "Template Downloaded", 
-      description: "Audited financials template has been downloaded. Fill in your actual data and upload."
-     });
+    console.log("Template Downloaded: Audited financials template has been downloaded. Fill in your actual data and upload.");
   }
 
   const handleCertificationRequest = () => {
-      console.log({ title: "Certification Request Sent",
-          description: "A request has been sent to the Admin for certification. You can track its status in the Admin panel."
-       });
+      console.log("Certification Request Sent: A request has been sent to the Admin for certification. You can track its status in the Admin panel.");
   }
 
   const handleExportToExcel = () => {
@@ -570,9 +564,7 @@ export default function CmaReportGeneratorPage() {
                                 handleGenerateReport();
                             }}
                             onFailure={() => {
-                                console.error({ variant: "destructive", title: "Payment Failed",
-                                    description: "Payment was not completed. Please try again."
-                                 });
+                                console.error("Payment Failed: Payment was not completed. Please try again.");
                             }}
                         />
                     ) : (

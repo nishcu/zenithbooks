@@ -63,10 +63,9 @@ export default function SuggestHsnPage() {
       );
       if (response?.hsnCode) {
         setResult(response);
-        console.log({ title: "HSN Code Suggestion Received!" });
+        console.log("title", "HSN Code Suggestion Received!");
       } else {
-        console.error({ variant: "destructive", title: "Suggestion Failed",
-          description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.", });
+        console.error("Suggestion Failed: Failed to get a suggestion. The AI model might be unavailable. Please try again later.");
       }
     } catch (e: any) {
       const errorMessage = e?.message || "An unexpected error occurred. Please check the console and try again.";

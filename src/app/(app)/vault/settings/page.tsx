@@ -52,8 +52,7 @@ export default function VaultSettingsPage() {
         }
       } catch (error) {
         console.error({ "Error loading preferences:", error });
-        console.error({ variant: "destructive", title: "Error",
-          description: "Failed to load notification preferences.", });
+        console.error("Error: Failed to load notification preferences.");
       } finally {
         setLoading(false);
       }
@@ -90,15 +89,10 @@ export default function VaultSettingsPage() {
         { merge: true }
       );
 
-      console.log({ title: "Preferences Saved",
-        description: "Your notification preferences have been updated.",
-      );
-      
-      setHasChanges(false });
+      console.log("Preferences Saved: Your notification preferences have been updated.");
     } catch (error) {
       console.error({ "Error saving preferences:", error });
-      console.error({ variant: "destructive", title: "Save Failed",
-        description: "Failed to save notification preferences. Please try again.", });
+      console.error("Save Failed: Failed to save notification preferences. Please try again.");
     } finally {
       setSaving(false);
     }

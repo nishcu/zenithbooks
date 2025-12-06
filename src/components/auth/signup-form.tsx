@@ -58,7 +58,7 @@ const formSchema = z.object({
   acceptPolicies: z.boolean().refine(val => val === true, {
     message: "You must accept the Terms & Conditions and Cancellation & Refund Policy"
   }),
-);
+});
 
 export function SignupForm() {
   const router = useRouter();
@@ -103,7 +103,7 @@ export function SignupForm() {
             );
           }
           
-          console.log({ title: "Signup Successful", description: "Welcome to ZenithBooks!"  });
+          console.log("Signup Successful: Welcome to ZenithBooks!");
           router.push("/dashboard");
         } else {
           // No redirect result, probably a direct page load

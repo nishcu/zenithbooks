@@ -37,28 +37,22 @@ export function ExportButtons({
 
   const handleExportPDF = async () => {
     if (!contentRef?.current) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "No content available for PDF export.", });
+      console.error("Error: No content available for PDF export.");
       return;
     }
 
     try {
       await exportToPDF(contentRef.current, { fileName );
-      console.log({ title: "PDF Exported",
-        description: "Your document has been exported successfully.",
-       });
+      console.log("PDF Exported: Your document has been exported successfully.");
     } catch (error) {
-      console.error({ variant: "destructive", title: "Export Failed",
-        description: "Failed to export PDF. Please try again.", });
+      console.error("Export Failed: Failed to export PDF. Please try again.");
     }
   };
 
   const handleExportCSV = () => {
     if (data && !Array.isArray(data)) {
       exportToCSV(data, { fileName );
-      console.log({ title: "CSV Exported",
-        description: "Your data has been exported successfully.",
-       });
+      console.log("CSV Exported: Your data has been exported successfully.");
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -84,21 +78,16 @@ export function ExportButtons({
       );
 
       exportToCSV({ headers, rows }, { fileName );
-      console.log({ title: "CSV Exported",
-        description: "Your data has been exported successfully.",
-       });
+      console.log("CSV Exported: Your data has been exported successfully.");
     } else {
-      console.error({ variant: "destructive", title: "Error",
-        description: "No data available for CSV export.", });
+      console.error("Error: No data available for CSV export.");
     }
   };
 
   const handleExportExcel = () => {
     if (data) {
       exportToExcel(data, { fileName );
-      console.log({ title: "Excel Exported",
-        description: "Your data has been exported successfully.",
-       });
+      console.log("Excel Exported: Your data has been exported successfully.");
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -124,12 +113,9 @@ export function ExportButtons({
       );
 
       exportToExcel({ headers, rows }, { fileName );
-      console.log({ title: "Excel Exported",
-        description: "Your data has been exported successfully.",
-       });
+      console.log("Excel Exported: Your data has been exported successfully.");
     } else {
-      console.error({ variant: "destructive", title: "Error",
-        description: "No data available for Excel export.", });
+      console.error("Error: No data available for Excel export.");
     }
   };
 

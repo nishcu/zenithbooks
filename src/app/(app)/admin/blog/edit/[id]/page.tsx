@@ -165,8 +165,7 @@ export default function EditBlogPostPage() {
                 const docSnap = await getDoc(docRef);
 
                 if (!docSnap.exists()) {
-                    console.error({ variant: "destructive", title: "Post Not Found",
-                        description: "The blog post you're trying to edit could not be found.", });
+                    console.error("Post Not Found: The blog post you're trying to edit could not be found.");
                     router.push('/admin/blog');
                     return;
                 }
@@ -194,8 +193,7 @@ export default function EditBlogPostPage() {
 
             } catch (error) {
                 console.error({ 'Error loading post:', error });
-                console.error({ variant: "destructive", title: "Error",
-                    description: "Failed to load the blog post.", });
+                console.error("Error: Failed to load the blog post.");
                 router.push('/admin/blog');
             } finally {
                 setIsLoading(false);
@@ -272,8 +270,7 @@ export default function EditBlogPostPage() {
             const success = await updateBlogPost(postId, postData);
 
             if (!success) {
-                console.error({ variant: "destructive", title: "Update Failed",
-                    description: "Failed to update the blog post. Please try again.", });
+                console.error("Update Failed: Failed to update the blog post. Please try again.");
                 return;
             }
 
@@ -287,8 +284,7 @@ export default function EditBlogPostPage() {
 
         } catch (error) {
             console.error({ 'Error updating post:', error });
-            console.error({ variant: "destructive", title: "Error",
-                description: "Failed to update the blog post. Please try again.", });
+            console.error("Error: Failed to update the blog post. Please try again.");
         } finally {
             setIsSaving(false);
             setIsUploading(false);

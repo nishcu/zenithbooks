@@ -127,8 +127,7 @@ export default function AdvanceTax() {
 
   const calculateTax = () => {
     if (estimatedIncome <= 0) {
-        console.error({ variant: "destructive", title: "Invalid Input",
-            description: "Please enter a valid estimated income.", });
+        console.error("Invalid Input: Please enter a valid estimated income.");
         return;
     }
     

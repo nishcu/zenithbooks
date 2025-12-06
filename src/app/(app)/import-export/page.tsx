@@ -70,8 +70,7 @@ export default function ImportExportPage() {
     const handleTallyImport = async (importType: 'vouchers' | 'masters') => {
         const fileToImport = importType === 'vouchers' ? tallyVoucherFile : tallyMasterFile;
         if (!fileToImport) {
-            console.error({ variant: "destructive", title: "No File Selected",
-                description: "Please select a Tally XML file to import.", });
+            console.error("No File Selected: Please select a Tally XML file to import.");
             return;
         }
 
@@ -196,7 +195,7 @@ export default function ImportExportPage() {
             ])
         );
         exportToExcel({ headers, rows }, { fileName: "Day_Book", includeDate: true );
-        console.log({ title: "Export Successful", description: "Day Book has been exported successfully."  });
+        console.log("Export Successful: Day Book has been exported successfully.");
     };
 
     const exportGeneralLedger = async () => {
@@ -229,7 +228,7 @@ export default function ImportExportPage() {
         );
 
         exportToExcel(sheets, { fileName: "General_Ledger", includeDate: true );
-        console.log({ title: "Export Successful", description: "General Ledger has been exported successfully."  });
+        console.log("Export Successful: General Ledger has been exported successfully.");
     };
 
     const exportTrialBalance = async () => {
@@ -254,7 +253,7 @@ export default function ImportExportPage() {
         ]);
 
         exportToCSV({ headers, rows }, { fileName: "Trial_Balance", includeDate: true );
-        console.log({ title: "Export Successful", description: "Trial Balance has been exported successfully."  });
+        console.log("Export Successful: Trial Balance has been exported successfully.");
     };
 
     const exportSalesInvoices = async () => {
@@ -275,7 +274,7 @@ export default function ImportExportPage() {
             ];
         );
         exportToExcel({ headers, rows }, { fileName: "Sales_Invoices", includeDate: true );
-        console.log({ title: "Export Successful", description: "Sales Invoices have been exported successfully."  });
+        console.log("Export Successful: Sales Invoices have been exported successfully.");
     };
 
     const exportPurchaseBills = async () => {
@@ -296,7 +295,7 @@ export default function ImportExportPage() {
             ];
         );
         exportToExcel({ headers, rows }, { fileName: "Purchase_Bills", includeDate: true );
-        console.log({ title: "Export Successful", description: "Purchase Bills have been exported successfully."  });
+        console.log("Export Successful: Purchase Bills have been exported successfully.");
     };
 
     const exportParties = async () => {
@@ -326,7 +325,7 @@ export default function ImportExportPage() {
             v.pincode || ""
         ]);
         exportToCSV({ headers, rows: [...customerRows, ...vendorRows] }, { fileName: "Parties", includeDate: true );
-        console.log({ title: "Export Successful", description: "Customer & Vendor list has been exported successfully."  });
+        console.log("Export Successful: Customer & Vendor list has been exported successfully.");
     };
 
     const exportItems = async () => {
@@ -342,7 +341,7 @@ export default function ImportExportPage() {
             item.stock || 0
         ]);
         exportToCSV({ headers, rows }, { fileName: "Stock_Items", includeDate: true );
-        console.log({ title: "Export Successful", description: "Stock Item list has been exported successfully."  });
+        console.log("Export Successful: Stock Item list has been exported successfully.");
     };
 
     // Template download functions
@@ -382,7 +381,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "parties_import_template.xlsx");
-        console.log({ title: "Template Downloaded", description: "Parties import template has been downloaded."  });
+        console.log("Template Downloaded: Parties import template has been downloaded.");
     };
 
     const downloadItemsTemplate = () => {
@@ -400,7 +399,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "items_import_template.xlsx");
-        console.log({ title: "Template Downloaded", description: "Items import template has been downloaded."  });
+        console.log("Template Downloaded: Items import template has been downloaded.");
     };
 
     const downloadTrialBalanceTemplate = () => {
@@ -414,7 +413,7 @@ export default function ImportExportPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log({ title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded."  });
+        console.log("Template Downloaded: Trial Balance CSV template has been downloaded.");
     };
 
     return (

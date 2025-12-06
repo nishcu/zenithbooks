@@ -388,8 +388,7 @@ export default function VoiceInvoiceEntryPage() {
               })
               .catch((error) => {
                 console.error({ 'Microphone permission denied:', error });
-                console.error({ variant: "destructive", title: "Microphone Access Required",
-                  description: "Please allow microphone access to use voice-to-invoice feature.", });
+                console.error("Microphone Access Required: Please allow microphone access to use voice-to-invoice feature.");
               );
           } else {
             // Fallback for older browsers
@@ -398,12 +397,10 @@ export default function VoiceInvoiceEntryPage() {
 
         } catch (error) {
           console.error({ 'Error initializing speech recognition:', error });
-          console.error({ variant: "destructive", title: "Speech Recognition Unavailable",
-            description: "Speech recognition could not be initialized. Please try a different browser.", });
+          console.error("Speech Recognition Unavailable: Speech recognition could not be initialized. Please try a different browser.");
         }
       } else {
-        console.error({ variant: "destructive", title: "Browser Not Supported",
-          description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.", });
+        console.error("Browser Not Supported: Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.");
       }
     }
 
@@ -436,8 +433,7 @@ export default function VoiceInvoiceEntryPage() {
 
   const startListening = () => {
     if (!recognition) {
-      console.error({ variant: "destructive", title: "Speech Recognition Not Available",
-        description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.", });
+      console.error("Speech Recognition Not Available: Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.");
       return;
     }
 
@@ -468,8 +464,7 @@ export default function VoiceInvoiceEntryPage() {
         } catch (error) {
           console.error({ 'Error starting recognition after delay:', error });
           setIsListening(false);
-          console.error({ variant: "destructive", title: "Speech Recognition Failed",
-            description: "Could not start speech recognition. Please try again.", });
+          console.error("Speech Recognition Failed: Could not start speech recognition. Please try again.");
         }
       }, 100);
 
@@ -480,8 +475,7 @@ export default function VoiceInvoiceEntryPage() {
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          console.error({ variant: "destructive", title: "Recognition Busy",
-            description: "Speech recognition is already running. Please wait.", });
+          console.error("Recognition Busy: Speech recognition is already running. Please wait.");
         } else {
           console.error({ variant: "destructive", title: "Speech Recognition Error",
             description: error.message || "Failed to start speech recognition.", });
@@ -506,8 +500,7 @@ export default function VoiceInvoiceEntryPage() {
 
   const processVoiceInput = useCallback(() => {
     if (!transcript.trim()) {
-      console.error({ variant: "destructive", title: "No Input",
-        description: "Please speak to create an invoice.", });
+      console.error("No Input: Please speak to create an invoice.");
       return;
     }
     
@@ -562,13 +555,13 @@ export default function VoiceInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected."  });
+        console.error("Invalid Selection: Please ensure a customer is selected.");
         return;
     }
     
     // Validate amount
     if (!values.amount || values.amount <= 0) {
-        console.error({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero."  });
+        console.error("Invalid Amount: Please enter a valid amount greater than zero.");
         return;
     }
     

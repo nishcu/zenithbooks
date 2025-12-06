@@ -324,11 +324,11 @@ export default function NetWorthCertificatePage() {
                     form.reset(data.formData);
                     console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
                 } else {
-                    console.error({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
+                    console.error("Unauthorized: You don't have permission to access this document.");
                     router.push('/ca-certificates/net-worth');
                 }
             } else {
-                 console.error({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
+                 console.error("Not Found: The requested document draft could not be found.");
                  router.push('/ca-certificates/net-worth');
             }
             setIsLoading(false);
@@ -379,12 +379,9 @@ export default function NetWorthCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(4);
-        console.log({ title: "Draft Ready for Preview",
-            description: "Review the generated certificate below.",
-         });
+        console.log("Draft Ready for Preview: Review the generated certificate below.");
     } else {
-         console.error({ variant: "destructive", title: "Validation Error",
-            description: "Please fill all required fields before generating the draft.", });
+         console.error("Validation Error: Please fill all required fields before generating the draft.");
     }
   }
 
@@ -569,9 +566,7 @@ export default function NetWorthCertificatePage() {
                                         );
                                       }}
                                       onFailure={() => {
-                                        console.error({ variant: "destructive", title: "Payment Failed",
-                                          description: "Payment was not completed. Please try again."
-                                         });
+                                        console.error("Payment Failed: Payment was not completed. Please try again.");
                                       }}
                                     />
                                   );

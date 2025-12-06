@@ -218,7 +218,7 @@ export default function JournalVoucherPage() {
     const originalVoucher = allVouchers.find((v: JournalVoucher | null) => v && v.id === voucherId);
 
     if (!originalVoucher) {
-      console.error({ variant: "destructive", title: "Error", description: "Original journal voucher not found."  });
+      console.error("Error: Original journal voucher not found.");
       return;
     }
 
@@ -249,7 +249,7 @@ export default function JournalVoucherPage() {
   const handleVoucherAction = (action: string, voucher: JournalVoucher) => {
     if (action === "Delete") {
       if (voucher.reverses) {
-        console.error({ variant: "destructive", title: "Cannot Delete", description: "This is a reversal entry and cannot be deleted."  });
+        console.error("Cannot Delete: This is a reversal entry and cannot be deleted.");
         return;
       }
       handleDeleteJournalVoucher(voucher.id);
@@ -257,7 +257,7 @@ export default function JournalVoucherPage() {
       setSelectedVoucher(voucher);
     } else if (action === "Edit") {
       if (voucher.reverses) {
-        console.error({ variant: "destructive", title: "Cannot Edit", description: "Reversal entries cannot be edited."  });
+        console.error("Cannot Edit: Reversal entries cannot be edited.");
         return;
       }
       setEditingVoucher(voucher);
@@ -308,7 +308,7 @@ export default function JournalVoucherPage() {
 
   const handleSaveVoucher = async () => {
     if (!date) {
-      console.error({ variant: "destructive", title: "Missing Details", description: "Please provide a date."  });
+      console.error("Missing Details: Please provide a date.");
       return;
     }
 
@@ -316,7 +316,7 @@ export default function JournalVoucherPage() {
     const totalCredits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.credit || "0"), 0);
 
     if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
-      console.error({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero."  });
+      console.error("Unbalanced Entry: Debit and credit totals must match and be greater than zero.");
       return;
     }
 
@@ -339,15 +339,11 @@ export default function JournalVoucherPage() {
     try {
       if (editingVoucher) {
         await updateJournalVoucher(editingVoucher.id, voucherData);
-        console.log({ title: "Voucher Updated",
-          description: "Your journal voucher has been updated successfully.",
-         });
+        console.log("Voucher Updated: Your journal voucher has been updated successfully.");
       } else {
         const newVoucherId = `JV-${Date.now()}`;
         await addJournalVoucher({ id: newVoucherId, ...voucherData );
-        console.log({ title: "Voucher Saved",
-          description: "Your journal voucher has been saved successfully.",
-         });
+        console.log("Voucher Saved: Your journal voucher has been saved successfully.");
       }
 
       handleDialogClose(false);

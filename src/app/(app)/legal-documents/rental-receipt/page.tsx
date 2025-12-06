@@ -41,9 +41,7 @@ export default function RentalReceiptPage() {
 
     const handleGenerate = () => {
         if (!tenantName || !landlordName || !rentAmount || !address) {
-            console.error({ variant: "destructive", title: "Missing Information",
-                description: "Please fill in all the required fields to generate the receipt."
-             });
+            console.error("Missing Information: Please fill in all the required fields to generate the receipt.");
             return;
         }
         
@@ -55,9 +53,7 @@ export default function RentalReceiptPage() {
         
         // No payment required - show receipt directly
         setShowReceipt(true);
-        console.log({ title: "Receipt Generated",
-            description: "Your rental receipt has been generated and is ready for download."
-         });
+        console.log("Receipt Generated: Your rental receipt has been generated and is ready for download.");
         
         // Scroll to receipt
         setTimeout(() => {
@@ -69,9 +65,7 @@ export default function RentalReceiptPage() {
         // After successful payment, show the receipt
         setShowReceipt(true);
         
-        console.log({ title: "Payment Successful",
-            description: "Your rental receipt has been generated and is ready for download."
-         });
+        console.log("Payment Successful: Your rental receipt has been generated and is ready for download.");
         
         // Scroll to receipt
         setTimeout(() => {
@@ -141,9 +135,7 @@ export default function RentalReceiptPage() {
                                     userName={user?.displayName || ''}
                                     onSuccess={handlePaymentSuccessCallback}
                                     onFailure={() => {
-                                        console.error({ variant: "destructive", title: "Payment Failed",
-                                            description: "Payment was not completed. Please try again."
-                                         });
+                                        console.error("Payment Failed: Payment was not completed. Please try again.");
                                     }}
                                 />
                             )}

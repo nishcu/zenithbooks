@@ -106,13 +106,10 @@ export default function AdminBlog() {
       const updatedPosts = await loadBlogPosts();
       setPosts(updatedPosts);
 
-      console.log({ title: "Post deleted",
-        description: "The blog post has been deleted successfully.",
-       });
+      console.log("Post deleted: The blog post has been deleted successfully.");
     } catch (error) {
       console.error({ 'Error deleting post:', error });
-      console.error({ variant: "destructive", title: "Error",
-        description: "Failed to delete the blog post.", });
+      console.error("Error: Failed to delete the blog post.");
     } finally {
       setIsLoading(null);
       setSelectedPost(null);

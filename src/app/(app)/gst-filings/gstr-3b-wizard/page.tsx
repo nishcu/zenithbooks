@@ -330,9 +330,7 @@ export default function Gstr3bWizardPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      console.log({ title: "JSON Generated",
-        description: "Your GSTR-3B JSON file has been downloaded successfully.",
-       });
+      console.log("JSON Generated: Your GSTR-3B JSON file has been downloaded successfully.");
     } catch (error: any) {
       console.error({ variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the JSON file.", });
@@ -342,14 +340,11 @@ export default function Gstr3bWizardPage() {
   const handleGeneratePdf = async () => {
     try {
       if (!reportRef.current) {
-        console.error({ variant: "destructive", title: "Error",
-          description: "Could not find the report content to generate PDF.", });
+        console.error("Error: Could not find the report content to generate PDF.");
         return;
       }
 
-      console.log({ title: "Generating PDF...",
-        description: "Your GSTR-3B PDF is being generated.",
-       });
+      console.log("Generating PDF...: Your GSTR-3B PDF is being generated.");
 
       const opt = {
         margin: [10, 10, 10, 10],
@@ -362,9 +357,7 @@ export default function Gstr3bWizardPage() {
 
       await html2pdf().set(opt).from(reportRef.current).save();
 
-      console.log({ title: "PDF Generated",
-        description: "Your GSTR-3B PDF has been downloaded successfully.",
-       });
+      console.log("PDF Generated: Your GSTR-3B PDF has been downloaded successfully.");
     } catch (error: any) {
       console.error({ variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the PDF file.", });

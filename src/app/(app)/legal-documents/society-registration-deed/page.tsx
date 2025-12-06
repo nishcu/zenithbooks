@@ -99,7 +99,7 @@ export default function SocietyRegistrationDeed() {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      console.log({ title: "Details Saved", description: "Proceeding to the next step."  });
+      console.log("Details Saved: Proceeding to the next step.");
     }
   };
 
@@ -201,14 +201,10 @@ export default function SocietyRegistrationDeed() {
                       userName={user?.displayName || ''}
                       onSuccess={(paymentId) => {
                         setShowDocument(true);
-                        console.log({ title: "Payment Successful",
-                          description: "Your document is ready for download."
-                         });
+                        console.log("Payment Successful: Your document is ready for download.");
                       }}
                       onFailure={() => {
-                        console.error({ variant: "destructive", title: "Payment Failed",
-                          description: "Payment was not completed. Please try again."
-                         });
+                        console.error("Payment Failed: Payment was not completed. Please try again.");
                       }}
                     />
                   );

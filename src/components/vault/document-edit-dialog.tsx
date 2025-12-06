@@ -69,14 +69,12 @@ export function DocumentEditDialog({
 
   const handleSave = async () => {
     if (!user || !document) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "User or document not found.", });
+      console.error("Error: User or document not found.");
       return;
     }
 
     if (!fileName.trim()) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "Document name is required.", });
+      console.error("Error: Document name is required.");
       return;
     }
 
@@ -95,16 +93,10 @@ export function DocumentEditDialog({
         lastUpdated: serverTimestamp(),
       );
 
-      console.log({ title: "Document Updated",
-        description: "Document metadata has been updated successfully.",
-      );
-
-      onSave();
-      onOpenChange(false });
+      console.log("Document Updated: Document metadata has been updated successfully.");
     } catch (error) {
       console.error({ "Error updating document:", error });
-      console.error({ variant: "destructive", title: "Update Failed",
-        description: "Failed to update document. Please try again.", });
+      console.error("Update Failed: Failed to update document. Please try again.");
     } finally {
       setIsSaving(false);
     }

@@ -177,9 +177,7 @@ export default function PartiesBulkUploadPage() {
   const handleDownloadTemplate = () => {
     const workbook = buildTemplateWorkbook();
     XLSX.writeFile(workbook, "parties_import_template.xlsx");
-    console.log({ title: "Template downloaded",
-      description: "Fill the sheet and upload it to import customers and vendors.",
-     });
+    console.log("Template downloaded: Fill the sheet and upload it to import customers and vendors.");
   };
 
   const parseFile = (file: File) => {
@@ -259,8 +257,7 @@ export default function PartiesBulkUploadPage() {
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      console.error({ variant: "destructive", title: "No rows to import",
-        description: "Fix validation errors or upload a file first.", });
+      console.error("No rows to import: Fix validation errors or upload a file first.");
       return;
     }
 

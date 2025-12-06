@@ -84,9 +84,7 @@ export default function UserManagementPage() {
 
   const handleSendInvite = async () => {
     if (!newUserEmail || !newUserRole) {
-        console.error({ variant: "destructive", title: "Missing Information",
-            description: "Please enter an email and select a role."
-         });
+        console.error("Missing Information: Please enter an email and select a role.");
         return;
     }
 

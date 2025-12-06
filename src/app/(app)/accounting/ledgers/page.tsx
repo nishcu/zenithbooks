@@ -322,14 +322,12 @@ export default function LedgersPage() {
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      console.error({ variant: "destructive", title: "Account Required",
-        description: "Please select an account first.", });
+      console.error("Account Required: Please select an account first.");
       return;
     }
     
     if (!fromDate || !toDate) {
-      console.error({ variant: "destructive", title: "Date Range Required",
-        description: "Please select both from and to dates.", });
+      console.error("Date Range Required: Please select both from and to dates.");
       return;
     }
     
@@ -349,8 +347,7 @@ export default function LedgersPage() {
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "Please select an account to export.", });
+      console.error("Error: Please select an account to export.");
       return;
     }
 
@@ -448,8 +445,7 @@ export default function LedgersPage() {
       );
     } catch (error) {
       console.error({ "Error exporting PDF:", error });
-      console.error({ variant: "destructive", title: "Export Failed",
-        description: "An error occurred while exporting the PDF. Please try again.", });
+      console.error("Export Failed: An error occurred while exporting the PDF. Please try again.");
     }
   };
 

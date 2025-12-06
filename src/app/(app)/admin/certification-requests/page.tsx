@@ -122,8 +122,7 @@ export default function AdminCertificationRequests() {
 
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
-      console.error({ variant: "destructive", title: "Approval Failed",
-        description: "Invalid request data. User information is missing.", });
+      console.error("Approval Failed: Invalid request data. User information is missing.");
       return;
     }
 
@@ -181,8 +180,7 @@ export default function AdminCertificationRequests() {
       setSelectedRequest(null);
     } catch (error) {
       console.error({ "Error approving certification request:", error });
-      console.error({ variant: "destructive", title: "Approval Failed",
-        description: "Failed to approve the certification request. Please try again.", });
+      console.error("Approval Failed: Failed to approve the certification request. Please try again.");
     } finally {
       setIsLoading(null);
     }
@@ -190,8 +188,7 @@ export default function AdminCertificationRequests() {
 
   const handleDownloadDraft = async (request: Request) => {
     if (!request.certificateData) {
-      console.error({ variant: "destructive", title: "Download Failed",
-        description: "Certificate data is not available for this draft.", });
+      console.error("Download Failed: Certificate data is not available for this draft.");
       return;
     }
 
@@ -207,9 +204,7 @@ export default function AdminCertificationRequests() {
         gstin: "GSTIN of CA Firm",
         pan: "PAN of CA Firm"
       };
-      console.log({ title: "Generating PDF...",
-        description: "Your draft certificate is being prepared for download.",
-       });
+      console.log("Generating PDF...: Your draft certificate is being prepared for download.");
 
       const data = request.certificateData;
       const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -416,13 +411,10 @@ export default function AdminCertificationRequests() {
       // Close the print window
       printWindow.close();
 
-      console.log({ title: "Draft Downloaded",
-        description: "Your draft certificate has been downloaded successfully.",
-       });
+      console.log("Draft Downloaded: Your draft certificate has been downloaded successfully.");
     } catch (error) {
       console.error({ "Draft download error:", error });
-      console.error({ variant: "destructive", title: "Download Failed",
-        description: "Failed to generate draft PDF. Please try again or contact support.", });
+      console.error("Download Failed: Failed to generate draft PDF. Please try again or contact support.");
     }
   };
 

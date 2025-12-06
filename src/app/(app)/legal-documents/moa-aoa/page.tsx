@@ -99,7 +99,7 @@ export default function MoaAoaPage() {
             const response = await generateMoaObjectsAction(values);
             if (response?.mainObjects) {
                 setResult(response.mainObjects);
-                console.log({ title: "MOA Objects Generated!" });
+                console.log("title", "MOA Objects Generated!");
             } else {
                  console.error({ variant: "destructive", title: "Generation Failed"  });
             }
@@ -197,14 +197,10 @@ export default function MoaAoaPage() {
                     userName={user?.displayName || ''}
                     onSuccess={(paymentId) => {
                       setShowDocument(true);
-                      console.log({ title: "Payment Successful",
-                        description: "Your document is ready for download."
-                       });
+                      console.log("Payment Successful: Your document is ready for download.");
                     }}
                     onFailure={() => {
-                      console.error({ variant: "destructive", title: "Payment Failed",
-                        description: "Payment was not completed. Please try again."
-                       });
+                      console.error("Payment Failed: Payment was not completed. Please try again.");
                     }}
                   />
                 ) : (
