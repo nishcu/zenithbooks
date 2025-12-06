@@ -514,8 +514,7 @@ export default function BulkJournalEntryPage() {
             } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
                 entries = await parseExcel(selectedFile);
             } else {
-                const { toast } = require("@/hooks/use-toast");
-toast({
+                toast({
   variant: "destructive",
   title: "Invalid File Type: Please upload a CSV or Excel file (.csv, .xlsx, .xls)",
 });

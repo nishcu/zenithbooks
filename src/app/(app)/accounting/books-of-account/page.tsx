@@ -496,9 +496,9 @@ export default function BooksOfAccountPage() {
         let totalGST = 0;
         let grandTotal = 0;
 
-        const salesVouchers = vouchers.filter(v => 
+        const salesVouchers = vouchers.filter(v =>
             v.id && (v.id.startsWith("INV-") || v.id.startsWith("SI-")) && !v.reverses
-        });
+        );
 
         salesVouchers.forEach(v => {
             // Find sales account line

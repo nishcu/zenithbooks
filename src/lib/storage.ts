@@ -113,7 +113,7 @@ export async function uploadBlogImage(
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               console.log('Blog image uploaded successfully:', downloadURL);
-              resolve(downloadURL });
+              resolve(downloadURL);
             } catch (error) {
               console.error("Error getting download URL", error );
               reject(new Error('Failed to get image URL. Please try again.'));
@@ -125,7 +125,7 @@ export async function uploadBlogImage(
       // Simple upload without progress tracking
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log({ 'Blog image uploaded successfully:', downloadURL);
+      console.log('Blog image uploaded successfully:', downloadURL);
       console.log('Storage ref path:', storageRef.fullPath });
       return downloadURL;
     }

@@ -63,7 +63,7 @@ export default function NewBlogPostPage() {
             category: "",
             contentBlocks: [{ value: "" }],
         },
-    );
+    });
 
     const { fields, append, remove } = useFieldArray({
       control: form.control,
