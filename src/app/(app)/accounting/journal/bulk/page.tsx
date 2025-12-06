@@ -523,8 +523,7 @@ export default function BulkJournalEntryPage() {
             }
 
             if (entries.length === 0) {
-                const { toast } = require("@/hooks/use-toast");
-toast({
+                toast({
   variant: "destructive",
   title: "No Entries Found: The file appears to be empty or in an incorrect format.",
 });

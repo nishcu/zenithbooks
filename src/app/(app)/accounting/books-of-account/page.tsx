@@ -518,9 +518,9 @@ export default function BooksOfAccountPage() {
             grandTotal += total;
 
             // Find customer/party
-            const customerLine = v.lines.find(l => 
+            const customerLine = v.lines.find(l =>
                 customers.some(customer => customer.id === String(l.account).trim())
-            });
+            );
             const customerName = customerLine ? getAccountName(String(customerLine.account).trim()) : 
                 (v.narration?.includes('to') ? v.narration.split('to')[1]?.trim() : '');
 

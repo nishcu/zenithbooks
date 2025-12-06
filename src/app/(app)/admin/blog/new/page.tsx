@@ -43,7 +43,7 @@ const formSchema = z.object({
   authorTitle: z.string().min(2, "Author title/experience is required."),
   category: z.string().min(2, "Category is required."),
   
-  image: z.custom<File>((val) => val instanceof File, "Featured image is required."),
+  image: z.instanceof(File, "Featured image is required."),
 
   contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required."),
 });
@@ -68,7 +68,7 @@ export default function NewBlogPostPage() {
     const { fields, append, remove } = useFieldArray({
       control: form.control,
       name: "contentBlocks",
-    );
+    });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -106,7 +106,7 @@ export default function NewBlogPostPage() {
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 published: true,
-                slug: values.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+                slug: values.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
             };
 
             // Save to Firebase
@@ -116,17 +116,11 @@ export default function NewBlogPostPage() {
 
         } catch (error: any) {
             const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Blog creation error",
-  description: error ,
-});
-            const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Upload Failed",
-  description: error.message || "Failed to upload image. Please try again.",
-});
+            toast({
+              variant: "destructive",
+              title: "Blog creation error",
+              description: error instanceof Error ? error.message : String(error),
+            });
         } finally {
             setIsLoading(false);
         }
@@ -135,7 +129,7 @@ toast({
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
              <Link href="/admin/blog" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="size-4" />
+                <ArrowLeft className="h-4 w-4" />
                 Back to Blog Management
             </Link>
             <div className="text-center">
@@ -225,7 +219,7 @@ toast({
                                         onClick={() => remove(index)}
                                         disabled={fields.length <= 1}
                                     >
-                                        <Trash2 className="size-4 text-destructive" />
+                                        <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </div>
                             ))}
