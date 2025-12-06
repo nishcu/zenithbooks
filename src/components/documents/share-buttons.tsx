@@ -112,7 +112,7 @@ export function ShareButtons({
         const html2pdfModule = await import("html2pdf.js");
         const pdfBlob = await html2pdfModule.default().set(opt).from(element).outputPdf('blob');
 
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' );
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
         // Check if we can share the file
         if (navigator.canShare({ files: [file] })) {

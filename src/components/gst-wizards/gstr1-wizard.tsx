@@ -130,7 +130,7 @@ export default function Gstr1Wizard() {
           b2b.push({
             ...invoiceData,
             gstin: customer.gstin,
-          );
+          });
         } else {
           // B2C: Customer doesn't have GSTIN
           if (invoiceValue > 250000) {

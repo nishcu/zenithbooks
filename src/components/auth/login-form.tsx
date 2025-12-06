@@ -81,9 +81,9 @@ export function LoginForm() {
       password: "",
       acceptPolicies: false,
     },
-  }
+  });
 
-   useEffect(() => {
+  useEffect(() => {
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);

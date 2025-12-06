@@ -121,7 +121,7 @@ export const assignAccountCode = async (party: Party, userId: string) => {
         name: party.name,
         type: "Current Asset",
         userId: userId,
-    );
+    },
 
     // 2. Update the party with the new account code
     const partyDocRef = doc(db, "customers", party.id);
