@@ -117,7 +117,12 @@ export default function MyDocumentsPage() {
         if (baseUrl) {
             router.push(`${baseUrl}?id=${doc.id}`);
         } else {
-            console.error({ variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.'  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Cannot Edit",
+  description: 'This document type does not support editing.',
+});
         }
     }
 
@@ -126,8 +131,18 @@ export default function MyDocumentsPage() {
             await deleteDoc(doc(db, "userDocuments", docId));
             console.log({ title: "Draft Deleted", description: `"${docName}" has been removed.`  });
         } catch (error) {
-            console.error({ variant: "destructive", title: 'Error', description: 'Could not delete the document draft.'  });
-            console.error({ "Error deleting document: ", error });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: 'Could not delete the document draft.',
+});
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: ,
+});
         }
     };
 
@@ -191,8 +206,17 @@ export default function MyDocumentsPage() {
 
                 console.log("PDF Downloaded: Your certified document has been downloaded successfully.");
             } catch (error) {
-                console.error({ "PDF generation error:", error });
-                console.error("Download Failed: Failed to generate PDF. Please try again or contact support.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "PDF generation error",
+  description: error ,
+});
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Download Failed: Failed to generate PDF. Please try again or contact support.",
+});
             }
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');

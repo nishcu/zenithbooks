@@ -61,7 +61,7 @@ export default function ShareCodeManagementPage() {
         setLoading(false);
       },
       (error) => {
-        console.error({ "Error fetching share codes:", error });
+        console.error("Error fetching share codes", error );
         console.error("Error: Failed to load share codes. Please try again.");
         setLoading(false);
       }
@@ -77,7 +77,7 @@ export default function ShareCodeManagementPage() {
       await deleteDoc(doc(db, "vaultShareCodes", codeId));
       console.log("Share Code Deleted: The share code has been deleted and access is revoked.");
     } catch (error) {
-      console.error({ "Error deleting share code:", error });
+      console.error("Error deleting share code", error );
       console.error("Delete Failed: Failed to delete share code. Please try again.");
     }
   };

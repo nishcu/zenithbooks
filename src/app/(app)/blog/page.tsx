@@ -40,7 +40,7 @@ function getStoredBlogPosts() {
 
         return posts;
     } catch (error) {
-        console.error({ 'Error loading blog posts from localStorage:', error });
+        console.error("Error loading blog posts from localStorage", error );
         return [];
     }
 }
@@ -53,7 +53,7 @@ function saveBlogPostsDebug(posts: any[]) {
         localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
         console.log({ 'Blog page: Saved posts to localStorage:', posts.length, 'posts' });
     } catch (error) {
-        console.error({ 'Error saving blog posts to localStorage:', error });
+        console.error("Error saving blog posts to localStorage", error );
     }
 }
 
@@ -73,7 +73,7 @@ async function migrateBlogImages() {
         // Update state
         window.location.reload(); // Simple way to refresh and show migrated images
     } catch (error) {
-        console.error({ 'Error during image migration:', error });
+        console.error("Error during image migration", error );
         alert('Failed to migrate images. Check console for details.');
     }
 }
@@ -113,7 +113,7 @@ export default function BlogPage() {
                 // Set posts (empty array if no posts found)
                 setBlogPosts(posts });
             } catch (error) {
-                console.error({ 'Error loading blog posts:', error });
+                console.error("Error loading blog posts", error );
                 // Keep sample posts on error
             } finally {
                 setIsLoading(false);
@@ -318,7 +318,7 @@ export default function BlogPage() {
                                         data-ai-hint={post.imageHint}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         onError={(e) => {
-                                            console.error({ 'Failed to load blog image:', post.imageUrl, 'for post:', post.id });
+                                            console.error("Failed to load blog image", post.imageUrl, 'for post:', post.id );
                                             // Fallback to a default image
                                             const target = e.target as HTMLImageElement;
                                             target.src = 'https://picsum.photos/800/400?random=fallback';

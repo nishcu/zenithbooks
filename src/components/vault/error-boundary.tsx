@@ -28,7 +28,7 @@ export class VaultErrorBoundary extends React.Component<ErrorBoundaryProps, Erro
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error({ "Vault Error:", error, errorInfo });
+    console.error("Vault Error", error, errorInfo );
   }
 
   handleReset = () => {

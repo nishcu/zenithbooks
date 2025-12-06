@@ -84,7 +84,11 @@ export default function RapidInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error("Invalid Selection: Please ensure a customer is selected.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Selection: Please ensure a customer is selected.",
+});
         return;
     }
     
@@ -138,7 +142,12 @@ export default function RapidInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save invoice", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save invoice",
+  description: e.message,
+});
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

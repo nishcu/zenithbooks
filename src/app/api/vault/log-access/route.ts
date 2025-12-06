@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       message: "Access logged successfully.",
     });
   } catch (error) {
-    console.error({ "Error logging access:", error });
+    console.error("Error logging access", error );
     return NextResponse.json(
       { error: "Failed to log access." },
       { status: 500 }

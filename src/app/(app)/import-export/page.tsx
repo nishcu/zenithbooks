@@ -70,7 +70,11 @@ export default function ImportExportPage() {
     const handleTallyImport = async (importType: 'vouchers' | 'masters') => {
         const fileToImport = importType === 'vouchers' ? tallyVoucherFile : tallyMasterFile;
         if (!fileToImport) {
-            console.error("No File Selected: Please select a Tally XML file to import.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No File Selected: Please select a Tally XML file to import.",
+});
             return;
         }
 
@@ -101,8 +105,12 @@ export default function ImportExportPage() {
              });
 
         } catch (error: any) {
-             console.error({ variant: "destructive", title: "Import Failed",
-                description: error.message, });
+             const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Import Failed",
+  description: error.message,
+});
         } finally {
             setIsImporting(false);
             if(importType === 'vouchers') setTallyVoucherFile(null);
@@ -123,12 +131,22 @@ export default function ImportExportPage() {
             
             // Basic validation based on file type
             if (type.includes("JSON") && !fileContent.trim().startsWith("{")) {
-                console.error({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.`  });
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid File",
+  description: `The selected file does not appear to be a valid JSON file.`,
+});
                 return;
             }
             
             if (type.includes("XML") && !fileContent.trim().startsWith("<")) {
-                console.error({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.`  });
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid File",
+  description: `The selected file does not appear to be a valid XML file.`,
+});
                 return;
             }
             
@@ -138,7 +156,12 @@ export default function ImportExportPage() {
                 description: `Your ${type} file '${file.name}' has been validated successfully. File size: ${(file.size / 1024 }).toFixed(2)} KB. Note: Full import functionality will be implemented based on specific requirements.` 
             );
         } catch (error: any) {
-            console.error({ variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file."  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Import Failed",
+  description: error.message || "An error occurred while processing the file.",
+});
         } finally {
             setIsImporting(false);
         }
@@ -174,7 +197,12 @@ export default function ImportExportPage() {
                     console.log({ variant: "destructive", title: "Unknown Export Type", description: `Export type "${exportType}" is not supported.`  });
             }
         } catch (error: any) {
-            console.error({ variant: "destructive", title: "Export Failed", description: error.message || "An error occurred during export."  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Export Failed",
+  description: error.message || "An error occurred during export.",
+});
         } finally {
             setIsExporting(null);
         }
@@ -361,7 +389,12 @@ export default function ImportExportPage() {
                     console.log({ variant: "destructive", title: "Unknown Template", description: `Template type "${templateType}" is not available.`  });
             }
         } catch (error: any) {
-            console.error({ variant: "destructive", title: "Template Download Failed", description: error.message || "An error occurred."  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Template Download Failed",
+  description: error.message || "An error occurred.",
+});
         }
     };
 

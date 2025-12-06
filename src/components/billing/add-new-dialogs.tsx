@@ -165,7 +165,12 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 // Add new party
                 const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
                 if (!nextCode) {
-                    console.error({ title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
+                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.",
+});
                     return;
                 }
                 const batch = writeBatch(db);
@@ -177,11 +182,11 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                     name: values.name,
                     type: "Current Asset",
                     userId: user.uid,
-                );
+                });
 
                 // 2. Add new party with the account code
                 const newPartyRef = doc(collection(db, collectionName));
-                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode );
+                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode });
                 
                 await batch.commit();
 
@@ -190,8 +195,12 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 
             onOpenChange(false);
         } catch (e) {
-            console.error({ "Error saving document: ", e });
-            console.log({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase( });}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
+            const { toast } = require("@/hooks/use-toast");
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: `Could not save ${type.toLowerCase()}. Please take a screenshot and email it to info@zenithbooks.in for faster resolution.`,
+            });
         }
     };
 
@@ -241,13 +250,13 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
     const form = useForm<z.infer<typeof itemSchema>>({
         resolver: zodResolver(itemSchema),
         defaultValues: { name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" },
-    );
+    });
 
     useEffect(() => {
       if (item && open) {
         form.reset(item);
       } else if (!open) {
-        form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" );
+        form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" });
       }
     }, [item, open, form]);
 
@@ -264,7 +273,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
         try {
             const result = await suggestHsnCodeAction({
                 productOrServiceDescription: description,
-            );
+            });
             
             if (result?.hsnCode) {
                 form.setValue("hsn", result.hsnCode);
@@ -278,7 +287,12 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
                  });
             }
         } catch (error: any) {
-            console.error({ "Error suggesting HSN code:", error });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error suggesting HSN code",
+  description: error ,
+});
             console.log({ variant: "destructive", 
                 title: "Error", 
                 description: error.message || "Failed to get HSN code suggestion. Please try again." 
@@ -299,12 +313,17 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
                 await updateDoc(itemDocRef, values);
                 console.log({ title: "Item Updated", description: `${values.name} has been updated.` });
             } else {
-                await addDoc(collection(db, 'items'), { ...values, userId: user.uid );
+                await addDoc(collection(db, 'items'), { ...values, userId: user.uid });
                 console.log({ title: "Item Added", description: `${values.name} has been added.` });
             }
            onOpenChange(false);
        } catch (e) {
-           console.error({ "Error adding document: ", e });
+           const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: "Could not save the item.",
+});
            console.log({ variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."  });
        }
     };

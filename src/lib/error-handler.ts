@@ -121,7 +121,7 @@ export function showErrorToast(error: unknown, context?: string) {
     // Add contact information for error resolution
     const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-    // Show actual toast notification
+    // Use proper toast system
     const { toast } = require("@/hooks/use-toast");
     toast({
       variant: "destructive",
@@ -129,7 +129,7 @@ export function showErrorToast(error: unknown, context?: string) {
       description: `${appError.message}${contactMessage}`,
     });
   } catch (error) {
-    console.error({ "showErrorToast failed:", error });
+    console.error("showErrorToast failed:", error);
   }
 }
 
@@ -137,11 +137,11 @@ export function showErrorToast(error: unknown, context?: string) {
  * Show success toast notification
  */
 export function showSuccessToast(title: string, description?: string) {
-  // Show actual toast notification
+  // Use proper toast system
   const { toast } = require("@/hooks/use-toast");
   toast({
-    title,
-    description,
+    title: title,
+    description: description,
   });
 }
 
@@ -149,12 +149,9 @@ export function showSuccessToast(title: string, description?: string) {
  * Async error wrapper for try-catch blocks
  */
 /**
- * Enhanced toast function for backward compatibility
+ * Enhanced toast function for error notifications with contact info
  */
-export function toast({ variant, title, description, ...props }: any) {
-  // Import the toast function
-  const { toast } = require("@/hooks/use-toast");
-
+export function showToastError(variant: string, title: string, description: string, ...props: any) {
   // Add contact information for error logging
   let finalDescription = description;
   if (variant === "destructive" || title?.toLowerCase().includes("error") ||
@@ -162,12 +159,12 @@ export function toast({ variant, title, description, ...props }: any) {
     finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
   }
 
-  // Show actual toast notification
+  // Use proper toast instead of console.log
+  const { toast } = require("@/hooks/use-toast");
   toast({
-    variant,
-    title,
+    variant: variant === "destructive" ? "destructive" : "default",
+    title: title || "Error",
     description: finalDescription,
-    ...props
   });
 }
 

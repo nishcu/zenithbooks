@@ -52,7 +52,7 @@ export function OnboardingHint({ type, onDismiss }: OnboardingHintProps) {
         
         setDismissed(dismissedHints[type] || false);
       } catch (error) {
-        console.error({ "Error checking dismissed hints:", error });
+        console.error("Error checking dismissed hints", error );
         setDismissed(false);
       } finally {
         setLoading(false);
@@ -87,7 +87,7 @@ export function OnboardingHint({ type, onDismiss }: OnboardingHintProps) {
       setDismissed(true);
       onDismiss?.();
     } catch (error) {
-      console.error({ "Error dismissing hint:", error });
+      console.error("Error dismissing hint", error );
     }
   };
 

@@ -98,9 +98,11 @@ export default function AdminAppointments() {
         ? { ...a, date: newDate, status: 'Confirmed' as Appointment['status'] }
         : a
     ));
-    console.log(
+    const { toast } = require("@/hooks/use-toast");
+    toast({
       title: "Appointment Rescheduled",
       description: `Appointment ${selectedAppointment.id} has been rescheduled successfully.`,
+    });
     );
     setIsRescheduleDialogOpen(false);
     setSelectedAppointment(null);

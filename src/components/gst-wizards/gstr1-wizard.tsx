@@ -234,8 +234,8 @@ export default function Gstr1Wizard() {
           cess: 0,
           reason: "Credit Note",
           gstin: customer?.gstin || "",
-        });
-      };
+        };
+      });
 
     // Combine with cancelled invoices
     setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);
@@ -262,7 +262,7 @@ export default function Gstr1Wizard() {
           cgst: invoice.cgst,
           sgst: invoice.sgst,
           cess: invoice.cess,
-        );
+        });
       }
       return acc;
     }, [] as any[]);
@@ -413,10 +413,11 @@ export default function Gstr1Wizard() {
 
 
   const handleNext = () => {
-    console.log(
+    const { toast } = require("@/hooks/use-toast");
+    toast({
       title: `Step ${step} Saved!`,
       description: `Moving to the next step.`,
-    );
+    });
     setStep(prev => prev + 1);
   };
 
@@ -501,7 +502,7 @@ export default function Gstr1Wizard() {
 
         // Download JSON file
         const jsonStr = JSON.stringify(gstr1Data, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" );
+        const blob = new Blob([jsonStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -515,7 +516,11 @@ export default function Gstr1Wizard() {
       } else if (type === 'PDF') {
         // Generate PDF from report content
         if (!reportRef.current) {
-          console.error("Error: Could not find the report content to generate PDF.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not find the report content to generate PDF.",
+});
           return;
         }
 
@@ -534,8 +539,12 @@ export default function Gstr1Wizard() {
         console.log("PDF Generated: Your GSTR-1 PDF has been downloaded successfully.");
       }
     } catch (error: any) {
-      console.error({ variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the file.", });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating the file.",
+});
     }
   };
 

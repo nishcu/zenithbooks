@@ -30,7 +30,7 @@ export async function reconcileItcAction(
 
     return result;
   } catch (error) {
-    console.error({ "Error in reconcileItcAction:", error });
+    console.error("Error in reconcileItcAction", error );
     throw new Error("Failed to reconcile ITC.");
   }
 }
@@ -42,7 +42,7 @@ export async function compareGstrReportsAction(
     const result = await compareGstrReports(input);
     return result;
   } catch (error) {
-    console.error({ "Error in compareGstrReportsAction:", error });
+    console.error("Error in compareGstrReportsAction", error );
     throw new Error("Failed to compare GSTR reports.");
   }
 }

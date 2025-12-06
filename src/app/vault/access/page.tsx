@@ -61,7 +61,7 @@ export default function VaultAccessPage() {
       try {
         data = await response.json();
       } catch (jsonError) {
-        console.error({ "Error parsing response:", jsonError });
+        console.error("Error parsing response", jsonError );
         setError("Invalid response from server. Please try again.");
         setValidated(false);
         return;
@@ -84,7 +84,7 @@ export default function VaultAccessPage() {
           } else {
             // This might be a route 404 (route not deployed)
             setError("Service temporarily unavailable. Please contact support or try again later.");
-            console.error({ "Route 404 error - API endpoint may not be deployed:", response });
+            console.error("Route 404 error - API endpoint may not be deployed", response );
           }
         } else if (response.status === 429) {
           // Rate limited - show friendly message with lockout time
@@ -106,7 +106,7 @@ export default function VaultAccessPage() {
       setValidated(true);
       await loadDocuments(data);
     } catch (error) {
-      console.error({ "Error validating code:", error });
+      console.error("Error validating code", error );
       setError("Failed to validate share code. Please try again.");
       setValidated(false);
     } finally {
@@ -139,7 +139,7 @@ export default function VaultAccessPage() {
         setError(data.error || "Failed to load documents.");
       }
     } catch (error) {
-      console.error({ "Error loading documents:", error });
+      console.error("Error loading documents", error );
       setError("Failed to load documents. Please try again.");
     } finally {
       setLoading(false);
@@ -182,7 +182,7 @@ export default function VaultAccessPage() {
         description: `${document.fileName} download has started.`,
       );
     } catch (error) {
-      console.error({ "Error downloading:", error });
+      console.error("Error downloading", error );
       console.error("Download Failed: Failed to download document. Please try again.");
     }
   };
@@ -203,7 +203,7 @@ export default function VaultAccessPage() {
       // Open view
       window.open(document.fileUrl, "_blank");
     } catch (error) {
-      console.error({ "Error viewing:", error });
+      console.error("Error viewing", error );
       console.error("View Failed: Failed to view document. Please try again.");
     }
   };

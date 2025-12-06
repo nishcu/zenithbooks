@@ -52,7 +52,7 @@ const rapidVoucherSchema = z.object({
   voucherDate: z.string().min(1, "Date is required."),
   mode: z.enum(["bank", "cash"]),
   amount: z.coerce.number().positive("Amount must be greater than zero."),
-);
+});
 
 type RapidVoucherForm = z.infer<typeof rapidVoucherSchema>;
 
@@ -85,7 +85,7 @@ export default function RapidVoucherEntryPage() {
       mode: "bank",
       amount: 0,
     },
-  );
+  });
   
   const voucherType = form.watch("type");
   const partyList = voucherType === 'receipt' ? customers : vendors;
@@ -114,7 +114,11 @@ export default function RapidVoucherEntryPage() {
     const selectedParty = partyList.find(p => p.id === values.partyId);
 
     if (!selectedParty) {
-        console.error("Invalid Selection: Please ensure a party is selected.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Selection: Please ensure a party is selected.",
+});
         return;
     }
     
@@ -178,11 +182,16 @@ export default function RapidVoucherEntryPage() {
                 voucherNumber: nextVoucherNumber,
                 partyId: "",
                 amount: 0,
-            );
+            });
             form.setFocus("partyId");
         }
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save voucher", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save voucher",
+  description: e.message,
+});
     }
   }, [accountingContext, partyList, toast, router, form, voucherPrefix]);
 

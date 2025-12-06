@@ -112,7 +112,11 @@ export default function CapitalContributionCertificatePage() {
                     router.push('/ca-certificates/capital-contribution');
                 }
             } else {
-                 console.error("Not Found: The requested document draft could not be found.");
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found: The requested document draft could not be found.",
+});
                  router.push('/ca-certificates/capital-contribution');
             }
             setIsLoading(false);
@@ -137,7 +141,12 @@ export default function CapitalContributionCertificatePage() {
       console.log({ '💰 Capital contribution price:', pricingData?.ca_certs?.find(s => s.id === 'capital_contribution')?.price });
       setPricing(pricingData });
     }).catch(error => {
-      console.error({ '❌ Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "❌ Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -155,13 +164,22 @@ export default function CapitalContributionCertificatePage() {
         setStep(2);
         console.log("Draft Ready: Review the certificate before printing.");
     } else {
-        console.error("Validation Error: Please fill all required fields.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please fill all required fields.",
+});
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: 'Authentication Error' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
           return;
       }
       setIsSubmitting(true);
@@ -185,7 +203,12 @@ export default function CapitalContributionCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: 'Could not save the draft.',
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -193,7 +216,11 @@ export default function CapitalContributionCertificatePage() {
   
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error("Authentication Error: You must be logged in to make a request.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error: You must be logged in to make a request.",
+});
           return;
       }
       setIsSubmitting(true);
@@ -211,8 +238,17 @@ export default function CapitalContributionCertificatePage() {
         );
         console.log("Request Sent: Your certification request has been sent to the admin for review.");
       } catch (error) {
-          console.error({ "Error sending request:", error });
-          console.error("Request Failed: Could not send the request. Please try again.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error sending request",
+  description: error ,
+});
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Request Failed: Could not send the request. Please try again.",
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -334,7 +370,11 @@ export default function CapitalContributionCertificatePage() {
                                   );
                                 }}
                                 onFailure={() => {
-                                  console.error("Payment Failed: Payment was not completed. Please try again.");
+                                  const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                                 }}
                               />
                             );

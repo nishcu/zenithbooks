@@ -20,13 +20,13 @@ export async function suggestHsnCodeAction(
     const result = await suggestHsnCodes(input);
     
     if (!result || !result.hsnCode) {
-      console.error({ "Invalid response from AI:", result });
+      console.error("Invalid response from AI", result );
       throw new Error("AI service returned an invalid response. Please try again.");
     }
     
     return result;
   } catch (error: any) {
-    console.error({ "Error in suggestHsnCodeAction:", error });
+    console.error("Error in suggestHsnCodeAction", error );
     
     // Return a more descriptive error
     if (error.message) {

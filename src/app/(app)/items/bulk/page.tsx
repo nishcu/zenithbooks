@@ -173,8 +173,12 @@ export default function ItemBulkUploadPage() {
         );
       } catch (error: any) {
         console.error(error);
-        console.error({ variant: "destructive", title: "Parsing failed",
-          description: error.message || "Could not read the file.", });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Parsing failed",
+  description: error.message || "Could not read the file.",
+});
       } finally {
         setIsParsing(false);
       }
@@ -196,12 +200,21 @@ export default function ItemBulkUploadPage() {
 
   const handleCreateItems = async () => {
     if (!user) {
-      console.error({ variant: "destructive", title: "Please sign in to continue."  });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Please sign in to continue.",
+  description: ,
+});
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      console.error("No rows to import: Fix validation errors or upload a file first.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No rows to import: Fix validation errors or upload a file first.",
+});
       return;
     }
 

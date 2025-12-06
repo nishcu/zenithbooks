@@ -139,7 +139,7 @@ export default function TransactionsPage() {
         // Update transactions - React will handle re-render optimization
         setTransactions(allTransactions);
       } catch (error) {
-        console.error({ "Error fetching transactions:", error });
+        console.error("Error fetching transactions", error );
       } finally {
         setLoading(false);
       }

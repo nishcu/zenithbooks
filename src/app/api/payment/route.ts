@@ -91,7 +91,7 @@ let data;
 try {
   data = JSON.parse(responseText);
 } catch (e) {
-  console.error({ 'Failed to parse Cashfree response as JSON:', responseText });
+  console.error("Failed to parse Cashfree response as JSON", responseText );
   return NextResponse.json(
     {
       error: 'Invalid response',
@@ -133,7 +133,7 @@ if (data?.order_id || data?.payment_session_id) {
   orderData = data.data;
 } else {
   // Unknown structure - log and return error
-  console.error({ 'Invalid Cashfree response structure:', data });
+  console.error("Invalid Cashfree response structure", data );
   return NextResponse.json(
     {
       error: 'Invalid response structure',
@@ -153,7 +153,7 @@ if (data?.order_id || data?.payment_session_id) {
 
 // Verify required fields exist
 if (!orderData.order_id || !orderData.payment_session_id) {
-  console.error({ 'Cashfree response missing required fields:', orderData });
+  console.error("Cashfree response missing required fields", orderData );
   return NextResponse.json(
     {
       error: 'Incomplete response',
@@ -179,7 +179,7 @@ return NextResponse.json({
   mode: isLive ? 'LIVE' : 'TEST', // Pass mode to frontend
 });
 } catch (err) {
-  console.error({ 'Server error:', err });
+  console.error("Server error", err );
 
   return NextResponse.json(
     { error: 'Server error', message: 'Payment failed. Try again.' },

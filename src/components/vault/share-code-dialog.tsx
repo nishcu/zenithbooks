@@ -180,7 +180,7 @@ export function ShareCodeDialog({
           description: description.trim() || null,
           categories: Array.from(selectedCategories),
           lastUpdated: serverTimestamp(),
-        );
+        });
 
         console.log("Share Code Updated: Share code has been updated successfully.");
       } else {
@@ -198,7 +198,7 @@ export function ShareCodeDialog({
           expiresAt: Timestamp.fromDate(expiresAtDate), // Convert to Firestore Timestamp
           isActive: true,
           accessCount: 0,
-        );
+        });
 
         // Set generated code for display (show the full code with prefix)
         setGeneratedCode(finalCodeToStore);
@@ -214,7 +214,7 @@ export function ShareCodeDialog({
 
       onSuccess();
     } catch (error) {
-      console.error({ "Error saving share code:", error });
+      console.error("Error saving share code", error );
       setError("Failed to save share code. Please try again.");
     } finally {
       setIsSaving(false);

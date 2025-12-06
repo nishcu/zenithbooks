@@ -84,12 +84,21 @@ export default function UserManagementPage() {
 
   const handleSendInvite = async () => {
     if (!newUserEmail || !newUserRole) {
-        console.error("Missing Information: Please enter an email and select a role.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Information: Please enter an email and select a role.",
+});
         return;
     }
 
     if (!user) {
-        console.error({ variant: "destructive", title: "Not Authenticated"  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Authenticated",
+  description: ,
+});
         return;
     }
 
@@ -112,9 +121,12 @@ export default function UserManagementPage() {
         setNewUserRole("viewer");
 
     } catch(error: any) {
-         console.error({ variant: "destructive", title: "Failed to send invite",
-            description: error.message || "Could not save the invitation to the database."
-         });
+         const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to send invite",
+  description: error.message || "Could not save the invitation to the database.",
+});
     } finally {
         setIsInviting(false);
     }

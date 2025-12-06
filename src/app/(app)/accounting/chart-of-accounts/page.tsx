@@ -88,7 +88,7 @@ const accountSchema = z.object({
     name: z.string().min(3, "Account name is required."),
     code: z.string().regex(/^\d{4}$/, "Account code must be 4 digits."),
     type: z.string().min(1, "Account type is required."),
-);
+  });
 
 export default function ChartOfAccountsPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -123,7 +123,7 @@ export default function ChartOfAccountsPage() {
   const form = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
     defaultValues: { name: "", code: "", type: "" }
-  );
+  });
 
   // Early return AFTER all hooks are called
   if (user && isFreemium) {
@@ -217,7 +217,12 @@ export default function ChartOfAccountsPage() {
 
   const onSubmit = async (values: z.infer<typeof accountSchema>) => {
     if (!user) {
-        console.error({ variant: "destructive", title: "Not Authenticated"  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Authenticated",
+  description: "You need to be logged in to manage accounts.",
+});
         return;
     }
 
@@ -229,8 +234,12 @@ export default function ChartOfAccountsPage() {
         form.reset();
         setIsAddDialogOpen(false);
     } catch (e) {
-        console.error({ "Error adding document: ", e });
-        console.error("Error: Could not save the account.");
+        const { toast } = require("@/hooks/use-toast");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while saving the account.",
+        });
     }
   };
 

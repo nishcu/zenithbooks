@@ -53,11 +53,21 @@ export default function ItcReconciliationPage() {
                 setItcReconResult(result.reconciliationResults);
                 console.log("title", "ITC Reconciliation Complete");
             } else {
-                console.error({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.'  });
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Reconciliation Failed",
+  description: 'Could not get ITC reconciliation results.',
+});
             }
         } catch (error: any) {
             console.error(error);
-            console.error({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.'  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "An Error Occurred",
+  description: error.message || 'An unexpected error occurred during ITC reconciliation.',
+});
         } finally {
             setIsItcLoading(false);
         }

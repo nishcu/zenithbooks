@@ -86,7 +86,7 @@ export default function VaultPage() {
         setLoading(false);
       },
       (error) => {
-        console.error({ "Error fetching documents:", error });
+        console.error("Error fetching documents", error );
         console.error("Error: Failed to load documents. Please try again.");
         setLoading(false);
       }
@@ -116,7 +116,7 @@ export default function VaultPage() {
           }
         }
       } catch (error) {
-        console.error({ "Error fetching storage settings:", error });
+        console.error("Error fetching storage settings", error );
       }
     };
 
@@ -128,7 +128,7 @@ export default function VaultPage() {
         const { checkAndNotifyExpiringCodes } = await import("@/lib/vault-notifications");
         await checkAndNotifyExpiringCodes(user.uid);
       } catch (error) {
-        console.error({ "Error checking expiring codes:", error });
+        console.error("Error checking expiring codes", error );
       }
     };
     

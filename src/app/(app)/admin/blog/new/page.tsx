@@ -115,9 +115,18 @@ export default function NewBlogPostPage() {
             console.log("Blog Post Published!: Your new blog post has been created and published successfully.");
 
         } catch (error: any) {
-            console.error({ 'Blog creation error:', error });
-            console.error({ variant: "destructive", title: "Upload Failed",
-                description: error.message || "Failed to upload image. Please try again.", });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Blog creation error",
+  description: error ,
+});
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Upload Failed",
+  description: error.message || "Failed to upload image. Please try again.",
+});
         } finally {
             setIsLoading(false);
         }

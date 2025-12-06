@@ -54,7 +54,11 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
   const handleQuickInvoiceCreate = async () => {
     const selectedCustomer = customers.find((c: any) => c.id === quickCustomer);
     if (!quickInvNum || !selectedCustomer || !quickItem || quickRate <= 0) {
-      console.error("Missing Information: Please fill out all fields for the quick invoice.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Information: Please fill out all fields for the quick invoice.",
+});
       return;
     }
     
@@ -93,7 +97,12 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
         onOpenChange(false);
 
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save invoice",
+  description: e.message,
+});
     }
   }
 

@@ -57,7 +57,7 @@ export default function BlogPostPage() {
                     setPost(null);
                 }
             } catch (error) {
-                console.error({ 'Error loading blog post:', error });
+                console.error("Error loading blog post", error );
                 setPost(null);
             } finally {
                 setIsLoading(false);
@@ -189,7 +189,7 @@ export default function BlogPostPage() {
                                 priority
                                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 768px, 1200px"
                                 onError={(e) => {
-                                    console.error({ 'Failed to load blog post image:', post.imageUrl });
+                                    console.error("Failed to load blog post image", post.imageUrl );
                                     // Fallback to a default image
                                     const target = e.target as HTMLImageElement;
                                     target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop&crop=center';

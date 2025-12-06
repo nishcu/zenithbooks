@@ -149,7 +149,7 @@ export function SignupForm() {
         userType: values.userType,
         companyName: values.companyName,
         createdAt: new Date(),
-      );
+      });
 
       showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
 

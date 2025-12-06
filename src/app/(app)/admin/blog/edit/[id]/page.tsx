@@ -44,10 +44,15 @@ function getStoredBlogPosts() {
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
         const posts = stored ? JSON.parse(stored) : [];
-        console.log({ 'Loaded blog posts from storage:', posts.length, 'posts' });
+        console.log('Loaded blog posts from storage:', posts.length, 'posts');
         return posts;
     } catch (error) {
-        console.error({ 'Error loading blog posts from localStorage:', error });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading blog posts from localStorage",
+  description: error ,
+});
         return [];
     }
 }
@@ -59,7 +64,12 @@ function saveBlogPosts(posts: any[]) {
     try {
         localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
     } catch (error) {
-        console.error({ 'Error saving blog posts to localStorage:', error });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error saving blog posts to localStorage",
+  description: error ,
+});
     }
 }
 
@@ -108,7 +118,12 @@ async function updateBlogPost(postId: string, updatedData: any) {
         console.log('Blog post updated successfully in Firebase');
         return true;
     } catch (error) {
-        console.error({ 'Error updating blog post:', error });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error updating blog post",
+  description: error ,
+});
         return false;
     }
 }
@@ -192,8 +207,17 @@ export default function EditBlogPostPage() {
                 setImagePreview(post.image);
 
             } catch (error) {
-                console.error({ 'Error loading post:', error });
-                console.error("Error: Failed to load the blog post.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading post",
+  description: error ,
+});
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to load the blog post.",
+});
                 router.push('/admin/blog');
             } finally {
                 setIsLoading(false);
@@ -211,8 +235,12 @@ export default function EditBlogPostPage() {
             // Validate the image file
             const validation = validateBlogImage(file);
             if (!validation.valid) {
-                console.error({ variant: "destructive", title: "Invalid Image",
-                    description: validation.error, });
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Image",
+  description: validation.error,
+});
                 // Clear the input
                 if (imageInputRef.current) {
                     imageInputRef.current.value = '';
@@ -245,9 +273,18 @@ export default function EditBlogPostPage() {
 
                     console.log({ 'Image uploaded successfully:', firebaseImageUrl });
                 } catch (uploadError) {
-                    console.error({ 'Image upload failed:', uploadError });
-                    console.error({ variant: "destructive", title: "Upload Failed",
-                        description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.", });
+                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Image upload failed",
+  description: uploadError ,
+});
+                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Upload Failed",
+  description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
+});
                     return;
                 } finally {
                     setIsUploading(false);
@@ -270,7 +307,11 @@ export default function EditBlogPostPage() {
             const success = await updateBlogPost(postId, postData);
 
             if (!success) {
-                console.error("Update Failed: Failed to update the blog post. Please try again.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Update Failed: Failed to update the blog post. Please try again.",
+});
                 return;
             }
 
@@ -283,8 +324,17 @@ export default function EditBlogPostPage() {
             router.push('/admin/blog');
 
         } catch (error) {
-            console.error({ 'Error updating post:', error });
-            console.error("Error: Failed to update the blog post. Please try again.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error updating post",
+  description: error ,
+});
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to update the blog post. Please try again.",
+});
         } finally {
             setIsSaving(false);
             setIsUploading(false);

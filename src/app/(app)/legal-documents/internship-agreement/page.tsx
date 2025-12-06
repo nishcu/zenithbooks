@@ -94,7 +94,12 @@ export default function InternshipAgreementPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -124,7 +129,12 @@ export default function InternshipAgreementPage() {
         console.log({ title: `Step ${step} Saved`  });
       }
     } else {
-      console.error({ variant: "destructive", title: "Validation Error"  });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error",
+  description: ,
+});
     }
   };
 
@@ -254,7 +264,11 @@ export default function InternshipAgreementPage() {
                             console.log("Payment Successful: Your document is ready for download.");
                           }}
                           onFailure={() => {
-                            console.error("Payment Failed: Payment was not completed. Please try again.");
+                            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                           }}
                         />
                       );
@@ -323,7 +337,11 @@ export default function InternshipAgreementPage() {
                   );
                 }}
                 onFailure={() => {
-                  console.error("Payment Failed: Payment was not completed. Please try again.");
+                  const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                 }}
               />
             ) : (

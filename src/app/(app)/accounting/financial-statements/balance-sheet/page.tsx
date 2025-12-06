@@ -111,13 +111,13 @@ export default function BalanceSheetPage() {
         } else {
             balances[account.code] = -openingBalance;
         }
-    );
+  });
     journalVouchers.forEach(voucher => {
         voucher.lines.forEach(line => {
             if (balances[line.account] === undefined) balances[line.account] = 0;
             balances[line.account] += safeParseFloat(line.credit) - safeParseFloat(line.debit);
-        );
-    );
+        });
+    });
 
     const revenue = combinedAccounts.filter(a => ['Revenue', 'Other Income'].includes(a.type)).reduce((sum, acc) => sum + (balances[acc.code] || 0), 0);
     const expenses = combinedAccounts.filter(a => ['Expense', 'Cost of Goods Sold', 'Depreciation'].includes(a.type)).reduce((sum, acc) => sum + (balances[acc.code] || 0), 0);
@@ -136,7 +136,7 @@ export default function BalanceSheetPage() {
     const exportRows: ExportRow[] = [];
     const pushHeader = (label: string) => {
         rows.push(<TableRow key={`le-header-${label}`} className='font-bold bg-muted/30'><TableCell colSpan={2}>{label}</TableCell></TableRow>);
-        exportRows.push({ section: "Liabilities", category: label, label, type: "header" );
+        exportRows.push({ section: "Liabilities", category: label, label, type: "header" });
     };
     const pushLine = (category: string, label: string, amount: number, opts?: { isSub?: boolean; isTotal?: boolean }) => {
         rows.push(<ReportTableRow key={`le-${label}`} label={label} amount={amount} isSub={opts?.isSub} isTotal={opts?.isTotal} />);
@@ -146,7 +146,7 @@ export default function BalanceSheetPage() {
             label,
             amount,
             type: opts?.isTotal ? "total" : "row",
-        );
+        });
     };
     const capitalAccount = getDisplayBalance('2010', 'Liability');
     const reservesAndSurplus = getDisplayBalance('2020', 'Liability') + getDisplayBalance('2030', 'Liability') + netProfit;
@@ -157,8 +157,8 @@ export default function BalanceSheetPage() {
     const total = capitalAccount + reservesAndSurplus + totalLongTermLiabilities + totalCurrentLiabilities;
 
     pushHeader("Capital & Reserves");
-    pushLine("Capital & Reserves", "Capital Account", capitalAccount, { isSub: true );
-    pushLine("Capital & Reserves", "Reserves & Surplus (incl. P&L)", reservesAndSurplus, { isSub: true );
+    pushLine("Capital & Reserves", "Capital Account", capitalAccount, { isSub: true });
+    pushLine("Capital & Reserves", "Reserves & Surplus (incl. P&L)", reservesAndSurplus, { isSub: true });
 
     pushHeader("Long-Term Liabilities");
     longTermLiabilitiesAccounts.forEach(acc => pushLine("Long-Term Liabilities", acc.name, getDisplayBalance(acc.code, 'Liability'), { isSub: true }));
@@ -172,7 +172,7 @@ export default function BalanceSheetPage() {
         label: "Total Liabilities & Equity",
         amount: total,
         type: "total",
-    );
+    });
     
     return { liabilityRows: rows, liabilityExportRows: exportRows, totalEquityAndLiabilities: total };
   }, [combinedAccounts, getDisplayBalance, netProfit]);
@@ -183,7 +183,7 @@ export default function BalanceSheetPage() {
     const exportRows: ExportRow[] = [];
     const pushHeader = (label: string) => {
         rows.push(<TableRow key={`as-header-${label}`} className='font-bold bg-muted/30'><TableCell colSpan={2}>{label}</TableCell></TableRow>);
-        exportRows.push({ section: "Assets", category: label, label, type: "header" );
+        exportRows.push({ section: "Assets", category: label, label, type: "header" });
     };
     const pushLine = (category: string, label: string, amount: number, opts?: { isSub?: boolean; isTotal?: boolean }) => {
         rows.push(<ReportTableRow key={`as-${label}`} label={label} amount={amount} isSub={opts?.isSub} isTotal={opts?.isTotal} />);
@@ -193,7 +193,7 @@ export default function BalanceSheetPage() {
             label,
             amount,
             type: opts?.isTotal ? "total" : "row",
-        );
+        });
     };
     const fixedAssetsAccounts = combinedAccounts.filter(a => a.type === 'Fixed Asset');
     const netFixedAssets = fixedAssetsAccounts.reduce((sum, acc) => sum + getDisplayBalance(acc.code, 'Asset'), 0);
@@ -206,20 +206,20 @@ export default function BalanceSheetPage() {
 
     pushHeader("Fixed Assets");
     fixedAssetsAccounts.forEach(acc => pushLine("Fixed Assets", acc.name, getDisplayBalance(acc.code, 'Asset'), { isSub: true }));
-    pushLine("Fixed Assets", 'Net Fixed Assets', netFixedAssets, { isTotal: true );
+     pushLine("Fixed Assets", 'Net Fixed Assets', netFixedAssets, { isTotal: true });
     pushLine("Investments", 'Investments', totalInvestments);
 
     pushHeader("Current Assets");
-    pushLine("Current Assets", "Accounts Receivable", totalReceivables, { isSub: true );
+     pushLine("Current Assets", "Accounts Receivable", totalReceivables, { isSub: true });
     otherCurrentAssetsAccounts.forEach(acc => pushLine("Current Assets", acc.name, getDisplayBalance(acc.code, 'Asset'), { isSub: true }));
-    pushLine("Current Assets", 'Total Current Assets', totalCurrentAssets, { isTotal: true );
+     pushLine("Current Assets", 'Total Current Assets', totalCurrentAssets, { isTotal: true });
     exportRows.push({
         section: "Assets",
         category: "Assets",
         label: "Total Assets",
         amount: total,
         type: "total",
-    );
+    });
     
     return { assetRows: rows, assetExportRows: exportRows, totalAssets: total };
   }, [combinedAccounts, getDisplayBalance]);
@@ -289,7 +289,7 @@ export default function BalanceSheetPage() {
     ];
 
     const csv = rows.map(line => line.map(cell => `"${cell ?? ""}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

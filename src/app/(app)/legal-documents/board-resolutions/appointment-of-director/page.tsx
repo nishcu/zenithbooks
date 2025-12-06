@@ -51,7 +51,7 @@ export default function AppointmentOfDirectorPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      console.error("Error loading pricing", error );
     );
 
     const unsubscribe = onPricingUpdate(pricingData => {

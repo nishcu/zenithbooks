@@ -81,7 +81,12 @@ export default function MoaAoaPage() {
       getServicePricing().then(pricingData => {
         setPricing(pricingData);
       }).catch(error => {
-        console.error({ 'Error loading pricing:', error });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
       );
 
       // Subscribe to real-time pricing updates
@@ -101,10 +106,20 @@ export default function MoaAoaPage() {
                 setResult(response.mainObjects);
                 console.log("title", "MOA Objects Generated!");
             } else {
-                 console.error({ variant: "destructive", title: "Generation Failed"  });
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: ,
+});
             }
         } catch (e) {
-            console.error({ variant: "destructive", title: "An Error Occurred"  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "An Error Occurred",
+  description: ,
+});
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -200,7 +215,11 @@ export default function MoaAoaPage() {
                       console.log("Payment Successful: Your document is ready for download.");
                     }}
                     onFailure={() => {
-                      console.error("Payment Failed: Payment was not completed. Please try again.");
+                      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                     }}
                   />
                 ) : (

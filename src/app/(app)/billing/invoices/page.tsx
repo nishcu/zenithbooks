@@ -101,7 +101,12 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
             console.log("E-Waybill Generated: The E-Waybill JSON has been downloaded successfully.");
             onOpenChange(false);
         } catch (error: any) {
-            console.error({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill."  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating the E-Waybill.",
+});
         }
     }
 
@@ -207,7 +212,11 @@ export default function InvoicesPage() {
         const originalVoucher = journalVouchers.find(v => v.id === invoiceId);
 
         if (!originalVoucher) {
-            console.error("Error: Original invoice transaction not found.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Original invoice transaction not found.",
+});
             return false;
         }
 
@@ -233,7 +242,12 @@ export default function InvoicesPage() {
             console.log({ title: "Invoice Cancelled", description: `Invoice has been successfully cancelled.`  });
             return true;
         } catch (e: any) {
-            console.error({ variant: "destructive", title: "Cancellation Failed", description: e.message  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Cancellation Failed",
+  description: e.message,
+});
             return false;
         }
     };
@@ -265,7 +279,12 @@ export default function InvoicesPage() {
                 }).toString();
                 router.push(`/billing/invoices/new?${queryParams}`);
             } else {
-                 console.error({ variant: "destructive", title: 'Edit Failed', description: `Could not cancel the original invoice.`  });
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Edit Failed",
+  description: `Could not cancel the original invoice.`,
+});
             }
         } else if (action === 'Remind') {
             const customer: any = customers.find(c => c.id === invoice.raw.customerId);
@@ -275,7 +294,11 @@ export default function InvoicesPage() {
                 );
                 window.open(`https://wa.me/${customer.phone}?text=${message}`, '_blank');
             } else {
-                 console.error("Cannot Send Reminder: Customer phone number is not available.");
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Cannot Send Reminder: Customer phone number is not available.",
+});
             }
         }
         else if (action === 'Ewaybill') {

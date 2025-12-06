@@ -112,11 +112,24 @@ export default function AdminUsers() {
         }));
         setUsers(usersWithStatus);
       } else {
-        console.error("Error: Failed to fetch users. You may not have admin privileges.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to fetch users. You may not have admin privileges.",
+});
       }
     } catch (error) {
-      console.error({ "Error fetching users:", error });
-      console.error("Error: Failed to load users. Please try again.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error fetching users",
+  description: error ,
+});
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to load users. Please try again.",
+});
     } finally {
       setIsLoading(false);
     }
@@ -195,12 +208,25 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        console.error({ variant: "destructive", title: "Error",
-          description: error.error || "Failed to update user.", });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: error.error || "Failed to update user.",
+});
       }
     } catch (error) {
-      console.error({ "Error updating user:", error });
-      console.error("Error: Failed to update user. Please try again.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error updating user",
+  description: error ,
+});
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to update user. Please try again.",
+});
     } finally {
       setIsLoadingAction(null);
     }
@@ -219,7 +245,11 @@ export default function AdminUsers() {
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null });
     } catch (error) {
-      console.error("Error: Failed to reset password.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to reset password.",
+});
     } finally {
       setIsLoadingAction(null);
     }
@@ -244,7 +274,11 @@ export default function AdminUsers() {
       setIsSuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error("Error: Failed to suspend user.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to suspend user.",
+});
     } finally {
       setIsLoadingAction(null);
     }
@@ -268,7 +302,11 @@ export default function AdminUsers() {
       setIsUnsuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error("Error: Failed to unsuspend user.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to unsuspend user.",
+});
     } finally {
       setIsLoadingAction(null);
     }
@@ -302,12 +340,25 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        console.error({ variant: "destructive", title: "Error",
-          description: error.error || "Failed to delete user.", });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: error.error || "Failed to delete user.",
+});
       }
     } catch (error) {
-      console.error({ "Error deleting user:", error });
-      console.error("Error: Failed to delete user. Please try again.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error deleting user",
+  description: error ,
+});
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Failed to delete user. Please try again.",
+});
     } finally {
       setIsLoadingAction(null);
     }

@@ -49,7 +49,7 @@ export default function StatutoryRegisters() {
       getServicePricing().then(pricingData => {
         setPricing(pricingData);
       }).catch(error => {
-        console.error({ 'Error loading pricing:', error });
+        console.error("Error loading pricing", error );
       );
 
       const unsubscribe = onPricingUpdate(pricingData => {
@@ -106,7 +106,7 @@ export default function StatutoryRegisters() {
             console.log("Generation Complete: Your files have been downloaded.");
 
         } catch (error) {
-            console.error({ "Error generating files:", error });
+            console.error("Error generating files", error );
             console.error("Generation Failed: An error occurred while generating the files.");
         }
     };

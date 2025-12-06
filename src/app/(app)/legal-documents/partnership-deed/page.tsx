@@ -456,11 +456,21 @@ export default function PartnershipDeedPage() {
             form.reset(data.formData);
             console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`  });
           } else {
-            console.error({ variant: "destructive", title: "Unauthorized"  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Unauthorized",
+  description: ,
+});
             router.push('/legal-documents/partnership-deed');
           }
         } else {
-          console.error({ variant: "destructive", title: "Not Found"  });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found",
+  description: ,
+});
           router.push('/legal-documents/partnership-deed');
         }
         setIsLoading(false);
@@ -484,7 +494,12 @@ export default function PartnershipDeedPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -500,7 +515,11 @@ export default function PartnershipDeedPage() {
   const handleDownloadPdf = async (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      console.error("Error: Could not find the content to download.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not find the content to download.",
+});
       return;
     }
 
@@ -520,7 +539,12 @@ export default function PartnershipDeedPage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: 'Authentication Error' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
           return;
       }
       setIsSubmitting(true);
@@ -544,7 +568,12 @@ export default function PartnershipDeedPage() {
           }
       } catch (e) {
           console.error(e);
-          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: 'Could not save the draft.',
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -569,11 +598,19 @@ export default function PartnershipDeedPage() {
             form.setValue("extraClauses", (existingClauses || "") + newClausesText);
             console.log("AI Clauses Added: Suggested clauses have been appended.");
         } else {
-             console.error("Suggestion Failed: Could not generate clauses.");
+             const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Suggestion Failed: Could not generate clauses.",
+});
         }
     } catch (error) {
         console.error(error);
-        console.error("Error: An error occurred while generating clauses.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: An error occurred while generating clauses.",
+});
     } finally {
         setIsSuggestingClauses(false);
     }
@@ -617,7 +654,11 @@ export default function PartnershipDeedPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error("Validation Error: Please correct the errors on this page before proceeding.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please correct the errors on this page before proceeding.",
+});
     }
   };
 
@@ -928,7 +969,11 @@ export default function PartnershipDeedPage() {
                               console.log("Payment Successful: Your documents are ready for download.");
                             }}
                             onFailure={() => {
-                              console.error("Payment Failed: Payment was not completed. Please try again.");
+                              const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                             }}
                           />
                         </CardFooter>
@@ -1025,7 +1070,11 @@ export default function PartnershipDeedPage() {
                                     );
                                 }}
                                 onFailure={() => {
-                                    console.error("Payment Failed: Payment was not completed. Please try again.");
+                                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                                 }}
                             />
                         ) : (

@@ -49,26 +49,39 @@ export function EmailDialog({
     const invalidEmails = emailAddresses.filter((email) => !isValidEmail(email));
 
     if (emailAddresses.length === 0) {
-      console.error("Email Required: Please enter at least one email address.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Email Required: Please enter at least one email address.",
+});
       return;
     }
 
     if (invalidEmails.length > 0) {
-      console.log(
+      const { toast } = require("@/hooks/use-toast");
+      toast({
         variant: "destructive",
         title: "Invalid Email",
         description: `The following email addresses are invalid: ${invalidEmails.join(", ")}`,
-      );
+      });
       return;
     }
 
     if (!contentRef.current) {
-      console.error("Error: Could not find the content to send.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not find the content to send.",
+});
       return;
     }
 
     if (!subject.trim()) {
-      console.error("Subject Required: Please enter an email subject.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Subject Required: Please enter an email subject.",
+});
       return;
     }
 
@@ -80,24 +93,34 @@ export function EmailDialog({
         subject: subject.trim(),
         body: body.trim(),
         fileName,
-      );
+      });
 
       if (result.success) {
-        console.log({ title: "Email Sent",
+        const { toast } = require("@/hooks/use-toast");
+        toast({
+          title: "Email Sent",
           description: result.message || "Your report has been sent successfully.",
-        );
+        });
         onOpenChange(false);
         // Reset form
         setTo(defaultTo || "");
-        setSubject(defaultSubject || fileName });
+        setSubject(defaultSubject || fileName);
         setBody(defaultBody || `Please find attached ${fileName}.`);
       } else {
-        console.error({ variant: "destructive", title: "Failed to Send Email",
-          description: result.error || "An error occurred while sending the email.", });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to Send Email",
+  description: result.error || "An error occurred while sending the email.",
+});
       }
     } catch (error) {
-      console.error({ variant: "destructive", title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send email.", });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: error instanceof Error ? error.message : "Failed to send email.",
+});
     } finally {
       setIsSending(false);
     }

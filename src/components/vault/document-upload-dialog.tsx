@@ -90,7 +90,7 @@ export function DocumentUploadDialog({
 
       return true;
     } catch (error) {
-      console.error({ "Error checking storage:", error });
+      console.error("Error checking storage", error );
       return false;
     }
   };
@@ -136,7 +136,7 @@ export function DocumentUploadDialog({
           setUploadProgress(progress);
         },
         (error) => {
-          console.error({ "Upload error:", error });
+          console.error("Upload error", error );
           setError("Upload failed. Please try again.");
           setIsUploading(false);
         },
@@ -203,14 +203,14 @@ export function DocumentUploadDialog({
             setUploadProgress(100);
             console.log("Upload Successful: Your document has been uploaded successfully.");
           } catch (error) {
-            console.error({ "Error saving document:", error });
+            console.error("Error saving document", error );
             setError("Failed to save document metadata. Please try again.");
             setIsUploading(false);
           }
         }
       );
     } catch (error) {
-      console.error({ "Upload error:", error });
+      console.error("Upload error", error );
       setError("Upload failed. Please try again.");
       setIsUploading(false);
     }

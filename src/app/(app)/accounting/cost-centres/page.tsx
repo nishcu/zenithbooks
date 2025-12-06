@@ -69,9 +69,11 @@ export default function CostCentresPage() {
   }
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    console.log({ title: `Action: ${action}`,
-        description: `This would ${action.toLowerCase( })} cost centre ${id}. This functionality is a placeholder.`
-    })
+    const { toast } = require("@/hooks/use-toast");
+    toast({
+      title: `Action: ${action}`,
+      description: `This would ${action.toLowerCase()} cost centre ${id}. This functionality is a placeholder.`
+    });
   }
 
   return (

@@ -95,7 +95,7 @@ export function DocumentEditDialog({
 
       console.log("Document Updated: Document metadata has been updated successfully.");
     } catch (error) {
-      console.error({ "Error updating document:", error });
+      console.error("Error updating document", error );
       console.error("Update Failed: Failed to update document. Please try again.");
     } finally {
       setIsSaving(false);

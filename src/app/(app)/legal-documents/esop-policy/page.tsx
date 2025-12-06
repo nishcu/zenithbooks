@@ -83,7 +83,11 @@ export default function EsopPolicy() {
             router.push('/legal-documents/esop-policy');
           }
         } else {
-          console.error("Not Found: The requested document draft could not be found.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found: The requested document draft could not be found.",
+});
           router.push('/legal-documents/esop-policy');
         }
         setIsLoading(false);
@@ -104,7 +108,12 @@ export default function EsopPolicy() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -117,7 +126,12 @@ export default function EsopPolicy() {
 
   const handleSaveDraft = async () => {
     if (!user) {
-      console.error({ variant: "destructive", title: 'Authentication Error'  });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
       return;
     }
     setIsSubmitting(true);
@@ -141,7 +155,12 @@ export default function EsopPolicy() {
       }
     } catch (e) {
       console.error(e);
-      console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'  });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: 'Could not save the draft.',
+});
     } finally {
       setIsSubmitting(false);
     }
@@ -218,7 +237,11 @@ export default function EsopPolicy() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    console.error("Error: Could not find document content.");
+                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not find document content.",
+});
                     return;
                   }
                   console.log("Generating PDF...: Your document is being prepared.");
@@ -233,7 +256,12 @@ export default function EsopPolicy() {
                   await html2pdf().set(opt).from(documentRef.current).save();
                   console.log("PDF Generated: Your ESOP Policy has been downloaded successfully.");
                 } catch (error: any) {
-                  console.error({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF."  });
+                  const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating the PDF.",
+});
                 }
               }}><FileDown className="mr-2"/> Download Full Policy</Button>
             </CardFooter>
@@ -300,7 +328,11 @@ export default function EsopPolicy() {
                       );
                     }}
                     onFailure={() => {
-                      console.error("Payment Failed: Payment was not completed. Please try again.");
+                      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                     }}
                   />
                 );

@@ -86,19 +86,19 @@ export default function TrialBalancePage() {
         const balances: Record<string, number> = {};
 
         // Initialize all possible accounts
-        allAccounts.forEach(acc => { balances[acc.code] = 0; );
-        customers.forEach(c => { balances[c.id] = 0; );
-        vendors.forEach(v => { balances[v.id] = 0; );
+        allAccounts.forEach(acc => { balances[acc.code] = 0; });
+        customers.forEach(c => { balances[c.id] = 0; });
+        vendors.forEach(v => { balances[v.id] = 0; });
 
         journalVouchers.forEach(voucher => {
             voucher.lines.forEach(line => {
                 if (balances.hasOwnProperty(line.account)) {
                     const debit = parseFloat(line.debit);
                     const credit = parseFloat(line.credit);
-                    balances[line.account] += debit - credit;
+                     balances[line.account] += debit - credit;
                 }
-            );
-        );
+            });
+        });
         
         const combinedData = [
             ...allAccounts.map(acc => ({...acc, group: acc.type})),
@@ -182,10 +182,11 @@ export default function TrialBalancePage() {
 
         // File upload processing
 
-        console.log(
+        const { toast } = require("@/hooks/use-toast");
+        toast({
             title: "Upload Simulated",
             description: `File '${uploadFile.name}' processed. In a real app, this would update your financial data.`,
-        );
+        });
         setIsUploadDialogOpen(false);
     }
     
@@ -222,7 +223,7 @@ export default function TrialBalancePage() {
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         
         // Convert to array format for formatting
-        const headers = Object.keys(dataToExport[0] || {);
+        const headers = Object.keys(dataToExport[0] || {});
         const rows = dataToExport.map(row => headers.map(h => row[h as keyof typeof row]));
         
         // Apply formatting for print-ready output

@@ -94,7 +94,11 @@ export default function ForeignRemittancePage() {
                     router.push('/ca-certificates/foreign-remittance');
                 }
             } else {
-                 console.error("Not Found: The requested document draft could not be found.");
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found: The requested document draft could not be found.",
+});
                  router.push('/ca-certificates/foreign-remittance');
             }
             setIsLoading(false);
@@ -115,7 +119,12 @@ export default function ForeignRemittancePage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -132,13 +141,22 @@ export default function ForeignRemittancePage() {
         setStep(2);
         console.log("Draft Ready: Review the Form 15CB before proceeding.");
     } else {
-        console.error("Validation Error: Please fill all required fields.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please fill all required fields.",
+});
     }
   }
   
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: 'Authentication Error' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
           return;
       }
       setIsSubmitting(true);
@@ -162,7 +180,12 @@ export default function ForeignRemittancePage() {
           }
       } catch (e) {
           console.error(e);
-          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: 'Could not save the draft.',
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -170,7 +193,11 @@ export default function ForeignRemittancePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error("Authentication Error: You must be logged in to make a request.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error: You must be logged in to make a request.",
+});
           return;
       }
       setIsSubmitting(true);
@@ -188,8 +215,17 @@ export default function ForeignRemittancePage() {
         );
         console.log("Request Sent: Your Form 15CB certification request has been sent to the admin for review and signature.");
       } catch (error) {
-          console.error({ "Error sending request:", error });
-          console.error("Request Failed: Could not send the request. Please try again.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error sending request",
+  description: error ,
+});
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Request Failed: Could not send the request. Please try again.",
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -332,7 +368,11 @@ export default function ForeignRemittancePage() {
                                   );
                                 }}
                                 onFailure={() => {
-                                  console.error("Payment Failed: Payment was not completed. Please try again.");
+                                  const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                                 }}
                               />
                             );

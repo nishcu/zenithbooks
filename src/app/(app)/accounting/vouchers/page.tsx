@@ -136,7 +136,7 @@ export default function VouchersPage() {
                     mode: v.lines.some(l => l.account === '1010') ? 'Cash' : 'Bank',
                     status: isReversed ? 'Reversed' : 'Active'
                 };
-            );
+            });
 
         const allPayments = journalVouchers
             .filter(v => v && v.id && v.id.startsWith("PV-"))
@@ -148,9 +148,9 @@ export default function VouchersPage() {
                     party: v.narration.split(" to ")[1]?.split(" for")[0] || v.narration,
                     amount: v.amount,
                     mode: v.lines.some(l => l.account === '1010') ? 'Cash' : 'Bank',
-                    status: isReversed ? 'Reversed' : 'Active'
-                };
-            );
+                     status: isReversed ? 'Reversed' : 'Active'
+                 };
+             });
 
         return { 
             receipts: allReceipts.filter(v => !reversedIds.has(v.id)),
@@ -181,7 +181,11 @@ export default function VouchersPage() {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);
 
         if (!originalVoucher) {
-            console.error("Error: Original voucher transaction not found.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Original voucher transaction not found.",
+});
             return;
         }
 
@@ -204,7 +208,12 @@ export default function VouchersPage() {
             await addJournalVoucher(reversalVoucher as any);
             console.log({ title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.`  });
         } catch (e: any) {
-            console.error({ variant: "destructive", title: "Reversal Failed", description: e.message  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Reversal Failed",
+  description: e.message,
+});
         }
     };
     
@@ -212,9 +221,11 @@ export default function VouchersPage() {
         if(action === 'Delete') {
             handleDeleteVoucher(voucherId);
         } else {
-            console.log({ title: `${action} Voucher`,
-                description: `Simulating ${action.toLowerCase( })} action for voucher ${voucherId}.`,
-            );
+            const { toast } = require("@/hooks/use-toast");
+            toast({
+                title: `${action} Voucher`,
+                description: `Simulating ${action.toLowerCase()} action for voucher ${voucherId}.`,
+            });
         }
     };
 

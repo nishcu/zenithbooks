@@ -170,8 +170,12 @@ export default function NewPurchasePage() {
         if (result) {
             // Validate the buyer's GSTIN
             if (result.buyerGstin && result.buyerGstin.toUpperCase() !== userGstin.toUpperCase()) {
-                 console.error({ variant: "destructive", title: "Validation Failed", 
-                    description: `This invoice appears to be for a different GSTIN (${result.buyerGstin});. Please upload a bill for your company.` 
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Failed",
+  description: `This invoice appears to be for a different GSTIN (${result.buyerGstin,
+});. Please upload a bill for your company.` 
                 );
                 setIsOcrLoading(false);
                 if(fileInputRef.current) fileInputRef.current.value = "";
@@ -210,12 +214,20 @@ export default function NewPurchasePage() {
             }
           console.log("Data Extracted!: Form has been pre-filled with AI.");
         } else {
-            console.error("Extraction Failed: Could not extract data from the document.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Extraction Failed: Could not extract data from the document.",
+});
         }
       };
     } catch (error) {
       console.error(error);
-      console.error("Error: An unexpected error occurred during OCR.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: An unexpected error occurred during OCR.",
+});
     } finally {
       setIsOcrLoading(false);
       // Reset file input to allow re-uploading the same file
@@ -230,7 +242,11 @@ export default function NewPurchasePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !billNumber) {
-        console.error("Missing Details: Please select a vendor and enter a bill number.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Details: Please select a vendor and enter a bill number.",
+});
         return;
     }
     
@@ -262,7 +278,12 @@ export default function NewPurchasePage() {
         console.log({ title: "Purchase Bill Saved", description: `Journal entry for bill #${billId} has been automatically created.`  });
         router.push("/purchases");
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save journal entry",
+  description: e.message,
+});
     }
   }
 

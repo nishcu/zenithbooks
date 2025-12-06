@@ -163,7 +163,11 @@ export default function NewInvoicePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !invoiceNumber) {
-        console.error("Missing Details: Please select a customer and enter an invoice number.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Details: Please select a customer and enter an invoice number.",
+});
         return;
     }
     
@@ -207,8 +211,18 @@ export default function NewInvoicePage() {
         console.log({ title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.`  });
         router.push("/billing/invoices");
     } catch (e: any) {
-        console.error({ "Firebase error:", e });
-        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Firebase error",
+  description: e ,
+});
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save journal entry",
+  description: e.message,
+});
     }
   }
 

@@ -122,7 +122,7 @@ export default function PricingPage() {
             setUserType(userDoc.data().userType || 'business');
           }
         } catch (error) {
-          console.error({ "Error fetching user type:", error });
+          console.error("Error fetching user type", error );
         }
       }
     };

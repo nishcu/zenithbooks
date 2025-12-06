@@ -14,7 +14,7 @@ export async function generateTermsAction(
     const result = await generateTerms(input);
     return result;
   } catch (error) {
-    console.error({ "Error in generateTermsAction:", error });
+    console.error("Error in generateTermsAction", error );
     throw new Error("Failed to generate terms and conditions.");
   }
 }

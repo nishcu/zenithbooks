@@ -119,7 +119,7 @@ export default function GstEngagementLetterPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      console.error("Error loading pricing", error );
     );
 
     // Subscribe to real-time pricing updates

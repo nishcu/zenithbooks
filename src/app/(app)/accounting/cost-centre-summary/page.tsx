@@ -35,7 +35,7 @@ import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 const formatCurrency = (value: number) => {
     if (Math.abs(value) < 0.01) value = 0;
-    return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 );
+    undefined
 };
 
 export default function CostCentreSummaryPage() {
@@ -53,7 +53,7 @@ export default function CostCentreSummaryPage() {
 
         costCentres.forEach(cc => {
             summary[cc.id] = { name: cc.name, income: 0, expense: 0 };
-        );
+      });
 
         journalVouchers.forEach(voucher => {
             voucher.lines.forEach(line => {
@@ -70,8 +70,8 @@ export default function CostCentreSummaryPage() {
                         summary[line.costCentre].expense += debit - credit;
                     }
                 }
-            );
-        );
+          });
+      });
         
         return Object.values(summary).map(data => ({
             ...data,
@@ -85,7 +85,7 @@ export default function CostCentreSummaryPage() {
             income: acc.income + curr.income,
             expense: acc.expense + curr.expense,
             net: acc.net + curr.net,
-        }), { income: 0, expense: 0, net: 0 );
+      }), { income: 0, expense: 0, net: 0 });
     }, [costCentreData]);
 
     // Early return AFTER all hooks are called
@@ -105,7 +105,12 @@ export default function CostCentreSummaryPage() {
 
     const handleExport = () => {
         if (costCentreData.length === 0) {
-            console.error({ variant: "destructive", title: "No data to export"  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No data to export",
+  description: "There is no cost centre data to export.",
+});
             return;
         }
 

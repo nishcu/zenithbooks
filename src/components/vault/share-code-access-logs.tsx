@@ -73,7 +73,7 @@ export function ShareCodeAccessLogs({
         setLoading(false);
       },
       (error) => {
-        console.error({ "Error fetching access logs:", error });
+        console.error("Error fetching access logs", error );
         setLoading(false);
       }
     );

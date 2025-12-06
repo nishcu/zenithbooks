@@ -120,16 +120,22 @@ export default function BudgetsPage() {
     };
 
     const handleSaveBudget = () => {
-        console.log({ "Saving budget for FY:", financialYear, budgetData });
-        console.log(
-            title: "Budget Saved!",
-            description: `Your budget for the financial year ${financialYear} has been saved.`,
-        );
+        console.log("Saving budget for FY:", financialYear, budgetData);
+        const { toast } = require("@/hooks/use-toast");
+        toast({
+          title: "Budget Saved!",
+          description: `Your budget for the financial year ${financialYear} has been saved.`,
+        });
     };
 
     const handleExportBudget = () => {
         if (budgetData.length === 0) {
-            console.error({ variant: "destructive", title: "No data to export"  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No data to export",
+  description: "There is no budget data to export.",
+});
             return;
         }
 

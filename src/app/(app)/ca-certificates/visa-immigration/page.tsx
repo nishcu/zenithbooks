@@ -105,11 +105,21 @@ export default function VisaImmigrationCertificatePage() {
                     form.reset(data.formData);
                     console.log("title", "Draft Loaded");
                 } else {
-                    console.error({ variant: "destructive", title: "Unauthorized" });
+                    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Unauthorized",
+  description: ,
+});
                     router.push('/ca-certificates/visa-immigration');
                 }
             } else {
-                 console.error({ variant: "destructive", title: "Not Found" });
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found",
+  description: ,
+});
                  router.push('/ca-certificates/visa-immigration');
             }
             setIsLoading(false);
@@ -130,7 +140,12 @@ export default function VisaImmigrationCertificatePage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error({ 'Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -163,13 +178,22 @@ export default function VisaImmigrationCertificatePage() {
         setStep(3); // Move to preview step
         console.log("Draft Ready: Review the generated certificate below.");
     } else {
-         console.error("Validation Error: Please fill all required fields.");
+         const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please fill all required fields.",
+});
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: 'Authentication Error' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
           return;
       }
       setIsSubmitting(true);
@@ -193,7 +217,12 @@ export default function VisaImmigrationCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          console.error({ variant: "destructive", title: 'Save Failed' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: ,
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -201,7 +230,11 @@ export default function VisaImmigrationCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error("Authentication Error: You must be logged in to make a request.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error: You must be logged in to make a request.",
+});
           return;
       }
       setIsSubmitting(true);
@@ -219,8 +252,17 @@ export default function VisaImmigrationCertificatePage() {
         );
         console.log("Request Sent: Your certification request has been sent to the admin for review and signature.");
       } catch (error) {
-          console.error({ "Error sending request:", error });
-          console.error("Request Failed: Could not send the request. Please try again.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error sending request",
+  description: error ,
+});
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Request Failed: Could not send the request. Please try again.",
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -245,7 +287,11 @@ export default function VisaImmigrationCertificatePage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error("Validation Error: Please correct the errors on this page before proceeding.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please correct the errors on this page before proceeding.",
+});
     }
   };
 
@@ -461,7 +507,11 @@ export default function VisaImmigrationCertificatePage() {
                                         );
                                       }}
                                       onFailure={() => {
-                                        console.error("Payment Failed: Payment was not completed. Please try again.");
+                                        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                                       }}
                                     />
                                   );

@@ -87,7 +87,11 @@ export default function NewPurchaseOrderPage() {
                 setOrderDate(orderData.orderDate.toDate());
                 setLineItems(orderData.lineItems);
             } else {
-                console.error("Error: Purchase order not found.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Purchase order not found.",
+});
                 router.push("/purchases/purchase-orders");
             }
         };
@@ -176,7 +180,12 @@ export default function NewPurchaseOrderPage() {
         router.push("/purchases/purchase-orders");
 
     } catch (error) {
-      console.error({ "Error saving document: ", error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: ,
+});
       console.log("Error Saving: There was an error saving the purchase order.");
     }
   };

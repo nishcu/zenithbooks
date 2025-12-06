@@ -232,7 +232,7 @@ export default function TdsReturns() {
       );
 
     } catch (error) {
-      console.error({ "Error generating report:", error });
+      console.error("Error generating report", error );
       console.error("Report Generation Failed: An error occurred while generating the report. Please try again.");
     }
   };

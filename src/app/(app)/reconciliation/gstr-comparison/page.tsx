@@ -57,11 +57,21 @@ export default function GstrComparisonPage() {
                 setGstrCompareResult(result.report);
                 console.log("title", "GSTR Comparison Complete");
             } else {
-                console.error({ variant: "destructive", title: 'Comparison Failed', description: 'Could not get GSTR comparison results.'  });
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Comparison Failed",
+  description: 'Could not get GSTR comparison results.',
+});
             }
         } catch (error: any) {
             console.error(error);
-            console.error({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during GSTR comparison.'  });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "An Error Occurred",
+  description: error.message || 'An unexpected error occurred during GSTR comparison.',
+});
         } finally {
             setIsGstrLoading(false);
         }

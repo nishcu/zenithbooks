@@ -90,7 +90,11 @@ export default function NewSalesOrderPage() {
                 }
                 setLineItems(orderData.lineItems);
             } else {
-                console.error("Error: Sales order not found.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Sales order not found.",
+});
                 router.push("/billing/sales-orders");
             }
         };
@@ -181,7 +185,12 @@ export default function NewSalesOrderPage() {
         router.push("/billing/sales-orders");
 
     } catch (error) {
-      console.error({ "Error saving document: ", error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: ,
+});
       console.log("Error Saving: There was an error saving the sales order.");
     }
   };

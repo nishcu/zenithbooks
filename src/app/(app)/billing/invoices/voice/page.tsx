@@ -295,8 +295,12 @@ export default function VoiceInvoiceEntryPage() {
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
 
       if (!isSecure) {
-        console.error({ variant: "destructive", title: "HTTPS Required",
-          description: "Speech recognition requires a secure connection (HTTPS });.",
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "HTTPS Required",
+  description: "Speech recognition requires a secure connection (HTTPS,
+});.",
         );
         return;
       }
@@ -332,12 +336,22 @@ export default function VoiceInvoiceEntryPage() {
                 }, 500);
               }
             } catch (error) {
-              console.error({ 'Error processing speech result:', error });
+              const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error processing speech result",
+  description: error ,
+});
             }
           };
 
           recognitionInstance.onerror = (event: any) => {
-            console.error({ 'Speech recognition error:', event.error, event });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Speech recognition error",
+  description: event.error, event ,
+});
 
             let errorMessage = "An error occurred with speech recognition.";
             let errorTitle = "Speech Recognition Error";
@@ -370,8 +384,12 @@ export default function VoiceInvoiceEntryPage() {
             }
 
             setIsListening(false);
-            console.error({ variant: "destructive", title: errorTitle,
-              description: errorMessage, });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: errorMessage,
+});
           };
 
           recognitionInstance.onend = () => {
@@ -387,8 +405,17 @@ export default function VoiceInvoiceEntryPage() {
                 setRecognition(recognitionInstance);
               })
               .catch((error) => {
-                console.error({ 'Microphone permission denied:', error });
-                console.error("Microphone Access Required: Please allow microphone access to use voice-to-invoice feature.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Microphone permission denied",
+  description: error ,
+});
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Microphone Access Required: Please allow microphone access to use voice-to-invoice feature.",
+});
               );
           } else {
             // Fallback for older browsers
@@ -396,11 +423,24 @@ export default function VoiceInvoiceEntryPage() {
           }
 
         } catch (error) {
-          console.error({ 'Error initializing speech recognition:', error });
-          console.error("Speech Recognition Unavailable: Speech recognition could not be initialized. Please try a different browser.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error initializing speech recognition",
+  description: error ,
+});
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Speech Recognition Unavailable: Speech recognition could not be initialized. Please try a different browser.",
+});
         }
       } else {
-        console.error("Browser Not Supported: Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Browser Not Supported: Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.",
+});
       }
     }
 
@@ -433,7 +473,11 @@ export default function VoiceInvoiceEntryPage() {
 
   const startListening = () => {
     if (!recognition) {
-      console.error("Speech Recognition Not Available: Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Speech Recognition Not Available: Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.",
+});
       return;
     }
 
@@ -462,23 +506,45 @@ export default function VoiceInvoiceEntryPage() {
             description: "Speak clearly: 'Customer name, Product name, Quantity'",
            });
         } catch (error) {
-          console.error({ 'Error starting recognition after delay:', error });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error starting recognition after delay",
+  description: error ,
+});
           setIsListening(false);
-          console.error("Speech Recognition Failed: Could not start speech recognition. Please try again.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Speech Recognition Failed: Could not start speech recognition. Please try again.",
+});
         }
       }, 100);
 
     } catch (error) {
-      console.error({ 'Error starting recognition:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error starting recognition",
+  description: error ,
+});
       setIsListening(false);
 
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          console.error("Recognition Busy: Speech recognition is already running. Please wait.");
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Recognition Busy: Speech recognition is already running. Please wait.",
+});
         } else {
-          console.error({ variant: "destructive", title: "Speech Recognition Error",
-            description: error.message || "Failed to start speech recognition.", });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Speech Recognition Error",
+  description: error.message || "Failed to start speech recognition.",
+});
         }
       }
     }
@@ -490,7 +556,12 @@ export default function VoiceInvoiceEntryPage() {
         recognition.stop();
         console.log('Speech recognition stopped');
       } catch (error) {
-        console.error({ 'Error stopping recognition:', error });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error stopping recognition",
+  description: error ,
+});
         // Force stop listening state
         recognition.abort();
       }
@@ -500,7 +571,11 @@ export default function VoiceInvoiceEntryPage() {
 
   const processVoiceInput = useCallback(() => {
     if (!transcript.trim()) {
-      console.error("No Input: Please speak to create an invoice.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No Input: Please speak to create an invoice.",
+});
       return;
     }
     
@@ -555,13 +630,21 @@ export default function VoiceInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error("Invalid Selection: Please ensure a customer is selected.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Selection: Please ensure a customer is selected.",
+});
         return;
     }
     
     // Validate amount
     if (!values.amount || values.amount <= 0) {
-        console.error("Invalid Amount: Please enter a valid amount greater than zero.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Amount: Please enter a valid amount greater than zero.",
+});
         return;
     }
     
@@ -623,10 +706,18 @@ export default function VoiceInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        console.error({ "Error creating invoice:", e });
-        console.error({ variant: "destructive", title: "Failed to save invoice", 
-          description: e.message || "An error occurred while creating the invoice. Please try again." 
-         });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error creating invoice",
+  description: e ,
+});
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save invoice",
+  description: e.message || "An error occurred while creating the invoice. Please try again.",
+});
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

@@ -113,7 +113,7 @@ export async function checkRateLimit(clientIp: string): Promise<{
       remainingAttempts: RATE_LIMIT_CONFIG.MAX_ATTEMPTS - record.attempts,
     };
   } catch (error) {
-    console.error({ "Error checking rate limit:", error });
+    console.error("Error checking rate limit", error );
     // On error, allow the request (fail open)
     return {
       allowed: true,
@@ -134,7 +134,7 @@ export async function resetRateLimit(clientIp: string): Promise<void> {
       lockedUntil: null,
     }, { merge: true });
   } catch (error) {
-    console.error({ "Error resetting rate limit:", error });
+    console.error("Error resetting rate limit", error );
   }
 }
 
@@ -201,7 +201,7 @@ export async function checkSuspiciousActivity(
     
     return { suspicious: false };
   } catch (error) {
-    console.error({ "Error checking suspicious activity:", error });
+    console.error("Error checking suspicious activity", error );
     return { suspicious: false };
   }
 }

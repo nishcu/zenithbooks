@@ -24,7 +24,12 @@ export async function getServicePricing(): Promise<ServicePricing> {
       return servicePricing;
     }
   } catch (error) {
-    console.error({ "Error fetching service pricing: ", error });
+    const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: "Failed to load pricing information.",
+});
     // Return default pricing as a fallback
     return servicePricing;
   }

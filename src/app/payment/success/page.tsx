@@ -80,7 +80,7 @@ function PaymentSuccessContent() {
            });
         }
       } catch (error) {
-        console.error({ 'Payment verification error:', error });
+        console.error("Payment verification error", error );
         setStatus('failed');
         console.log({ variant: 'default',
           title: 'Verification Issue',

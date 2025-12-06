@@ -393,7 +393,11 @@ export default function BulkInvoicePage() {
       } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         rows = await parseExcel(file);
       } else {
-        console.error("Unsupported Format: Please upload a CSV or Excel file.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Unsupported Format: Please upload a CSV or Excel file.",
+});
         setIsProcessing(false);
         return;
       }
@@ -466,10 +470,18 @@ export default function BulkInvoicePage() {
         description: `${rows.length} invoice${rows.length === 1 ? '' : 's'} processed. ${validCount} valid, ${errorCount} with errors.` 
       );
     } catch (error: any) {
-      console.error({ "Error processing file:", error });
-      console.error({ variant: "destructive", title: "Processing Error", 
-        description: error.message || "Could not process the file. Please check the format and try again." 
-       });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error processing file",
+  description: error ,
+});
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Processing Error",
+  description: error.message || "Could not process the file. Please check the format and try again.",
+});
     } finally {
       setIsProcessing(false);
       // Reset file input
@@ -487,7 +499,11 @@ export default function BulkInvoicePage() {
     const validInvoices = parsedInvoices.filter(p => p.status === 'valid');
     
     if (validInvoices.length === 0) {
-      console.error("No Valid Invoices: Please fix errors before creating invoices.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No Valid Invoices: Please fix errors before creating invoices.",
+});
       return;
     }
 

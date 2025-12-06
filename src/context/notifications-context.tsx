@@ -70,7 +70,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         try {
             await updateDoc(doc(db, "notifications", id), { read: true });
         } catch (error) {
-            console.error({ "Error marking notification as read:", error });
+            console.error("Error marking notification as read", error );
         }
     };
     
@@ -84,7 +84,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
                 )
             );
         } catch (error) {
-            console.error({ "Error marking all notifications as read:", error });
+            console.error("Error marking all notifications as read", error );
         }
     };
     
@@ -94,7 +94,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
             // In Firestore, we'll mark it as deleted instead of actually deleting
             await updateDoc(doc(db, "notifications", id), { deleted: true });
         } catch (error) {
-            console.error({ "Error deleting notification:", error });
+            console.error("Error deleting notification", error );
         }
     };
     
@@ -108,7 +108,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
                 createdAt: Timestamp.now(),
             });
         } catch (error) {
-            console.error({ "Error adding notification:", error });
+            console.error("Error adding notification", error );
         }
     };
     

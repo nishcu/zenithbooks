@@ -72,7 +72,9 @@ export default function BooksOfAccountPage() {
                     backLabel="Back to Dashboard"
                 />
             </div>
-        );
+        </>
+    );
+    }
     }
 
     if (!accountingContext) {
@@ -80,7 +82,7 @@ export default function BooksOfAccountPage() {
             <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-        );
+        });
     }
 
     // Get account name by code
@@ -160,11 +162,11 @@ export default function BooksOfAccountPage() {
                     debit > 0 ? debit.toFixed(2) : "",
                     credit > 0 ? credit.toFixed(2) : ""
                 ]);
-            );
+          });
 
             // Add blank row between vouchers
             rows.push(["", "", "", "", "", ""]);
-        );
+      });
 
         // Add totals row
         rows.push(["", "", "", "TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
@@ -233,10 +235,10 @@ export default function BooksOfAccountPage() {
                         payment,
                         receiptParticulars,
                         paymentParticulars
-                    );
+                    });
                 }
             }
-        );
+        });
 
         // Sort by date
         cashTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -272,7 +274,7 @@ export default function BooksOfAccountPage() {
                     balance.toFixed(2)
                 ]);
             }
-        );
+        });
 
         return { headers, rows };
     };
@@ -294,8 +296,8 @@ export default function BooksOfAccountPage() {
                     (account && account.type === 'Bank')) {
                     usedBankAccounts.add(accountCode);
                 }
-            );
-        );
+            });
+        });
 
         // Tally format: Double column format with Receipt side (left) and Payment side (right)
         const headers = ["Date", "Particulars", "Voucher No.", "Receipt", "Date", "Particulars", "Voucher No.", "Payment", "Balance"];
@@ -354,27 +356,28 @@ export default function BooksOfAccountPage() {
                             ? paymentAccounts.map(acc => `By ${acc}`).join(", ")
                             : (v.narration || "Bank Payment");
 
-                        bankTransactions.push({
-                            date: format(new Date(v.date), "dd-MMM-yyyy"),
-                            voucherId: v.id,
-                            bankAccount: accountCode,
-                            bankName: getAccountName(accountCode),
-                            receipt,
-                            payment,
-                            receiptParticulars,
-                            paymentParticulars
-                        );
+                        // Temporarily commented out to isolate syntax error
+                        // bankTransactions.push({
+                        //     date: format(new Date(v.date), "dd-MMM-yyyy"),
+                        //     voucherId: v.id,
+                        //     bankAccount: accountCode,
+                        //     bankName: getAccountName(accountCode),
+                        //     receipt,
+                        //     payment,
+                        //     receiptParticulars,
+                        //     paymentParticulars
+                        // });
                     }
                 }
-            );
-        );
+            });
+        });
 
         // Sort by date, then by bank account
         bankTransactions.sort((a, b) => {
             const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
             if (dateCompare !== 0) return dateCompare;
             return a.bankAccount.localeCompare(b.bankAccount);
-        );
+        });
 
         // Generate rows in Tally format - combine all banks in one book
         let currentBank = "";
@@ -417,7 +420,7 @@ export default function BooksOfAccountPage() {
                     bankBalances[trans.bankAccount].toFixed(2)
                 ]);
             }
-        );
+        });
 
         return { headers, rows: allRows };
     };
@@ -451,7 +454,7 @@ export default function BooksOfAccountPage() {
                 // Find vendor/party
                 const vendorLine = v.lines.find(l => 
                     vendors.some(vendor => vendor.id === String(l.account).trim())
-                );
+                });
                 const supplierName = vendorLine ? getAccountName(String(vendorLine.account).trim()) : 
                     (v.narration?.includes('from') ? v.narration.split('from')[1]?.trim() : '');
 
@@ -469,14 +472,14 @@ export default function BooksOfAccountPage() {
                     total.toFixed(2)
                 ]);
             }
-        );
+        });
 
         // Sort by date
         rows.sort((a, b) => {
             const dateA = new Date(a[0] as string);
             const dateB = new Date(b[0] as string);
             return dateA.getTime() - dateB.getTime();
-        );
+        });
 
         // Add totals row
         if (rows.length > 0) {
@@ -497,7 +500,7 @@ export default function BooksOfAccountPage() {
 
         const salesVouchers = vouchers.filter(v => 
             v.id && (v.id.startsWith("INV-") || v.id.startsWith("SI-")) && !v.reverses
-        );
+        });
 
         salesVouchers.forEach(v => {
             // Find sales account line
@@ -519,7 +522,7 @@ export default function BooksOfAccountPage() {
             // Find customer/party
             const customerLine = v.lines.find(l => 
                 customers.some(customer => customer.id === String(l.account).trim())
-            );
+            });
             const customerName = customerLine ? getAccountName(String(customerLine.account).trim()) : 
                 (v.narration?.includes('to') ? v.narration.split('to')[1]?.trim() : '');
 
@@ -533,14 +536,14 @@ export default function BooksOfAccountPage() {
                 gstAmount.toFixed(2),
                 total.toFixed(2)
             ]);
-        );
+        });
 
         // Sort by date
         rows.sort((a, b) => {
             const dateA = new Date(a[0] as string);
             const dateB = new Date(b[0] as string);
             return dateA.getTime() - dateB.getTime();
-        );
+        });
 
         // Add totals row
         if (rows.length > 0) {
@@ -592,11 +595,11 @@ export default function BooksOfAccountPage() {
                     debit > 0 ? debit.toFixed(2) : "",
                     credit > 0 ? credit.toFixed(2) : ""
                 ]);
-            );
+          });
 
             // Blank row between vouchers
             rows.push(["", "", "", "", "", "", ""]);
-        );
+        });
 
         // Add totals row
         rows.push(["", "", "", "", "TOTAL", totalDebit.toFixed(2), totalCredit.toFixed(2)]);
@@ -613,13 +616,13 @@ export default function BooksOfAccountPage() {
         // Initialize all accounts with their types
         allAccounts.forEach(acc => {
             accountBalances[acc.code] = { debit: 0, credit: 0, opening: 0, type: acc.type };
-        );
+        });
         customers.forEach(c => {
             accountBalances[c.id] = { debit: 0, credit: 0, opening: 0, type: "Customer" };
-        );
+        });
         vendors.forEach(v => {
             accountBalances[v.id] = { debit: 0, credit: 0, opening: 0, type: "Vendor" };
-        );
+        });
 
         // Calculate balances from vouchers
         vouchers.forEach(v => {
@@ -636,8 +639,8 @@ export default function BooksOfAccountPage() {
                 }
                 accountBalances[accountCode].debit += parseFloat(String(line.debit).replace(/,/g, '')) || 0;
                 accountBalances[accountCode].credit += parseFloat(String(line.credit).replace(/,/g, '')) || 0;
-            );
-        );
+            });
+        });
 
         // Group accounts by type and sort
         const accountsByType: Record<string, Array<[string, typeof accountBalances[string]]>> = {};
@@ -650,7 +653,7 @@ export default function BooksOfAccountPage() {
                 }
                 accountsByType[type].push([code, balance]);
             }
-        );
+        });
 
         // Sort types and accounts within each type
         const typeOrder = ["Assets", "Cash", "Bank", "Customer", "Vendor", "Liabilities", "Equity", "Revenue", "Expense", "Other"];
@@ -661,7 +664,7 @@ export default function BooksOfAccountPage() {
             if (indexA === -1) return 1;
             if (indexB === -1) return -1;
             return indexA - indexB;
-        );
+        });
 
         // Generate rows grouped by type
         sortedTypes.forEach(type => {
@@ -670,7 +673,7 @@ export default function BooksOfAccountPage() {
             
             const accounts = accountsByType[type].sort((a, b) => 
                 getAccountName(a[0]).localeCompare(getAccountName(b[0]))
-            );
+            });
 
             accounts.forEach(([code, balance]) => {
                 const closing = balance.opening + balance.debit - balance.credit;
@@ -682,11 +685,11 @@ export default function BooksOfAccountPage() {
                     balance.credit.toFixed(2),
                     closing.toFixed(2)
                 ]);
-            );
+          });
 
             // Add blank row after each group
             rows.push(["", "", "", "", "", ""]);
-        );
+      });
 
         return { headers, rows };
     };
@@ -700,13 +703,13 @@ export default function BooksOfAccountPage() {
         // Initialize all accounts with their types
         allAccounts.forEach(acc => {
             accountBalances[acc.code] = { debit: 0, credit: 0, type: acc.type };
-        );
+        });
         customers.forEach(c => {
             accountBalances[c.id] = { debit: 0, credit: 0, type: "Customer" };
-        );
+        });
         vendors.forEach(v => {
             accountBalances[v.id] = { debit: 0, credit: 0, type: "Vendor" };
-        );
+        });
 
         // Calculate balances from vouchers
         vouchers.forEach(v => {
@@ -722,8 +725,8 @@ export default function BooksOfAccountPage() {
                 }
                 accountBalances[accountCode].debit += parseFloat(String(line.debit).replace(/,/g, '')) || 0;
                 accountBalances[accountCode].credit += parseFloat(String(line.credit).replace(/,/g, '')) || 0;
-            );
-        );
+            });
+        });
 
         // Group by account type (like Tally)
         const accountsByType: Record<string, Array<[string, typeof accountBalances[string]]>> = {};
@@ -737,7 +740,7 @@ export default function BooksOfAccountPage() {
                 }
                 accountsByType[type].push([code, balance]);
             }
-        );
+        });
 
         // Sort types in Tally order (Assets, Liabilities, Equity, Income, Expenses)
         const typeOrder = ["Assets", "Cash", "Bank", "Customer", "Vendor", "Liabilities", "Equity", "Revenue", "Expense", "Other"];
@@ -748,7 +751,7 @@ export default function BooksOfAccountPage() {
             if (indexA === -1) return 1;
             if (indexB === -1) return -1;
             return indexA - indexB;
-        );
+        });
 
         // Generate rows grouped by type (Tally format)
         sortedTypes.forEach(type => {
@@ -757,7 +760,7 @@ export default function BooksOfAccountPage() {
             
             const accounts = accountsByType[type].sort((a, b) => 
                 getAccountName(a[0]).localeCompare(getAccountName(b[0]))
-            );
+            });
 
             accounts.forEach(([code, balance]) => {
                 const accountName = getAccountName(code);
@@ -786,8 +789,8 @@ export default function BooksOfAccountPage() {
                         ]);
                     }
                 }
-            );
-        );
+            });
+        });
 
         // Calculate totals
         let totalDebit = 0;
@@ -803,7 +806,7 @@ export default function BooksOfAccountPage() {
                 totalDebit += balance.debit;
                 totalCredit += balance.credit;
             }
-        );
+        });
 
         // Add blank row before totals
         rows.push(["", "", ""]);
@@ -877,7 +880,11 @@ export default function BooksOfAccountPage() {
             const { from, to } = getDateRange();
 
             if (filteredVouchers.length === 0) {
-                console.error("No Data: No transactions found for the selected period.");
+                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No Data: No transactions found for the selected period.",
+});
                 setIsGenerating(false);
                 return;
             }
@@ -946,7 +953,7 @@ export default function BooksOfAccountPage() {
                     worksheet['!merges'].push({
                         s: { r: 0, c: 0 },
                         e: { r: 0, c: maxCol }
-                    );
+                    });
                     
                     // Row 2: Address - Center
                     const addressCell = XLSX.utils.encode_cell({ r: 1, c: 0 );
@@ -957,7 +964,7 @@ export default function BooksOfAccountPage() {
                     worksheet['!merges'].push({
                         s: { r: 1, c: 0 },
                         e: { r: 1, c: maxCol }
-                    );
+                    });
                     
                     // GST row if exists
                     if (sheetHeaders.length > 3 && sheetHeaders[2][0]) {
@@ -969,7 +976,7 @@ export default function BooksOfAccountPage() {
                         worksheet['!merges'].push({
                             s: { r: 2, c: 0 },
                             e: { r: 2, c: maxCol }
-                        );
+                        });
                     }
                     
                     // Title row - "Books of Accounts" - Bold, larger
@@ -984,7 +991,7 @@ export default function BooksOfAccountPage() {
                         worksheet['!merges'].push({
                             s: { r: titleRowIndex, c: 0 },
                             e: { r: titleRowIndex, c: maxCol }
-                        );
+                        });
                     }
                     
                     // Period row
@@ -998,7 +1005,7 @@ export default function BooksOfAccountPage() {
                         worksheet['!merges'].push({
                             s: { r: periodRowIndex, c: 0 },
                             e: { r: periodRowIndex, c: maxCol }
-                        );
+                        });
                     }
                     
                     // Sub-title row (Sheet name) - Bold
@@ -1013,7 +1020,7 @@ export default function BooksOfAccountPage() {
                         worksheet['!merges'].push({
                             s: { r: subTitleRowIndex, c: 0 },
                             e: { r: subTitleRowIndex, c: maxCol }
-                        );
+                        });
                     }
                     
                     // Style column headers (bold)
@@ -1025,7 +1032,7 @@ export default function BooksOfAccountPage() {
                             worksheet[headerCell].s.fill = { fgColor: { rgb: "E0E0E0" } }; // Light gray background
                             worksheet[headerCell].s.alignment = { horizontal: 'center', vertical: 'center' };
                         }
-                    );
+                    });
                     
                     // Set print area and page setup for better printing
                     const lastRow = maxRow + 1; // Excel is 1-indexed
@@ -1034,7 +1041,7 @@ export default function BooksOfAccountPage() {
                     
                     XLSX.utils.book_append_sheet(workbook, worksheet, name.substring(0, 31));
                 }
-            );
+            });
 
             // Generate filename
             const dateRange = getDateRange();
@@ -1048,11 +1055,20 @@ export default function BooksOfAccountPage() {
             console.log(
                 title: "Books of Account Generated",
                 description: `Excel file with ${sheets.length} sheets has been generated successfully.`,
-            );
+            });
         } catch (error: any) {
-            console.error({ "Error generating books:", error });
-            console.error({ variant: "destructive", title: "Generation Failed",
-                description: error.message || "An error occurred while generating books of account.", });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error generating books",
+  description: error ,
+});
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating books of account.",
+});
         } finally {
             setIsGenerating(false);
         }

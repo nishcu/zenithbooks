@@ -37,7 +37,7 @@ async function isNotificationEnabled(
     const preferences = settingsDoc.data().notificationPreferences || {};
     return preferences[type] ?? true; // Default to enabled if not set
   } catch (error) {
-    console.error({ "Error checking notification preferences:", error });
+    console.error("Error checking notification preferences", error );
     return true; // Default to enabled on error
   }
 }
@@ -71,7 +71,7 @@ export async function createVaultNotification(data: NotificationData): Promise<v
       expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : null,
     });
   } catch (error) {
-    console.error({ "Error creating vault notification:", error });
+    console.error("Error creating vault notification", error );
     // Don't throw - notifications are not critical
   }
 }
@@ -203,7 +203,7 @@ export async function checkAndNotifyExpiringCodes(userId: string): Promise<void>
       }
     });
   } catch (error) {
-    console.error({ "Error checking expiring codes:", error });
+    console.error("Error checking expiring codes", error );
   }
 }
 

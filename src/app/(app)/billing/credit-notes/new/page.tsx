@@ -131,7 +131,11 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        console.error("Missing Details: Please select a customer and original invoice.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Details: Please select a customer and original invoice.",
+});
         return;
     }
     
@@ -159,7 +163,12 @@ export default function NewCreditNotePage() {
         );
         console.log({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.`  });
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save journal entry",
+  description: e.message,
+});
     }
   }
 

@@ -328,7 +328,11 @@ export default function NetWorthCertificatePage() {
                     router.push('/ca-certificates/net-worth');
                 }
             } else {
-                 console.error("Not Found: The requested document draft could not be found.");
+                 const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Not Found: The requested document draft could not be found.",
+});
                  router.push('/ca-certificates/net-worth');
             }
             setIsLoading(false);
@@ -352,7 +356,12 @@ export default function NetWorthCertificatePage() {
       setPricing(pricingData);
       console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render' });
     }).catch(error => {
-      console.error({ '❌ NET-WORTH PAGE: Error loading pricing:', error });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "❌ NET-WORTH PAGE: Error loading pricing",
+  description: error ,
+});
     );
 
     // Subscribe to real-time pricing updates
@@ -381,13 +390,22 @@ export default function NetWorthCertificatePage() {
         setStep(4);
         console.log("Draft Ready for Preview: Review the generated certificate below.");
     } else {
-         console.error("Validation Error: Please fill all required fields before generating the draft.");
+         const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Validation Error: Please fill all required fields before generating the draft.",
+});
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error({ variant: "destructive", title: 'Authentication Error' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error",
+  description: ,
+});
           return;
       }
       setIsSubmitting(true);
@@ -411,7 +429,12 @@ export default function NetWorthCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Save Failed",
+  description: 'Could not save the draft.',
+});
       } finally {
           setIsSubmitting(false);
       }
@@ -566,7 +589,11 @@ export default function NetWorthCertificatePage() {
                                         );
                                       }}
                                       onFailure={() => {
-                                        console.error("Payment Failed: Payment was not completed. Please try again.");
+                                        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                                       }}
                                     />
                                   );

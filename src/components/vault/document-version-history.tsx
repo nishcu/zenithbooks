@@ -64,7 +64,7 @@ export function DocumentVersionHistory({
 
       console.log("Version download initiated:", versionNumber });
     } catch (error: any) {
-      console.error({ "Version download error:", error });
+      console.error("Version download error", error );
 
       let errorMessage = "Failed to download version. Please try again.";
       if (error.name === 'AbortError') {

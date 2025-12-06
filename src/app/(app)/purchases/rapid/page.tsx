@@ -48,7 +48,11 @@ export default function RapidPurchaseEntryPage() {
     const selectedItem: any = items.find((i:any) => i.id === values.itemId);
 
     if (!selectedParty || !selectedItem) {
-        console.error("Invalid Selection: Please ensure vendor and item are selected.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Invalid Selection: Please ensure vendor and item are selected.",
+});
         return;
     }
     
@@ -96,7 +100,12 @@ export default function RapidPurchaseEntryPage() {
             form.setFocus("itemId");
         }
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save purchase", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save purchase",
+  description: e.message,
+});
     }
   }, [accountingContext, vendors, items, form, router, toast]);
 

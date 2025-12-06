@@ -14,7 +14,7 @@ export async function generateMoaObjectsAction(
     const result = await generateMoaObjects(input);
     return result;
   } catch (error) {
-    console.error({ "Error in generateMoaObjectsAction:", error });
+    console.error("Error in generateMoaObjectsAction", error );
     throw new Error("Failed to get MOA objects suggestion.");
   }
 }

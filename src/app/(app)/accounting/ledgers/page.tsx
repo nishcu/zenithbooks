@@ -96,7 +96,7 @@ export default function LedgersPage() {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       setFromDate(startOfMonth);
       setToDate(today);
-      setDateRange({ from: startOfMonth, to: today );
+       setDateRange({ from: startOfMonth, to: today });
     }
   }, [fromDate, toDate]);
 
@@ -130,7 +130,12 @@ export default function LedgersPage() {
             const querySnapshot2 = await getDocs(q2);
             vouchers = querySnapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher));
           } catch (err2) {
-            console.error({ "Error fetching from both collections:", err1, err2 });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error fetching from both collections",
+  description: err1, err2 ,
+});
             throw err2;
           }
         }
@@ -167,16 +172,16 @@ export default function LedgersPage() {
             const hasAccount = voucher.lines.some(line => {
               const lineAccount = String(line.account || '').trim();
               const selected = String(selectedAccount || '').trim();
-              return lineAccount === selected;
-            );
+               return lineAccount === selected;
+            });
             
             return inRange && hasAccount;
           })
           .sort((a, b) => {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
-            return dateB.getTime() - dateA.getTime();
-          );
+             return dateB.getTime() - dateA.getTime();
+          });
 
         if (isMounted) {
           setJournalVouchers(filteredVouchers);
@@ -186,14 +191,20 @@ export default function LedgersPage() {
               variant: "default"
              });
           } else if (filteredVouchers.length > 0) {
-            console.log( 
-              title: "Report Generated", 
-              description: `Found ${filteredVouchers.length} entries for the selected period.`,
-            );
+             const { toast } = require("@/hooks/use-toast");
+             toast({
+               title: "Report Generated",
+                description: `Found ${filteredVouchers.length} entries for the selected period.`
+            });
           }
         }
       } catch (err) {
-        console.error({ "Error fetching vouchers: ", err });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: "An error occurred while fetching ledger data.",
+});
         console.log({ title: "Error", 
           description: `Could not fetch ledger data: ${err instanceof Error ? err.message : 'Unknown error'}.`, 
           variant: "destructive"
@@ -229,7 +240,7 @@ export default function LedgersPage() {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
-    );
+    });
     
     sortedVouchers.forEach((voucher, vIndex) => {
       if (!voucher.lines || !Array.isArray(voucher.lines)) {
@@ -260,9 +271,9 @@ export default function LedgersPage() {
             debit, 
             credit, 
             balance: runningBalance 
-          );
-        );
-    );
+          });
+      });
+  });
     
     return { 
       ledgerEntries: entries, 
@@ -322,12 +333,20 @@ export default function LedgersPage() {
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      console.error("Account Required: Please select an account first.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Account Required: Please select an account first.",
+});
       return;
     }
     
     if (!fromDate || !toDate) {
-      console.error("Date Range Required: Please select both from and to dates.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Date Range Required: Please select both from and to dates.",
+});
       return;
     }
     
@@ -337,7 +356,7 @@ export default function LedgersPage() {
     const end = new Date(toDate);
     end.setHours(23, 59, 59, 999);
     
-    setDateRange({ from: start, to: end );
+    setDateRange({ from: start, to: end });
     
     console.log(
       title: "Generating Report",
@@ -347,7 +366,11 @@ export default function LedgersPage() {
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      console.error("Error: Please select an account to export.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Please select an account to export.",
+});
       return;
     }
 
@@ -444,8 +467,17 @@ export default function LedgersPage() {
         description: `Ledger for ${accountName} has been exported successfully.`,
       );
     } catch (error) {
-      console.error({ "Error exporting PDF:", error });
-      console.error("Export Failed: An error occurred while exporting the PDF. Please try again.");
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error exporting PDF",
+  description: error ,
+});
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Export Failed: An error occurred while exporting the PDF. Please try again.",
+});
     }
   };
 

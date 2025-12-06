@@ -156,7 +156,12 @@ export default function CmaReportGeneratorPage() {
 
   const handleGetAiObservations = async () => {
       if (!generatedReport) {
-          console.error({ variant: "destructive", title: 'Error', description: 'Please generate the report first.' });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: 'Please generate the report first.',
+});
           return;
       }
       setIsAiLoading(true);
@@ -176,12 +181,27 @@ export default function CmaReportGeneratorPage() {
               setAiObservations(result.observations);
               setActiveTab('ai-observations');
           } else {
-              console.error({ variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.' });
+              const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "AI Analysis Failed",
+  description: 'Could not retrieve AI observations.',
+});
           }
       } catch (error: any) {
-          console.error({ "CMA Observations Error:", error });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "CMA Observations Error",
+  description: error ,
+});
           const errorMessage = error?.message || 'An error occurred while fetching AI observations.';
-          console.error({ variant: "destructive", title: 'Error', description: errorMessage });
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: errorMessage,
+});
       } finally {
           setIsAiLoading(false);
       }
@@ -564,7 +584,11 @@ export default function CmaReportGeneratorPage() {
                                 handleGenerateReport();
                             }}
                             onFailure={() => {
-                                console.error("Payment Failed: Payment was not completed. Please try again.");
+                                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                             }}
                         />
                     ) : (

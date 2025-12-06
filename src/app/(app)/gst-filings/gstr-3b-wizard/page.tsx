@@ -332,15 +332,23 @@ export default function Gstr3bWizardPage() {
 
       console.log("JSON Generated: Your GSTR-3B JSON file has been downloaded successfully.");
     } catch (error: any) {
-      console.error({ variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the JSON file.", });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating the JSON file.",
+});
     }
   }
 
   const handleGeneratePdf = async () => {
     try {
       if (!reportRef.current) {
-        console.error("Error: Could not find the report content to generate PDF.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not find the report content to generate PDF.",
+});
         return;
       }
 
@@ -359,8 +367,12 @@ export default function Gstr3bWizardPage() {
 
       console.log("PDF Generated: Your GSTR-3B PDF has been downloaded successfully.");
     } catch (error: any) {
-      console.error({ variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the PDF file.", });
+      const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Generation Failed",
+  description: error.message || "An error occurred while generating the PDF file.",
+});
     }
   }
 

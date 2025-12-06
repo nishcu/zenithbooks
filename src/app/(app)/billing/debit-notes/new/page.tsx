@@ -126,7 +126,11 @@ export default function NewDebitNotePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !originalPurchase) {
-        console.error("Missing Details: Please select a vendor and original purchase bill.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Missing Details: Please select a vendor and original purchase bill.",
+});
         return;
     }
     
@@ -151,7 +155,12 @@ export default function NewDebitNotePage() {
         );
         console.log({ title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.`  });
     } catch (e: any) {
-        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Failed to save journal entry",
+  description: e.message,
+});
     }
   }
 

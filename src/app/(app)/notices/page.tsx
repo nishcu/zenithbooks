@@ -98,7 +98,11 @@ export default function NoticesPage() {
 
     const handleSubmit = async (values: NoticeFormData) => {
         if (!user) {
-            console.error("Authentication Error: You must be logged in to submit a notice.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Authentication Error: You must be logged in to submit a notice.",
+});
             return;
         }
 
@@ -118,7 +122,12 @@ export default function NoticesPage() {
 
             console.log("Request Submitted Successfully!: Your notice has been sent to the admin panel. A professional will be assigned shortly and will get in touch with you.");
         } catch (error) {
-            console.error({ "Error submitting notice request: ", error });
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error",
+  description: ,
+});
             console.log({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."});;
         }
     }
@@ -201,7 +210,11 @@ export default function NoticesPage() {
                                 form.handleSubmit((values) => handleSubmit(values))();
                             }}
                             onFailure={() => {
-                                console.error("Payment Failed: Payment was not completed. Please try again.");
+                                const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Payment Failed: Payment was not completed. Please try again.",
+});
                             }}
                         />
                     ) : (

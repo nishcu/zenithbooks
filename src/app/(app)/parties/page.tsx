@@ -113,7 +113,11 @@ export default function PartiesPage() {
         await deleteDoc(partyDocRef);
         console.log({ title: "Party Deleted", description: `${party.name} has been removed.`} })
     } catch (e) {
-        console.error("Error: Could not delete the party.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Error: Could not delete the party.",
+});
     }
   }
   
@@ -124,7 +128,12 @@ export default function PartiesPage() {
           console.log({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.` });
       } catch (error) {
           console.error(error);
-          console.error({ variant: "destructive", title: "Assignment Failed", description: (error as Error });.message );
+          const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Assignment Failed",
+  description: (error as Error,
+});.message );
       }
   }
   
@@ -186,7 +195,11 @@ export default function PartiesPage() {
   
   const handleImport = async () => {
     if (!importFile || !user) {
-        console.error("No file selected: Please upload a file to import.");
+        const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "No file selected: Please upload a file to import.",
+});
         return;
     }
     
@@ -231,7 +244,11 @@ export default function PartiesPage() {
             setIsImportDialogOpen(false);
             setImportFile(null);
         } catch (error) {
-            console.error("Import Failed: There was an error writing to the database.");
+            const { toast } = require("@/hooks/use-toast");
+toast({
+  variant: "destructive",
+  title: "Import Failed: There was an error writing to the database.",
+});
         }
     };
     reader.readAsArrayBuffer(importFile);
