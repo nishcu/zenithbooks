@@ -40,7 +40,8 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
+import { toast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
 import { showErrorToast, showSuccessToast } from "@/lib/error-handler";
@@ -110,7 +111,7 @@ export function SignupForm() {
         }
       } catch (error: any) {
         console.error("Google Signup Error:", error);
-        toast({
+        enhancedToast({
           variant: "default",
           title: "Couldn't Sign Up with Google",
           description: error.message || "Something went wrong. Please try again or sign up with email.",
@@ -132,7 +133,7 @@ export function SignupForm() {
       // Check password strength
       const passwordCheck = checkPasswordStrength(values.password);
       if (!passwordCheck.valid) {
-        toast({
+        enhancedToast({
           variant: "default",
           title: "Password Needs to be Stronger",
           description: passwordCheck.feedback.join(" ") + " Please create a stronger password to keep your account secure.",

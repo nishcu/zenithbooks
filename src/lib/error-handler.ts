@@ -5,6 +5,28 @@
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
 import { toast } from "@/hooks/use-toast";
 
+// Contact information for error resolution
+const ERROR_CONTACT_INFO = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
+
+/**
+ * Enhanced toast function that automatically adds contact info for error toasts
+ */
+export function enhancedToast({ variant, title, description, ...props }: any) {
+  // Add contact information for error/destructive toasts
+  let finalDescription = description;
+  if (variant === "destructive" || title?.toLowerCase().includes("error") ||
+      title?.toLowerCase().includes("failed") || title?.toLowerCase().includes("oops")) {
+    finalDescription = (description || "") + ERROR_CONTACT_INFO;
+  }
+
+  return toast({
+    variant,
+    title,
+    description: finalDescription,
+    ...props
+  });
+}
+
 export interface AppError {
   code: string;
   message: string;
@@ -115,11 +137,14 @@ export function handleError(error: unknown, context?: string): AppError {
 export function showErrorToast(error: unknown, context?: string) {
   const appError = handleError(error, context);
   // Only use destructive variant for security-critical errors
-  const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED && 
-                     (appError.message.includes('disabled') || 
+  const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED &&
+                     (appError.message.includes('disabled') ||
                       appError.message.includes('locked'));
-  
-  toast({
+
+  // Add contact information for error resolution
+  const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
+
+  enhancedToast({
     variant: isCritical ? "destructive" : "default",
     title: isCritical ? "Security Alert" : "Oops!",
     description: appError.message,
@@ -150,4 +175,7 @@ export async function withErrorHandling<T>(
     return null;
   }
 }
+
+// Export the enhanced toast function for use throughout the app
+export { enhancedToast };
 
