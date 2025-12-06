@@ -207,7 +207,7 @@ export default function NewInvoicePage() {
         console.log({ title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.`  });
         router.push("/billing/invoices");
     } catch (e: any) {
-        console.error("Firebase error:", e);
+        console.error({ "Firebase error:", e });
         console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
     }
   }

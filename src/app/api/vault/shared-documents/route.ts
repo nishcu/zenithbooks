@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       count: documents.length,
     });
   } catch (error) {
-    console.error("Error fetching shared documents:", error);
+    console.error({ "Error fetching shared documents:", error });
     return NextResponse.json(
       { error: "Failed to fetch documents." },
       { status: 500 }

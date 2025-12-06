@@ -81,7 +81,7 @@ export default function VaultAccessLogsPage() {
         setShareCodes(codes);
       },
       (error) => {
-        console.error("Error fetching share codes:", error);
+        console.error({ "Error fetching share codes:", error });
       }
     );
 
@@ -111,10 +111,9 @@ export default function VaultAccessLogsPage() {
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching access logs:", error);
-        console.error( variant: "destructive", title: "Error",
-          description: "Failed to load access logs. Please try again.",
-        );
+        console.error({ "Error fetching access logs:", error });
+        console.error({ variant: "destructive", title: "Error",
+          description: "Failed to load access logs. Please try again.", });
         setLoading(false);
       }
     );

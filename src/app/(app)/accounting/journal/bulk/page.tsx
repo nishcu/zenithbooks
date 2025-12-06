@@ -512,17 +512,15 @@ export default function BulkJournalEntryPage() {
             } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
                 entries = await parseExcel(selectedFile);
             } else {
-                console.error( variant: "destructive", title: "Invalid File Type",
-                    description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)",
-                );
+                console.error({ variant: "destructive", title: "Invalid File Type",
+                    description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)", });
                 setIsProcessing(false);
                 return;
             }
 
             if (entries.length === 0) {
-                console.error( variant: "destructive", title: "No Entries Found",
-                    description: "The file appears to be empty or in an incorrect format.",
-                );
+                console.error({ variant: "destructive", title: "No Entries Found",
+                    description: "The file appears to be empty or in an incorrect format.", });
                 setIsProcessing(false);
                 return;
             }
@@ -628,10 +626,9 @@ export default function BulkJournalEntryPage() {
             );
             setIsProcessing(false);
         } catch (error: any) {
-            console.error("Error processing file:", error);
-            console.error( variant: "destructive", title: "Processing Failed",
-                description: error.message || "An error occurred while processing the file.",
-            );
+            console.error({ "Error processing file:", error });
+            console.error({ variant: "destructive", title: "Processing Failed",
+                description: error.message || "An error occurred while processing the file.", });
             setIsProcessing(false);
         }
     };
@@ -790,17 +787,15 @@ export default function BulkJournalEntryPage() {
 
     const handleCreateEntries = async () => {
         if (!accountingContext) {
-            console.error( variant: "destructive", title: "Error",
-                description: "Accounting context not available.",
-            );
+            console.error({ variant: "destructive", title: "Error",
+                description: "Accounting context not available.", });
             return;
         }
 
         const validEntries = parsedEntries.filter(e => e.status === 'valid');
         if (validEntries.length === 0) {
-            console.error( variant: "destructive", title: "No Valid Entries",
-                description: "Please fix errors before creating entries.",
-            );
+            console.error({ variant: "destructive", title: "No Valid Entries",
+                description: "Please fix errors before creating entries.", });
             return;
         }
 
@@ -876,7 +871,7 @@ export default function BulkJournalEntryPage() {
                     await addJournalVoucher(voucher);
                     successCount++;
                 } catch (error: any) {
-                    console.error("Error creating voucher:", error);
+                    console.error({ "Error creating voucher:", error });
                     errorCount++;
                 }
             }
@@ -891,10 +886,9 @@ export default function BulkJournalEntryPage() {
             const fileInput = document.getElementById('file-upload') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
         } catch (error: any) {
-            console.error("Error creating entries:", error);
-            console.error( variant: "destructive", title: "Creation Failed",
-                description: error.message || "An error occurred while creating journal entries.",
-            );
+            console.error({ "Error creating entries:", error });
+            console.error({ variant: "destructive", title: "Creation Failed",
+                description: error.message || "An error occurred while creating journal entries.", });
         } finally {
             setIsCreating(false);
         }

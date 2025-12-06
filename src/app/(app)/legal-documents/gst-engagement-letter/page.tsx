@@ -119,7 +119,7 @@ export default function GstEngagementLetterPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -155,9 +155,8 @@ export default function GstEngagementLetterPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error( variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors before proceeding.",
-        );
+        console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please correct the errors before proceeding.", });
     }
   };
 

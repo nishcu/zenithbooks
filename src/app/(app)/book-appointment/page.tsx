@@ -109,10 +109,8 @@ function BookAppointmentForm() {
 
   function onSubmit(values: FormData) {
     console.log({ values);
-    console.log(
-      title: "Request Submitted!",
-      description: "Our team will get in touch with you shortly to confirm your appointment.",
-    );
+    console.log({ title: "Request Submitted!",
+      description: "Our team will get in touch with you shortly to confirm your appointment.", });
     form.reset( });
   }
 

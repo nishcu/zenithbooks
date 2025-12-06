@@ -24,7 +24,7 @@ export async function getServicePricing(): Promise<ServicePricing> {
       return servicePricing;
     }
   } catch (error) {
-    console.error("Error fetching service pricing: ", error);
+    console.error({ "Error fetching service pricing: ", error });
     // Return default pricing as a fallback
     return servicePricing;
   }

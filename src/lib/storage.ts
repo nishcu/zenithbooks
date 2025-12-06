@@ -27,7 +27,7 @@ export async function uploadImage(file: File, folder: string = BLOG_IMAGES_PATH)
     console.log({ 'Image uploaded successfully:', downloadURL });
     return downloadURL;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error({ 'Error uploading image:', error });
     throw new Error('Failed to upload image. Please try again.');
   }
 }
@@ -47,7 +47,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
 
     console.log({ 'Image deleted successfully:', path });
   } catch (error) {
-    console.error('Error deleting image:', error);
+    console.error({ 'Error deleting image:', error });
     // Don't throw error for delete failures as it's not critical
   }
 }
@@ -63,7 +63,7 @@ export function getStoragePathFromUrl(url: string): string {
     const urlObj = new URL(url);
     return decodeURIComponent(urlObj.pathname.split('/o/')[1].split('?')[0]);
   } catch (error) {
-    console.error('Error extracting storage path:', error);
+    console.error({ 'Error extracting storage path:', error });
     return '';
   }
 }
@@ -106,7 +106,7 @@ export async function uploadBlogImage(
             onProgress(progress);
           },
           (error) => {
-            console.error('Upload error:', error);
+            console.error({ 'Upload error:', error });
             reject(new Error('Failed to upload image. Please try again.'));
           },
           async () => {
@@ -115,7 +115,7 @@ export async function uploadBlogImage(
               console.log({ 'Blog image uploaded successfully:', downloadURL);
               resolve(downloadURL });
             } catch (error) {
-              console.error('Error getting download URL:', error);
+              console.error({ 'Error getting download URL:', error });
               reject(new Error('Failed to get image URL. Please try again.'));
             }
           }
@@ -130,7 +130,7 @@ export async function uploadBlogImage(
       return downloadURL;
     }
   } catch (error) {
-    console.error('Error uploading blog image:', error);
+    console.error({ 'Error uploading blog image:', error });
     if (error instanceof Error) {
       throw error;
     }
@@ -154,7 +154,7 @@ export async function deleteBlogImage(imageUrl: string): Promise<void> {
     await deleteObject(imageRef);
     console.log('Blog image deleted successfully');
   } catch (error) {
-    console.error('Error deleting blog image:', error);
+    console.error({ 'Error deleting blog image:', error });
     // Don't throw error for delete failures as it's not critical
   }
 }
@@ -215,7 +215,7 @@ export async function migrateBase64ToFirebaseStorage(
     // Upload to Firebase Storage
     return await uploadBlogImage(file);
   } catch (error) {
-    console.error('Error migrating base64 image to Firebase Storage:', error);
+    console.error({ 'Error migrating base64 image to Firebase Storage:', error });
     throw new Error('Failed to migrate image to Firebase Storage');
   }
 }

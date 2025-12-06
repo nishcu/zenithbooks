@@ -120,10 +120,9 @@ export default function NewBlogPostPage() {
             setImagePreview(null });
 
         } catch (error: any) {
-            console.error('Blog creation error:', error);
-            console.error( variant: "destructive", title: "Upload Failed",
-                description: error.message || "Failed to upload image. Please try again.",
-            );
+            console.error({ 'Blog creation error:', error });
+            console.error({ variant: "destructive", title: "Upload Failed",
+                description: error.message || "Failed to upload image. Please try again.", });
         } finally {
             setIsLoading(false);
         }

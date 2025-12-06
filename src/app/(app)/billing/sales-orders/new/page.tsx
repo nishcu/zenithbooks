@@ -181,7 +181,7 @@ export default function NewSalesOrderPage() {
         router.push("/billing/sales-orders");
 
     } catch (error) {
-      console.error("Error saving document: ", error);
+      console.error({ "Error saving document: ", error });
       console.log({ title: "Error Saving",
         description: "There was an error saving the sales order.",
         variant: "destructive",

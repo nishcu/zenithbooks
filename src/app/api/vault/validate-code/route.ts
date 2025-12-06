@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
       userId: shareCodeData.userId,
     });
   } catch (error) {
-    console.error("[validate-code] Error validating share code:", error);
+    console.error({ "[validate-code] Error validating share code:", error });
     // Log more details for debugging
     if (error instanceof Error) {
       console.error("[validate-code] Error details:", {

@@ -128,7 +128,7 @@ export default function MyDocumentsPage() {
             console.log({ title: "Draft Deleted", description: `"${docName}" has been removed.`  });
         } catch (error) {
             console.error({ variant: "destructive", title: 'Error', description: 'Could not delete the document draft.'  });
-            console.error("Error deleting document: ", error);
+            console.error({ "Error deleting document: ", error });
         }
     };
 
@@ -148,8 +148,8 @@ export default function MyDocumentsPage() {
 
                 // Generate certificate HTML based on document type and data
                 const certificateHTML = generateCertificateHTML(doc);
-                console.log("Generated HTML:", certificateHTML); // Debug log
-                console.log("Document data:", doc); // Debug log
+                console.log({ "Generated HTML:", certificateHTML }); // Debug log
+                console.log({ "Document data:", doc }); // Debug log
 
                 // Create a new window with the certificate HTML
                 const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -206,10 +206,9 @@ export default function MyDocumentsPage() {
                     description: "Your certified document has been downloaded successfully.",
                  });
             } catch (error) {
-                console.error("PDF generation error:", error);
-                console.error( variant: "destructive", title: "Download Failed",
-                    description: "Failed to generate PDF. Please try again or contact support.",
-                );
+                console.error({ "PDF generation error:", error });
+                console.error({ variant: "destructive", title: "Download Failed",
+                    description: "Failed to generate PDF. Please try again or contact support.", });
             }
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');

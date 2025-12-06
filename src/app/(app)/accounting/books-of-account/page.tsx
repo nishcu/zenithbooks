@@ -877,9 +877,8 @@ export default function BooksOfAccountPage() {
             const { from, to } = getDateRange();
 
             if (filteredVouchers.length === 0) {
-                console.error( variant: "destructive", title: "No Data",
-                    description: "No transactions found for the selected period.",
-                );
+                console.error({ variant: "destructive", title: "No Data",
+                    description: "No transactions found for the selected period.", });
                 setIsGenerating(false);
                 return;
             }
@@ -1052,10 +1051,9 @@ export default function BooksOfAccountPage() {
                 description: `Excel file with ${sheets.length} sheets has been generated successfully.`,
             );
         } catch (error: any) {
-            console.error("Error generating books:", error);
-            console.error( variant: "destructive", title: "Generation Failed",
-                description: error.message || "An error occurred while generating books of account.",
-            );
+            console.error({ "Error generating books:", error });
+            console.error({ variant: "destructive", title: "Generation Failed",
+                description: error.message || "An error occurred while generating books of account.", });
         } finally {
             setIsGenerating(false);
         }

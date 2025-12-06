@@ -15,7 +15,7 @@ export async function saveServicePricingAction(updatedPricing: ServicePricing) {
     revalidatePath("/admin/service-pricing");
     return { success: true };
   } catch (error) {
-    console.error("Error saving service pricing:", error);
+    console.error({ "Error saving service pricing:", error });
     return { success: false, error: "Failed to save pricing." };
   }
 }

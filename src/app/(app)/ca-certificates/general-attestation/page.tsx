@@ -108,7 +108,7 @@ export default function GeneralAttestationPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -183,7 +183,7 @@ export default function GeneralAttestationPage() {
         description: "Your certification request has been sent to the admin for review and signature."
        });
     } catch (error) {
-      console.error("Error sending request:", error);
+      console.error({ "Error sending request:", error });
       console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
     } finally {
       setIsSubmitting(false);

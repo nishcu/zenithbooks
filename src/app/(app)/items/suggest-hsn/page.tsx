@@ -65,16 +65,14 @@ export default function SuggestHsnPage() {
         setResult(response);
         console.log({ title: "HSN Code Suggestion Received!" });
       } else {
-        console.error( variant: "destructive", title: "Suggestion Failed",
-          description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.",
-        );
+        console.error({ variant: "destructive", title: "Suggestion Failed",
+          description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.", });
       }
     } catch (e: any) {
       const errorMessage = e?.message || "An unexpected error occurred. Please check the console and try again.";
-      console.error( variant: "destructive", title: "An Error Occurred",
-        description: errorMessage,
-      );
-      console.error("HSN Code Suggestion Error:", e);
+      console.error({ variant: "destructive", title: "An Error Occurred",
+        description: errorMessage, });
+      console.error({ "HSN Code Suggestion Error:", e });
     } finally {
       setIsLoading(false);
     }

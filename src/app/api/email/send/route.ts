@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       const result = await resend.emails.send(emailData);
 
       if (result.error) {
-        console.error("Resend API error:", result.error);
+        console.error({ "Resend API error:", result.error });
         return NextResponse.json(
           {
             error: "Failed to send email",
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
     } catch (error) {
-      console.error("Resend error:", error);
+      console.error({ "Resend error:", error });
       return NextResponse.json(
         {
           error: "Failed to send email",
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Email sending error:", error);
+    console.error({ "Email sending error:", error });
     return NextResponse.json(
       {
         error: "Failed to send email",

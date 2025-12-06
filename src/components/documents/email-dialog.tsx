@@ -49,9 +49,8 @@ export function EmailDialog({
     const invalidEmails = emailAddresses.filter((email) => !isValidEmail(email));
 
     if (emailAddresses.length === 0) {
-      console.error( variant: "destructive", title: "Email Required",
-        description: "Please enter at least one email address.",
-      );
+      console.error({ variant: "destructive", title: "Email Required",
+        description: "Please enter at least one email address.", });
       return;
     }
 
@@ -65,16 +64,14 @@ export function EmailDialog({
     }
 
     if (!contentRef.current) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Could not find the content to send.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Could not find the content to send.", });
       return;
     }
 
     if (!subject.trim()) {
-      console.error( variant: "destructive", title: "Subject Required",
-        description: "Please enter an email subject.",
-      );
+      console.error({ variant: "destructive", title: "Subject Required",
+        description: "Please enter an email subject.", });
       return;
     }
 
@@ -98,14 +95,12 @@ export function EmailDialog({
         setSubject(defaultSubject || fileName });
         setBody(defaultBody || `Please find attached ${fileName}.`);
       } else {
-        console.error( variant: "destructive", title: "Failed to Send Email",
-          description: result.error || "An error occurred while sending the email.",
-        );
+        console.error({ variant: "destructive", title: "Failed to Send Email",
+          description: result.error || "An error occurred while sending the email.", });
       }
     } catch (error) {
-      console.error( variant: "destructive", title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send email.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send email.", });
     } finally {
       setIsSending(false);
     }

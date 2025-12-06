@@ -152,7 +152,7 @@ const readStorageMap = (key: string): ReconStorageMap => {
       return parsed as ReconStorageMap;
     }
   } catch (error) {
-    console.error("Could not read bank reconciliation state:", error);
+    console.error({ "Could not read bank reconciliation state:", error });
   }
   return {};
 };
@@ -162,7 +162,7 @@ const writeStorageMap = (key: string, data: ReconStorageMap) => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
-    console.error("Could not persist bank reconciliation state:", error);
+    console.error({ "Could not persist bank reconciliation state:", error });
   }
 };
 
@@ -286,7 +286,7 @@ export default function BankReconciliationPage() {
                   setBankAccount(lastAccount);
               }
           } catch (error) {
-              console.error("Could not restore last bank account:", error);
+              console.error({ "Could not restore last bank account:", error });
           }
       }, [storageKey]);
 
@@ -295,7 +295,7 @@ export default function BankReconciliationPage() {
           try {
               localStorage.setItem(`${storageKey}__lastAccount`, bankAccount);
           } catch (error) {
-              console.error("Could not persist last bank account:", error);
+              console.error({ "Could not persist last bank account:", error });
           }
       }, [bankAccount, storageKey]);
 
@@ -573,14 +573,13 @@ export default function BankReconciliationPage() {
                 try {
                     parsedResult = await parsePDF(file);
                 } catch (pdfError: any) {
-                    console.error( variant: "destructive", title: "PDF Parsing Not Available", 
-                        description: pdfError.message || "Please convert your PDF to CSV or Excel format, or use our API endpoint for PDF processing." 
-                    );
+                    console.error({ variant: "destructive", title: "PDF Parsing Not Available", 
+                        description: pdfError.message || "Please convert your PDF to CSV or Excel format, or use our API endpoint for PDF processing." });
                     setIsProcessingFile(false);
                     return;
                 }
             } else {
-                console.error( variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." );
+                console.error({ variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." });
                 setIsProcessingFile(false);
                 return;
             }
@@ -625,7 +624,7 @@ export default function BankReconciliationPage() {
                 description: summaryPieces.join(". " }) 
             );
         } catch (error: any) {
-            console.error("Error parsing file:", error);
+            console.error({ "Error parsing file:", error });
             setImportSummary(null);
             setSkippedRowsDetail([]);
             console.error({ variant: "destructive", title: "File Parsing Error", 
@@ -869,7 +868,7 @@ export default function BankReconciliationPage() {
             setIsAddEntryDialogOpen(false);
             setEntryToCreate(null);
         } catch (error: any) {
-            console.error("Error creating entry:", error);
+            console.error({ "Error creating entry:", error });
             console.error({ variant: "destructive", title: "Error", 
                 description: error.message || "Could not create the accounting entry. Please try again." 
              });

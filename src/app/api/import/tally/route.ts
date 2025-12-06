@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Tally Import Error:', error);
+    console.error({ 'Tally Import Error:', error });
     return NextResponse.json({ error: error.message || 'Failed to process Tally XML file.' }, { status: 500 });
   }
 }

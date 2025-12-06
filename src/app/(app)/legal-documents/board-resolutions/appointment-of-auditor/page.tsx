@@ -52,7 +52,7 @@ export default function AppointmentOfAuditorPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     const unsubscribe = onPricingUpdate(pricingData => {

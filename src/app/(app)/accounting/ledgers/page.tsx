@@ -130,7 +130,7 @@ export default function LedgersPage() {
             const querySnapshot2 = await getDocs(q2);
             vouchers = querySnapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalVoucher));
           } catch (err2) {
-            console.error("Error fetching from both collections:", err1, err2);
+            console.error({ "Error fetching from both collections:", err1, err2 });
             throw err2;
           }
         }
@@ -193,7 +193,7 @@ export default function LedgersPage() {
           }
         }
       } catch (err) {
-        console.error("Error fetching vouchers: ", err);
+        console.error({ "Error fetching vouchers: ", err });
         console.log({ title: "Error", 
           description: `Could not fetch ledger data: ${err instanceof Error ? err.message : 'Unknown error'}.`, 
           variant: "destructive"
@@ -322,16 +322,14 @@ export default function LedgersPage() {
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      console.error( variant: "destructive", title: "Account Required",
-        description: "Please select an account first.",
-      );
+      console.error({ variant: "destructive", title: "Account Required",
+        description: "Please select an account first.", });
       return;
     }
     
     if (!fromDate || !toDate) {
-      console.error( variant: "destructive", title: "Date Range Required",
-        description: "Please select both from and to dates.",
-      );
+      console.error({ variant: "destructive", title: "Date Range Required",
+        description: "Please select both from and to dates.", });
       return;
     }
     
@@ -351,9 +349,8 @@ export default function LedgersPage() {
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Please select an account to export.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Please select an account to export.", });
       return;
     }
 
@@ -450,10 +447,9 @@ export default function LedgersPage() {
         description: `Ledger for ${accountName} has been exported successfully.`,
       );
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      console.error( variant: "destructive", title: "Export Failed",
-        description: "An error occurred while exporting the PDF. Please try again.",
-      );
+      console.error({ "Error exporting PDF:", error });
+      console.error({ variant: "destructive", title: "Export Failed",
+        description: "An error occurred while exporting the PDF. Please try again.", });
     }
   };
 

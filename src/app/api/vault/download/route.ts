@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Download API error:", error);
+    console.error({ "Download API error:", error });
     return NextResponse.json(
       { error: "Failed to download file" },
       { status: 500 }

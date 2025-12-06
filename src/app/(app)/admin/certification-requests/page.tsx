@@ -122,9 +122,8 @@ export default function AdminCertificationRequests() {
 
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
-      console.error( variant: "destructive", title: "Approval Failed",
-        description: "Invalid request data. User information is missing.",
-      );
+      console.error({ variant: "destructive", title: "Approval Failed",
+        description: "Invalid request data. User information is missing.", });
       return;
     }
 
@@ -181,10 +180,9 @@ export default function AdminCertificationRequests() {
       setIsApproveDialogOpen(false);
       setSelectedRequest(null);
     } catch (error) {
-      console.error("Error approving certification request:", error);
-      console.error( variant: "destructive", title: "Approval Failed",
-        description: "Failed to approve the certification request. Please try again.",
-      );
+      console.error({ "Error approving certification request:", error });
+      console.error({ variant: "destructive", title: "Approval Failed",
+        description: "Failed to approve the certification request. Please try again.", });
     } finally {
       setIsLoading(null);
     }
@@ -192,9 +190,8 @@ export default function AdminCertificationRequests() {
 
   const handleDownloadDraft = async (request: Request) => {
     if (!request.certificateData) {
-      console.error( variant: "destructive", title: "Download Failed",
-        description: "Certificate data is not available for this draft.",
-      );
+      console.error({ variant: "destructive", title: "Download Failed",
+        description: "Certificate data is not available for this draft.", });
       return;
     }
 
@@ -423,10 +420,9 @@ export default function AdminCertificationRequests() {
         description: "Your draft certificate has been downloaded successfully.",
        });
     } catch (error) {
-      console.error("Draft download error:", error);
-      console.error( variant: "destructive", title: "Download Failed",
-        description: "Failed to generate draft PDF. Please try again or contact support.",
-      );
+      console.error({ "Draft download error:", error });
+      console.error({ variant: "destructive", title: "Download Failed",
+        description: "Failed to generate draft PDF. Please try again or contact support.", });
     }
   };
 

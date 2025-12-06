@@ -348,11 +348,11 @@ export default function NetWorthCertificatePage() {
   useEffect(() => {
     console.log({ '🚀 NET-WORTH PAGE: Loading pricing data...');
     getServicePricing().then(pricingData => {
-      console.log('✅ NET-WORTH PAGE: Pricing data received:', pricingData);
+      console.log({ '✅ NET-WORTH PAGE: Pricing data received:', pricingData });
       setPricing(pricingData);
       console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render' });
     }).catch(error => {
-      console.error('❌ NET-WORTH PAGE: Error loading pricing:', error);
+      console.error({ '❌ NET-WORTH PAGE: Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -383,9 +383,8 @@ export default function NetWorthCertificatePage() {
             description: "Review the generated certificate below.",
          });
     } else {
-         console.error( variant: "destructive", title: "Validation Error",
-            description: "Please fill all required fields before generating the draft.",
-        );
+         console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please fill all required fields before generating the draft.", });
     }
   }
 
@@ -534,10 +533,10 @@ export default function NetWorthCertificatePage() {
                              {/* Debug logging */}
                              {(() => {
                                  console.log({ '🔍 DEBUG - Rendering Razorpay condition:');
-                                 console.log('- pricing exists:', !!pricing);
-                                 console.log('- ca_certs exists:', !!pricing?.ca_certs);
-                                 console.log('- net_worth service:', pricing?.ca_certs?.find(s => s.id === 'net_worth'));
-                                 console.log('- price value:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price);
+                                 console.log({ '- pricing exists:', !!pricing });
+                                 console.log({ '- ca_certs exists:', !!pricing?.ca_certs });
+                                 console.log({ '- net_worth service:', pricing?.ca_certs?.find(s => s.id === 'net_worth') });
+                                 console.log({ '- price value:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price });
                                  console.log('- price > 0:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 });
                                  return null;
                              })()}

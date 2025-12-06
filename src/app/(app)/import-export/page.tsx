@@ -70,9 +70,8 @@ export default function ImportExportPage() {
     const handleTallyImport = async (importType: 'vouchers' | 'masters') => {
         const fileToImport = importType === 'vouchers' ? tallyVoucherFile : tallyMasterFile;
         if (!fileToImport) {
-            console.error( variant: "destructive", title: "No File Selected",
-                description: "Please select a Tally XML file to import.",
-            );
+            console.error({ variant: "destructive", title: "No File Selected",
+                description: "Please select a Tally XML file to import.", });
             return;
         }
 
@@ -103,9 +102,8 @@ export default function ImportExportPage() {
              });
 
         } catch (error: any) {
-             console.error( variant: "destructive", title: "Import Failed",
-                description: error.message,
-            );
+             console.error({ variant: "destructive", title: "Import Failed",
+                description: error.message, });
         } finally {
             setIsImporting(false);
             if(importType === 'vouchers') setTallyVoucherFile(null);

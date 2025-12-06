@@ -517,9 +517,8 @@ export default function Gstr1Wizard() {
       } else if (type === 'PDF') {
         // Generate PDF from report content
         if (!reportRef.current) {
-          console.error( variant: "destructive", title: "Error",
-            description: "Could not find the report content to generate PDF.",
-          );
+          console.error({ variant: "destructive", title: "Error",
+            description: "Could not find the report content to generate PDF.", });
           return;
         }
 
@@ -542,9 +541,8 @@ export default function Gstr1Wizard() {
          });
       }
     } catch (error: any) {
-      console.error( variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the file.",
-      );
+      console.error({ variant: "destructive", title: "Generation Failed",
+        description: error.message || "An error occurred while generating the file.", });
     }
   };
 

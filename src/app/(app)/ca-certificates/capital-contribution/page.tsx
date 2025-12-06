@@ -132,12 +132,12 @@ export default function CapitalContributionCertificatePage() {
   useEffect(() => {
     console.log({ '🔍 Loading pricing for capital contribution...');
     getServicePricing().then(pricingData => {
-      console.log('✅ Pricing loaded:', pricingData);
-      console.log('🎯 CA certs pricing:', pricingData?.ca_certs);
-      console.log('💰 Capital contribution price:', pricingData?.ca_certs?.find(s => s.id === 'capital_contribution')?.price);
+      console.log({ '✅ Pricing loaded:', pricingData });
+      console.log({ '🎯 CA certs pricing:', pricingData?.ca_certs });
+      console.log({ '💰 Capital contribution price:', pricingData?.ca_certs?.find(s => s.id === 'capital_contribution')?.price });
       setPricing(pricingData });
     }).catch(error => {
-      console.error('❌ Error loading pricing:', error);
+      console.error({ '❌ Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -213,7 +213,7 @@ export default function CapitalContributionCertificatePage() {
             description: "Your certification request has been sent to the admin for review."
          });
       } catch (error) {
-          console.error("Error sending request:", error);
+          console.error({ "Error sending request:", error });
           console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
       } finally {
           setIsSubmitting(false);

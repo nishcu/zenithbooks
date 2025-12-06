@@ -112,9 +112,8 @@ export function ShareCodeDialog({
         );
         setTimeout(() => setCodeCopied(false), 2000 });
       } catch (error) {
-        console.error( variant: "destructive", title: "Copy Failed",
-          description: "Failed to copy code. Please copy it manually.",
-        );
+        console.error({ variant: "destructive", title: "Copy Failed",
+          description: "Failed to copy code. Please copy it manually.", });
       }
     }
   };
@@ -223,7 +222,7 @@ export function ShareCodeDialog({
 
       onSuccess();
     } catch (error) {
-      console.error("Error saving share code:", error);
+      console.error({ "Error saving share code:", error });
       setError("Failed to save share code. Please try again.");
     } finally {
       setIsSaving(false);

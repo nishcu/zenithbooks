@@ -79,7 +79,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
          });
         return true;
       } catch (error) {
-        console.error("Error sending request:", error);
+        console.error({ "Error sending request:", error });
         console.error({ variant: "destructive", title: "Request Failed",
           description: "Could not send the request. Please try again."
          });
@@ -122,7 +122,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
       onPaymentSuccess?.(paymentId);
       return true;
     } catch (error) {
-      console.error("Error sending request:", error);
+      console.error({ "Error sending request:", error });
       console.error({ variant: "destructive", title: "Request Failed",
         description: "Payment was successful but request submission failed. Please contact support."
        });

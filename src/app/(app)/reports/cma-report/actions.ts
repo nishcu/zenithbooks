@@ -20,13 +20,13 @@ export async function getCmaObservationsAction(
     const result = await getCmaObservations(input);
     
     if (!result || !result.observations) {
-      console.error("Invalid response from AI:", result);
+      console.error({ "Invalid response from AI:", result });
       throw new Error("AI service returned an invalid response. Please try again.");
     }
     
     return result;
   } catch (error: any) {
-    console.error("Error in getCmaObservationsAction:", error);
+    console.error({ "Error in getCmaObservationsAction:", error });
     
     // Return a more descriptive error
     if (error.message) {

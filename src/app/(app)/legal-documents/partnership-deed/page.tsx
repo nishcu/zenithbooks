@@ -485,7 +485,7 @@ export default function PartnershipDeedPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -501,9 +501,8 @@ export default function PartnershipDeedPage() {
   const handleDownloadPdf = (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Could not find the content to download.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Could not find the content to download.", });
       return;
     }
 
@@ -621,9 +620,8 @@ export default function PartnershipDeedPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error( variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors on this page before proceeding.",
-        );
+        console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please correct the errors on this page before proceeding.", });
     }
   };
 

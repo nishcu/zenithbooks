@@ -66,7 +66,7 @@ export function CashfreeCheckout({
 
       // DEBUG: Log what we're sending to the API
       console.log({ 'DEBUG - customerDetails being sent to API:', customerDetailsPayload);
-      console.log('DEBUG - userEmail value:', userEmail);
+      console.log({ 'DEBUG - userEmail value:', userEmail });
       console.log('DEBUG - userName value:', userName });
 
       const requestBody = {
@@ -110,11 +110,11 @@ export function CashfreeCheckout({
         } else if (response.status === 500 || response.status === 503) {
           // 500/503 means Cashfree API or server error
           errorMessage = data.message || data.error || 'Payment gateway error. Please try again later or contact support.';
-          console.error('Payment API error details:', data);
+          console.error({ 'Payment API error details:', data });
           
           // Log additional details for debugging
           if (data.details && process.env.NODE_ENV === 'development') {
-            console.error('Cashfree API error details:', data.details);
+            console.error({ 'Cashfree API error details:', data.details });
           }
         } else {
           errorMessage = data.message || data.error || `Payment error (${response.status}). Please try again.`;
@@ -142,13 +142,11 @@ export function CashfreeCheckout({
       
       if (!paymentSessionId) {
         console.error('❌ paymentSessionId missing from BACKEND');
-        console.error('Response keys:', Object.keys(data));
-        console.error('Full response:', data);
-        console.log(
-          variant: 'default',
+        console.error({ 'Response keys:', Object.keys(data) });
+        console.error({ 'Full response:', data });
+        console.log({ variant: 'default',
           title: 'Payment Setup Issue',
-          description: 'We couldn\'t set up your payment session. Please refresh the page and try again.',
-        );
+          description: 'We couldn\'t set up your payment session. Please refresh the page and try again.', });
         setIsLoading(false);
         onFailure?.( });
               return;
@@ -161,7 +159,7 @@ export function CashfreeCheckout({
         await loadCashfree();
         console.log('✅ Cashfree SDK loaded and ready' });
       } catch (error) {
-        console.error('❌ Failed to load Cashfree SDK:', error);
+        console.error({ '❌ Failed to load Cashfree SDK:', error });
         console.log({ variant: 'default',
           title: 'Payment Gateway Loading',
           description: 'The payment gateway is taking a moment to load. Please refresh the page and try again.',
@@ -214,7 +212,7 @@ export function CashfreeCheckout({
         // Checkout will redirect - don't reset loading state as user is being redirected
 
       } catch (cashfreeError) {
-        console.error('❌ Cashfree checkout error:', cashfreeError);
+        console.error({ '❌ Cashfree checkout error:', cashfreeError });
 
         let errorMessage = 'We couldn\'t process your payment right now. Please try again.';
         let errorTitle = 'Payment Issue';
@@ -240,7 +238,7 @@ export function CashfreeCheckout({
       }
 
     } catch (error) {
-      console.error('Payment initialization error:', error);
+      console.error({ 'Payment initialization error:', error });
 
       let errorMessage = 'We couldn\'t start your payment right now. Please try again in a moment.';
       let errorTitle = 'Payment Setup Issue';

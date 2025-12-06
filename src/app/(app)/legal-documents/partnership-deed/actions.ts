@@ -14,7 +14,7 @@ export async function suggestClausesAction(
     const result = await suggestLegalClauses(input);
     return result;
   } catch (error) {
-    console.error("Error in suggestClausesAction:", error);
+    console.error({ "Error in suggestClausesAction:", error });
     throw new Error("Failed to get clause suggestions from AI.");
   }
 }

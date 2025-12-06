@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
             paymentId,
           });
         } catch (firestoreError) {
-          console.error('Firestore update error in webhook:', firestoreError);
+          console.error({ 'Firestore update error in webhook:', firestoreError });
           // Don't fail the webhook - Cashfree expects 200 response
         }
       }
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error processing webhook:', error);
+    console.error({ 'Error processing webhook:', error });
     
     // Still return 200 to prevent Cashfree from retrying
     // Log the error for investigation

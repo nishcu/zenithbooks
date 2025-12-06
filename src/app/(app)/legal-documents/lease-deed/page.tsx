@@ -128,7 +128,7 @@ export default function LeaseDeedPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -167,9 +167,8 @@ export default function LeaseDeedPage() {
         );
       }
     } else {
-        console.error( variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors before proceeding.",
-        );
+        console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please correct the errors before proceeding.", });
     }
   };
 

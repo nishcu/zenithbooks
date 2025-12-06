@@ -55,7 +55,7 @@ export function VaultStatistics() {
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching document count:", error);
+        console.error({ "Error fetching document count:", error });
         setLoading(false);
       }
     );
@@ -70,7 +70,7 @@ export function VaultStatistics() {
         setRecentDocuments(docs);
       },
       (error) => {
-        console.error("Error fetching recent documents:", error);
+        console.error({ "Error fetching recent documents:", error });
       }
     );
 
@@ -84,7 +84,7 @@ export function VaultStatistics() {
           setStorageUsed(data.currentStorageUsed || 0);
         }
       } catch (error) {
-        console.error("Error fetching storage:", error);
+        console.error({ "Error fetching storage:", error });
       }
     };
 
@@ -102,7 +102,7 @@ export function VaultStatistics() {
         setShareCodesCount(snapshot.size);
       },
       (error) => {
-        console.error("Error fetching share codes:", error);
+        console.error({ "Error fetching share codes:", error });
       }
     );
 

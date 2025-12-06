@@ -54,9 +54,8 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
   const handleQuickInvoiceCreate = async () => {
     const selectedCustomer = customers.find((c: any) => c.id === quickCustomer);
     if (!quickInvNum || !selectedCustomer || !quickItem || quickRate <= 0) {
-      console.error( variant: "destructive", title: "Missing Information",
-        description: "Please fill out all fields for the quick invoice.",
-      );
+      console.error({ variant: "destructive", title: "Missing Information",
+        description: "Please fill out all fields for the quick invoice.", });
       return;
     }
     

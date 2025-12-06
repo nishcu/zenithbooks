@@ -55,7 +55,7 @@ async function loadBlogPosts() {
 
         return posts;
     } catch (error) {
-        console.error('Error loading blog posts from Firebase:', error);
+        console.error({ 'Error loading blog posts from Firebase:', error });
         return [];
     }
 }
@@ -67,7 +67,7 @@ function saveBlogPosts(posts: any[]) {
     try {
         localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
     } catch (error) {
-        console.error('Error saving blog posts to localStorage:', error);
+        console.error({ 'Error saving blog posts to localStorage:', error });
     }
 }
 
@@ -110,10 +110,9 @@ export default function AdminBlog() {
         description: "The blog post has been deleted successfully.",
        });
     } catch (error) {
-      console.error('Error deleting post:', error);
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to delete the blog post.",
-      );
+      console.error({ 'Error deleting post:', error });
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to delete the blog post.", });
     } finally {
       setIsLoading(null);
       setSelectedPost(null);

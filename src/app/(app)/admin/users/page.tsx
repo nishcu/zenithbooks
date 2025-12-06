@@ -112,15 +112,13 @@ export default function AdminUsers() {
         }));
         setUsers(usersWithStatus);
       } else {
-        console.error( variant: "destructive", title: "Error",
-          description: "Failed to fetch users. You may not have admin privileges.",
-        );
+        console.error({ variant: "destructive", title: "Error",
+          description: "Failed to fetch users. You may not have admin privileges.", });
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to load users. Please try again.",
-      );
+      console.error({ "Error fetching users:", error });
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to load users. Please try again.", });
     } finally {
       setIsLoading(false);
     }
@@ -199,15 +197,13 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        console.error( variant: "destructive", title: "Error",
-          description: error.error || "Failed to update user.",
-        );
+        console.error({ variant: "destructive", title: "Error",
+          description: error.error || "Failed to update user.", });
       }
     } catch (error) {
-      console.error("Error updating user:", error);
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to update user. Please try again.",
-      );
+      console.error({ "Error updating user:", error });
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to update user. Please try again.", });
     } finally {
       setIsLoadingAction(null);
     }
@@ -226,9 +222,8 @@ export default function AdminUsers() {
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null });
     } catch (error) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to reset password.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to reset password.", });
     } finally {
       setIsLoadingAction(null);
     }
@@ -253,9 +248,8 @@ export default function AdminUsers() {
       setIsSuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to suspend user.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to suspend user.", });
     } finally {
       setIsLoadingAction(null);
     }
@@ -279,9 +273,8 @@ export default function AdminUsers() {
       setIsUnsuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to unsuspend user.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to unsuspend user.", });
     } finally {
       setIsLoadingAction(null);
     }
@@ -315,15 +308,13 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        console.error( variant: "destructive", title: "Error",
-          description: error.error || "Failed to delete user.",
-        );
+        console.error({ variant: "destructive", title: "Error",
+          description: error.error || "Failed to delete user.", });
       }
     } catch (error) {
-      console.error("Error deleting user:", error);
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to delete user. Please try again.",
-      );
+      console.error({ "Error deleting user:", error });
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to delete user. Please try again.", });
     } finally {
       setIsLoadingAction(null);
     }

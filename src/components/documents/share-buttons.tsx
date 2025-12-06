@@ -43,17 +43,15 @@ export function ShareButtons({
   const handleDownloadPdf = async () => {
     const element = contentRef.current;
     if (!element) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Could not find the content to download.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Could not find the content to download.", });
       return;
     }
 
     // Check if element has content
     if (!element.innerHTML || element.innerHTML.trim() === '') {
-      console.error( variant: "destructive", title: "Error",
-        description: "The content appears to be empty. Please ensure the page is fully loaded.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "The content appears to be empty. Please ensure the page is fully loaded.", });
       return;
     }
 
@@ -83,7 +81,7 @@ export function ShareButtons({
       };
 
       console.log({ "Generating PDF for element:", element);
-      console.log("PDF options:", opt);
+      console.log({ "PDF options:", opt });
 
       await html2pdf().set(opt).from(element).save();
 
@@ -92,11 +90,10 @@ export function ShareButtons({
         description: "Your PDF has been downloaded successfully.",
        });
     } catch (error: any) {
-      console.error("PDF generation error:", error);
-      console.error("Element:", element);
-      console.error( variant: "destructive", title: "PDF Generation Failed",
-        description: error.message || "An error occurred while generating the PDF. Please try again.",
-      );
+      console.error({ "PDF generation error:", error });
+      console.error({ "Element:", element });
+      console.error({ variant: "destructive", title: "PDF Generation Failed",
+        description: error.message || "An error occurred while generating the PDF. Please try again.", });
     }
   };
 
@@ -138,7 +135,7 @@ export function ShareButtons({
           return;
         }
       } catch (error) {
-        console.error('Web Share API failed:', error);
+        console.error({ 'Web Share API failed:', error });
         // Fall back to regular WhatsApp sharing
       }
     }
@@ -172,7 +169,7 @@ export function ShareButtons({
       }, 1000);
 
     } catch (error) {
-      console.error('PDF generation failed:', error);
+      console.error({ 'PDF generation failed:', error });
 
       // Final fallback: just share the message
       const encodedMessage = encodeURIComponent(message);
@@ -205,9 +202,8 @@ export function ShareButtons({
         description: "The page link has been copied to your clipboard.",
        });
     } catch (error) {
-      console.error( variant: "destructive", title: "Error",
-        description: "Failed to copy link to clipboard.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "Failed to copy link to clipboard.", });
     }
   };
 
@@ -222,9 +218,8 @@ export function ShareButtons({
         );
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          console.error( variant: "destructive", title: "Error",
-            description: "Failed to share. Please try another method.",
-          );
+          console.error({ variant: "destructive", title: "Error",
+            description: "Failed to share. Please try another method.", });
         }
       }
     } else {

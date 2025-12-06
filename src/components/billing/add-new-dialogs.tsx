@@ -190,7 +190,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 
             onOpenChange(false);
         } catch (e) {
-            console.error("Error saving document: ", e);
+            console.error({ "Error saving document: ", e });
             console.log({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase( })}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
         }
     };
@@ -278,7 +278,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
                  });
             }
         } catch (error: any) {
-            console.error("Error suggesting HSN code:", error);
+            console.error({ "Error suggesting HSN code:", error });
             console.log({ variant: "destructive", 
                 title: "Error", 
                 description: error.message || "Failed to get HSN code suggestion. Please try again." 
@@ -304,7 +304,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
             }
            onOpenChange(false);
        } catch (e) {
-           console.error("Error adding document: ", e);
+           console.error({ "Error adding document: ", e });
            console.log({ variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."  });
        }
     };

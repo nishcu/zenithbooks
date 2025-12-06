@@ -231,7 +231,7 @@ export default function ChartOfAccountsPage() {
         form.reset();
         setIsAddDialogOpen(false);
     } catch (e) {
-        console.error("Error adding document: ", e);
+        console.error({ "Error adding document: ", e });
         console.error({ variant: "destructive", title: "Error", description: "Could not save the account." } })
     }
   };

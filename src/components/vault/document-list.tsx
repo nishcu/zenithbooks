@@ -69,7 +69,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
     try {
       const latestVersion = document.versions?.[document.currentVersion];
       if (!latestVersion?.fileUrl) {
-        console.error("Document URL not found for:", document.fileName);
+        console.error({ "Document URL not found for:", document.fileName });
         alert("Error: Document URL not found. Please try again.");
         return;
       }
@@ -87,7 +87,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       console.log("Download initiated for:", document.fileName });
 
     } catch (error: any) {
-      console.error("Download error:", error);
+      console.error({ "Download error:", error });
 
       let errorMessage = "Failed to download document. Please try again.";
       if (error.name === 'AbortError') {
@@ -103,7 +103,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
   const handleView = (document: Document) => {
     const latestVersion = document.versions?.[document.currentVersion];
     if (!latestVersion?.fileUrl) {
-      console.error("Document URL not found for:", document.fileName);
+      console.error({ "Document URL not found for:", document.fileName });
       alert("Error: Document URL not found. Please try again.");
       return;
     }
@@ -168,7 +168,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         onRefresh();
       }
     } catch (error) {
-      console.error("Error deleting document:", error);
+      console.error({ "Error deleting document:", error });
       alert("Error: Failed to delete document. Please try again.");
     }
   };

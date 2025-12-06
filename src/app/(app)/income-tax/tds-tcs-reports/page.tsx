@@ -143,7 +143,7 @@ export default function TdsTcsReportsPage() {
         return voucherDate >= startDate && voucherDate <= endDate;
       );
 
-      console.log('Relevant vouchers:', relevantVouchers.length);
+      console.log({ 'Relevant vouchers:', relevantVouchers.length });
 
       const generatedData: ReportRow[] = [];
 
@@ -229,7 +229,7 @@ export default function TdsTcsReportsPage() {
       );
 
     } catch (error) {
-      console.error("Error generating report:", error);
+      console.error({ "Error generating report:", error });
       console.error({ variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
        });

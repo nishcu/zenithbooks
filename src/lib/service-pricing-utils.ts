@@ -37,7 +37,7 @@ export async function getUserSubscriptionInfo(userId: string): Promise<UserSubsc
       subscriptionPlan: null,
     };
   } catch (error) {
-    console.error("Error fetching user subscription info:", error);
+    console.error({ "Error fetching user subscription info:", error });
     return {
       userType: null,
       subscriptionPlan: null,

@@ -468,7 +468,7 @@ export default function BulkInvoicePage() {
         description: `${rows.length} invoice${rows.length === 1 ? '' : 's'} processed. ${validCount} valid, ${errorCount} with errors.` 
       );
     } catch (error: any) {
-      console.error("Error processing file:", error);
+      console.error({ "Error processing file:", error });
       console.error({ variant: "destructive", title: "Processing Error", 
         description: error.message || "Could not process the file. Please check the format and try again." 
        });

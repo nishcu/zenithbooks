@@ -96,7 +96,7 @@ export function LoginForm() {
             setIsCheckingRedirect(false);
         }
       } catch (error: any) {
-        console.error("Google Login Error:", error);
+        console.error({ "Google Login Error:", error });
         
         // Provide user-friendly error messages
         let errorMessage = "An unknown error occurred. Please try again.";
@@ -115,11 +115,9 @@ export function LoginForm() {
           errorMessage = error.message;
         }
         
-        console.error(
-          variant: "default",
+        console.error({ variant: "default",
           title: "Couldn't Sign In with Google",
-          description: errorMessage,
-        );
+          description: errorMessage, });
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
       }
@@ -137,11 +135,9 @@ export function LoginForm() {
       // Check if account is locked
       const loginId = getLoginIdentifier(sanitizedEmail);
       if (isAccountLocked(loginId)) {
-        console.error(
-          variant: "destructive",
+        console.error({ variant: "destructive",
           title: "Account Temporarily Locked",
-          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
-        );
+          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.", });
         setIsEmailLoading(false);
         return;
       }
@@ -159,11 +155,9 @@ export function LoginForm() {
       const attemptResult = recordFailedLogin(loginId);
       
       if (attemptResult.locked) {
-        console.error(
-          variant: "destructive",
+        console.error({ variant: "destructive",
           title: "Account Temporarily Locked",
-          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
-        );
+          description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.", });
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {

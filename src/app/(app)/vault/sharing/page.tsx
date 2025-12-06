@@ -61,10 +61,9 @@ export default function ShareCodeManagementPage() {
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching share codes:", error);
-        console.error( variant: "destructive", title: "Error",
-          description: "Failed to load share codes. Please try again.",
-        );
+        console.error({ "Error fetching share codes:", error });
+        console.error({ variant: "destructive", title: "Error",
+          description: "Failed to load share codes. Please try again.", });
         setLoading(false);
       }
     );
@@ -81,10 +80,9 @@ export default function ShareCodeManagementPage() {
         description: "The share code has been deleted and access is revoked.",
        });
     } catch (error) {
-      console.error("Error deleting share code:", error);
-      console.error( variant: "destructive", title: "Delete Failed",
-        description: "Failed to delete share code. Please try again.",
-      );
+      console.error({ "Error deleting share code:", error });
+      console.error({ variant: "destructive", title: "Delete Failed",
+        description: "Failed to delete share code. Please try again.", });
     }
   };
 

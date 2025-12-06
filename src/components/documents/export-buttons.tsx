@@ -37,9 +37,8 @@ export function ExportButtons({
 
   const handleExportPDF = async () => {
     if (!contentRef?.current) {
-      console.error( variant: "destructive", title: "Error",
-        description: "No content available for PDF export.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "No content available for PDF export.", });
       return;
     }
 
@@ -49,9 +48,8 @@ export function ExportButtons({
         description: "Your document has been exported successfully.",
        });
     } catch (error) {
-      console.error( variant: "destructive", title: "Export Failed",
-        description: "Failed to export PDF. Please try again.",
-      );
+      console.error({ variant: "destructive", title: "Export Failed",
+        description: "Failed to export PDF. Please try again.", });
     }
   };
 
@@ -90,9 +88,8 @@ export function ExportButtons({
         description: "Your data has been exported successfully.",
        });
     } else {
-      console.error( variant: "destructive", title: "Error",
-        description: "No data available for CSV export.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "No data available for CSV export.", });
     }
   };
 
@@ -131,9 +128,8 @@ export function ExportButtons({
         description: "Your data has been exported successfully.",
        });
     } else {
-      console.error( variant: "destructive", title: "Error",
-        description: "No data available for Excel export.",
-      );
+      console.error({ variant: "destructive", title: "Error",
+        description: "No data available for Excel export.", });
     }
   };
 

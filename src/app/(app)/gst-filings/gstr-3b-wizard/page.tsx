@@ -334,18 +334,16 @@ export default function Gstr3bWizardPage() {
         description: "Your GSTR-3B JSON file has been downloaded successfully.",
        });
     } catch (error: any) {
-      console.error( variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the JSON file.",
-      );
+      console.error({ variant: "destructive", title: "Generation Failed",
+        description: error.message || "An error occurred while generating the JSON file.", });
     }
   }
 
   const handleGeneratePdf = async () => {
     try {
       if (!reportRef.current) {
-        console.error( variant: "destructive", title: "Error",
-          description: "Could not find the report content to generate PDF.",
-        );
+        console.error({ variant: "destructive", title: "Error",
+          description: "Could not find the report content to generate PDF.", });
         return;
       }
 
@@ -368,9 +366,8 @@ export default function Gstr3bWizardPage() {
         description: "Your GSTR-3B PDF has been downloaded successfully.",
        });
     } catch (error: any) {
-      console.error( variant: "destructive", title: "Generation Failed",
-        description: error.message || "An error occurred while generating the PDF file.",
-      );
+      console.error({ variant: "destructive", title: "Generation Failed",
+        description: error.message || "An error occurred while generating the PDF file.", });
     }
   }
 

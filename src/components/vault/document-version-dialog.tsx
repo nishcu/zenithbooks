@@ -111,7 +111,7 @@ export function DocumentVersionDialog({
 
       return true;
     } catch (error) {
-      console.error("Error checking storage:", error);
+      console.error({ "Error checking storage:", error });
       return false;
     }
   };
@@ -164,7 +164,7 @@ export function DocumentVersionDialog({
           setUploadProgress(progress);
         },
         (error) => {
-          console.error("Upload error:", error);
+          console.error({ "Upload error:", error });
           setError("Upload failed. Please try again.");
           setIsUploading(false);
         },
@@ -234,14 +234,14 @@ export function DocumentVersionDialog({
             onUploadSuccess();
             onOpenChange(false);
           } catch (error) {
-            console.error("Error saving version:", error);
+            console.error({ "Error saving version:", error });
             setError("Failed to save version. Please try again.");
             setIsUploading(false);
           }
         }
       );
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error({ "Upload error:", error });
       setError("Upload failed. Please try again.");
       setIsUploading(false);
     }

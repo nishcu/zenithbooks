@@ -130,7 +130,7 @@ export default function VisaImmigrationCertificatePage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -163,9 +163,8 @@ export default function VisaImmigrationCertificatePage() {
         setStep(3); // Move to preview step
         console.log({ title: "Draft Ready", description: "Review the generated certificate below."  });
     } else {
-         console.error( variant: "destructive", title: "Validation Error",
-            description: "Please fill all required fields.",
-        );
+         console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please fill all required fields.", });
     }
   }
 
@@ -223,7 +222,7 @@ export default function VisaImmigrationCertificatePage() {
             description: "Your certification request has been sent to the admin for review and signature."
          });
       } catch (error) {
-          console.error("Error sending request:", error);
+          console.error({ "Error sending request:", error });
           console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
       } finally {
           setIsSubmitting(false);
@@ -249,9 +248,8 @@ export default function VisaImmigrationCertificatePage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
-        console.error( variant: "destructive", title: "Validation Error",
-            description: "Please correct the errors on this page before proceeding.",
-        );
+        console.error({ variant: "destructive", title: "Validation Error",
+            description: "Please correct the errors on this page before proceeding.", });
     }
   };
 

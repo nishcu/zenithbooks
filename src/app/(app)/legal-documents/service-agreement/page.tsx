@@ -102,7 +102,7 @@ export default function ServiceAgreementPage() {
     getServicePricing().then(pricingData => {
       setPricing(pricingData);
     }).catch(error => {
-      console.error('Error loading pricing:', error);
+      console.error({ 'Error loading pricing:', error });
     );
 
     // Subscribe to real-time pricing updates
@@ -134,9 +134,8 @@ export default function ServiceAgreementPage() {
         console.log({ title: `Step ${step} Saved`, description: `Proceeding to the next step.`  });
       }
     } else {
-      console.error( variant: "destructive", title: "Validation Error",
-        description: "Please correct the errors before proceeding.",
-      );
+      console.error({ variant: "destructive", title: "Validation Error",
+        description: "Please correct the errors before proceeding.", });
     }
   };
 

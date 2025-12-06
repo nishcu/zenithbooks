@@ -124,7 +124,7 @@ export function showErrorToast(error: unknown, context?: string) {
     // Log to console instead of showing toast to prevent crashes
     console.error(`[${context || 'Error'}] ${appError.code}: ${appError.message}${contactMessage}`);
   } catch (error) {
-    console.error("showErrorToast failed:", error);
+    console.error({ "showErrorToast failed:", error });
   }
 }
 

@@ -6,7 +6,7 @@ import { db } from '@/lib/firebase';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch((error) => {
-      console.error('Failed to parse request body:', error);
+      console.error({ 'Failed to parse request body:', error });
       throw new Error('Invalid request body');
     });
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
             paymentAmount: amount,
           });
         } catch (firestoreError) {
-          console.error('Firestore update error in demo mode:', firestoreError);
+          console.error({ 'Firestore update error in demo mode:', firestoreError });
           // Still return success for demo mode even if Firestore fails
         }
       }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (fetchError: any) {
-        console.error('Network error calling Cashfree API:', fetchError);
+        console.error({ 'Network error calling Cashfree API:', fetchError });
         throw {
           message: `Network error: ${fetchError?.message || 'Failed to connect to Cashfree API'}`,
           isNetworkError: true,
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       try {
         orderDetails = JSON.parse(responseText);
       } catch (e) {
-        console.error('Failed to parse Cashfree verification response:', responseText);
+        console.error({ 'Failed to parse Cashfree verification response:', responseText });
         throw new Error('Invalid response from Cashfree API');
       }
 
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
             paymentStatus: orderStatus || paymentStatus || 'SUCCESS',
           });
         } catch (firestoreError) {
-          console.error('Firestore update error:', firestoreError);
+          console.error({ 'Firestore update error:', firestoreError });
           // Don't fail the entire request if Firestore update fails
           // Payment is already verified, just log the error
         }
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       });
 
     } catch (cashfreeError: any) {
-      console.error('Cashfree verification error:', cashfreeError);
+      console.error({ 'Cashfree verification error:', cashfreeError });
 
       // Fallback: still update the user if we have the payment details
       // This is more lenient than Razorpay's strict verification
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
             warning: 'Verification failed but payment recorded',
           });
         } catch (firestoreError) {
-          console.error('Firestore update failed in fallback:', firestoreError);
+          console.error({ 'Firestore update failed in fallback:', firestoreError });
           // Continue to throw the original Cashfree error
         }
       }
@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Error verifying payment:', error);
+    console.error({ 'Error verifying payment:', error });
     
     // Provide more detailed error information
     const errorMessage = error?.message || 'Payment verification failed';

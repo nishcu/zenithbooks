@@ -73,7 +73,7 @@ export const AccountingProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         if (error) {
-            console.error("IMPORTANT: Firestore query failed. This is likely due to a missing index. Please check for an error message below that contains a URL to create the index.", error);
+            console.error({ "IMPORTANT: Firestore query failed. This is likely due to a missing index. Please check for an error message below that contains a URL to create the index.", error });
         }
     }, [error]);
 

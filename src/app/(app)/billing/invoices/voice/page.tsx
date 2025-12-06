@@ -332,12 +332,12 @@ export default function VoiceInvoiceEntryPage() {
                 }, 500);
               }
             } catch (error) {
-              console.error('Error processing speech result:', error);
+              console.error({ 'Error processing speech result:', error });
             }
           };
 
           recognitionInstance.onerror = (event: any) => {
-            console.error('Speech recognition error:', event.error, event);
+            console.error({ 'Speech recognition error:', event.error, event });
 
             let errorMessage = "An error occurred with speech recognition.";
             let errorTitle = "Speech Recognition Error";
@@ -370,9 +370,8 @@ export default function VoiceInvoiceEntryPage() {
             }
 
             setIsListening(false);
-            console.error( variant: "destructive", title: errorTitle,
-              description: errorMessage,
-            );
+            console.error({ variant: "destructive", title: errorTitle,
+              description: errorMessage, });
           };
 
           recognitionInstance.onend = () => {
@@ -388,10 +387,9 @@ export default function VoiceInvoiceEntryPage() {
                 setRecognition(recognitionInstance);
               })
               .catch((error) => {
-                console.error('Microphone permission denied:', error);
-                console.error( variant: "destructive", title: "Microphone Access Required",
-                  description: "Please allow microphone access to use voice-to-invoice feature.",
-                );
+                console.error({ 'Microphone permission denied:', error });
+                console.error({ variant: "destructive", title: "Microphone Access Required",
+                  description: "Please allow microphone access to use voice-to-invoice feature.", });
               );
           } else {
             // Fallback for older browsers
@@ -399,15 +397,13 @@ export default function VoiceInvoiceEntryPage() {
           }
 
         } catch (error) {
-          console.error('Error initializing speech recognition:', error);
-          console.error( variant: "destructive", title: "Speech Recognition Unavailable",
-            description: "Speech recognition could not be initialized. Please try a different browser.",
-          );
+          console.error({ 'Error initializing speech recognition:', error });
+          console.error({ variant: "destructive", title: "Speech Recognition Unavailable",
+            description: "Speech recognition could not be initialized. Please try a different browser.", });
         }
       } else {
-        console.error( variant: "destructive", title: "Browser Not Supported",
-          description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.",
-        );
+        console.error({ variant: "destructive", title: "Browser Not Supported",
+          description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.", });
       }
     }
 
@@ -440,9 +436,8 @@ export default function VoiceInvoiceEntryPage() {
 
   const startListening = () => {
     if (!recognition) {
-      console.error( variant: "destructive", title: "Speech Recognition Not Available",
-        description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.",
-      );
+      console.error({ variant: "destructive", title: "Speech Recognition Not Available",
+        description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.", });
       return;
     }
 
@@ -471,28 +466,25 @@ export default function VoiceInvoiceEntryPage() {
             description: "Speak clearly: 'Customer name, Product name, Quantity'",
            });
         } catch (error) {
-          console.error('Error starting recognition after delay:', error);
+          console.error({ 'Error starting recognition after delay:', error });
           setIsListening(false);
-          console.error( variant: "destructive", title: "Speech Recognition Failed",
-            description: "Could not start speech recognition. Please try again.",
-          );
+          console.error({ variant: "destructive", title: "Speech Recognition Failed",
+            description: "Could not start speech recognition. Please try again.", });
         }
       }, 100);
 
     } catch (error) {
-      console.error('Error starting recognition:', error);
+      console.error({ 'Error starting recognition:', error });
       setIsListening(false);
 
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          console.error( variant: "destructive", title: "Recognition Busy",
-            description: "Speech recognition is already running. Please wait.",
-          );
+          console.error({ variant: "destructive", title: "Recognition Busy",
+            description: "Speech recognition is already running. Please wait.", });
         } else {
-          console.error( variant: "destructive", title: "Speech Recognition Error",
-            description: error.message || "Failed to start speech recognition.",
-          );
+          console.error({ variant: "destructive", title: "Speech Recognition Error",
+            description: error.message || "Failed to start speech recognition.", });
         }
       }
     }
@@ -504,7 +496,7 @@ export default function VoiceInvoiceEntryPage() {
         recognition.stop();
         console.log('Speech recognition stopped');
       } catch (error) {
-        console.error('Error stopping recognition:', error);
+        console.error({ 'Error stopping recognition:', error });
         // Force stop listening state
         recognition.abort();
       }
@@ -514,9 +506,8 @@ export default function VoiceInvoiceEntryPage() {
 
   const processVoiceInput = useCallback(() => {
     if (!transcript.trim()) {
-      console.error( variant: "destructive", title: "No Input",
-        description: "Please speak to create an invoice.",
-      );
+      console.error({ variant: "destructive", title: "No Input",
+        description: "Please speak to create an invoice.", });
       return;
     }
     
@@ -639,7 +630,7 @@ export default function VoiceInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        console.error("Error creating invoice:", e);
+        console.error({ "Error creating invoice:", e });
         console.error({ variant: "destructive", title: "Failed to save invoice", 
           description: e.message || "An error occurred while creating the invoice. Please try again." 
          });

@@ -176,7 +176,7 @@ export default function NewPurchaseOrderPage() {
         router.push("/purchases/purchase-orders");
 
     } catch (error) {
-      console.error("Error saving document: ", error);
+      console.error({ "Error saving document: ", error });
       console.log({ title: "Error Saving",
         description: "There was an error saving the purchase order.",
         variant: "destructive",
