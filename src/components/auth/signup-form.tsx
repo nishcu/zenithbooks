@@ -110,10 +110,8 @@ export function SignupForm() {
           setIsCheckingRedirect(false);
         }
       } catch (error: any) {
-        console.error({ "Google Signup Error:", error });
-        console.error({ variant: "default",
-          title: "Couldn't Sign Up with Google",
-          description: error.message || "Something went wrong. Please try again or sign up with email.", });
+        console.error("Google Signup Error:", error);
+        console.error("Couldn't Sign Up with Google:", error.message || "Something went wrong. Please try again or sign up with email.");
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
       }

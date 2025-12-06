@@ -139,7 +139,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
     const form = useForm<z.infer<typeof partySchema>>({
         resolver: zodResolver(partySchema),
         defaultValues: { name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' },
-    );
+    });
 
     useEffect(() => {
       if (party && open) {

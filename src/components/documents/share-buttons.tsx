@@ -159,7 +159,7 @@ export function ShareButtons({
       }, 1000);
 
     } catch (error) {
-      console.error({ 'PDF generation failed:', error });
+      console.error('PDF generation failed:', error);
 
       // Final fallback: just share the message
       const encodedMessage = encodeURIComponent(message);

@@ -235,7 +235,7 @@ export default function Gstr1Wizard() {
           reason: "Credit Note",
           gstin: customer?.gstin || "",
         });
-      };
+      });
 
     // Combine with cancelled invoices
     setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);

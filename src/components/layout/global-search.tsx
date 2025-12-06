@@ -231,7 +231,7 @@ export function GlobalSearch() {
       // Return up to 15 results for better coverage
       return results.slice(0, 15);
     } catch (error) {
-      console.error({ 'Error in search results computation:', error });
+      console.error('Error in search results computation:', error);
       return [];
     }
   }, [searchTerm, customers, vendors, items, customersLoading, vendorsLoading, itemsLoading]);
