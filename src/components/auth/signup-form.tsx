@@ -133,7 +133,7 @@ export function SignupForm() {
       if (!passwordCheck.valid) {
         console.error({ variant: "default",
           title: "Password Needs to be Stronger",
-          description: passwordCheck.feedback.join(" " }) + " Please create a stronger password to keep your account secure.",
+          description: passwordCheck.feedback.join(" " }); + " Please create a stronger password to keep your account secure.",
         );
         setIsLoading(false);
         return;

@@ -331,7 +331,7 @@ export default function BulkJournalEntryPage() {
         
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");
         console.log({ title: "Template Downloaded",
-            description: "Template file has been downloaded. Use account names or ledger names (not codes }). Fill in your journal entries and upload.",
+            description: "Template file has been downloaded. Use account names or ledger names (not codes });. Fill in your journal entries and upload.",
         );
     };
 

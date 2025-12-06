@@ -43,10 +43,10 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
     } else {
       onSwitchWorkspace(client);
       if(client) {
-        console.log(
+        console.log({
             title: `Switched to ${client.name}'s Workspace`,
             description: `You are now managing the account for ${client.name}.`,
-        );
+        });
       }
     }
   };

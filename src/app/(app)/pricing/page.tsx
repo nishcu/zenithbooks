@@ -149,7 +149,7 @@ export default function PricingPage() {
   
   const handleSave = (tierId: string) => {
     setEditingTier(null);
-    console.log({ title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId })?.name} plan have been saved.`);
+    console.log({ title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId });?.name} plan have been saved.`);
   };
   
   const handlePriceChange = (tierId: string, cycle: 'monthly' | 'annually', value: number) => {

@@ -171,7 +171,7 @@ export default function NewPurchasePage() {
             // Validate the buyer's GSTIN
             if (result.buyerGstin && result.buyerGstin.toUpperCase() !== userGstin.toUpperCase()) {
                  console.error({ variant: "destructive", title: "Validation Failed", 
-                    description: `This invoice appears to be for a different GSTIN (${result.buyerGstin} }). Please upload a bill for your company.` 
+                    description: `This invoice appears to be for a different GSTIN (${result.buyerGstin});. Please upload a bill for your company.` 
                 );
                 setIsOcrLoading(false);
                 if(fileInputRef.current) fileInputRef.current.value = "";

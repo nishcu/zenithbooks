@@ -129,7 +129,7 @@ export default function AdminCertificationRequests() {
 
     if (!udin.trim()) {
       console.error({ variant: "destructive", title: "UDIN Required",
-        description: "Please enter the UDIN (Unique Document Identification Number }) for this certificate.",
+        description: "Please enter the UDIN (Unique Document Identification Number }); for this certificate.",
       );
       return;
     }

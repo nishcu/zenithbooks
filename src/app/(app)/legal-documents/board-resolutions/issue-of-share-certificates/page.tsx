@@ -85,7 +85,7 @@ export default function IssueOfSharesPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Share_Certificate_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" } }),
+    onAfterPrint: () => console.log({ title: "Print Complete" });,
   );
 
   return (

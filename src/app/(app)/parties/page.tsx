@@ -113,7 +113,7 @@ export default function PartiesPage() {
         await deleteDoc(partyDocRef);
         console.log({ title: "Party Deleted", description: `${party.name} has been removed.`} })
     } catch (e) {
-        console.error({ variant: "destructive", title: "Error", description: "Could not delete the party."} })
+        console.error({ variant: "destructive", title: "Error", description: "Could not delete the party."});
     }
   }
   
@@ -124,7 +124,7 @@ export default function PartiesPage() {
           console.log({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.` });
       } catch (error) {
           console.error(error);
-          console.error({ variant: "destructive", title: "Assignment Failed", description: (error as Error }).message );
+          console.error({ variant: "destructive", title: "Assignment Failed", description: (error as Error });.message );
       }
   }
   

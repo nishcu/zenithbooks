@@ -78,7 +78,7 @@ export default function ShiftingOfOfficePage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Shifting_Office_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" } }),
+    onAfterPrint: () => console.log({ title: "Print Complete" });,
   );
 
   return (

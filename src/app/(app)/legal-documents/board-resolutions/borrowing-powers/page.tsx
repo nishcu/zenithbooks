@@ -82,7 +82,7 @@ export default function BorrowingPowersPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Borrowing_Powers_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" } }),
+    onAfterPrint: () => console.log({ title: "Print Complete" });,
   );
   
   const directorCount = [formData.authorizedDirector1, formData.authorizedDirector2].filter(Boolean).length;

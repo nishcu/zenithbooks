@@ -77,7 +77,7 @@ export default function AppointmentOfDirectorPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Director_Appointment_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" } }),
+    onAfterPrint: () => console.log({ title: "Print Complete" });,
   );
 
   return (

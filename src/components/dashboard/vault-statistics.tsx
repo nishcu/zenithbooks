@@ -55,7 +55,7 @@ export function VaultStatistics() {
         setLoading(false);
       },
       (error) => {
-        console.error({ "Error fetching document count:", error });
+        console.error("Error fetching document count:", error);
         setLoading(false);
       }
     );
@@ -70,7 +70,7 @@ export function VaultStatistics() {
         setRecentDocuments(docs);
       },
       (error) => {
-        console.error({ "Error fetching recent documents:", error });
+        console.error("Error fetching recent documents:", error);
       }
     );
 

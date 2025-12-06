@@ -191,7 +191,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
             onOpenChange(false);
         } catch (e) {
             console.error({ "Error saving document: ", e });
-            console.log({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase( })}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
+            console.log({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase( });}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
         }
     };
 

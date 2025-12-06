@@ -621,7 +621,7 @@ export default function BankReconciliationPage() {
                 summaryPieces.splice(1, 0, `${skippedRows} row${skippedRows === 1 ? '' : 's'} skipped`);
             }
             console.log({ title: "Statement Uploaded", 
-                description: summaryPieces.join(". " }) 
+                description: summaryPieces.join(". " }); 
             );
         } catch (error: any) {
             console.error({ "Error parsing file:", error });
@@ -677,7 +677,7 @@ export default function BankReconciliationPage() {
         }, 0);
         
         if (Math.abs(totalStatement - totalBook) > 0.01) {
-             console.log({ variant: "destructive", title: "Mismatch Error", description: `Selected totals do not match. Bank: ${totalStatement.toFixed(2 })}, Book: ${totalBook.toFixed(2)}` );
+             console.log({ variant: "destructive", title: "Mismatch Error", description: `Selected totals do not match. Bank: ${totalStatement.toFixed(2 });}, Book: ${totalBook.toFixed(2)}` );
              return;
         }
         

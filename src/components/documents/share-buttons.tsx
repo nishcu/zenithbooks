@@ -55,13 +55,11 @@ export function ShareButtons({
       return;
     }
 
-    console.log({ title: "Generating PDF...",
-      description: "Your document is being prepared for download.",
-    );
+    console.log({ title: "Generating PDF...", description: "Your document is being prepared for download." });
 
     try {
       // Ensure content is fully loaded before generating PDF
-      await new Promise(resolve => setTimeout(resolve, 500) });
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const opt = {
         margin: [10, 10, 10, 10],

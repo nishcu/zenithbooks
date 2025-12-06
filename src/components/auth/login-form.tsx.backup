@@ -57,11 +57,11 @@ const formSchema = z.object({
   acceptPolicies: z.boolean().refine(val => val === true, {
     message: "You must accept the Terms & Conditions and Cancellation & Refund Policy"
   }),
-});
+);
 
 const passwordResetSchema = z.object({
   resetEmail: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
-});
+);
 
 export function LoginForm() {
   const router = useRouter();

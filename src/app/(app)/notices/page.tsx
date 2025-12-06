@@ -122,7 +122,7 @@ export default function NoticesPage() {
             form.reset( });
         } catch (error) {
             console.error({ "Error submitting notice request: ", error });
-            console.log({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."}  });
+            console.log({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."});;
         }
     }
 

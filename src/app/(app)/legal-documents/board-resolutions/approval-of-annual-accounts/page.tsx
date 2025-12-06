@@ -77,7 +77,7 @@ export default function ApprovalOfAnnualAccountsPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Accounts_Approval_${formData.companyName}`,
-    onAfterPrint: () => console.log({ title: "Print Complete" } }),
+    onAfterPrint: () => console.log({ title: "Print Complete" });,
   );
 
   return (

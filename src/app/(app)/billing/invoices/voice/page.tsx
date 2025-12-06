@@ -296,7 +296,7 @@ export default function VoiceInvoiceEntryPage() {
 
       if (!isSecure) {
         console.error({ variant: "destructive", title: "HTTPS Required",
-          description: "Speech recognition requires a secure connection (HTTPS }).",
+          description: "Speech recognition requires a secure connection (HTTPS });.",
         );
         return;
       }
