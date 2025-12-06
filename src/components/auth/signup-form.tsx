@@ -159,13 +159,13 @@ export function SignupForm() {
         createdAt: new Date(),
       });
 
-      await showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
+      showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
 
       // 3. Redirect to dashboard, user is now logged in.
       router.push("/dashboard");
 
     } catch (error: any) {
-      await showErrorToast(error, "Signup");
+      showErrorToast(error, "Signup");
     } finally {
         setIsLoading(false);
     }

@@ -4,24 +4,23 @@
 
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
 
-// Import toast function dynamically to avoid issues
+// Simple approach - import toast directly but handle gracefully
 let toastFunction: any = null;
 
-const getToastFunction = async () => {
-  if (!toastFunction) {
-    try {
-      const { toast } = await import("@/hooks/use-toast");
+// Try to import toast function safely
+if (typeof window !== 'undefined') {
+  try {
+    import("@/hooks/use-toast").then(({ toast }) => {
       toastFunction = toast;
-    } catch (error) {
-      console.error("Failed to load toast function:", error);
-      // Fallback to console
-      toastFunction = ({ title, description }: any) => {
-        console.error(title, description);
-      };
-    }
+    }).catch(() => {
+      console.warn("Toast import failed");
+    });
+  } catch (error) {
+    console.warn("Toast initialization failed:", error);
   }
-  return toastFunction;
-};
+}
+
+const getToast = () => toastFunction;
 
 
 
@@ -132,7 +131,7 @@ export function handleError(error: unknown, context?: string): AppError {
 /**
  * Show error toast notification (friendly, non-destructive for user errors)
  */
-export async function showErrorToast(error: unknown, context?: string) {
+export function showErrorToast(error: unknown, context?: string) {
   try {
     const appError = handleError(error, context);
     // Only use destructive variant for security-critical errors
@@ -143,12 +142,16 @@ export async function showErrorToast(error: unknown, context?: string) {
     // Add contact information for error resolution
     const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-    const toast = await getToastFunction();
-    toast({
-      variant: isCritical ? "destructive" : "default",
-      title: isCritical ? "Security Alert" : "Oops!",
-      description: appError.message + contactMessage,
-    });
+    const toast = getToast();
+    if (toast) {
+      toast({
+        variant: isCritical ? "destructive" : "default",
+        title: isCritical ? "Security Alert" : "Oops!",
+        description: appError.message + contactMessage,
+      });
+    } else {
+      console.error("Toast function not available:", context, appError);
+    }
   } catch (error) {
     console.error("showErrorToast failed:", error);
     // Fallback to console logging
@@ -159,13 +162,17 @@ export async function showErrorToast(error: unknown, context?: string) {
 /**
  * Show success toast notification
  */
-export async function showSuccessToast(title: string, description?: string) {
+export function showSuccessToast(title: string, description?: string) {
   try {
-    const toast = await getToastFunction();
-    toast({
-      title,
-      description,
-    });
+    const toast = getToast();
+    if (toast) {
+      toast({
+        title,
+        description,
+      });
+    } else {
+      console.log("Success:", title, description);
+    }
   } catch (error) {
     console.error("showSuccessToast failed:", error);
     // Fallback to console logging
@@ -188,18 +195,17 @@ export function showEnhancedToast({ variant, title, description, ...props }: any
     finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
   }
 
-  // Use dynamic toast loading
-  getToastFunction().then(toast => {
+  const toast = getToast();
+  if (toast) {
     toast({
       variant,
       title,
       description: finalDescription,
       ...props
     });
-  }).catch(error => {
-    console.error("Toast function failed:", error);
-    console.error(title, finalDescription);
-  });
+  } else {
+    console.error("Enhanced toast failed - function not available:", title, finalDescription);
+  }
 }
 
 export async function withErrorHandling<T>(
@@ -209,7 +215,7 @@ export async function withErrorHandling<T>(
   try {
     return await fn();
   } catch (error) {
-    await showErrorToast(error, context);
+    showErrorToast(error, context);
     return null;
   }
 }

@@ -192,7 +192,7 @@ export function LoginForm() {
       }
       try {
           await sendPasswordResetEmail(auth, resetEmail);
-          await showSuccessToast("Password Reset Email Sent", "Please check your inbox for instructions to reset your password.");
+          showSuccessToast("Password Reset Email Sent", "Please check your inbox for instructions to reset your password.");
           setIsForgotPasswordOpen(false);
           setResetEmail("");
       } catch (error: any) {
