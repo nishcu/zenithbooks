@@ -119,11 +119,11 @@ async function updateBlogPost(postId: string, updatedData: any) {
         return true;
     } catch (error) {
         const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error updating blog post",
-  description: error ,
-});
+        toast({
+          variant: "destructive",
+          title: "Error updating blog post",
+          description: "Failed to update the blog post. Please try again.",
+        });
         return false;
     }
 }
@@ -138,10 +138,10 @@ const formSchema = z.object({
   authorTitle: z.string().min(2, "Author title/experience is required."),
   category: z.string().min(2, "Category is required."),
 
-  image: z.custom<File>((val) => val instanceof File, "Featured image is required.").optional(),
+  image: z.any().optional(),
 
-  contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required."),
-);
+  contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required.")
+});
 
 export default function EditBlogPostPage() {
     const params = useParams();
@@ -164,12 +164,12 @@ export default function EditBlogPostPage() {
             category: "",
             contentBlocks: [{ value: "" }],
         },
-    );
+    });
 
     const { fields: contentFields, append: appendContent, remove: removeContent } = useFieldArray({
         control: form.control,
         name: "contentBlocks",
-    );
+    });
 
     // Load existing blog post data
     useEffect(() => {
@@ -213,7 +213,7 @@ toast({
   title: "Error loading post",
   description: error ,
 });
-                const { toast } = require("@/hooks/use-toast");
+               
 toast({
   variant: "destructive",
   title: "Error: Failed to load the blog post.",
@@ -269,22 +269,16 @@ toast({
                 try {
                     firebaseImageUrl = await uploadBlogImage(values.image, (progress) => {
                         setUploadProgress(progress);
-                    );
+                    });
 
-                    console.log({ 'Image uploaded successfully:', firebaseImageUrl });
+                    console.log('Image uploaded successfully:', firebaseImageUrl);
                 } catch (uploadError) {
                     const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Image upload failed",
-  description: uploadError ,
-});
-                    const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Upload Failed",
-  description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
-});
+                    toast({
+                      variant: "destructive",
+                      title: "Upload Failed",
+                      description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
+                    });
                     return;
                 } finally {
                     setIsUploading(false);
