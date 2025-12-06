@@ -61,6 +61,8 @@ export function DocumentVersionHistory({
       window.location.href = downloadUrl;
 
       console.log("Version download initiated:", versionNumber);
+
+      console.log("Version download initiated:", versionNumber);
     } catch (error: any) {
       console.error("Version download error:", error);
 

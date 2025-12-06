@@ -84,6 +84,8 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
 
       console.log("Download initiated for:", document.fileName);
 
+      console.log("Download initiated for:", document.fileName);
+
     } catch (error: any) {
       console.error("Download error:", error);
 

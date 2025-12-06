@@ -144,10 +144,10 @@ export function showErrorToast(error: unknown, context?: string) {
   // Add contact information for error resolution
   const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-  enhancedToast({
+  toast({
     variant: isCritical ? "destructive" : "default",
     title: isCritical ? "Security Alert" : "Oops!",
-    description: appError.message,
+    description: appError.message + contactMessage,
   });
 }
 
