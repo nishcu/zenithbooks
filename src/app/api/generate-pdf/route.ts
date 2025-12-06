@@ -1,12 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
-import { initializeApp } from "firebase/app";
-import { firebaseConfig } from "@/lib/firebase";
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +10,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Dynamically import pdf-lib to avoid build-time issues
+    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
 
     // Create PDF document
     const pdfDoc = await PDFDocument.create();
@@ -91,6 +86,9 @@ export async function POST(request: NextRequest) {
 // For backward compatibility, support GET requests
 export async function GET() {
   try {
+    // Dynamically import pdf-lib to avoid build-time issues
+    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 800]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
