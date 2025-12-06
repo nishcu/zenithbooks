@@ -1,0 +1,16 @@
+# Development files
+src/ai/dev.ts
+
+# Documentation
+*.md
+!README.md
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
