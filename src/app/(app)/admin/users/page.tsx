@@ -102,6 +102,7 @@ export default function AdminUsers() {
         headers: {
           'x-user-id': user?.uid || '',
         },
+      });
       );
 
       if (response.ok) {

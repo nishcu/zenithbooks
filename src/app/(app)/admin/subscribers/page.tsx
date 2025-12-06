@@ -102,7 +102,7 @@ export default function Subscribers() {
         ? { ...s, status: 'Cancelled' as Subscriber['status'] }
         : s
     ));
-    console.log(
+    console.log({
       title: "Subscription Cancelled",
       description: `${selectedSubscriber.userName}'s subscription has been cancelled.`,
       variant: "destructive",

@@ -976,7 +976,7 @@ toast({
                     // Title row - "Books of Accounts" - Bold, larger
                     const titleRowIndex = sheetHeaders.findIndex(row => row[0] === "Books of Accounts");
                     if (titleRowIndex >= 0) {
-                        const titleCell = XLSX.utils.encode_cell({ r: titleRowIndex, c: 0 );
+                        const titleCell = XLSX.utils.encode_cell({ r: titleRowIndex, c: 0 });
                         if (!worksheet[titleCell]) worksheet[titleCell] = { t: 's', v: "Books of Accounts" };
                         worksheet[titleCell].s = {
                             font: { bold: true, sz: 14 },

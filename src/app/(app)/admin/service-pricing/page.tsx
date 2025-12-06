@@ -54,7 +54,7 @@ export default function ServicePricingPage() {
     // Subscribe to real-time updates
     const unsubscribe = onPricingUpdate(pricing => {
         setServices(pricing);
-    );
+    });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();

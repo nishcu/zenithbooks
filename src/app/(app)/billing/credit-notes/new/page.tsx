@@ -160,7 +160,7 @@ toast({
             lines: journalLines,
             amount: totalAmount,
             customerId: customer,
-        );
+        });
         console.log({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.`  });
     } catch (e: any) {
 toast({
