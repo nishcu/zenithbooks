@@ -11,8 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+import { toast } from "@/hooks/use-toast";
 import { PlusCircle, ArrowRightLeft, FileArchive, LogIn, Users, Inbox } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -55,7 +54,7 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
   
   const handleAddNewClient = () => {
     if (!newClientName || !newClientGstin || !newClientEmail) {
-        showEnhancedToast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details."});
+        toast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."});
         return;
     }
     const newClient = {

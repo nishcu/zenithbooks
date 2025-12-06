@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+import { toast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { collection, addDoc, doc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
@@ -152,7 +151,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 
     const onSubmit = async (values: z.infer<typeof partySchema>) => {
          if (!user) {
-            showEnhancedToast({ variant: "destructive", title: "Not Authenticated" });
+            toast({ variant: "destructive", title: "Not Authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
             return;
         }
         const collectionName = type === 'Customer' ? 'customers' : 'vendors';
@@ -166,7 +165,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 // Add new party
                 const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
                 if (!nextCode) {
-                    showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not generate an account code." });
+                    toast({ variant: "destructive", title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
                     return;
                 }
                 const batch = writeBatch(db);
@@ -192,7 +191,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
             onOpenChange(false);
         } catch (e) {
             console.error("Error saving document: ", e);
-            showEnhancedToast({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.` });
+            toast({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` });
         }
     };
 
@@ -295,7 +294,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const onSubmit = async (values: z.infer<typeof itemSchema>) => {
         if (!user) {
-           showEnhancedToast({ variant: "destructive", title: "Not authenticated" });
+           toast({ variant: "destructive", title: "Not authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
            return;
        }
        try {
@@ -310,7 +309,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
            onOpenChange(false);
        } catch (e) {
            console.error("Error adding document: ", e);
-           showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not save the item." });
+           toast({ variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
        }
     };
 
