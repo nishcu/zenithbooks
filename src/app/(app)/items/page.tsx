@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Wand2, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc } from "firebase/firestore";
