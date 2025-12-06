@@ -49,7 +49,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as TableFoot } from "@/components/ui/table";
 import { format } from "date-fns";
-import html2pdf from "html2pdf.js";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
@@ -498,17 +497,14 @@ export default function PartnershipDeedPage() {
 
   const formData = form.watch();
   
-  const handleDownloadPdf = (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
+  const handleDownloadPdf = async (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      console.error({ variant: "destructive", title: "Error",
-        description: "Could not find the content to download.", });
+      console.error({ variant: "destructive", title: "Error", description: "Could not find the content to download." });
       return;
     }
 
-    console.log({ title: "Generating PDF...",
-      description: "Your document is being prepared for download.",
-     });
+    console.log({ title: "Generating PDF...", description: "Your document is being prepared for download." });
 
     const opt = {
       margin: 0.5,
@@ -518,7 +514,8 @@ export default function PartnershipDeedPage() {
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
     };
 
-    html2pdf().from(element).set(opt).save();
+    const html2pdfModule = await import("html2pdf.js");
+    html2pdfModule.default().from(element).set(opt).save();
   };
 
   const handleSaveDraft = async () => {

@@ -4,7 +4,6 @@
 
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
-import html2pdf from "html2pdf.js";
 
 export interface ExportData {
   headers: string[];
@@ -187,7 +186,8 @@ export async function exportToPDF(
     },
   };
 
-  await html2pdf().set(opt).from(element).save();
+  const html2pdfModule = await import("html2pdf.js");
+  await html2pdfModule.default().set(opt).from(element).save();
 }
 
 /**

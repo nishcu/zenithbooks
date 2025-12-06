@@ -13,7 +13,6 @@ import { Printer, MessageSquare, Share2, Mail, Copy, Download } from "lucide-rea
 import React, { useState } from "react";
 
 import {  } from "@/lib/error-handler";
-import html2pdf from "html2pdf.js";
 import { EmailDialog } from "./email-dialog";
 
 interface ShareButtonsProps {
@@ -78,15 +77,13 @@ export function ShareButtons({
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       };
 
-      console.log({ "Generating PDF for element:", element);
+      console.log({ "Generating PDF for element:", element });
       console.log({ "PDF options:", opt });
 
-      await html2pdf().set(opt).from(element).save();
+      const html2pdfModule = await import("html2pdf.js");
+      await html2pdfModule.default().set(opt).from(element).save();
 
-      console.log(
-        title: "PDF Generated",
-        description: "Your PDF has been downloaded successfully.",
-       });
+      console.log({ title: "PDF Generated", description: "Your PDF has been downloaded successfully." });
     } catch (error: any) {
       console.error({ "PDF generation error:", error });
       console.error({ "Element:", element });
@@ -115,7 +112,8 @@ export function ShareButtons({
           jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
 
-        const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+        const html2pdfModule = await import("html2pdf.js");
+        const pdfBlob = await html2pdfModule.default().set(opt).from(element).outputPdf('blob');
 
         const file = new File([pdfBlob], fileName, { type: 'application/pdf' );
 
@@ -127,9 +125,7 @@ export function ShareButtons({
             files: [file]
           );
 
-          console.log({ title: "Shared successfully",
-            description: "Document shared with PDF attachment.",
-           });
+          console.log({ title: "Shared successfully", description: "Document shared with PDF attachment." });
           return;
         }
       } catch (error) {
@@ -154,11 +150,10 @@ export function ShareButtons({
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
-      await html2pdf().set(opt).from(element).save(fileName);
+      const html2pdfModule = await import("html2pdf.js");
+      await html2pdfModule.default().set(opt).from(element).save(fileName);
 
-      console.log({ title: "PDF Downloaded",
-        description: "PDF has been downloaded. Please attach it manually to WhatsApp.",
-       });
+      console.log({ title: "PDF Downloaded", description: "PDF has been downloaded. Please attach it manually to WhatsApp." });
 
       // Small delay to ensure download starts, then open WhatsApp
       setTimeout(() => {
@@ -173,9 +168,7 @@ export function ShareButtons({
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
 
-      console.log({ title: "WhatsApp opened",
-        description: "Please download the PDF and attach it manually.",
-       });
+      console.log({ title: "WhatsApp opened", description: "Please download the PDF and attach it manually." });
     }
   };
 
@@ -196,9 +189,7 @@ export function ShareButtons({
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
       await navigator.clipboard.writeText(url);
-      console.log({ title: "Link copied!",
-        description: "The page link has been copied to your clipboard.",
-       });
+      console.log({ title: "Link copied!", description: "The page link has been copied to your clipboard." });
     } catch (error) {
       console.error({ variant: "destructive", title: "Error",
         description: "Failed to copy link to clipboard.", });

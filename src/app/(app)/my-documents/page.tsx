@@ -29,7 +29,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import html2pdf from "html2pdf.js";
 
 const numberToWords = (num: number): string => {
     const a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
@@ -195,20 +194,17 @@ export default function MyDocumentsPage() {
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                 };
 
-                console.log({ "Generating PDF from window"); // Debug log
-                await html2pdf().set(opt).from(printWindow.document.body).save();
+                console.log({ "Generating PDF from window" }); // Debug log
+                const html2pdfModule = await import("html2pdf.js");
+                await html2pdfModule.default().set(opt).from(printWindow.document.body).save();
 
                 // Close the print window
                 printWindow.close();
 
-                console.log(
-                    title: "PDF Downloaded",
-                    description: "Your certified document has been downloaded successfully.",
-                 });
+                console.log({ title: "PDF Downloaded", description: "Your certified document has been downloaded successfully." });
             } catch (error) {
                 console.error({ "PDF generation error:", error });
-                console.error({ variant: "destructive", title: "Download Failed",
-                    description: "Failed to generate PDF. Please try again or contact support.", });
+                console.error({ variant: "destructive", title: "Download Failed", description: "Failed to generate PDF. Please try again or contact support." });
             }
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');
