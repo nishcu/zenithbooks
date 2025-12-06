@@ -1,10 +1,9 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
   "framework": "nextjs",
-  "nodeVersion": "18.x",
-  "regions": ["fra1"],
-  "maxLambdaSize": "50mb",
+  "buildCommand": "npm run build",
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
@@ -15,14 +14,6 @@
       "source": "/api/vault/:path*",
       "destination": "/api/vault/:path*"
     }
-  ],
-  "build": {
-    "env": {
-      "NODE_OPTIONS": "--max-old-space-size=4096",
-      "NEXT_TELEMETRY_DISABLED": "1",
-      "CI": "1"
-    }
-  },
-  "installCommand": "npm ci --prefer-offline --no-audit"
+  ]
 }
 
