@@ -24,7 +24,7 @@ export async function uploadImage(file: File, folder: string = BLOG_IMAGES_PATH)
     // Get download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
 
-    console.log({ 'Image uploaded successfully:', downloadURL });
+    console.log('Image uploaded successfully:', downloadURL);
     return downloadURL;
   } catch (error) {
     console.error("Error uploading image", error );

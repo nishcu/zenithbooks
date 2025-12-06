@@ -125,7 +125,7 @@ export default function AdminAppointments() {
       title: "Appointment Cancelled",
       description: `Appointment ${selectedAppointment.id} has been cancelled.`,
       variant: "destructive",
-    );
+    });
     setIsCancelDialogOpen(false);
     setSelectedAppointment(null);
     setIsLoading(null);

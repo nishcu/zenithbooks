@@ -628,9 +628,10 @@ toast({
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
             const errorCount = validatedEntries.filter(e => e.status === 'error').length;
 
-            console.log(
-                title: "File Processed",
-                description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
+            const { toast } = require("@/hooks/use-toast");
+            toast({
+              title: "File Processed",
+              description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
             });
             setIsProcessing(false);
         } catch (error: any) {

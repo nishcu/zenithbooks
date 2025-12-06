@@ -445,7 +445,7 @@ toast({
           4: { cellWidth: 25, halign: 'right' },
           5: { cellWidth: 25, halign: 'right' },
         },
-      );
+    });
 
       // Footer
       const pageCount = (doc as any).internal.getNumberOfPages();
