@@ -76,48 +76,43 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
 
       console.log("Starting download for:", document.fileName);
 
-      // Properly download the file with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch(latestVersion.fileUrl, {
-        signal: controller.signal,
+      // Use server-side PDF generation approach to avoid React DOM issues
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
         headers: {
-          'Accept': '*/*',
-        }
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentUrl: latestVersion.fileUrl,
+          documentName: document.fileName,
+          documentType: latestVersion.fileType || "document",
+        }),
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`Failed to generate PDF: ${response.status}`);
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+
+      // Create download link (safe approach)
       const link = document.createElement("a");
       link.href = url;
-      link.download = document.fileName;
+      link.download = `${document.fileName}.pdf`;
       link.style.display = 'none';
 
-      // Ensure body exists
-      if (!document.body) {
-        throw new Error("Document body not available");
-      }
-
+      // Append to body and trigger download
       document.body.appendChild(link);
-
-      // Trigger download
       link.click();
 
-      // Cleanup with delay to ensure download starts
+      // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
 
       console.log("Download completed for:", document.fileName);
-      console.log(`Download started for: ${document.fileName}`);
 
     } catch (error: any) {
       console.error("Download error:", error);
