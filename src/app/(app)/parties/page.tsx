@@ -111,9 +111,9 @@ export default function PartiesPage() {
     const partyDocRef = doc(db, collectionName, party.id);
     try {
         await deleteDoc(partyDocRef);
-        console.log( title: "Party Deleted", description: `${party.name} has been removed.`})
+        console.log({ title: "Party Deleted", description: `${party.name} has been removed.`} })
     } catch (e) {
-        console.error( variant: "destructive", title: "Error", description: "Could not delete the party."})
+        console.error({ variant: "destructive", title: "Error", description: "Could not delete the party."} })
     }
   }
   
@@ -121,10 +121,10 @@ export default function PartiesPage() {
       if (!user) return;
       try {
           const newCode = await assignAccountCode(party, user.uid);
-          console.log( title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.`);
+          console.log({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.` });
       } catch (error) {
           console.error(error);
-          console.error( variant: "destructive", title: "Assignment Failed", description: (error as Error).message );
+          console.error({ variant: "destructive", title: "Assignment Failed", description: (error as Error }).message );
       }
   }
   
@@ -164,7 +164,7 @@ export default function PartiesPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, type.charAt(0).toUpperCase() + type.slice(1));
     XLSX.writeFile(workbook, `${type}_export.xlsx`);
-    console.log( title: "Export Successful", description: `Your ${type} list has been downloaded.` );
+    console.log({ title: "Export Successful", description: `Your ${type} list has been downloaded.`  });
   };
   
   const handleDownloadTemplate = () => {
@@ -186,7 +186,7 @@ export default function PartiesPage() {
   
   const handleImport = async () => {
     if (!importFile || !user) {
-        console.error( variant: "destructive", title: "No file selected", description: "Please upload a file to import.");
+        console.error({ variant: "destructive", title: "No file selected", description: "Please upload a file to import." });
         return;
     }
     
@@ -227,11 +227,11 @@ export default function PartiesPage() {
 
         try {
             await batch.commit();
-            console.log( title: "Import Successful", description: `${json.length} parties were imported.`);
+            console.log({ title: "Import Successful", description: `${json.length} parties were imported.` });
             setIsImportDialogOpen(false);
             setImportFile(null);
         } catch (error) {
-            console.error( variant: "destructive", title: "Import Failed", description: "There was an error writing to the database." );
+            console.error({ variant: "destructive", title: "Import Failed", description: "There was an error writing to the database."  });
         }
     };
     reader.readAsArrayBuffer(importFile);

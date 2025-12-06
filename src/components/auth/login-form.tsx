@@ -89,7 +89,7 @@ export function LoginForm() {
         const result = await getRedirectResult(auth);
         if (result) {
           // User has successfully signed in via redirect.
-          console.log( title: "Login Successful", description: "Welcome!" );
+          console.log({ title: "Login Successful", description: "Welcome!"  });
           router.push("/dashboard");
         } else {
             // No redirect result, probably a direct page load
@@ -187,7 +187,7 @@ export function LoginForm() {
 
   async function handlePasswordReset() {
       if (!resetEmail) {
-          console.error( variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." );
+          console.error({ variant: "default", title: "Email Required", description: "Please enter your email address to reset your password."  });
           return;
       }
       try {

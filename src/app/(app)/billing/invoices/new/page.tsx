@@ -163,7 +163,7 @@ export default function NewInvoicePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !invoiceNumber) {
-        console.error( variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number.");
+        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number." });
         return;
     }
     
@@ -171,7 +171,7 @@ export default function NewInvoicePage() {
     const isDuplicate = journalVouchers.some(voucher => voucher.id === invoiceId);
 
     if (isDuplicate) {
-        console.log( variant: "destructive", title: "Duplicate Invoice", description: `An invoice with the number ${invoiceId} already exists.` );
+        console.log({ variant: "destructive", title: "Duplicate Invoice", description: `An invoice with the number ${invoiceId} already exists.`  });
         return;
     }
 
@@ -204,11 +204,11 @@ export default function NewInvoicePage() {
             customerId: customer,
         );
 
-        console.log( title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.` );
+        console.log({ title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.`  });
         router.push("/billing/invoices");
     } catch (e: any) {
         console.error("Firebase error:", e);
-        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
     }
   }
 

@@ -98,10 +98,9 @@ export default function ImportExportPage() {
                 throw new Error(result.error || "An unknown error occurred.");
             }
             
-            console.log(
-                title: "Import Successful!",
+            console.log({ title: "Import Successful!",
                 description: result.message,
-            );
+             });
 
         } catch (error: any) {
              console.error( variant: "destructive", title: "Import Failed",
@@ -116,7 +115,7 @@ export default function ImportExportPage() {
     
     const handleGenericImport = async (file: File | null, type: string) => {
          if (!file) {
-            console.log( variant: "destructive", title: "No File Selected", description: `Please select a file for ${type}.` );
+            console.log({ variant: "destructive", title: "No File Selected", description: `Please select a file for ${type}.`  });
             return;
         }
         
@@ -127,23 +126,22 @@ export default function ImportExportPage() {
             
             // Basic validation based on file type
             if (type.includes("JSON") && !fileContent.trim().startsWith("{")) {
-                console.error( variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.` );
+                console.error({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.`  });
                 return;
             }
             
             if (type.includes("XML") && !fileContent.trim().startsWith("<")) {
-                console.error( variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.` );
+                console.error({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.`  });
                 return;
             }
             
             // For now, we'll validate and show success
             // Actual parsing and import logic would be implemented based on specific requirements
-            console.log( 
-                title: "File Validated", 
-                description: `Your ${type} file '${file.name}' has been validated successfully. File size: ${(file.size / 1024).toFixed(2)} KB. Note: Full import functionality will be implemented based on specific requirements.` 
+            console.log({ title: "File Validated", 
+                description: `Your ${type} file '${file.name}' has been validated successfully. File size: ${(file.size / 1024 }).toFixed(2)} KB. Note: Full import functionality will be implemented based on specific requirements.` 
             );
         } catch (error: any) {
-            console.error( variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file." );
+            console.error({ variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file."  });
         } finally {
             setIsImporting(false);
         }
@@ -176,10 +174,10 @@ export default function ImportExportPage() {
                     await exportItems();
                     break;
                 default:
-                    console.log( variant: "destructive", title: "Unknown Export Type", description: `Export type "${exportType}" is not supported.` );
+                    console.log({ variant: "destructive", title: "Unknown Export Type", description: `Export type "${exportType}" is not supported.`  });
             }
         } catch (error: any) {
-            console.error( variant: "destructive", title: "Export Failed", description: error.message || "An error occurred during export." );
+            console.error({ variant: "destructive", title: "Export Failed", description: error.message || "An error occurred during export."  });
         } finally {
             setIsExporting(null);
         }
@@ -200,7 +198,7 @@ export default function ImportExportPage() {
             ])
         );
         exportToExcel({ headers, rows }, { fileName: "Day_Book", includeDate: true );
-        console.log( title: "Export Successful", description: "Day Book has been exported successfully." );
+        console.log({ title: "Export Successful", description: "Day Book has been exported successfully."  });
     };
 
     const exportGeneralLedger = async () => {
@@ -233,7 +231,7 @@ export default function ImportExportPage() {
         );
 
         exportToExcel(sheets, { fileName: "General_Ledger", includeDate: true );
-        console.log( title: "Export Successful", description: "General Ledger has been exported successfully." );
+        console.log({ title: "Export Successful", description: "General Ledger has been exported successfully."  });
     };
 
     const exportTrialBalance = async () => {
@@ -258,7 +256,7 @@ export default function ImportExportPage() {
         ]);
 
         exportToCSV({ headers, rows }, { fileName: "Trial_Balance", includeDate: true );
-        console.log( title: "Export Successful", description: "Trial Balance has been exported successfully." );
+        console.log({ title: "Export Successful", description: "Trial Balance has been exported successfully."  });
     };
 
     const exportSalesInvoices = async () => {
@@ -279,7 +277,7 @@ export default function ImportExportPage() {
             ];
         );
         exportToExcel({ headers, rows }, { fileName: "Sales_Invoices", includeDate: true );
-        console.log( title: "Export Successful", description: "Sales Invoices have been exported successfully." );
+        console.log({ title: "Export Successful", description: "Sales Invoices have been exported successfully."  });
     };
 
     const exportPurchaseBills = async () => {
@@ -300,7 +298,7 @@ export default function ImportExportPage() {
             ];
         );
         exportToExcel({ headers, rows }, { fileName: "Purchase_Bills", includeDate: true );
-        console.log( title: "Export Successful", description: "Purchase Bills have been exported successfully." );
+        console.log({ title: "Export Successful", description: "Purchase Bills have been exported successfully."  });
     };
 
     const exportParties = async () => {
@@ -330,7 +328,7 @@ export default function ImportExportPage() {
             v.pincode || ""
         ]);
         exportToCSV({ headers, rows: [...customerRows, ...vendorRows] }, { fileName: "Parties", includeDate: true );
-        console.log( title: "Export Successful", description: "Customer & Vendor list has been exported successfully." );
+        console.log({ title: "Export Successful", description: "Customer & Vendor list has been exported successfully."  });
     };
 
     const exportItems = async () => {
@@ -346,7 +344,7 @@ export default function ImportExportPage() {
             item.stock || 0
         ]);
         exportToCSV({ headers, rows }, { fileName: "Stock_Items", includeDate: true );
-        console.log( title: "Export Successful", description: "Stock Item list has been exported successfully." );
+        console.log({ title: "Export Successful", description: "Stock Item list has been exported successfully."  });
     };
 
     // Template download functions
@@ -363,10 +361,10 @@ export default function ImportExportPage() {
                     downloadTrialBalanceTemplate();
                     break;
                 default:
-                    console.log( variant: "destructive", title: "Unknown Template", description: `Template type "${templateType}" is not available.` );
+                    console.log({ variant: "destructive", title: "Unknown Template", description: `Template type "${templateType}" is not available.`  });
             }
         } catch (error: any) {
-            console.error( variant: "destructive", title: "Template Download Failed", description: error.message || "An error occurred." );
+            console.error({ variant: "destructive", title: "Template Download Failed", description: error.message || "An error occurred."  });
         }
     };
 
@@ -386,7 +384,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "parties_import_template.xlsx");
-        console.log( title: "Template Downloaded", description: "Parties import template has been downloaded." );
+        console.log({ title: "Template Downloaded", description: "Parties import template has been downloaded."  });
     };
 
     const downloadItemsTemplate = () => {
@@ -404,7 +402,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "items_import_template.xlsx");
-        console.log( title: "Template Downloaded", description: "Items import template has been downloaded." );
+        console.log({ title: "Template Downloaded", description: "Items import template has been downloaded."  });
     };
 
     const downloadTrialBalanceTemplate = () => {
@@ -418,7 +416,7 @@ export default function ImportExportPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log( title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded." );
+        console.log({ title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded."  });
     };
 
     return (

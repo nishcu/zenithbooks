@@ -77,10 +77,9 @@ export default function ShareCodeManagementPage() {
 
     try {
       await deleteDoc(doc(db, "vaultShareCodes", codeId));
-      console.log(
-        title: "Share Code Deleted",
+      console.log({ title: "Share Code Deleted",
         description: "The share code has been deleted and access is revoked.",
-      );
+       });
     } catch (error) {
       console.error("Error deleting share code:", error);
       console.error( variant: "destructive", title: "Delete Failed",
@@ -93,10 +92,9 @@ export default function ShareCodeManagementPage() {
     // Note: In a real implementation, we'd need to store the plain text code
     // temporarily during creation and never show it again. For now, we'll
     // show a message that codes should be copied at creation time.
-    console.log(
-      title: "Code Copied",
+    console.log({ title: "Code Copied",
       description: "Share codes should be copied immediately after creation for security.",
-    );
+     });
   };
 
   const isExpired = (expiresAt: any) => {

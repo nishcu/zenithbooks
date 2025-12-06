@@ -120,7 +120,7 @@ export default function BudgetsPage() {
     };
 
     const handleSaveBudget = () => {
-        console.log("Saving budget for FY:", financialYear, budgetData);
+        console.log({ "Saving budget for FY:", financialYear, budgetData });
         console.log(
             title: "Budget Saved!",
             description: `Your budget for the financial year ${financialYear} has been saved.`,
@@ -129,7 +129,7 @@ export default function BudgetsPage() {
 
     const handleExportBudget = () => {
         if (budgetData.length === 0) {
-            console.error( variant: "destructive", title: "No data to export" );
+            console.error({ variant: "destructive", title: "No data to export"  });
             return;
         }
 
@@ -151,7 +151,7 @@ export default function BudgetsPage() {
         ];
         
         XLSX.writeFile(workbook, `Budget_${financialYear}.xlsx`);
-        console.log( title: "Export Successful", description: `Budget for ${financialYear} has been exported to Excel.` );
+        console.log({ title: "Export Successful", description: `Budget for ${financialYear} has been exported to Excel.`  });
     };
     
     return (

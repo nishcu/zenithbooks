@@ -131,7 +131,7 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        console.error( variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice.");
+        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice." });
         return;
     }
     
@@ -157,9 +157,9 @@ export default function NewCreditNotePage() {
             amount: totalAmount,
             customerId: customer,
         );
-        console.log( title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.` );
+        console.log({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.`  });
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
     }
   }
 

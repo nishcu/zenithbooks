@@ -295,8 +295,8 @@ export default function VoiceInvoiceEntryPage() {
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
 
       if (!isSecure) {
-        console.error( variant: "destructive", title: "HTTPS Required",
-          description: "Speech recognition requires a secure connection (HTTPS).",
+        console.error({ variant: "destructive", title: "HTTPS Required",
+          description: "Speech recognition requires a secure connection (HTTPS }).",
         );
         return;
       }
@@ -323,12 +323,12 @@ export default function VoiceInvoiceEntryPage() {
               const result = event.results[0];
               if (result && result[0]) {
                 const transcript = result[0].transcript.trim();
-                console.log('Speech recognition result:', transcript);
+                console.log({ 'Speech recognition result:', transcript);
                 setTranscript(transcript);
 
                 // Auto-stop after successful recognition
                 setTimeout(() => {
-                  setIsListening(false);
+                  setIsListening(false });
                 }, 500);
               }
             } catch (error) {
@@ -465,11 +465,11 @@ export default function VoiceInvoiceEntryPage() {
       setTimeout(() => {
         try {
           recognition.start();
-          console.log('Speech recognition started successfully');
+          console.log({ 'Speech recognition started successfully');
           console.log(
             title: "🎤 Listening...",
             description: "Speak clearly: 'Customer name, Product name, Quantity'",
-          );
+           });
         } catch (error) {
           console.error('Error starting recognition after delay:', error);
           setIsListening(false);
@@ -557,12 +557,11 @@ export default function VoiceInvoiceEntryPage() {
     
     setIsProcessing(false);
     
-    console.log(
-      title: "Voice Input Processed",
+    console.log({ title: "Voice Input Processed",
       description: parsed.customerId && parsed.itemId 
         ? "Customer and product identified. Please review and create invoice."
         : "Some information may need manual entry. Please review.",
-    );
+     });
   }, [transcript, customers, items, form, toast]);
 
   const handleSave = useCallback(async (values: VoiceInvoiceForm, closeOnSave: boolean) => {
@@ -572,13 +571,13 @@ export default function VoiceInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." );
+        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected."  });
         return;
     }
     
     // Validate amount
     if (!values.amount || values.amount <= 0) {
-        console.error( variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." );
+        console.error({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero."  });
         return;
     }
     
@@ -615,10 +614,9 @@ export default function VoiceInvoiceEntryPage() {
 
         await addJournalVoucher(newInvoice);
 
-        console.log( 
-          title: "Invoice Created!", 
+        console.log({ title: "Invoice Created!", 
           description: `${invoiceId} has been created successfully and will appear in GSTR-1 and GSTR-3B.` 
-        );
+         });
 
         // Reset form and transcript
         setTranscript("");
@@ -642,9 +640,9 @@ export default function VoiceInvoiceEntryPage() {
         }
     } catch (e: any) {
         console.error("Error creating invoice:", e);
-        console.error( variant: "destructive", title: "Failed to save invoice", 
+        console.error({ variant: "destructive", title: "Failed to save invoice", 
           description: e.message || "An error occurred while creating the invoice. Please try again." 
-        );
+         });
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

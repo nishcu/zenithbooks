@@ -201,8 +201,7 @@ export function DocumentUploadDialog({
 
             // Success
             setUploadProgress(100);
-            console.log(
-              title: "Upload Successful",
+            console.log({ title: "Upload Successful",
               description: "Your document has been uploaded successfully.",
             );
 
@@ -213,7 +212,7 @@ export function DocumentUploadDialog({
             setUploadProgress(0);
             
             setIsUploading(false);
-            onUploadSuccess();
+            onUploadSuccess( });
           } catch (error) {
             console.error("Error saving document:", error);
             setError("Failed to save document metadata. Please try again.");

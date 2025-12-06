@@ -28,12 +28,12 @@ export default function ContactPage() {
   );
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log({ values);
     console.log(
       title: "Message Sent!",
       description: "Thank you for reaching out. Our team will get back to you shortly.",
     );
-    form.reset();
+    form.reset( });
   }
 
   return (

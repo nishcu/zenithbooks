@@ -74,10 +74,9 @@ export default function RunPayrollPage() {
   const handleBack = () => setStep((prev) => prev - 1);
   
   const handleFinalize = () => {
-    console.log(
-      title: "Payroll Finalized!",
+    console.log({ title: "Payroll Finalized!",
       description: "July 2024 payroll has been processed and recorded."
-    );
+     });
     setStep(1); // Reset
   }
 

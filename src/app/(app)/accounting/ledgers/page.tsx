@@ -181,11 +181,10 @@ export default function LedgersPage() {
         if (isMounted) {
           setJournalVouchers(filteredVouchers);
           if (filteredVouchers.length === 0 && vouchers.length > 0) {
-            console.log( 
-              title: "No Entries Found", 
+            console.log({ title: "No Entries Found", 
               description: `No entries found for account ${selectedAccount} in the selected date range. Found ${vouchers.length} total vouchers.`,
               variant: "default"
-            );
+             });
           } else if (filteredVouchers.length > 0) {
             console.log( 
               title: "Report Generated", 
@@ -195,11 +194,10 @@ export default function LedgersPage() {
         }
       } catch (err) {
         console.error("Error fetching vouchers: ", err);
-        console.log( 
-          title: "Error", 
+        console.log({ title: "Error", 
           description: `Could not fetch ledger data: ${err instanceof Error ? err.message : 'Unknown error'}.`, 
           variant: "destructive"
-        );
+         });
         if (isMounted) {
           setJournalVouchers([]);
         }

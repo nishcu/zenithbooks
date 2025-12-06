@@ -103,7 +103,7 @@ export function SignupForm() {
             );
           }
           
-          console.log( title: "Signup Successful", description: "Welcome to ZenithBooks!" );
+          console.log({ title: "Signup Successful", description: "Welcome to ZenithBooks!"  });
           router.push("/dashboard");
         } else {
           // No redirect result, probably a direct page load
@@ -133,10 +133,9 @@ export function SignupForm() {
       // Check password strength
       const passwordCheck = checkPasswordStrength(values.password);
       if (!passwordCheck.valid) {
-        console.error(
-          variant: "default",
+        console.error({ variant: "default",
           title: "Password Needs to be Stronger",
-          description: passwordCheck.feedback.join(" ") + " Please create a stronger password to keep your account secure.",
+          description: passwordCheck.feedback.join(" " }) + " Please create a stronger password to keep your account secure.",
         );
         setIsLoading(false);
         return;

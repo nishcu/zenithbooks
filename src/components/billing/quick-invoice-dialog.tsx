@@ -84,10 +84,9 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
             customerId: quickCustomer,
         );
 
-        console.log(
-            title: "Quick Invoice Created!",
+        console.log({ title: "Quick Invoice Created!",
             description: `Invoice ${invoiceId} has been created and recorded.`
-        );
+         });
 
         // Reset form
         setQuickInvNum("");
@@ -98,7 +97,7 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
         onOpenChange(false);
 
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save invoice", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save invoice", description: e.message  });
     }
   }
 

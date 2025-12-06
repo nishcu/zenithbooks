@@ -105,9 +105,9 @@ Date:                                       Deponent Signature
 
   const handleGenerate = () => {
     if (!formData.deponentName || !formData.parentage || !formData.address || !formData.firmName) {
-      console.error( variant: "destructive", title: "Missing Information",
+      console.error({ variant: "destructive", title: "Missing Information",
         description: "Please fill in all the required fields to generate the affidavit."
-      );
+       });
       return;
     }
 
@@ -129,18 +129,16 @@ Date:                                       Deponent Signature
 
     // No payment required - show document
     setShowDocument(true);
-    console.log(
-      title: "Affidavit Generated",
+    console.log({ title: "Affidavit Generated",
       description: "Your affidavit has been generated and is ready for download."
-    );
+     });
   };
 
   const handlePaymentSuccess = (paymentId: string) => {
     setShowDocument(true);
-    console.log(
-      title: "Payment Successful",
+    console.log({ title: "Payment Successful",
       description: "Your affidavit has been generated and is ready for download."
-    );
+     });
   };
 
   const basePrice = pricing?.gst_documents?.find(s => s.id === 'self_affidavit_gst')?.price || 0;
@@ -221,9 +219,9 @@ Date:                                       Deponent Signature
                         userName={user?.displayName || ''}
                         onSuccess={handlePaymentSuccess}
                         onFailure={() => {
-                            console.error( variant: "destructive", title: "Payment Failed",
+                            console.error({ variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
-                            );
+                             });
                         }}
                     />
                 ) : (

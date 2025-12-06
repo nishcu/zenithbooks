@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
     
     // For demo mode, skip verification if keys are not configured
     if (!appId || !secretKey) {
-      console.log('Demo mode: Skipping payment verification - missing Cashfree credentials');
+      console.log({ 'Demo mode: Skipping payment verification - missing Cashfree credentials');
 
       // Update user's subscription status in Firestore for demo
       if (userId) {
         try {
-          const userRef = doc(db, 'users', userId);
+          const userRef = doc(db, 'users', userId });
           await updateDoc(userRef, {
             subscriptionStatus: 'active',
             subscriptionPlan: planId,

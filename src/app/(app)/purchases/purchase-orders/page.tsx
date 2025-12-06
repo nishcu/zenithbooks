@@ -104,9 +104,9 @@ export default function PurchaseOrdersPage() {
     } else if (action === 'Cancel') {
       try {
         await deleteDoc(doc(db, "purchase-orders", order.id));
-        console.log( title: "Purchase Order Cancelled", description: `Purchase order ${order.id} has been successfully cancelled.` );
+        console.log({ title: "Purchase Order Cancelled", description: `Purchase order ${order.id} has been successfully cancelled.`  });
       } catch (error) {
-        console.error( variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order." );
+        console.error({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order."  });
       }
     }
   };

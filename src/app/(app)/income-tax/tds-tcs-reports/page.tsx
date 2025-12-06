@@ -104,17 +104,16 @@ export default function TdsTcsReportsPage() {
 
   const generateReport = async () => {
     if (!user) {
-      console.error( variant: "destructive", title: "Authentication Required",
+      console.error({ variant: "destructive", title: "Authentication Required",
         description: "Please log in to generate reports."
-      );
+       });
       return;
     }
 
     setReportData([]); // Clear previous data
-    console.log(
-        title: "Generating Report...",
+    console.log({ title: "Generating Report...",
         description: "Analyzing journal entries for the selected period."
-    );
+     });
 
     try {
       // Determine the date range for the report
@@ -136,7 +135,7 @@ export default function TdsTcsReportsPage() {
         endDate = new Date(startYear, startMonth + 3, 0); // Last day of the quarter
       }
 
-      console.log('Date range:', startDate.toISOString(), 'to', endDate.toISOString());
+      console.log({ 'Date range:', startDate.toISOString(), 'to', endDate.toISOString());
 
       // Filter journal vouchers by date range
       const relevantVouchers = journalVouchers.filter(voucher => {
@@ -178,7 +177,7 @@ export default function TdsTcsReportsPage() {
                 const vendorQuery = query(collection(db, "vendors"), where("__name__", "==", voucher.vendorId));
                 const vendorSnapshot = await getDocs(vendorQuery);
                 if (!vendorSnapshot.empty) {
-                  const vendorData = vendorSnapshot.docs[0].data();
+                  const vendorData = vendorSnapshot.docs[0].data( });
                   deducteeName = vendorData.name || "Unknown Vendor";
                   deducteePAN = vendorData.pan || "PANNOTAVBL";
                 }
@@ -223,18 +222,17 @@ export default function TdsTcsReportsPage() {
       setReportData(generatedData);
       setReportTitle(`${reportType.toUpperCase()} Report for ${periodLabel}`);
 
-      console.log("Report generated with real data:", generatedData);
+      console.log({ "Report generated with real data:", generatedData });
 
-      console.log(
-          title: "Report Generated",
-          description: `Found ${generatedData.length} ${reportType.toUpperCase()} transactions for ${periodLabel}.`
+      console.log({ title: "Report Generated",
+          description: `Found ${generatedData.length} ${reportType.toUpperCase( })} transactions for ${periodLabel}.`
       );
 
     } catch (error) {
       console.error("Error generating report:", error);
-      console.error( variant: "destructive", title: "Report Generation Failed",
+      console.error({ variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
-      );
+       });
     }
   };
 
@@ -366,10 +364,9 @@ export default function TdsTcsReportsPage() {
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
 
-              console.log(
-                title: "Report Exported",
+              console.log({ title: "Report Exported",
                 description: "The report has been downloaded as a CSV file."
-              );
+               });
             }}
           >
             <FileDown className="mr-2" />

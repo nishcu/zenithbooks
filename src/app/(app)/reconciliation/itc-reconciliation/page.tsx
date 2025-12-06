@@ -51,13 +51,13 @@ export default function ItcReconciliationPage() {
             const result = await reconcileItcAction({ gstr2bDataUri, purchaseBills: "" ); // Purchase bills are handled on server
             if (result?.reconciliationResults) {
                 setItcReconResult(result.reconciliationResults);
-                console.log( title: "ITC Reconciliation Complete" );
+                console.log({ title: "ITC Reconciliation Complete"  });
             } else {
-                console.error( variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.' );
+                console.error({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.'  });
             }
         } catch (error: any) {
             console.error(error);
-            console.error( variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.' );
+            console.error({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.'  });
         } finally {
             setIsItcLoading(false);
         }

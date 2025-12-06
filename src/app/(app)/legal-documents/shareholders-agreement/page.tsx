@@ -88,13 +88,13 @@ export default function ShareholdersAgreement() {
           const data = docSnap.data();
           if (data.userId === user.uid) {
             form.reset(data.formData);
-            console.log( title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` );
+            console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`  });
           } else {
-            console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." );
+            console.error({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."  });
             router.push('/legal-documents/shareholders-agreement');
           }
         } else {
-          console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." );
+          console.error({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."  });
           router.push('/legal-documents/shareholders-agreement');
         }
         setIsLoading(false);
@@ -133,7 +133,7 @@ export default function ShareholdersAgreement() {
 
   const handleSaveDraft = async () => {
     if (!user) {
-      console.error( variant: "destructive", title: 'Authentication Error' );
+      console.error({ variant: "destructive", title: 'Authentication Error'  });
       return;
     }
     setIsSubmitting(true);
@@ -142,7 +142,7 @@ export default function ShareholdersAgreement() {
       if (docId) {
         const docRef = doc(db, "userDocuments", docId);
         await updateDoc(docRef, { formData, updatedAt: new Date() );
-        console.log( title: "Draft Updated", description: `Updated "${formData.documentName}".` );
+        console.log({ title: "Draft Updated", description: `Updated "${formData.documentName}".`  });
       } else {
         const docRef = await addDoc(collection(db, 'userDocuments'), {
           userId: user.uid,
@@ -152,12 +152,12 @@ export default function ShareholdersAgreement() {
           formData,
           createdAt: new Date(),
         );
-        console.log( title: "Draft Saved!", description: `Saved "${formData.documentName}".` );
+        console.log({ title: "Draft Saved!", description: `Saved "${formData.documentName}".`  });
         router.push(`/legal-documents/shareholders-agreement?id=${docRef.id}`);
       }
     } catch (e) {
       console.error(e);
-      console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' );
+      console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'  });
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +167,7 @@ export default function ShareholdersAgreement() {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      console.log( title: "Details Saved", description: "Proceeding to the next step." );
+      console.log({ title: "Details Saved", description: "Proceeding to the next step."  });
     }
   };
 
@@ -256,10 +256,10 @@ export default function ShareholdersAgreement() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    console.error( variant: "destructive", title: "Error", description: "Could not find document content." );
+                    console.error({ variant: "destructive", title: "Error", description: "Could not find document content."  });
                     return;
                   }
-                  console.log( title: "Generating PDF...", description: "Your document is being prepared." );
+                  console.log({ title: "Generating PDF...", description: "Your document is being prepared."  });
                   const opt = {
                     margin: [10, 10, 10, 10],
                     filename: `Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}.pdf`,
@@ -269,9 +269,9 @@ export default function ShareholdersAgreement() {
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                   };
                   await html2pdf().set(opt).from(documentRef.current).save();
-                  console.log( title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." );
+                  console.log({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully."  });
                 } catch (error: any) {
-                  console.error( variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." );
+                  console.error({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF."  });
                 }
               }}><FileDown className="mr-2"/> Download Full Agreement</Button>
             </CardFooter>
@@ -338,9 +338,9 @@ export default function ShareholdersAgreement() {
                       );
                     }}
                     onFailure={() => {
-                      console.error( variant: "destructive", title: "Payment Failed",
+                      console.error({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      );
+                       });
                     }}
                   />
                 );

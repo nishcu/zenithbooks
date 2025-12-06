@@ -149,7 +149,7 @@ export default function PricingPage() {
   
   const handleSave = (tierId: string) => {
     setEditingTier(null);
-    console.log( title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId)?.name} plan have been saved.`);
+    console.log({ title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId })?.name} plan have been saved.`);
   };
   
   const handlePriceChange = (tierId: string, cycle: 'monthly' | 'annually', value: number) => {
@@ -352,11 +352,10 @@ export default function PricingPage() {
                             // You might want to redirect to dashboard or show success page
                           }}
                           onFailure={() => {
-                            console.log(
-                              variant: 'default',
+                            console.log({ variant: 'default',
                               title: 'Payment Couldn\'t Be Processed',
                               description: 'We couldn\'t complete your payment. Please check your payment details and try again.',
-                            );
+                             });
                           }}
                         />
                       )
@@ -364,10 +363,9 @@ export default function PricingPage() {
                       <Button
                         className="w-full"
                         onClick={() => {
-                          console.log(
-                            title: 'Login Required',
+                          console.log({ title: 'Login Required',
                             description: 'Please login or sign up to purchase a subscription.',
-                          );
+                           });
                         }}
                       >
                         Login to Subscribe

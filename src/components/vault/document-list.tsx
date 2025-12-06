@@ -74,7 +74,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         return;
       }
 
-      console.log("Starting download for:", document.fileName);
+      console.log({ "Starting download for:", document.fileName });
 
       // Use server-side proxy to avoid CORS and DOM issues
       const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(latestVersion.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent(latestVersion.fileType || "application/octet-stream")}`;
@@ -82,9 +82,9 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       // Use window.location.href to trigger download (completely avoids DOM manipulation)
       window.location.href = downloadUrl;
 
-      console.log("Download initiated for:", document.fileName);
+      console.log({ "Download initiated for:", document.fileName);
 
-      console.log("Download initiated for:", document.fileName);
+      console.log("Download initiated for:", document.fileName });
 
     } catch (error: any) {
       console.error("Download error:", error);

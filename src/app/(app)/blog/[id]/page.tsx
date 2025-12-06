@@ -41,12 +41,12 @@ export default function BlogPostPage() {
     useEffect(() => {
         const loadPost = async () => {
             try {
-                console.log('Loading blog post from Firebase:', id);
+                console.log({ 'Loading blog post from Firebase:', id);
                 const docRef = doc(db, 'blogPosts', id as string);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    const postData = docSnap.data();
+                    const postData = docSnap.data( });
                     setPost({
                         id: docSnap.id,
                         ...postData,

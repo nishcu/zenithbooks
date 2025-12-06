@@ -118,16 +118,16 @@ export default function MyDocumentsPage() {
         if (baseUrl) {
             router.push(`${baseUrl}?id=${doc.id}`);
         } else {
-            console.error( variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.' );
+            console.error({ variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.'  });
         }
     }
 
      const handleDelete = async (docId: string, docName: string) => {
         try {
             await deleteDoc(doc(db, "userDocuments", docId));
-            console.log( title: "Draft Deleted", description: `"${docName}" has been removed.` );
+            console.log({ title: "Draft Deleted", description: `"${docName}" has been removed.`  });
         } catch (error) {
-            console.error( variant: "destructive", title: 'Error', description: 'Could not delete the document draft.' );
+            console.error({ variant: "destructive", title: 'Error', description: 'Could not delete the document draft.'  });
             console.error("Error deleting document: ", error);
         }
     };
@@ -136,8 +136,7 @@ export default function MyDocumentsPage() {
         // For certified documents, generate PDF on-demand
         if (doc.isCertified) {
             try {
-                console.log(
-                    title: "Generating PDF...",
+                console.log({ title: "Generating PDF...",
                     description: "Your certified document is being prepared for download.",
                 );
 
@@ -155,7 +154,7 @@ export default function MyDocumentsPage() {
                 // Create a new window with the certificate HTML
                 const printWindow = window.open('', '_blank', 'width=800,height=600');
                 if (!printWindow) {
-                    throw new Error('Failed to open print window. Please allow popups for this site.');
+                    throw new Error('Failed to open print window. Please allow popups for this site.' });
                 }
 
                 printWindow.document.write(`
@@ -196,7 +195,7 @@ export default function MyDocumentsPage() {
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                 };
 
-                console.log("Generating PDF from window"); // Debug log
+                console.log({ "Generating PDF from window"); // Debug log
                 await html2pdf().set(opt).from(printWindow.document.body).save();
 
                 // Close the print window
@@ -205,7 +204,7 @@ export default function MyDocumentsPage() {
                 console.log(
                     title: "PDF Downloaded",
                     description: "Your certified document has been downloaded successfully.",
-                );
+                 });
             } catch (error) {
                 console.error("PDF generation error:", error);
                 console.error( variant: "destructive", title: "Download Failed",
@@ -215,11 +214,10 @@ export default function MyDocumentsPage() {
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');
         } else {
-            console.log(
-                title: "Download Not Available",
+            console.log({ title: "Download Not Available",
                 description: "The PDF for this document is not available. Please contact support.",
                 variant: "destructive",
-            );
+             });
         }
     };
 
@@ -246,8 +244,8 @@ export default function MyDocumentsPage() {
             gstin: "GSTIN of CA Firm",
             pan: "PAN of CA Firm"
         };
-        console.log("Certificate data for PDF generation:", data); // Debug log
-        console.log("Full document object:", doc); // Debug log
+        console.log({ "Certificate data for PDF generation:", data); // Debug log
+        console.log("Full document object:", doc }); // Debug log
 
         if (!data) {
                 return `

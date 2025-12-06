@@ -186,11 +186,11 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
             const agreementText = generateAgreementText(data);
             setGeneratedAgreement(agreementText);
             setStep(2);
-            console.log( title: "LLP Agreement Generated Successfully!" );
+            console.log({ title: "LLP Agreement Generated Successfully!"  });
         } catch (error) {
-            console.error( variant: "destructive", title: "Error Generating Agreement",
+            console.error({ variant: "destructive", title: "Error Generating Agreement",
                 description: "An unexpected error occurred."
-            );
+             });
             console.error(error);
         }
     }
@@ -355,15 +355,14 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
                                         userName={user?.displayName || ''}
                                         onSuccess={(paymentId) => {
                                             setShowDocument(true);
-                                            console.log(
-                                                title: "Payment Successful",
+                                            console.log({ title: "Payment Successful",
                                                 description: "Your document is ready for download."
-                                            );
+                                             });
                                         }}
                                         onFailure={() => {
-                                            console.error( variant: "destructive", title: "Payment Failed",
+                                            console.error({ variant: "destructive", title: "Payment Failed",
                                                 description: "Payment was not completed. Please try again."
-                                            );
+                                             });
                                         }}
                                     />
                                 ) : (

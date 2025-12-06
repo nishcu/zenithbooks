@@ -159,9 +159,8 @@ export default function AdvanceTax() {
     const totalTax = tax * 1.04;
     setTaxLiability(totalTax);
 
-    console.log(
-        title: "Tax Calculated",
-        description: `Your estimated tax liability is ₹${totalTax.toFixed(2)}.`
+    console.log({ title: "Tax Calculated",
+        description: `Your estimated tax liability is ₹${totalTax.toFixed(2 })}.`
     );
   };
 

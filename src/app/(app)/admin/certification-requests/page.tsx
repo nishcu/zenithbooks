@@ -129,8 +129,8 @@ export default function AdminCertificationRequests() {
     }
 
     if (!udin.trim()) {
-      console.error( variant: "destructive", title: "UDIN Required",
-        description: "Please enter the UDIN (Unique Document Identification Number) for this certificate.",
+      console.error({ variant: "destructive", title: "UDIN Required",
+        description: "Please enter the UDIN (Unique Document Identification Number }) for this certificate.",
       );
       return;
     }
@@ -138,7 +138,7 @@ export default function AdminCertificationRequests() {
     setIsLoading('approve');
 
     try {
-      console.log("Approving request:", selectedRequest); // Debug log
+      console.log({ "Approving request:", selectedRequest); // Debug log
 
       // Update the certification request status to 'Certified'
       await updateDoc(doc(db, "certificationRequests", selectedRequest.id), {
@@ -148,7 +148,7 @@ export default function AdminCertificationRequests() {
         udin: udin.trim(),
         digitalSignature: digitalSignature.trim(),
         signatureFileUrl: null, // Will be set if file is uploaded
-      );
+       });
 
       // Save the certified document to user's userDocuments collection
       const certifiedDocData = {
@@ -210,10 +210,9 @@ export default function AdminCertificationRequests() {
         gstin: "GSTIN of CA Firm",
         pan: "PAN of CA Firm"
       };
-      console.log(
-        title: "Generating PDF...",
+      console.log({ title: "Generating PDF...",
         description: "Your draft certificate is being prepared for download.",
-      );
+       });
 
       const data = request.certificateData;
       const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -420,10 +419,9 @@ export default function AdminCertificationRequests() {
       // Close the print window
       printWindow.close();
 
-      console.log(
-        title: "Draft Downloaded",
+      console.log({ title: "Draft Downloaded",
         description: "Your draft certificate has been downloaded successfully.",
-      );
+       });
     } catch (error) {
       console.error("Draft download error:", error);
       console.error( variant: "destructive", title: "Download Failed",

@@ -136,7 +136,7 @@ export default function CouponsPage() {
         status: new Date(data.expiryDate) < new Date() ? 'Expired' : 'Active',
     };
     setCoupons(prev => [newCoupon, ...prev]);
-    console.log( title: "Coupon Created", description: `Coupon code ${newCoupon.code} has been added.`);
+    console.log({ title: "Coupon Created", description: `Coupon code ${newCoupon.code} has been added.` });
     setIsDialogOpen(false);
     form.reset();
   }
@@ -317,11 +317,10 @@ export default function CouponsPage() {
                         <DropdownMenuItem 
                           onClick={() => {
                             setCoupons(coupons.filter(c => c.id !== coupon.id));
-                            console.log( 
-                              title: "Coupon Deleted", 
+                            console.log({ title: "Coupon Deleted", 
                               description: `Coupon code ${coupon.code} has been deleted.`,
                               variant: "destructive"
-                            );
+                             });
                           }}
                           className="text-destructive"
                         >

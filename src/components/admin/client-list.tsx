@@ -38,9 +38,8 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
     if (client && client.id === activeClientId) {
       // If clicking the active client, switch back to own workspace
       onSwitchWorkspace(null);
-      console.log(
-        title: "Switched to Own Workspace",
-      );
+      console.log({ title: "Switched to Own Workspace",
+       });
     } else {
       onSwitchWorkspace(client);
       if(client) {
@@ -54,7 +53,7 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
   
   const handleAddNewClient = () => {
     if (!newClientName || !newClientGstin || !newClientEmail) {
-        console.log( variant: "destructive", title: "Missing fields", description: "Please fill out all client details.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.");
+        console.log({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
         return;
     }
     const newClient = {
@@ -64,7 +63,7 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
         email: newClientEmail,
     };
     setClients(prev => [...prev, newClient]);
-    console.log( title: "Client Added", description: `${newClient.name} has been added to your client list.`);
+    console.log({ title: "Client Added", description: `${newClient.name} has been added to your client list.` });
     
     setNewClientName("");
     setNewClientGstin("");

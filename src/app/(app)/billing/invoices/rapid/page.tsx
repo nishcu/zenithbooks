@@ -84,7 +84,7 @@ export default function RapidInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." );
+        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected."  });
         return;
     }
     
@@ -120,7 +120,7 @@ export default function RapidInvoiceEntryPage() {
 
         await addJournalVoucher(newInvoice);
 
-        console.log( title: "Invoice Saved", description: `${invoiceId} has been created.` );
+        console.log({ title: "Invoice Saved", description: `${invoiceId} has been created.`  });
 
         if (closeOnSave) {
             router.push("/billing/invoices");
@@ -138,7 +138,7 @@ export default function RapidInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save invoice", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save invoice", description: e.message  });
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

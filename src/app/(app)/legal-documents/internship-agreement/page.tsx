@@ -121,10 +121,10 @@ export default function InternshipAgreementPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 3) {
-        console.log( title: `Step ${step} Saved` );
+        console.log({ title: `Step ${step} Saved`  });
       }
     } else {
-      console.error( variant: "destructive", title: "Validation Error" );
+      console.error({ variant: "destructive", title: "Validation Error"  });
     }
   };
 
@@ -251,15 +251,14 @@ export default function InternshipAgreementPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            console.log(
-                              title: "Payment Successful",
+                            console.log({ title: "Payment Successful",
                               description: "Your document is ready for download."
-                            );
+                             });
                           }}
                           onFailure={() => {
-                            console.error( variant: "destructive", title: "Payment Failed",
+                            console.error({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            );
+                             });
                           }}
                         />
                       );
@@ -328,9 +327,9 @@ export default function InternshipAgreementPage() {
                   );
                 }}
                 onFailure={() => {
-                  console.error( variant: "destructive", title: "Payment Failed",
+                  console.error({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  );
+                   });
                 }}
               />
             ) : (

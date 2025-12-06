@@ -126,7 +126,7 @@ export default function NewDebitNotePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !originalPurchase) {
-        console.error( variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill.");
+        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill." });
         return;
     }
     
@@ -149,9 +149,9 @@ export default function NewDebitNotePage() {
             amount: totalAmount,
             vendorId: vendor,
         );
-        console.log( title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.` );
+        console.log({ title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.`  });
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
     }
   }
 

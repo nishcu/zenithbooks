@@ -29,11 +29,10 @@ function PaymentSuccessContent() {
 
       if (!orderIdParam) {
         setStatus('failed');
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: 'Payment Information Missing',
           description: 'We couldn\'t find your order information. Please contact support with your payment details.',
-        );
+         });
         return;
       }
 
@@ -62,8 +61,7 @@ function PaymentSuccessContent() {
 
         if (response.ok && data.success) {
           setStatus('success');
-          console.log(
-            title: 'Payment Successful!',
+          console.log({ title: 'Payment Successful!',
             description: 'Your payment has been verified and subscription activated.',
           );
           
@@ -72,24 +70,22 @@ function PaymentSuccessContent() {
           
           // Redirect to dashboard after 3 seconds
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/dashboard' });
           }, 3000);
         } else {
           setStatus('failed');
-          console.log(
-            variant: 'default',
+          console.log({ variant: 'default',
             title: 'Payment Verification Pending',
             description: data.message || 'We\'re having trouble verifying your payment. If you were charged, please contact our support team with your order details.',
-          );
+           });
         }
       } catch (error) {
         console.error('Payment verification error:', error);
         setStatus('failed');
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: 'Verification Issue',
           description: 'We couldn\'t verify your payment right now. If you were charged, please contact our support team with your order ID.',
-        );
+         });
       }
     };
 

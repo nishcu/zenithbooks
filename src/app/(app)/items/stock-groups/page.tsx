@@ -50,9 +50,8 @@ export default function StockGroupsPage() {
   const [groups, setGroups] = useState(sampleStockGroups);
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    console.log(
-        title: `Action: ${action}`,
-        description: `This would ${action.toLowerCase()} stock group ${id}. This functionality is a placeholder.`
+    console.log({ title: `Action: ${action}`,
+        description: `This would ${action.toLowerCase( })} stock group ${id}. This functionality is a placeholder.`
     })
   }
 

@@ -43,19 +43,18 @@ export function CashfreeCheckout({
     try {
       // Validate user is authenticated
       if (!userId || !userEmail) {
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: 'Please Sign In',
           description: 'You need to sign in to your account to proceed with payment.',
         );
-        setIsLoading(false);
+        setIsLoading(false });
         return;
       }
 
-      console.log('Creating payment order for:', { amount, planId, userId, userEmail, userName );
+      console.log({ 'Creating payment order for:', { amount, planId, userId, userEmail, userName );
       
       // Store planId in localStorage for payment success page
-      localStorage.setItem('pending_plan_id', planId);
+      localStorage.setItem('pending_plan_id', planId });
 
       // Prepare customer details
       const customerDetailsPayload = {
@@ -66,9 +65,9 @@ export function CashfreeCheckout({
       };
 
       // DEBUG: Log what we're sending to the API
-      console.log('DEBUG - customerDetails being sent to API:', customerDetailsPayload);
+      console.log({ 'DEBUG - customerDetails being sent to API:', customerDetailsPayload);
       console.log('DEBUG - userEmail value:', userEmail);
-      console.log('DEBUG - userName value:', userName);
+      console.log('DEBUG - userName value:', userName });
 
       const requestBody = {
         amount,
@@ -85,7 +84,7 @@ export function CashfreeCheckout({
         userName: userName,   // Pass as fallback
       };
 
-      console.log('DEBUG - Full request body:', requestBody);
+      console.log({ 'DEBUG - Full request body:', requestBody });
 
       // Create order on server
       const response = await fetch('/api/payment', {
@@ -97,7 +96,7 @@ export function CashfreeCheckout({
       );
 
       const data = await response.json();
-      console.log('PAYMENT API DATA:', data);
+      console.log({ 'PAYMENT API DATA:', data });
 
       if (!response.ok) {
         // Provide more specific error messages
@@ -126,16 +125,16 @@ export function CashfreeCheckout({
 
       // Check if this is demo mode (no real API keys configured)
       if (data.demoMode === true) {
-        console.log('Running in demo mode - payment UI will show but transactions won\'t process');
+        console.log({ 'Running in demo mode - payment UI will show but transactions won\'t process');
         console.log(
           title: 'Demo Mode',
           description: 'Payment gateway is in demo mode. Configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
           duration: 5000,
-        );
+         });
         return;
       }
 
-      console.log('✅ Payment gateway is in LIVE mode - real transactions will be processed');
+      console.log({ '✅ Payment gateway is in LIVE mode - real transactions will be processed');
 
       // Extract paymentSessionId from backend response
       // Backend returns payment_session_id (snake_case) - MUST match backend exactly
@@ -151,38 +150,36 @@ export function CashfreeCheckout({
           description: 'We couldn\'t set up your payment session. Please refresh the page and try again.',
         );
         setIsLoading(false);
-        onFailure?.();
+        onFailure?.( });
               return;
             }
 
-      console.log('SDK LOADED - paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
+      console.log({ 'SDK LOADED - paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
 
       // Load Cashfree SDK dynamically
       try {
         await loadCashfree();
-        console.log('✅ Cashfree SDK loaded and ready');
+        console.log('✅ Cashfree SDK loaded and ready' });
       } catch (error) {
         console.error('❌ Failed to load Cashfree SDK:', error);
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: 'Payment Gateway Loading',
           description: 'The payment gateway is taking a moment to load. Please refresh the page and try again.',
         );
         setIsLoading(false);
-        onFailure?.();
+        onFailure?.( });
         return;
       }
 
       // Verify SDK is ready
       if (!window.Cashfree) {
         console.error('❌ Cashfree SDK not available on window object');
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: 'Payment Gateway Not Ready',
           description: 'The payment gateway needs a moment to initialize. Please wait a second and try again.',
         );
         setIsLoading(false);
-        onFailure?.();
+        onFailure?.( });
         return;
       }
 
@@ -193,7 +190,7 @@ export function CashfreeCheckout({
       
       // Determine mode from API response (LIVE = production, TEST = sandbox)
       const mode = data.mode === 'LIVE' ? 'production' : 'sandbox';
-      console.log('Initializing Cashfree SDK with mode:', mode);
+      console.log({ 'Initializing Cashfree SDK with mode:', mode });
 
       try {
         // Step 1: Initialize Cashfree SDK with mode
@@ -208,12 +205,12 @@ export function CashfreeCheckout({
         
         // Step 2: Launch checkout with paymentSessionId
         // checkout() method receives { paymentSessionId: "..." }
-        console.log('Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
+        console.log({ 'Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
         const result = await cashfree.checkout({
           paymentSessionId: paymentSessionId,
             );
         
-        console.log('✅ Cashfree checkout completed:', result);
+        console.log('✅ Cashfree checkout completed:', result });
         // Checkout will redirect - don't reset loading state as user is being redirected
 
       } catch (cashfreeError) {
@@ -234,13 +231,12 @@ export function CashfreeCheckout({
           }
         }
 
-        console.log(
-          variant: 'default',
+        console.log({ variant: 'default',
           title: errorTitle,
           description: errorMessage,
         );
         setIsLoading(false);
-        onFailure?.();
+        onFailure?.( });
       }
 
     } catch (error) {
@@ -268,12 +264,11 @@ export function CashfreeCheckout({
         }
       }
 
-      console.log(
-        variant: 'default',
+      console.log({ variant: 'default',
         title: errorTitle,
         description: errorMessage,
       );
-      onFailure?.();
+      onFailure?.( });
     } finally {
       setIsLoading(false);
     }

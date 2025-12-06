@@ -104,7 +104,7 @@ export default function PurchasesPage() {
         vendorId: originalVoucher.vendorId,
     };
     await addJournalVoucher(cancellationVoucher as any);
-    console.log( title: "Bill Cancelled", description: `Purchase bill #${billId} has been cancelled.` );
+    console.log({ title: "Bill Cancelled", description: `Purchase bill #${billId} has been cancelled.`  });
   };
   
   const getStatusBadge = (status: string) => {

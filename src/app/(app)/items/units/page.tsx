@@ -50,9 +50,8 @@ export default function UnitsPage() {
   const [units, setUnits] = useState(sampleUnits);
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    console.log(
-        title: `Action: ${action}`,
-        description: `This would ${action.toLowerCase()} unit ${id}. This functionality is a placeholder.`
+    console.log({ title: `Action: ${action}`,
+        description: `This would ${action.toLowerCase( })} unit ${id}. This functionality is a placeholder.`
     })
   }
 

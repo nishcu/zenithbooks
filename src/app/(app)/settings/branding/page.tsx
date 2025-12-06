@@ -97,8 +97,8 @@ export default function BrandingPage() {
     const clearSignature = () => sigCanvasRef.current?.clear();
     const saveSignature = () => {
         const dataUrl = sigCanvasRef.current?.getTrimmedCanvas().toDataURL('image/png');
-        console.log("Signature saved (simulated):", dataUrl);
-        console.log(title: "Signature Saved!");
+        console.log({ "Signature saved (simulated):", dataUrl });
+        console.log({ title: "Signature Saved!" });
     }
 
     function onSubmit(values: z.infer<typeof formSchema>) {
@@ -113,10 +113,9 @@ export default function BrandingPage() {
         writeBrandingSettings(payload);
         setTimeout(() => {
             setIsSaving(false);
-            console.log(
-                title: "Branding Settings Saved!",
+            console.log({ title: "Branding Settings Saved!",
                 description: "Your company details have been updated.",
-            );
+             });
         }, 1500);
     }
     
@@ -131,10 +130,10 @@ export default function BrandingPage() {
             const result = await generateTermsAction({ companyName );
             if (result?.terms) {
                 form.setValue("invoiceTerms", result.terms);
-                console.log( title: "Terms & Conditions Generated!" );
+                console.log({ title: "Terms & Conditions Generated!"  });
             }
         } catch (e) {
-            console.error( variant: "destructive", title: "Error", description: "Failed to generate terms." );
+            console.error({ variant: "destructive", title: "Error", description: "Failed to generate terms."  });
         } finally {
             setIsGeneratingTerms(false);
         }

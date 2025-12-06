@@ -155,7 +155,7 @@ export default function NewPurchasePage() {
     if (!file) return;
 
     setIsOcrLoading(true);
-    console.log( title: "Reading Document...", description: "AI is extracting data from the uploaded bill." );
+    console.log({ title: "Reading Document...", description: "AI is extracting data from the uploaded bill."  });
 
     // This is a placeholder for the user's actual GSTIN from their profile
     const userGstin = "27ABCDE1234F1Z5";
@@ -170,8 +170,8 @@ export default function NewPurchasePage() {
         if (result) {
             // Validate the buyer's GSTIN
             if (result.buyerGstin && result.buyerGstin.toUpperCase() !== userGstin.toUpperCase()) {
-                 console.error( variant: "destructive", title: "Validation Failed", 
-                    description: `This invoice appears to be for a different GSTIN (${result.buyerGstin}). Please upload a bill for your company.` 
+                 console.error({ variant: "destructive", title: "Validation Failed", 
+                    description: `This invoice appears to be for a different GSTIN (${result.buyerGstin} }). Please upload a bill for your company.` 
                 );
                 setIsOcrLoading(false);
                 if(fileInputRef.current) fileInputRef.current.value = "";
@@ -205,17 +205,17 @@ export default function NewPurchasePage() {
                 if (matchedVendor) {
                     setVendor(matchedVendor.id);
                 } else {
-                    console.log( title: "New Vendor Detected", description: `Consider adding "${result.vendorName}" to your vendor list.` );
+                    console.log({ title: "New Vendor Detected", description: `Consider adding "${result.vendorName}" to your vendor list.`  });
                 }
             }
-          console.log( title: "Data Extracted!", description: "Form has been pre-filled with AI." );
+          console.log({ title: "Data Extracted!", description: "Form has been pre-filled with AI."  });
         } else {
-            console.error( variant: "destructive", title: "Extraction Failed", description: "Could not extract data from the document." );
+            console.error({ variant: "destructive", title: "Extraction Failed", description: "Could not extract data from the document."  });
         }
       };
     } catch (error) {
       console.error(error);
-      console.error( variant: "destructive", title: "Error", description: "An unexpected error occurred during OCR." );
+      console.error({ variant: "destructive", title: "Error", description: "An unexpected error occurred during OCR."  });
     } finally {
       setIsOcrLoading(false);
       // Reset file input to allow re-uploading the same file
@@ -230,7 +230,7 @@ export default function NewPurchasePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !billNumber) {
-        console.error( variant: "destructive", title: "Missing Details", description: "Please select a vendor and enter a bill number.");
+        console.error({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and enter a bill number." });
         return;
     }
     
@@ -238,7 +238,7 @@ export default function NewPurchasePage() {
     const isDuplicate = journalVouchers.some(voucher => voucher.id === billId);
 
     if (isDuplicate) {
-        console.log( variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${billId} already exists.` );
+        console.log({ variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${billId} already exists.`  });
         return;
     }
     
@@ -259,10 +259,10 @@ export default function NewPurchasePage() {
             amount: totalBillAmount,
             vendorId: vendor,
         );
-        console.log( title: "Purchase Bill Saved", description: `Journal entry for bill #${billId} has been automatically created.` );
+        console.log({ title: "Purchase Bill Saved", description: `Journal entry for bill #${billId} has been automatically created.`  });
         router.push("/purchases");
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save journal entry", description: e.message  });
     }
   }
 

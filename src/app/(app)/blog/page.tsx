@@ -31,7 +31,7 @@ function getStoredBlogPosts() {
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
         const posts = stored ? JSON.parse(stored) : [];
-        console.log('Blog page: Loaded posts from storage:', posts.length, 'posts');
+        console.log({ 'Blog page: Loaded posts from storage:', posts.length, 'posts' });
 
         // Log the first few posts to see their images
         posts.slice(0, 3).forEach((post, index) => {
@@ -51,7 +51,7 @@ function saveBlogPostsDebug(posts: any[]) {
 
     try {
         localStorage.setItem(BLOG_POSTS_STORAGE_KEY, JSON.stringify(posts));
-        console.log('Blog page: Saved posts to localStorage:', posts.length, 'posts');
+        console.log({ 'Blog page: Saved posts to localStorage:', posts.length, 'posts' });
     } catch (error) {
         console.error('Error saving blog posts to localStorage:', error);
     }
@@ -94,13 +94,13 @@ export default function BlogPage() {
 
         const loadBlogPosts = async () => {
             try {
-                console.log('Loading blog posts from Firebase...');
+                console.log({ 'Loading blog posts from Firebase...');
                 const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
                 const querySnapshot = await getDocs(q);
 
                 const posts: any[] = [];
                 querySnapshot.forEach((doc) => {
-                    const data = doc.data();
+                    const data = doc.data( });
                     posts.push({
                         id: doc.id,
                         ...data,
@@ -108,10 +108,10 @@ export default function BlogPage() {
                     });
                 });
 
-                console.log('Loaded blog posts from Firebase:', posts.length, 'posts');
+                console.log({ 'Loaded blog posts from Firebase:', posts.length, 'posts');
 
                 // Set posts (empty array if no posts found)
-                setBlogPosts(posts);
+                setBlogPosts(posts });
             } catch (error) {
                 console.error('Error loading blog posts:', error);
                 // Keep sample posts on error

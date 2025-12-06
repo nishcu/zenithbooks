@@ -87,7 +87,7 @@ export default function NewPurchaseOrderPage() {
                 setOrderDate(orderData.orderDate.toDate());
                 setLineItems(orderData.lineItems);
             } else {
-                console.error( variant: "destructive", title: "Error", description: "Purchase order not found." );
+                console.error({ variant: "destructive", title: "Error", description: "Purchase order not found."  });
                 router.push("/purchases/purchase-orders");
             }
         };
@@ -109,19 +109,19 @@ export default function NewPurchaseOrderPage() {
 
   const handleSave = async () => {
     if (!user) {
-      console.log( title: "Error", description: "You must be logged in to save.", variant: "destructive" );
+      console.log({ title: "Error", description: "You must be logged in to save.", variant: "destructive"  });
       return;
     }
     if (!supplier) {
-      console.log( title: "Error", description: "Please select a supplier.", variant: "destructive" );
+      console.log({ title: "Error", description: "Please select a supplier.", variant: "destructive"  });
       return;
     }
     if (!orderDate) {
-      console.log( title: "Error", description: "Please select an order date.", variant: "destructive" );
+      console.log({ title: "Error", description: "Please select an order date.", variant: "destructive"  });
       return;
     }
     if (lineItems.some(item => !item.itemId || item.qty <= 0 || item.rate < 0)) {
-      console.log( title: "Error", description: "Please ensure all line items are valid.", variant: "destructive" );
+      console.log({ title: "Error", description: "Please ensure all line items are valid.", variant: "destructive"  });
       return;
     }
 
@@ -177,11 +177,10 @@ export default function NewPurchaseOrderPage() {
 
     } catch (error) {
       console.error("Error saving document: ", error);
-      console.log(
-        title: "Error Saving",
+      console.log({ title: "Error Saving",
         description: "There was an error saving the purchase order.",
         variant: "destructive",
-      );
+       });
     }
   };
 

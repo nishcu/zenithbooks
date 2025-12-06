@@ -33,17 +33,17 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
 
   const handleCertificationRequest = async (requestData: CertificationRequestData) => {
     if (!user) {
-      console.error( variant: "destructive", title: "Authentication Error",
+      console.error({ variant: "destructive", title: "Authentication Error",
         description: "You must be logged in to make a request."
-      );
+       });
       return false;
     }
 
     // Check if pricing is loaded
     if (!pricing) {
-      console.error( variant: "destructive", title: "Loading",
+      console.error({ variant: "destructive", title: "Loading",
         description: "Please wait while we load pricing information."
-      );
+       });
       return false;
     }
 
@@ -74,16 +74,15 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
           signedDocumentUrl: null,
           amount: 0, // Free
         );
-        console.log(
-          title: "Request Sent",
+        console.log({ title: "Request Sent",
           description: "Your certification request has been sent to the admin for review and signature."
-        );
+         });
         return true;
       } catch (error) {
         console.error("Error sending request:", error);
-        console.error( variant: "destructive", title: "Request Failed",
+        console.error({ variant: "destructive", title: "Request Failed",
           description: "Could not send the request. Please try again."
-        );
+         });
         return false;
       } finally {
         setIsSubmitting(false);
@@ -117,17 +116,16 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
         amount: effectivePrice,
         paymentId: paymentId,
       );
-      console.log(
-        title: "Payment Successful & Request Sent",
+      console.log({ title: "Payment Successful & Request Sent",
         description: "Your payment has been processed and certification request sent to admin."
-      );
+       });
       onPaymentSuccess?.(paymentId);
       return true;
     } catch (error) {
       console.error("Error sending request:", error);
-      console.error( variant: "destructive", title: "Request Failed",
+      console.error({ variant: "destructive", title: "Request Failed",
         description: "Payment was successful but request submission failed. Please contact support."
-      );
+       });
       return false;
     } finally {
       setIsSubmitting(false);

@@ -12,11 +12,11 @@ export function AppDownloads() {
   
 
   const handleAppDownload = (platform: string) => {
-    console.log(
+    console.log({
       title: "Coming Soon! 🚀",
       description: `ZenithBooks mobile app for ${platform} will be available soon. We'll notify you when it's ready!`,
       duration: 5000,
-    );
+    });
   };
 
   return (

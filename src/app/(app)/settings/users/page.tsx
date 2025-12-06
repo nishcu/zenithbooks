@@ -77,22 +77,21 @@ export default function UserManagementPage() {
   }, [invitesSnapshot]);
 
   const handleAction = (action: string, userId: string) => {
-    console.log(
-        title: `Action: ${action}`,
+    console.log({ title: `Action: ${action}`,
         description: `This is a placeholder for ${action} on user ${userId}.`
-    );
+     });
   }
 
   const handleSendInvite = async () => {
     if (!newUserEmail || !newUserRole) {
-        console.error( variant: "destructive", title: "Missing Information",
+        console.error({ variant: "destructive", title: "Missing Information",
             description: "Please enter an email and select a role."
-        );
+         });
         return;
     }
 
     if (!user) {
-        console.error( variant: "destructive", title: "Not Authenticated" );
+        console.error({ variant: "destructive", title: "Not Authenticated"  });
         return;
     }
 
@@ -106,19 +105,18 @@ export default function UserManagementPage() {
             invitedAt: new Date(),
         );
 
-        console.log(
-            title: "Invitation Recorded",
+        console.log({ title: "Invitation Recorded",
             description: `${newUserEmail} has been invited as a ${newUserRole}. They need to sign up to accept.`
-        );
+         });
 
         setIsInviteDialogOpen(false);
         setNewUserEmail("");
         setNewUserRole("viewer");
 
     } catch(error: any) {
-         console.error( variant: "destructive", title: "Failed to send invite",
+         console.error({ variant: "destructive", title: "Failed to send invite",
             description: error.message || "Could not save the invitation to the database."
-        );
+         });
     } finally {
         setIsInviting(false);
     }

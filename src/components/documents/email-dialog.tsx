@@ -89,14 +89,13 @@ export function EmailDialog({
       );
 
       if (result.success) {
-        console.log(
-          title: "Email Sent",
+        console.log({ title: "Email Sent",
           description: result.message || "Your report has been sent successfully.",
         );
         onOpenChange(false);
         // Reset form
         setTo(defaultTo || "");
-        setSubject(defaultSubject || fileName);
+        setSubject(defaultSubject || fileName });
         setBody(defaultBody || `Please find attached ${fileName}.`);
       } else {
         console.error( variant: "destructive", title: "Failed to Send Email",

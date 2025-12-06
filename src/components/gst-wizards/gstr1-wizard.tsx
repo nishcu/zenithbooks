@@ -511,10 +511,9 @@ export default function Gstr1Wizard() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        console.log(
-          title: "JSON Generated",
+        console.log({ title: "JSON Generated",
           description: "Your GSTR-1 JSON file has been downloaded successfully.",
-        );
+         });
       } else if (type === 'PDF') {
         // Generate PDF from report content
         if (!reportRef.current) {
@@ -524,10 +523,9 @@ export default function Gstr1Wizard() {
           return;
         }
 
-        console.log(
-          title: "Generating PDF...",
+        console.log({ title: "Generating PDF...",
           description: "Your GSTR-1 PDF is being generated.",
-        );
+         });
 
         const opt = {
           margin: [10, 10, 10, 10],
@@ -539,10 +537,9 @@ export default function Gstr1Wizard() {
 
         await html2pdf().set(opt).from(reportRef.current).save();
 
-        console.log(
-          title: "PDF Generated",
+        console.log({ title: "PDF Generated",
           description: "Your GSTR-1 PDF has been downloaded successfully.",
-        );
+         });
       }
     } catch (error: any) {
       console.error( variant: "destructive", title: "Generation Failed",

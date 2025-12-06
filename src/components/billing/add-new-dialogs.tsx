@@ -151,7 +151,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 
     const onSubmit = async (values: z.infer<typeof partySchema>) => {
          if (!user) {
-            console.log( variant: "destructive", title: "Not Authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
+            console.log({ variant: "destructive", title: "Not Authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."  });
             return;
         }
         const collectionName = type === 'Customer' ? 'customers' : 'vendors';
@@ -160,12 +160,12 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 // Update existing party
                 const partyDocRef = doc(db, collectionName, party.id);
                 await updateDoc(partyDocRef, values);
-                console.log( title: `${type} Updated`, description: `${values.name} has been updated.` );
+                console.log({ title: `${type} Updated`, description: `${values.name} has been updated.` });
             } else {
                 // Add new party
                 const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
                 if (!nextCode) {
-                    console.log( variant: "destructive", title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
+                    console.error({ title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
                     return;
                 }
                 const batch = writeBatch(db);
@@ -185,13 +185,13 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 
                 await batch.commit();
 
-                console.log( title: `${type} Added`, description: `${values.name} has been saved with account code ${nextCode}.` );
+                console.log({ title: `${type} Added`, description: `${values.name} has been saved with account code ${nextCode}.` });
             }
 
             onOpenChange(false);
         } catch (e) {
             console.error("Error saving document: ", e);
-            console.log( variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
+            console.log({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase( })}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
         }
     };
 
@@ -253,11 +253,10 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const handleSuggestHsn = async (description: string) => {
         if (!description || description.trim().length < 3) {
-            console.log( 
-                variant: "destructive", 
+            console.log({ variant: "destructive", 
                 title: "Description Required", 
                 description: "Please enter at least 3 characters to get HSN code suggestion." 
-            );
+             });
             return;
         }
 
@@ -269,24 +268,21 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
             
             if (result?.hsnCode) {
                 form.setValue("hsn", result.hsnCode);
-                console.log( 
-                    title: "HSN Code Suggested", 
+                console.log({ title: "HSN Code Suggested", 
                     description: `Suggested HSN code: ${result.hsnCode}` 
-                );
+                 });
             } else {
-                console.log( 
-                    variant: "destructive", 
+                console.log({ variant: "destructive", 
                     title: "Suggestion Failed", 
                     description: "Could not get HSN code suggestion. Please try again." 
-                );
+                 });
             }
         } catch (error: any) {
             console.error("Error suggesting HSN code:", error);
-            console.log( 
-                variant: "destructive", 
+            console.log({ variant: "destructive", 
                 title: "Error", 
                 description: error.message || "Failed to get HSN code suggestion. Please try again." 
-            );
+             });
         } finally {
             setIsSuggestingHsn(false);
         }
@@ -294,22 +290,22 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const onSubmit = async (values: z.infer<typeof itemSchema>) => {
         if (!user) {
-           console.log( variant: "destructive", title: "Not authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
+           console.log({ variant: "destructive", title: "Not authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."  });
            return;
        }
        try {
             if (item) {
                 const itemDocRef = doc(db, "items", item.id);
                 await updateDoc(itemDocRef, values);
-                console.log( title: "Item Updated", description: `${values.name} has been updated.` );
+                console.log({ title: "Item Updated", description: `${values.name} has been updated.` });
             } else {
                 await addDoc(collection(db, 'items'), { ...values, userId: user.uid );
-                console.log( title: "Item Added", description: `${values.name} has been added.` );
+                console.log({ title: "Item Added", description: `${values.name} has been added.` });
             }
            onOpenChange(false);
        } catch (e) {
            console.error("Error adding document: ", e);
-           console.log( variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
+           console.log({ variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."  });
        }
     };
 

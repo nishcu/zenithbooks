@@ -97,13 +97,12 @@ export function DocumentEditDialog({
         lastUpdated: serverTimestamp(),
       );
 
-      console.log(
-        title: "Document Updated",
+      console.log({ title: "Document Updated",
         description: "Document metadata has been updated successfully.",
       );
 
       onSave();
-      onOpenChange(false);
+      onOpenChange(false });
     } catch (error) {
       console.error("Error updating document:", error);
       console.error( variant: "destructive", title: "Update Failed",

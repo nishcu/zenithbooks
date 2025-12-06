@@ -92,10 +92,9 @@ export default function BulkInvoicePage() {
   // Show friendly upgrade message for freemium users
   useEffect(() => {
     if (user && isFreemium) {
-      console.log(
-        title: "Upgrade Required",
+      console.log({ title: "Upgrade Required",
         description: "Bulk invoice upload is a premium feature. Upgrade to Business or Professional plan to access it!",
-      );
+       });
     }
   }, [user, isFreemium, toast]);
   
@@ -186,7 +185,7 @@ export default function BulkInvoicePage() {
     XLSX.utils.book_append_sheet(wb, ws, "Bulk Invoices");
     
     XLSX.writeFile(wb, "bulk_invoice_template.xlsx");
-    console.log( title: "Template Downloaded", description: "Excel template has been downloaded. Fill in your invoice data and upload." );
+    console.log({ title: "Template Downloaded", description: "Excel template has been downloaded. Fill in your invoice data and upload."  });
   };
 
   const parseCSV = (file: File): Promise<BulkInvoiceRow[]> => {
@@ -396,7 +395,7 @@ export default function BulkInvoicePage() {
       } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         rows = await parseExcel(file);
       } else {
-        console.error( variant: "destructive", title: "Unsupported Format", description: "Please upload a CSV or Excel file." );
+        console.error({ variant: "destructive", title: "Unsupported Format", description: "Please upload a CSV or Excel file."  });
         setIsProcessing(false);
         return;
       }
@@ -470,9 +469,9 @@ export default function BulkInvoicePage() {
       );
     } catch (error: any) {
       console.error("Error processing file:", error);
-      console.error( variant: "destructive", title: "Processing Error", 
+      console.error({ variant: "destructive", title: "Processing Error", 
         description: error.message || "Could not process the file. Please check the format and try again." 
-      );
+       });
     } finally {
       setIsProcessing(false);
       // Reset file input
@@ -490,7 +489,7 @@ export default function BulkInvoicePage() {
     const validInvoices = parsedInvoices.filter(p => p.status === 'valid');
     
     if (validInvoices.length === 0) {
-      console.error( variant: "destructive", title: "No Valid Invoices", description: "Please fix errors before creating invoices." );
+      console.error({ variant: "destructive", title: "No Valid Invoices", description: "Please fix errors before creating invoices."  });
       return;
     }
 
@@ -538,10 +537,9 @@ export default function BulkInvoicePage() {
     setIsCreating(false);
 
     if (successCount > 0) {
-      console.log( 
-        title: "Invoices Created!", 
+      console.log({ title: "Invoices Created!", 
         description: `Successfully created ${successCount} invoice${successCount === 1 ? '' : 's'}.${errorCount > 0 ? ` ${errorCount} failed.` : ''} All invoices will appear in GSTR-1 and GSTR-3B.` 
-      );
+       });
       
       // Clear parsed invoices
       setParsedInvoices([]);
@@ -551,11 +549,10 @@ export default function BulkInvoicePage() {
         router.push("/billing/invoices");
       }, 2000);
     } else {
-      console.log( 
-        variant: "destructive", 
+      console.log({ variant: "destructive", 
         title: "Creation Failed", 
         description: `Could not create invoices. ${errorCount} error${errorCount === 1 ? '' : 's'} occurred.` 
-      );
+       });
     }
   };
 

@@ -216,10 +216,9 @@ export default function Gstr9cPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    console.log(
-      title: `JSON Generation Complete`,
+    console.log({ title: `JSON Generation Complete`,
       description: `Your GSTR-9C JSON file has been downloaded.`,
-    );
+     });
   };
 
   return (
@@ -612,10 +611,10 @@ export default function Gstr9cPage() {
                 <Button variant="outline"><FileSpreadsheet className="mr-2"/> Export to Excel</Button>
                 <Button variant="outline" onClick={async () => {
                     if (!reportRef.current) {
-                        console.error( variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." );
+                        console.error({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF."  });
                         return;
                     }
-                    console.log( title: "Generating PDF...", description: "Your GSTR-9C PDF is being generated." );
+                    console.log({ title: "Generating PDF...", description: "Your GSTR-9C PDF is being generated."  });
                     const opt = {
                         margin: [10, 10, 10, 10],
                         filename: `GSTR-9C-${format(new Date(), "yyyy-MM-dd")}.pdf`,
@@ -625,7 +624,7 @@ export default function Gstr9cPage() {
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                     };
                     await html2pdf().set(opt).from(reportRef.current).save();
-                    console.log( title: "PDF Generated", description: "Your GSTR-9C PDF has been downloaded successfully." );
+                    console.log({ title: "PDF Generated", description: "Your GSTR-9C PDF has been downloaded successfully."  });
                 }}><FileDown className="mr-2"/> Download GSTR-9C PDF</Button>
                 <Button onClick={handleGenerateJson}><FileJson className="mr-2"/> Download GSTR-9C JSON</Button>
              </CardFooter>

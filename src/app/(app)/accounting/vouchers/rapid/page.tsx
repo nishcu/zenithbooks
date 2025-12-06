@@ -114,7 +114,7 @@ export default function RapidVoucherEntryPage() {
     const selectedParty = partyList.find(p => p.id === values.partyId);
 
     if (!selectedParty) {
-        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure a party is selected." );
+        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a party is selected."  });
         return;
     }
     
@@ -165,7 +165,7 @@ export default function RapidVoucherEntryPage() {
 
         await addJournalVoucher(newVoucher);
 
-        console.log( title: "Voucher Saved", description: `${voucherId} has been created.` );
+        console.log({ title: "Voucher Saved", description: `${voucherId} has been created.`  });
 
         if (closeOnSave) {
             router.push("/accounting/vouchers");
@@ -182,7 +182,7 @@ export default function RapidVoucherEntryPage() {
             form.setFocus("partyId");
         }
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save voucher", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save voucher", description: e.message  });
     }
   }, [accountingContext, partyList, toast, router, form, voucherPrefix]);
 

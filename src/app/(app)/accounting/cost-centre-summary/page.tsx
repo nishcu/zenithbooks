@@ -105,7 +105,7 @@ export default function CostCentreSummaryPage() {
 
     const handleExport = () => {
         if (costCentreData.length === 0) {
-            console.error( variant: "destructive", title: "No data to export" );
+            console.error({ variant: "destructive", title: "No data to export"  });
             return;
         }
 
@@ -137,7 +137,7 @@ export default function CostCentreSummaryPage() {
         ];
         
         XLSX.writeFile(workbook, `Cost_Centre_Summary_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-        console.log( title: "Export Successful", description: "Cost Centre Summary has been exported to Excel." );
+        console.log({ title: "Export Successful", description: "Cost Centre Summary has been exported to Excel."  });
     };
 
 

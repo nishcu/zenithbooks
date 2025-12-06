@@ -455,13 +455,13 @@ export default function PartnershipDeedPage() {
           const data = docSnap.data();
           if (data.userId === user.uid) {
             form.reset(data.formData);
-            console.log( title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` );
+            console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`  });
           } else {
-            console.error( variant: "destructive", title: "Unauthorized" );
+            console.error({ variant: "destructive", title: "Unauthorized"  });
             router.push('/legal-documents/partnership-deed');
           }
         } else {
-          console.error( variant: "destructive", title: "Not Found" );
+          console.error({ variant: "destructive", title: "Not Found"  });
           router.push('/legal-documents/partnership-deed');
         }
         setIsLoading(false);
@@ -507,10 +507,9 @@ export default function PartnershipDeedPage() {
       return;
     }
 
-    console.log(
-      title: "Generating PDF...",
+    console.log({ title: "Generating PDF...",
       description: "Your document is being prepared for download.",
-    );
+     });
 
     const opt = {
       margin: 0.5,
@@ -525,7 +524,7 @@ export default function PartnershipDeedPage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: 'Authentication Error');
+          console.error({ variant: "destructive", title: 'Authentication Error' });
           return;
       }
       setIsSubmitting(true);
@@ -534,7 +533,7 @@ export default function PartnershipDeedPage() {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
               await updateDoc(docRef, { formData, updatedAt: new Date() );
-              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
+              console.log({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -544,12 +543,12 @@ export default function PartnershipDeedPage() {
                   formData,
                   createdAt: new Date(),
               );
-              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
+              console.log({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
               router.push(`/legal-documents/partnership-deed?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
+          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
       } finally {
           setIsSubmitting(false);
       }
@@ -572,13 +571,13 @@ export default function PartnershipDeedPage() {
         if(result?.suggestedClauses && result.suggestedClauses.length > 0) {
             const newClausesText = result.suggestedClauses.map(c => `\n\n${c.title.toUpperCase()}\n${c.clauseText}`).join('');
             form.setValue("extraClauses", (existingClauses || "") + newClausesText);
-            console.log( title: "AI Clauses Added", description: "Suggested clauses have been appended." );
+            console.log({ title: "AI Clauses Added", description: "Suggested clauses have been appended."  });
         } else {
-             console.error( variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses." );
+             console.error({ variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses."  });
         }
     } catch (error) {
         console.error(error);
-        console.error( variant: "destructive", title: "Error", description: "An error occurred while generating clauses." );
+        console.error({ variant: "destructive", title: "Error", description: "An error occurred while generating clauses."  });
     } finally {
         setIsSuggestingClauses(false);
     }
@@ -619,7 +618,7 @@ export default function PartnershipDeedPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 8) {
-        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
+        console.log({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.`  });
       }
     } else {
         console.error( variant: "destructive", title: "Validation Error",
@@ -932,15 +931,14 @@ export default function PartnershipDeedPage() {
                             userName={user?.displayName || ''}
                             onSuccess={(paymentId) => {
                               setShowDocument(true);
-                              console.log(
-                                title: "Payment Successful",
+                              console.log({ title: "Payment Successful",
                                 description: "Your documents are ready for download."
-                              );
+                               });
                             }}
                             onFailure={() => {
-                              console.error( variant: "destructive", title: "Payment Failed",
+                              console.error({ variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
-                              );
+                               });
                             }}
                           />
                         </CardFooter>
@@ -1037,9 +1035,9 @@ export default function PartnershipDeedPage() {
                                     );
                                 }}
                                 onFailure={() => {
-                                    console.error( variant: "destructive", title: "Payment Failed",
+                                    console.error({ variant: "destructive", title: "Payment Failed",
                                         description: "Payment was not completed. Please try again."
-                                    );
+                                     });
                                 }}
                             />
                         ) : (

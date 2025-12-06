@@ -114,10 +114,9 @@ export default function ItemBulkUploadPage() {
   const handleDownloadTemplate = () => {
     const workbook = buildTemplateWorkbook();
     XLSX.writeFile(workbook, "items_import_template.xlsx");
-    console.log(
-      title: "Template downloaded",
+    console.log({ title: "Template downloaded",
       description: "Fill the Excel file and upload it here.",
-    );
+     });
   };
 
   const normalizeRow = (row: Record<string, any>, index: number): ParsedItemRow => {
@@ -200,7 +199,7 @@ export default function ItemBulkUploadPage() {
 
   const handleCreateItems = async () => {
     if (!user) {
-      console.error( variant: "destructive", title: "Please sign in to continue." );
+      console.error({ variant: "destructive", title: "Please sign in to continue."  });
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");

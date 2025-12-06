@@ -76,17 +76,17 @@ export default function GodownsPage() {
 
   const handleDelete = (id: string) => {
     setGodowns(godowns.filter(g => g.id !== id));
-    console.log( title: "Godown Deleted", description: "The godown has been removed." );
+    console.log({ title: "Godown Deleted", description: "The godown has been removed."  });
   };
 
   const handleSave = () => {
     if (selectedGodown) {
         setGodowns(godowns.map(g => g.id === selectedGodown.id ? { ...g, ...formData } : g));
-        console.log( title: "Godown Updated", description: "The godown details have been updated." );
+        console.log({ title: "Godown Updated", description: "The godown details have been updated."  });
     } else {
         const newGodown = { id: `loc-${Date.now()}`, ...formData };
         setGodowns([...godowns, newGodown]);
-        console.log( title: "Godown Added", description: "A new godown has been created." );
+        console.log({ title: "Godown Added", description: "A new godown has been created."  });
     }
     setIsDialogOpen(false);
   };

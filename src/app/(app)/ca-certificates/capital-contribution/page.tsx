@@ -72,7 +72,7 @@ export default function CapitalContributionCertificatePage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
-  console.log('👤 User auth status:', { user: !!user, authLoading, userId: user?.uid );
+  console.log({ '👤 User auth status:', { user: !!user, authLoading, userId: user?.uid  });
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -106,13 +106,13 @@ export default function CapitalContributionCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
+                    console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
                 } else {
-                    console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document.");
+                    console.error({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
                     router.push('/ca-certificates/capital-contribution');
                 }
             } else {
-                 console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found.");
+                 console.error({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
                  router.push('/ca-certificates/capital-contribution');
             }
             setIsLoading(false);
@@ -130,38 +130,38 @@ export default function CapitalContributionCertificatePage() {
 
   // Load pricing data with real-time updates
   useEffect(() => {
-    console.log('🔍 Loading pricing for capital contribution...');
+    console.log({ '🔍 Loading pricing for capital contribution...');
     getServicePricing().then(pricingData => {
       console.log('✅ Pricing loaded:', pricingData);
       console.log('🎯 CA certs pricing:', pricingData?.ca_certs);
       console.log('💰 Capital contribution price:', pricingData?.ca_certs?.find(s => s.id === 'capital_contribution')?.price);
-      setPricing(pricingData);
+      setPricing(pricingData });
     }).catch(error => {
       console.error('❌ Error loading pricing:', error);
     );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
-      console.log('🔄 Real-time pricing update received:', pricingData);
+      console.log({ '🔄 Real-time pricing update received:', pricingData);
       setPricing(pricingData);
     );
 
-    return () => unsubscribe();
+    return () => unsubscribe( });
   }, []);
 
   const handlePreview = async () => {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        console.log( title: "Draft Ready", description: "Review the certificate before printing." );
+        console.log({ title: "Draft Ready", description: "Review the certificate before printing."  });
     } else {
-        console.error( variant: "destructive", title: "Validation Error", description: "Please fill all required fields.");
+        console.error({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields." });
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: 'Authentication Error');
+          console.error({ variant: "destructive", title: 'Authentication Error' });
           return;
       }
       setIsSubmitting(true);
@@ -170,7 +170,7 @@ export default function CapitalContributionCertificatePage() {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
               await updateDoc(docRef, { formData, updatedAt: new Date() );
-              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
+              console.log({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -180,12 +180,12 @@ export default function CapitalContributionCertificatePage() {
                   formData,
                   createdAt: new Date(),
               );
-              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
+              console.log({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
               router.push(`/ca-certificates/capital-contribution?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
+          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
       } finally {
           setIsSubmitting(false);
       }
@@ -193,7 +193,7 @@ export default function CapitalContributionCertificatePage() {
   
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
+          console.error({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request."  });
           return;
       }
       setIsSubmitting(true);
@@ -209,13 +209,12 @@ export default function CapitalContributionCertificatePage() {
             signedDocumentUrl: null,
             formData: form.getValues(),
         );
-        console.log(
-            title: "Request Sent",
+        console.log({ title: "Request Sent",
             description: "Your certification request has been sent to the admin for review."
-        );
+         });
       } catch (error) {
           console.error("Error sending request:", error);
-          console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
+          console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
       } finally {
           setIsSubmitting(false);
       }
@@ -337,9 +336,9 @@ export default function CapitalContributionCertificatePage() {
                                   );
                                 }}
                                 onFailure={() => {
-                                  console.error( variant: "destructive", title: "Payment Failed",
+                                  console.error({ variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                  );
+                                   });
                                 }}
                               />
                             );

@@ -48,7 +48,7 @@ export default function RapidPurchaseEntryPage() {
     const selectedItem: any = items.find((i:any) => i.id === values.itemId);
 
     if (!selectedParty || !selectedItem) {
-        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected." );
+        console.error({ variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected."  });
         return;
     }
     
@@ -56,7 +56,7 @@ export default function RapidPurchaseEntryPage() {
     const isDuplicate = journalVouchers.some(voucher => voucher.id === voucherId);
 
     if (isDuplicate) {
-        console.log( variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${voucherId} already exists.` );
+        console.log({ variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${voucherId} already exists.`  });
         return;
     }
 
@@ -80,7 +80,7 @@ export default function RapidPurchaseEntryPage() {
             vendorId: values.partyId,
         );
 
-        console.log( title: "Purchase Saved", description: `Bill #${values.voucherNumber} has been created.` );
+        console.log({ title: "Purchase Saved", description: `Bill #${values.voucherNumber} has been created.`  });
 
         if (closeOnSave) {
             router.push("/purchases");
@@ -96,7 +96,7 @@ export default function RapidPurchaseEntryPage() {
             form.setFocus("itemId");
         }
     } catch (e: any) {
-        console.error( variant: "destructive", title: "Failed to save purchase", description: e.message );
+        console.error({ variant: "destructive", title: "Failed to save purchase", description: e.message  });
     }
   }, [accountingContext, vendors, items, form, router, toast]);
 

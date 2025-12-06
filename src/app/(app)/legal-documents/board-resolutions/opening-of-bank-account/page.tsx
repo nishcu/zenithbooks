@@ -85,7 +85,7 @@ export default function BankAccountResolutionPage() {
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Bank_Account_${formData.companyName}`,
-    onAfterPrint: () => console.log( title: "Print Complete" }),
+    onAfterPrint: () => console.log({ title: "Print Complete" } }),
   );
 
   return (
@@ -188,15 +188,14 @@ export default function BankAccountResolutionPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            console.log(
-                              title: "Payment Successful",
+                            console.log({ title: "Payment Successful",
                               description: "Your document is ready for download."
-                            );
+                             });
                           }}
                           onFailure={() => {
-                            console.error( variant: "destructive", title: "Payment Failed",
+                            console.error({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            );
+                             });
                           }}
                         />
                       );

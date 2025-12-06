@@ -45,7 +45,7 @@ const baseUrl = isLive
   : 'https://sandbox.cashfree.com/pg';
 
 // Debug: Verify NEXT_PUBLIC_APP_URL is loaded
-console.log('APP URL:', process.env.NEXT_PUBLIC_APP_URL);
+console.log({ 'APP URL:', process.env.NEXT_PUBLIC_APP_URL });
 
 // --- BUILD CASHFREE REQUEST BODY ---
 const orderId = `order_${Date.now()}`;
@@ -103,14 +103,14 @@ try {
 }
 
 // Debug: Log the full response structure
-console.log('Cashfree API Response:', JSON.stringify(data, null, 2));
+console.log({ 'Cashfree API Response:', JSON.stringify(data, null, 2));
 console.log('Response status:', response.status);
 console.log('Response ok:', response.ok);
 console.log('Response keys:', data ? Object.keys(data) : 'no data');
 
 // If Cashfree returns error
 if (!response.ok) {
-  console.error('Cashfree Error:', data);
+  console.error('Cashfree Error:', data });
   return NextResponse.json(
     {
       error: 'Cashfree Error',

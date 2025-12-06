@@ -57,14 +57,13 @@ export function ShareButtons({
       return;
     }
 
-    console.log(
-      title: "Generating PDF...",
+    console.log({ title: "Generating PDF...",
       description: "Your document is being prepared for download.",
     );
 
     try {
       // Ensure content is fully loaded before generating PDF
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 500) });
 
       const opt = {
         margin: [10, 10, 10, 10],
@@ -83,7 +82,7 @@ export function ShareButtons({
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
       };
 
-      console.log("Generating PDF for element:", element);
+      console.log({ "Generating PDF for element:", element);
       console.log("PDF options:", opt);
 
       await html2pdf().set(opt).from(element).save();
@@ -91,7 +90,7 @@ export function ShareButtons({
       console.log(
         title: "PDF Generated",
         description: "Your PDF has been downloaded successfully.",
-      );
+       });
     } catch (error: any) {
       console.error("PDF generation error:", error);
       console.error("Element:", element);
@@ -133,10 +132,9 @@ export function ShareButtons({
             files: [file]
           );
 
-          console.log(
-            title: "Shared successfully",
+          console.log({ title: "Shared successfully",
             description: "Document shared with PDF attachment.",
-          );
+           });
           return;
         }
       } catch (error) {
@@ -163,10 +161,9 @@ export function ShareButtons({
 
       await html2pdf().set(opt).from(element).save(fileName);
 
-      console.log(
-        title: "PDF Downloaded",
+      console.log({ title: "PDF Downloaded",
         description: "PDF has been downloaded. Please attach it manually to WhatsApp.",
-      );
+       });
 
       // Small delay to ensure download starts, then open WhatsApp
       setTimeout(() => {
@@ -181,10 +178,9 @@ export function ShareButtons({
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
 
-      console.log(
-        title: "WhatsApp opened",
+      console.log({ title: "WhatsApp opened",
         description: "Please download the PDF and attach it manually.",
-      );
+       });
     }
   };
 
@@ -205,10 +201,9 @@ export function ShareButtons({
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
       await navigator.clipboard.writeText(url);
-      console.log(
-        title: "Link copied!",
+      console.log({ title: "Link copied!",
         description: "The page link has been copied to your clipboard.",
-      );
+       });
     } catch (error) {
       console.error( variant: "destructive", title: "Error",
         description: "Failed to copy link to clipboard.",

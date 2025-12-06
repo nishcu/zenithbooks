@@ -99,12 +99,12 @@ export default function MoaAoaPage() {
             const response = await generateMoaObjectsAction(values);
             if (response?.mainObjects) {
                 setResult(response.mainObjects);
-                console.log( title: "MOA Objects Generated!");
+                console.log({ title: "MOA Objects Generated!" });
             } else {
-                 console.error( variant: "destructive", title: "Generation Failed" );
+                 console.error({ variant: "destructive", title: "Generation Failed"  });
             }
         } catch (e) {
-            console.error( variant: "destructive", title: "An Error Occurred" );
+            console.error({ variant: "destructive", title: "An Error Occurred"  });
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -197,15 +197,14 @@ export default function MoaAoaPage() {
                     userName={user?.displayName || ''}
                     onSuccess={(paymentId) => {
                       setShowDocument(true);
-                      console.log(
-                        title: "Payment Successful",
+                      console.log({ title: "Payment Successful",
                         description: "Your document is ready for download."
-                      );
+                       });
                     }}
                     onFailure={() => {
-                      console.error( variant: "destructive", title: "Payment Failed",
+                      console.error({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      );
+                       });
                     }}
                   />
                 ) : (

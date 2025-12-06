@@ -432,10 +432,9 @@ export default function VaultPage() {
         onOpenChange={setIsUploadDialogOpen}
         onUploadSuccess={() => {
           setIsUploadDialogOpen(false);
-          console.log(
-            title: "Upload Successful",
+          console.log({ title: "Upload Successful",
             description: "Your document has been uploaded successfully.",
-          );
+           });
         }}
       />
     </div>

@@ -44,7 +44,7 @@ function getStoredBlogPosts() {
     try {
         const stored = localStorage.getItem(BLOG_POSTS_STORAGE_KEY);
         const posts = stored ? JSON.parse(stored) : [];
-        console.log('Loaded blog posts from storage:', posts.length, 'posts');
+        console.log({ 'Loaded blog posts from storage:', posts.length, 'posts' });
         return posts;
     } catch (error) {
         console.error('Error loading blog posts from localStorage:', error);
@@ -65,13 +65,13 @@ function saveBlogPosts(posts: any[]) {
 
 // Function to update a blog post in Firebase
 async function updateBlogPost(postId: string, updatedData: any) {
-    console.log('Updating blog post in Firebase:', postId, updatedData);
+    console.log({ 'Updating blog post in Firebase:', postId, updatedData);
 
     try {
         // Convert contentBlocks back to content array format
         const content = updatedData.contentBlocks
             .filter((block: any) => block.value.trim() !== '')
-            .map((block: any) => block.value);
+            .map((block: any) => block.value });
 
         // Prepare update data for Firebase
         const updateData: any = {
@@ -248,7 +248,7 @@ export default function EditBlogPostPage() {
                         setUploadProgress(progress);
                     );
 
-                    console.log('Image uploaded successfully:', firebaseImageUrl);
+                    console.log({ 'Image uploaded successfully:', firebaseImageUrl });
                 } catch (uploadError) {
                     console.error('Image upload failed:', uploadError);
                     console.error( variant: "destructive", title: "Upload Failed",

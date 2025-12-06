@@ -181,7 +181,7 @@ export default function VouchersPage() {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);
 
         if (!originalVoucher) {
-            console.error( variant: "destructive", title: "Error", description: "Original voucher transaction not found." );
+            console.error({ variant: "destructive", title: "Error", description: "Original voucher transaction not found."  });
             return;
         }
 
@@ -202,9 +202,9 @@ export default function VouchersPage() {
 
         try {
             await addJournalVoucher(reversalVoucher as any);
-            console.log( title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.` );
+            console.log({ title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.`  });
         } catch (e: any) {
-            console.error( variant: "destructive", title: "Reversal Failed", description: e.message );
+            console.error({ variant: "destructive", title: "Reversal Failed", description: e.message  });
         }
     };
     
@@ -212,9 +212,8 @@ export default function VouchersPage() {
         if(action === 'Delete') {
             handleDeleteVoucher(voucherId);
         } else {
-            console.log(
-                title: `${action} Voucher`,
-                description: `Simulating ${action.toLowerCase()} action for voucher ${voucherId}.`,
+            console.log({ title: `${action} Voucher`,
+                description: `Simulating ${action.toLowerCase( })} action for voucher ${voucherId}.`,
             );
         }
     };

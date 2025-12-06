@@ -278,7 +278,7 @@ CertificateToPrint.displayName = 'CertificateToPrint';
 
 
 export default function NetWorthCertificatePage() {
-  console.log('🎯 NET-WORTH PAGE: Component rendered/mounted');
+  console.log({ '🎯 NET-WORTH PAGE: Component rendered/mounted');
 
   
   const router = useRouter();
@@ -289,7 +289,7 @@ export default function NetWorthCertificatePage() {
   const printRef = useRef<HTMLDivElement>(null);
   const [user, authLoading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(!!docId);
-  const [pricing, setPricing] = useState(null);
+  const [pricing, setPricing] = useState(null });
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
@@ -322,13 +322,13 @@ export default function NetWorthCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
+                    console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
                 } else {
-                    console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document.");
+                    console.error({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
                     router.push('/ca-certificates/net-worth');
                 }
             } else {
-                 console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found.");
+                 console.error({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
                  router.push('/ca-certificates/net-worth');
             }
             setIsLoading(false);
@@ -346,27 +346,27 @@ export default function NetWorthCertificatePage() {
 
   // Load pricing data with real-time updates
   useEffect(() => {
-    console.log('🚀 NET-WORTH PAGE: Loading pricing data...');
+    console.log({ '🚀 NET-WORTH PAGE: Loading pricing data...');
     getServicePricing().then(pricingData => {
       console.log('✅ NET-WORTH PAGE: Pricing data received:', pricingData);
       setPricing(pricingData);
-      console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render');
+      console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render' });
     }).catch(error => {
       console.error('❌ NET-WORTH PAGE: Error loading pricing:', error);
     );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
-      console.log('🔄 NET-WORTH PAGE: Real-time pricing update received:', pricingData);
+      console.log({ '🔄 NET-WORTH PAGE: Real-time pricing update received:', pricingData);
       setPricing(pricingData);
     );
 
-    return () => unsubscribe();
+    return () => unsubscribe( });
   }, []);
 
   // Debug pricing changes
   useEffect(() => {
-    console.log('🔄 NET-WORTH PAGE: Pricing state changed:', pricing);
+    console.log({ '🔄 NET-WORTH PAGE: Pricing state changed:', pricing });
     if (pricing) {
       console.log('📊 NET-WORTH PAGE: Available ca_certs services:', pricing.ca_certs?.map(s => `${s.id}: ₹${s.price}`));
     }
@@ -379,10 +379,9 @@ export default function NetWorthCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(4);
-        console.log(
-            title: "Draft Ready for Preview",
+        console.log({ title: "Draft Ready for Preview",
             description: "Review the generated certificate below.",
-        );
+         });
     } else {
          console.error( variant: "destructive", title: "Validation Error",
             description: "Please fill all required fields before generating the draft.",
@@ -392,7 +391,7 @@ export default function NetWorthCertificatePage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: 'Authentication Error');
+          console.error({ variant: "destructive", title: 'Authentication Error' });
           return;
       }
       setIsSubmitting(true);
@@ -401,7 +400,7 @@ export default function NetWorthCertificatePage() {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
               await updateDoc(docRef, { formData, updatedAt: new Date() );
-              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
+              console.log({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -411,12 +410,12 @@ export default function NetWorthCertificatePage() {
                   formData,
                   createdAt: new Date(),
               );
-              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
+              console.log({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
               router.push(`/ca-certificates/net-worth?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
+          console.error({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
       } finally {
           setIsSubmitting(false);
       }
@@ -534,12 +533,12 @@ export default function NetWorthCertificatePage() {
 
                              {/* Debug logging */}
                              {(() => {
-                                 console.log('🔍 DEBUG - Rendering Razorpay condition:');
+                                 console.log({ '🔍 DEBUG - Rendering Razorpay condition:');
                                  console.log('- pricing exists:', !!pricing);
                                  console.log('- ca_certs exists:', !!pricing?.ca_certs);
                                  console.log('- net_worth service:', pricing?.ca_certs?.find(s => s.id === 'net_worth'));
                                  console.log('- price value:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price);
-                                 console.log('- price > 0:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price > 0);
+                                 console.log('- price > 0:', pricing?.ca_certs?.find(s => s.id === 'net_worth')?.price > 0 });
                                  return null;
                              })()}
 
@@ -571,9 +570,9 @@ export default function NetWorthCertificatePage() {
                                         );
                                       }}
                                       onFailure={() => {
-                                        console.error( variant: "destructive", title: "Payment Failed",
+                                        console.error({ variant: "destructive", title: "Payment Failed",
                                           description: "Payment was not completed. Please try again."
-                                        );
+                                         });
                                       }}
                                     />
                                   );

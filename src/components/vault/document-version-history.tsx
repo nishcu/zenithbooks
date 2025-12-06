@@ -52,7 +52,7 @@ export function DocumentVersionHistory({
 
   const handleDownload = async (versionNumber: number, fileUrl: string, fileName: string) => {
     try {
-      console.log("Starting version download:", versionNumber, fileName);
+      console.log({ "Starting version download:", versionNumber, fileName });
 
       // Use server-side proxy to avoid CORS and DOM issues
       const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(fileUrl)}&fileName=${encodeURIComponent(fileName || `version-${versionNumber}`)}&fileType=application/octet-stream`;
@@ -60,9 +60,9 @@ export function DocumentVersionHistory({
       // Use window.location.href to trigger download (completely avoids DOM manipulation)
       window.location.href = downloadUrl;
 
-      console.log("Version download initiated:", versionNumber);
+      console.log({ "Version download initiated:", versionNumber);
 
-      console.log("Version download initiated:", versionNumber);
+      console.log("Version download initiated:", versionNumber });
     } catch (error: any) {
       console.error("Version download error:", error);
 

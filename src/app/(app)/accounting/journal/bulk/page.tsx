@@ -330,9 +330,8 @@ export default function BulkJournalEntryPage() {
         XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
         
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");
-        console.log(
-            title: "Template Downloaded",
-            description: "Template file has been downloaded. Use account names or ledger names (not codes). Fill in your journal entries and upload.",
+        console.log({ title: "Template Downloaded",
+            description: "Template file has been downloaded. Use account names or ledger names (not codes }). Fill in your journal entries and upload.",
         );
     };
 
@@ -882,9 +881,8 @@ export default function BulkJournalEntryPage() {
                 }
             }
 
-            console.log(
-                title: "Entries Created",
-                description: `Successfully created ${successCount} journal voucher(s). ${errorCount > 0 ? `${errorCount} failed.` : ''}`,
+            console.log({ title: "Entries Created",
+                description: `Successfully created ${successCount} journal voucher(s }). ${errorCount > 0 ? `${errorCount} failed.` : ''}`,
             );
 
             // Reset

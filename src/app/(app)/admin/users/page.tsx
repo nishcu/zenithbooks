@@ -220,12 +220,11 @@ export default function AdminUsers() {
     try {
       // For now, simulate password reset since we don't have the actual implementation
       await new Promise(resolve => setTimeout(resolve, 800));
-      console.log(
-        title: "Password Reset",
+      console.log({ title: "Password Reset",
         description: `Password reset functionality will be implemented soon.`,
       );
       setIsResetPasswordDialogOpen(false);
-      setSelectedUser(null);
+      setSelectedUser(null });
     } catch (error) {
       console.error( variant: "destructive", title: "Error",
         description: "Failed to reset password.",

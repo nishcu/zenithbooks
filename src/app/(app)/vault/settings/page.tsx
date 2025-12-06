@@ -91,12 +91,11 @@ export default function VaultSettingsPage() {
         { merge: true }
       );
 
-      console.log(
-        title: "Preferences Saved",
+      console.log({ title: "Preferences Saved",
         description: "Your notification preferences have been updated.",
       );
       
-      setHasChanges(false);
+      setHasChanges(false });
     } catch (error) {
       console.error("Error saving preferences:", error);
       console.error( variant: "destructive", title: "Save Failed",

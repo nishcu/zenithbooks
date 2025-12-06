@@ -107,11 +107,10 @@ export function ShareCodeDialog({
       try {
         await navigator.clipboard.writeText(generatedCode);
         setCodeCopied(true);
-        console.log(
-          title: "Code Copied",
+        console.log({ title: "Code Copied",
           description: "Share code copied to clipboard. Save it securely!",
         );
-        setTimeout(() => setCodeCopied(false), 2000);
+        setTimeout(() => setCodeCopied(false), 2000 });
       } catch (error) {
         console.error( variant: "destructive", title: "Copy Failed",
           description: "Failed to copy code. Please copy it manually.",
@@ -188,10 +187,9 @@ export function ShareCodeDialog({
           lastUpdated: serverTimestamp(),
         );
 
-        console.log(
-          title: "Share Code Updated",
+        console.log({ title: "Share Code Updated",
           description: "Share code has been updated successfully.",
-        );
+         });
       } else {
         // Create new code
         const expiresAtDate = new Date();
@@ -211,10 +209,9 @@ export function ShareCodeDialog({
 
         // Set generated code for display (show the full code with prefix)
         setGeneratedCode(finalCodeToStore);
-        console.log(
-          title: "Share Code Created",
+        console.log({ title: "Share Code Created",
           description: "Copy the code now - it won't be shown again!",
-        );
+         });
       }
 
       // Don't close dialog if code was just generated - let user copy it

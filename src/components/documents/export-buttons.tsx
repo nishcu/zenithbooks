@@ -45,10 +45,9 @@ export function ExportButtons({
 
     try {
       await exportToPDF(contentRef.current, { fileName );
-      console.log(
-        title: "PDF Exported",
+      console.log({ title: "PDF Exported",
         description: "Your document has been exported successfully.",
-      );
+       });
     } catch (error) {
       console.error( variant: "destructive", title: "Export Failed",
         description: "Failed to export PDF. Please try again.",
@@ -59,10 +58,9 @@ export function ExportButtons({
   const handleExportCSV = () => {
     if (data && !Array.isArray(data)) {
       exportToCSV(data, { fileName );
-      console.log(
-        title: "CSV Exported",
+      console.log({ title: "CSV Exported",
         description: "Your data has been exported successfully.",
-      );
+       });
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -88,10 +86,9 @@ export function ExportButtons({
       );
 
       exportToCSV({ headers, rows }, { fileName );
-      console.log(
-        title: "CSV Exported",
+      console.log({ title: "CSV Exported",
         description: "Your data has been exported successfully.",
-      );
+       });
     } else {
       console.error( variant: "destructive", title: "Error",
         description: "No data available for CSV export.",
@@ -102,10 +99,9 @@ export function ExportButtons({
   const handleExportExcel = () => {
     if (data) {
       exportToExcel(data, { fileName );
-      console.log(
-        title: "Excel Exported",
+      console.log({ title: "Excel Exported",
         description: "Your data has been exported successfully.",
-      );
+       });
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -131,10 +127,9 @@ export function ExportButtons({
       );
 
       exportToExcel({ headers, rows }, { fileName );
-      console.log(
-        title: "Excel Exported",
+      console.log({ title: "Excel Exported",
         description: "Your data has been exported successfully.",
-      );
+       });
     } else {
       console.error( variant: "destructive", title: "Error",
         description: "No data available for Excel export.",

@@ -62,12 +62,12 @@ export default function PayrollEmployeesPage() {
 
     const handleAddEmployee = () => {
         if (!newEmployee.name || !newEmployee.designation) {
-            console.error( variant: "destructive", title: "Missing Information", description: "Please provide both name and designation.");
+            console.error({ variant: "destructive", title: "Missing Information", description: "Please provide both name and designation." });
             return;
         }
         const newId = `EMP-${String(employees.length + 1).padStart(3, '0')}`;
         setEmployees([...employees, { id: newId, ...newEmployee, status: "Active" }]);
-        console.log( title: "Employee Added", description: `${newEmployee.name} has been added.` );
+        console.log({ title: "Employee Added", description: `${newEmployee.name} has been added.`  });
         setIsDialogOpen(false);
         setNewEmployee({ name: "", designation: "" );
     };

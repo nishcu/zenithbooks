@@ -24,7 +24,7 @@ export async function uploadImage(file: File, folder: string = BLOG_IMAGES_PATH)
     // Get download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
 
-    console.log('Image uploaded successfully:', downloadURL);
+    console.log({ 'Image uploaded successfully:', downloadURL });
     return downloadURL;
   } catch (error) {
     console.error('Error uploading image:', error);
@@ -45,7 +45,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const imageRef = ref(storage, path);
     await deleteObject(imageRef);
 
-    console.log('Image deleted successfully:', path);
+    console.log({ 'Image deleted successfully:', path });
   } catch (error) {
     console.error('Error deleting image:', error);
     // Don't throw error for delete failures as it's not critical
@@ -112,8 +112,8 @@ export async function uploadBlogImage(
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log('Blog image uploaded successfully:', downloadURL);
-              resolve(downloadURL);
+              console.log({ 'Blog image uploaded successfully:', downloadURL);
+              resolve(downloadURL });
             } catch (error) {
               console.error('Error getting download URL:', error);
               reject(new Error('Failed to get image URL. Please try again.'));
@@ -125,8 +125,8 @@ export async function uploadBlogImage(
       // Simple upload without progress tracking
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log('Blog image uploaded successfully:', downloadURL);
-      console.log('Storage ref path:', storageRef.fullPath);
+      console.log({ 'Blog image uploaded successfully:', downloadURL);
+      console.log('Storage ref path:', storageRef.fullPath });
       return downloadURL;
     }
   } catch (error) {

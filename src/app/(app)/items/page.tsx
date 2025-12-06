@@ -74,9 +74,9 @@ export default function ItemsPage() {
     const itemDocRef = doc(db, "items", item.id);
     try {
         await deleteDoc(itemDocRef);
-        console.log( title: "Item Deleted", description: `${item.name} has been removed.` );
+        console.log({ title: "Item Deleted", description: `${item.name} has been removed.`  });
     } catch (e) {
-        console.error( variant: "destructive", title: "Error", description: "Could not delete the item." );
+        console.error({ variant: "destructive", title: "Error", description: "Could not delete the item."  });
     }
   }
 

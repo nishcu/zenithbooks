@@ -112,13 +112,12 @@ export default function NewBlogPostPage() {
             // Save to Firebase
             await addDoc(collection(db, 'blogPosts'), blogPostData);
 
-            console.log(
-                title: "Blog Post Published!",
+            console.log({ title: "Blog Post Published!",
                 description: "Your new blog post has been created and published successfully.",
             );
 
             form.reset();
-            setImagePreview(null);
+            setImagePreview(null });
 
         } catch (error: any) {
             console.error('Blog creation error:', error);

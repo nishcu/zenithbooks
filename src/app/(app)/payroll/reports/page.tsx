@@ -41,10 +41,9 @@ export default function PayrollReportsPage() {
     const reportRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = () => {
-        console.log(
-            title: "Download Initiated",
+        console.log({ title: "Download Initiated",
             description: `Your ${reportType} report is being generated.`
-        );
+         });
         
         // Simulate data generation for the report
         const reportData = [

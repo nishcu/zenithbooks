@@ -202,7 +202,7 @@ export default function ProfitAndLossPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    console.log( title: "CSV Downloaded Successfully!" );
+    console.log({ title: "CSV Downloaded Successfully!"  });
   };
 
   return (

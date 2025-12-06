@@ -151,15 +151,14 @@ export default function CmaReportGeneratorPage() {
     setGeneratedReport(cmaData);
     setActiveTab("report");
     setIsGenerating(false);
-    console.log(
-        title: "CMA Report Generated",
+    console.log({ title: "CMA Report Generated",
         description: "Review the generated statements in the 'Generated CMA Report' tab."
-    );
+     });
   };
 
   const handleGetAiObservations = async () => {
       if (!generatedReport) {
-          console.error( variant: "destructive", title: 'Error', description: 'Please generate the report first.');
+          console.error({ variant: "destructive", title: 'Error', description: 'Please generate the report first.' });
           return;
       }
       setIsAiLoading(true);
@@ -179,12 +178,12 @@ export default function CmaReportGeneratorPage() {
               setAiObservations(result.observations);
               setActiveTab('ai-observations');
           } else {
-              console.error( variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.');
+              console.error({ variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.' });
           }
       } catch (error: any) {
           console.error("CMA Observations Error:", error);
           const errorMessage = error?.message || 'An error occurred while fetching AI observations.';
-          console.error( variant: "destructive", title: 'Error', description: errorMessage);
+          console.error({ variant: "destructive", title: 'Error', description: errorMessage });
       } finally {
           setIsAiLoading(false);
       }
@@ -300,17 +299,15 @@ export default function CmaReportGeneratorPage() {
     XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
     
     XLSX.writeFile(wb, `CMA_Audited_Financials_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    console.log( 
-      title: "Template Downloaded", 
+    console.log({ title: "Template Downloaded", 
       description: "Audited financials template has been downloaded. Fill in your actual data and upload."
-    );
+     });
   }
 
   const handleCertificationRequest = () => {
-      console.log(
-          title: "Certification Request Sent",
+      console.log({ title: "Certification Request Sent",
           description: "A request has been sent to the Admin for certification. You can track its status in the Admin panel."
-      );
+       });
   }
 
   const handleExportToExcel = () => {
@@ -573,9 +570,9 @@ export default function CmaReportGeneratorPage() {
                                 handleGenerateReport();
                             }}
                             onFailure={() => {
-                                console.error( variant: "destructive", title: "Payment Failed",
+                                console.error({ variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                );
+                                 });
                             }}
                         />
                     ) : (

@@ -105,13 +105,13 @@ export default function TurnoverCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
+                    console.log({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
                 } else {
-                    console.error( variant: "destructive", title: "Unauthorized");
+                    console.error({ variant: "destructive", title: "Unauthorized" });
                     router.push('/ca-certificates/turnover');
                 }
             } else {
-                 console.error( variant: "destructive", title: "Not Found");
+                 console.error({ variant: "destructive", title: "Not Found" });
                  router.push('/ca-certificates/turnover');
             }
             setIsLoading(false);
@@ -140,15 +140,15 @@ export default function TurnoverCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        console.log( title: "Draft Ready", description: "Review the certificate before proceeding." );
+        console.log({ title: "Draft Ready", description: "Review the certificate before proceeding."  });
     } else {
-        console.error( variant: "destructive", title: "Validation Error", description: "Please fill all required fields.");
+        console.error({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields." });
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: 'Authentication Error');
+          console.error({ variant: "destructive", title: 'Authentication Error' });
           return;
       }
       setIsSubmitting(true);
@@ -157,7 +157,7 @@ export default function TurnoverCertificatePage() {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
               await updateDoc(docRef, { formData, updatedAt: new Date() );
-              console.log(title: "Draft Updated");
+              console.log({ title: "Draft Updated" });
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -167,12 +167,12 @@ export default function TurnoverCertificatePage() {
                   formData,
                   createdAt: new Date(),
               );
-              console.log(title: "Draft Saved!");
+              console.log({ title: "Draft Saved!" });
               router.push(`/ca-certificates/turnover?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          console.error( variant: "destructive", title: 'Save Failed');
+          console.error({ variant: "destructive", title: 'Save Failed' });
       } finally {
           setIsSubmitting(false);
       }
@@ -180,13 +180,13 @@ export default function TurnoverCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
+          console.error({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request."  });
           return;
       }
 
       // Check if pricing is loaded
       if (!pricing) {
-          console.error( variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." );
+          console.error({ variant: "destructive", title: "Loading", description: "Please wait while we load pricing information."  });
           return;
       }
 
@@ -217,13 +217,12 @@ export default function TurnoverCertificatePage() {
                 formData: form.getValues(),
                 amount: 0, // Free
             );
-            console.log(
-                title: "Request Sent",
+            console.log({ title: "Request Sent",
                 description: "Your certification request has been sent to the admin for review and signature."
-            );
+             });
           } catch (error) {
               console.error("Error sending request:", error);
-              console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
+              console.error({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again."  });
           } finally {
               setIsSubmitting(false);
           }
@@ -387,23 +386,22 @@ export default function TurnoverCertificatePage() {
                                            amount: effectivePrice,
                                            paymentId: paymentId,
                                        );
-                                       console.log(
-                                           title: "Payment Successful & Request Sent",
+                                       console.log({ title: "Payment Successful & Request Sent",
                                            description: "Your payment has been processed and certification request sent to admin."
-                                       );
+                                        });
                                    } catch (error) {
                                        console.error("Error sending request:", error);
-                                       console.error( variant: "destructive", title: "Request Failed",
+                                       console.error({ variant: "destructive", title: "Request Failed",
                                            description: "Payment was successful but request submission failed. Please contact support."
-                                       );
+                                        });
                                    } finally {
                                        setIsSubmitting(false);
                                    }
                                }}
                                onFailure={() => {
-                                   console.error( variant: "destructive", title: "Payment Failed",
+                                   console.error({ variant: "destructive", title: "Payment Failed",
                                        description: "Payment was not completed. Please try again."
-                                   );
+                                    });
                                }}
                            />
                        ) : (
