@@ -76,43 +76,13 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
 
       console.log("Starting download for:", document.fileName);
 
-      // Use server-side PDF generation approach to avoid React DOM issues
-      const response = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentUrl: latestVersion.fileUrl,
-          documentName: document.fileName,
-          documentType: latestVersion.fileType || "document",
-        }),
-      });
+      // Use server-side proxy to avoid CORS and DOM issues
+      const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(latestVersion.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent(latestVersion.fileType || "application/octet-stream")}`;
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate PDF: ${response.status}`);
-      }
+      // Use window.location.href to trigger download (completely avoids DOM manipulation)
+      window.location.href = downloadUrl;
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      // Create download link (safe approach)
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${document.fileName}.pdf`;
-      link.style.display = 'none';
-
-      // Append to body and trigger download
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-
-      console.log("Download completed for:", document.fileName);
+      console.log("Download initiated for:", document.fileName);
 
     } catch (error: any) {
       console.error("Download error:", error);

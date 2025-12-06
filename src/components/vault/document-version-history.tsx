@@ -54,43 +54,13 @@ export function DocumentVersionHistory({
     try {
       console.log("Starting version download:", versionNumber, fileName);
 
-      // Use server-side PDF generation approach to avoid React DOM issues
-      const response = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentUrl: fileUrl,
-          documentName: fileName || `version-${versionNumber}`,
-          documentType: "version",
-        }),
-      });
+      // Use server-side proxy to avoid CORS and DOM issues
+      const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(fileUrl)}&fileName=${encodeURIComponent(fileName || `version-${versionNumber}`)}&fileType=application/octet-stream`;
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate PDF: ${response.status}`);
-      }
+      // Use window.location.href to trigger download (completely avoids DOM manipulation)
+      window.location.href = downloadUrl;
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      // Create download link (safe approach)
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${fileName || `version-${versionNumber}`}.pdf`;
-      link.style.display = 'none';
-
-      // Append to body and trigger download
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-
-      console.log("Version download completed:", versionNumber);
+      console.log("Version download initiated:", versionNumber);
     } catch (error: any) {
       console.error("Version download error:", error);
 
