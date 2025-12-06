@@ -78,7 +78,7 @@ export function SignupForm() {
         password: "",
         acceptPolicies: false,
     }
-  }
+  });
 
   useEffect(() => {
     const handleRedirectResult = async () => {

@@ -96,7 +96,7 @@ export function LoginForm() {
             setIsCheckingRedirect(false);
         }
       } catch (error: any) {
-        console.error({ "Google Login Error:", error });
+        console.error("Google Login Error:", error);
         
         // Provide user-friendly error messages
         let errorMessage = "An unknown error occurred. Please try again.";

@@ -120,7 +120,7 @@ export function ShareButtons({
             title: shareTitle || fileName,
             text: message,
             files: [file]
-          );
+          });
 
           console.log("Shared successfully: Document shared with PDF attachment.");
           return;

@@ -125,7 +125,7 @@ export const assignAccountCode = async (party: Party, userId: string) => {
 
     // 2. Update the party with the new account code
     const partyDocRef = doc(db, "customers", party.id);
-    batch.update(partyDocRef, { accountCode: nextCode );
+    batch.update(partyDocRef, { accountCode: nextCode });
 
     await batch.commit();
     return nextCode;

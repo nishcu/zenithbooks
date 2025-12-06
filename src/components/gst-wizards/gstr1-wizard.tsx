@@ -141,7 +141,7 @@ export default function Gstr1Wizard() {
             b2cOther.push(invoiceData);
           }
         }
-      );
+      });
 
     // Process cancelled invoices (CANCEL-*) - treat them as credit notes
     journalVouchers
