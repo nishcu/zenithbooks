@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -29,12 +29,12 @@ const formSchema = z.object({
   loanAmount: z.coerce.number().positive("Loan amount must be a positive number."),
   interestRate: z.coerce.number().min(0, "Interest rate cannot be negative."),
   tenure: z.string().min(1, "Tenure is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function ApprovalOfLoanPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
@@ -54,11 +54,11 @@ export default function ApprovalOfLoanPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -74,15 +74,15 @@ export default function ApprovalOfLoanPage() {
       interestRate: 12,
       tenure: "2 years",
     },
-  });
+  );
 
   const formData = form.watch();
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Loan_Approval_${formData.companyName}`,
-    onAfterPrint: () => toast({ title: "Print Complete" }),
-  });
+    onAfterPrint: () => console.log( title: "Print Complete" }),
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -174,15 +174,15 @@ export default function ApprovalOfLoanPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );

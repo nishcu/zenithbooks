@@ -19,8 +19,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, Printer, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -53,12 +53,12 @@ const formSchema = z.object({
   franchiseeObligations: z.string().default("The Franchisee shall operate the business in accordance with the Franchisor's standards, use approved suppliers, and maintain the confidentiality of the franchise system."),
   
   jurisdictionCity: z.string().min(2, "Jurisdiction city is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function FranchiseAgreementPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -69,7 +69,7 @@ export default function FranchiseAgreementPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'franchise_agreement'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -92,13 +92,13 @@ export default function FranchiseAgreementPage() {
       termYears: 5,
       jurisdictionCity: "Mumbai",
     },
-  });
+  );
   
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       agreementDate: new Date().toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data with real-time updates
@@ -107,19 +107,19 @@ export default function FranchiseAgreementPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-  });
+  );
 
   const processStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -139,12 +139,12 @@ export default function FranchiseAgreementPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 4) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to the next step.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to the next step.` );
       }
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Validation Error",
+      console.error( variant: "destructive", title: "Validation Error",
         description: "Please correct the errors before proceeding.",
-      });
+      );
     }
   };
 
@@ -284,15 +284,15 @@ export default function FranchiseAgreementPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -358,12 +358,12 @@ export default function FranchiseAgreementPage() {
                     reportType: "Franchise Agreement Certification",
                     clientName: form.getValues("franchisorName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

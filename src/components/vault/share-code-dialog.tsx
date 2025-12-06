@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Copy, CheckCircle2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_SHARE_CODE, VaultCategory } from "@/lib/vault-constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -45,7 +45,7 @@ export function ShareCodeDialog({
   onSuccess,
 }: ShareCodeDialogProps) {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [codeName, setCodeName] = useState("");
   const [description, setDescription] = useState("");
   const [secretCode, setSecretCode] = useState("");
@@ -107,15 +107,15 @@ export function ShareCodeDialog({
       try {
         await navigator.clipboard.writeText(generatedCode);
         setCodeCopied(true);
-        toast({
+        console.log(
           title: "Code Copied",
           description: "Share code copied to clipboard. Save it securely!",
-        });
+        );
         setTimeout(() => setCodeCopied(false), 2000);
       } catch (error) {
-        showEnhancedToast({ variant: "destructive", title: "Copy Failed",
+        console.error( variant: "destructive", title: "Copy Failed",
           description: "Failed to copy code. Please copy it manually.",
-        });
+        );
       }
     }
   };
@@ -186,12 +186,12 @@ export function ShareCodeDialog({
           description: description.trim() || null,
           categories: Array.from(selectedCategories),
           lastUpdated: serverTimestamp(),
-        });
+        );
 
-        toast({
+        console.log(
           title: "Share Code Updated",
           description: "Share code has been updated successfully.",
-        });
+        );
       } else {
         // Create new code
         const expiresAtDate = new Date();
@@ -207,14 +207,14 @@ export function ShareCodeDialog({
           expiresAt: Timestamp.fromDate(expiresAtDate), // Convert to Firestore Timestamp
           isActive: true,
           accessCount: 0,
-        });
+        );
 
         // Set generated code for display (show the full code with prefix)
         setGeneratedCode(finalCodeToStore);
-        toast({
+        console.log(
           title: "Share Code Created",
           description: "Copy the code now - it won't be shown again!",
-        });
+        );
       }
 
       // Don't close dialog if code was just generated - let user copy it

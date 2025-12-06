@@ -39,8 +39,8 @@ import {
   FileDown
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { suggestClausesAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { db, auth } from "@/lib/firebase";
@@ -66,7 +66,7 @@ const partnerSchema = z.object({
   capitalContribution: z.coerce.number().min(0, "Capital Contribution must be positive or zero."),
   profitShare: z.coerce.number().min(0, { message: "Cannot be negative" }).max(100, { message: "Cannot exceed 100" }),
   isDesignated: z.boolean().default(false),
-});
+);
 
 const formSchema = z.object({
   documentName: z.string().min(3, "Document name is required."),
@@ -115,7 +115,7 @@ const formSchema = z.object({
 }, {
     message: "Total capital contribution from partners must match the Firm's total capital.",
     path: ["totalCapital"],
-});
+);
 
 
 type FormData = z.infer<typeof formSchema>;
@@ -327,7 +327,7 @@ const PartnershipDeedToPrint = React.forwardRef<HTMLDivElement, { formData: Form
             </div>
         </div>
     );
-});
+);
 PartnershipDeedToPrint.displayName = 'PartnershipDeedToPrint';
 
 
@@ -344,7 +344,7 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
             </div>
         </div>
     );
-});
+);
 CertificateToPrint.displayName = 'CertificateToPrint';
 
 const AffidavitToPrint = React.forwardRef<HTMLDivElement, { formData: FormData; deponent: z.infer<typeof partnerSchema> | undefined }>
@@ -368,13 +368,13 @@ const AffidavitToPrint = React.forwardRef<HTMLDivElement, { formData: FormData; 
             </div>
         </div>
     );
-});
+);
 AffidavitToPrint.displayName = 'AffidavitToPrint';
 
 // #endregion
 
 export default function PartnershipDeedPage() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -401,7 +401,7 @@ export default function PartnershipDeedPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'partnership_deed'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -438,12 +438,12 @@ export default function PartnershipDeedPage() {
       arbitrationCity: "Mumbai",
       extraClauses: "",
     },
-  });
+  );
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "partners",
-  });
+  );
 
   useEffect(() => {
     if (docId && user) {
@@ -455,13 +455,13 @@ export default function PartnershipDeedPage() {
           const data = docSnap.data();
           if (data.userId === user.uid) {
             form.reset(data.formData);
-            toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
+            console.log( title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` );
           } else {
-            showEnhancedToast({ variant: "destructive", title: "Unauthorized" });
+            console.error( variant: "destructive", title: "Unauthorized" );
             router.push('/legal-documents/partnership-deed');
           }
         } else {
-          showEnhancedToast({ variant: "destructive", title: "Not Found" });
+          console.error( variant: "destructive", title: "Not Found" );
           router.push('/legal-documents/partnership-deed');
         }
         setIsLoading(false);
@@ -486,12 +486,12 @@ export default function PartnershipDeedPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -501,16 +501,16 @@ export default function PartnershipDeedPage() {
   const handleDownloadPdf = (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Could not find the content to download.",
-      });
+      );
       return;
     }
 
-    toast({
+    console.log(
       title: "Generating PDF...",
       description: "Your document is being prepared for download.",
-    });
+    );
 
     const opt = {
       margin: 0.5,
@@ -525,7 +525,7 @@ export default function PartnershipDeedPage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -533,8 +533,8 @@ export default function PartnershipDeedPage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated", description: `Updated "${formData.documentName}".`});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -543,13 +543,13 @@ export default function PartnershipDeedPage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!", description: `Saved "${formData.documentName}".`});
+              );
+              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
               router.push(`/legal-documents/partnership-deed?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
       } finally {
           setIsSubmitting(false);
       }
@@ -558,7 +558,7 @@ export default function PartnershipDeedPage() {
   const handleSuggestClauses = async () => {
     const businessActivity = form.getValues("businessActivity");
     if (!businessActivity) {
-      form.setError("businessActivity", {type: "manual", message: "Business activity is required to suggest clauses."});
+      form.setError("businessActivity", {type: "manual", message: "Business activity is required to suggest clauses.");
       return;
     }
     setIsSuggestingClauses(true);
@@ -568,17 +568,17 @@ export default function PartnershipDeedPage() {
             documentType: "LLP Agreement",
             businessActivity,
             existingClauses: existingClauses || ""
-        });
+        );
         if(result?.suggestedClauses && result.suggestedClauses.length > 0) {
             const newClausesText = result.suggestedClauses.map(c => `\n\n${c.title.toUpperCase()}\n${c.clauseText}`).join('');
             form.setValue("extraClauses", (existingClauses || "") + newClausesText);
-            toast({ title: "AI Clauses Added", description: "Suggested clauses have been appended." });
+            console.log( title: "AI Clauses Added", description: "Suggested clauses have been appended." );
         } else {
-             showEnhancedToast({ variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses." });
+             console.error( variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses." );
         }
     } catch (error) {
         console.error(error);
-        showEnhancedToast({ variant: "destructive", title: "Error", description: "An error occurred while generating clauses." });
+        console.error( variant: "destructive", title: "Error", description: "An error occurred while generating clauses." );
     } finally {
         setIsSuggestingClauses(false);
     }
@@ -600,7 +600,7 @@ export default function PartnershipDeedPage() {
         case 4:
             fieldsToValidate = ["bankAuthority"];
             if (form.getValues("bankAuthority") === 'specific' && !form.getValues("specificPartner")) {
-                form.setError("specificPartner", { type: 'manual', message: "Please select a partner."});
+                form.setError("specificPartner", { type: 'manual', message: "Please select a partner.");
                 return;
             }
             break;
@@ -619,12 +619,12 @@ export default function PartnershipDeedPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 8) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors on this page before proceeding.",
-        });
+        );
     }
   };
 
@@ -932,15 +932,15 @@ export default function PartnershipDeedPage() {
                             userName={user?.displayName || ''}
                             onSuccess={(paymentId) => {
                               setShowDocument(true);
-                              toast({
+                              console.log(
                                 title: "Payment Successful",
                                 description: "Your documents are ready for download."
-                              });
+                              );
                             }}
                             onFailure={() => {
-                              showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                              console.error( variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
-                              });
+                              );
                             }}
                           />
                         </CardFooter>
@@ -1034,12 +1034,12 @@ export default function PartnershipDeedPage() {
                                         reportType: "Partnership Deed Certification",
                                         clientName: form.getValues("firmName"),
                                         formData: form.getValues(),
-                                    });
+                                    );
                                 }}
                                 onFailure={() => {
-                                    showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                    console.error( variant: "destructive", title: "Payment Failed",
                                         description: "Payment was not completed. Please try again."
-                                    });
+                                    );
                                 }}
                             />
                         ) : (

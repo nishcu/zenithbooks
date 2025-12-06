@@ -12,8 +12,8 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, FileSignature, ArrowRight, Printer, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
@@ -38,7 +38,7 @@ const formSchema = z.object({
   contributionDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   contributionMode: z.enum(["Cash", "Cheque", "Bank Transfer"]),
   bankDetails: z.string().optional(),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -59,7 +59,7 @@ const numberToWords = (num: number): string => {
 }
 
 export default function CapitalContributionCertificatePage() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -72,12 +72,12 @@ export default function CapitalContributionCertificatePage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
 
-  console.log('👤 User auth status:', { user: !!user, authLoading, userId: user?.uid });
+  console.log('👤 User auth status:', { user: !!user, authLoading, userId: user?.uid );
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'capital_contribution'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -93,7 +93,7 @@ export default function CapitalContributionCertificatePage() {
       contributionMode: "Bank Transfer",
       bankDetails: "HDFC Bank, A/c No. XXXXXX1234, IFSC: HDFC0001234",
     },
-  });
+  );
 
   useEffect(() => {
     if(docId && user) {
@@ -106,13 +106,13 @@ export default function CapitalContributionCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
+                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
                 } else {
-                    showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."});
+                    console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document.");
                     router.push('/ca-certificates/capital-contribution');
                 }
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."});
+                 console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found.");
                  router.push('/ca-certificates/capital-contribution');
             }
             setIsLoading(false);
@@ -138,13 +138,13 @@ export default function CapitalContributionCertificatePage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('❌ Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       console.log('🔄 Real-time pricing update received:', pricingData);
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -153,15 +153,15 @@ export default function CapitalContributionCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        toast({ title: "Draft Ready", description: "Review the certificate before printing." });
+        console.log( title: "Draft Ready", description: "Review the certificate before printing." );
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields."});
+        console.error( variant: "destructive", title: "Validation Error", description: "Please fill all required fields.");
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -169,8 +169,8 @@ export default function CapitalContributionCertificatePage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated", description: `Updated "${formData.documentName}".`});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -179,13 +179,13 @@ export default function CapitalContributionCertificatePage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!", description: `Saved "${formData.documentName}".`});
+              );
+              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
               router.push(`/ca-certificates/capital-contribution?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
       } finally {
           setIsSubmitting(false);
       }
@@ -193,7 +193,7 @@ export default function CapitalContributionCertificatePage() {
   
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
           return;
       }
       setIsSubmitting(true);
@@ -208,14 +208,14 @@ export default function CapitalContributionCertificatePage() {
             draftUrl: "#", // In a real app, this would be a URL to the generated PDF/data
             signedDocumentUrl: null,
             formData: form.getValues(),
-        });
-        toast({
+        );
+        console.log(
             title: "Request Sent",
             description: "Your certification request has been sent to the admin for review."
-        });
+        );
       } catch (error) {
           console.error("Error sending request:", error);
-          showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+          console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
       } finally {
           setIsSubmitting(false);
       }
@@ -334,12 +334,12 @@ export default function CapitalContributionCertificatePage() {
                                     reportType: "Capital Contribution Certificate",
                                     clientName: form.getValues("contributorName"),
                                     formData: form.getValues(),
-                                  });
+                                  );
                                 }}
                                 onFailure={() => {
-                                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                  console.error( variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                  });
+                                  );
                                 }}
                               />
                             );

@@ -17,17 +17,17 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 
 export function UserNav() {
   const [user] = useAuthState(auth);
   const router = useRouter();
-  const { toast } = useToast();
+  
 
   const handleLogout = async () => {
     await signOut(auth);
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    console.log( title: "Logged Out", description: "You have been successfully logged out." );
     router.push('/login');
   }
 

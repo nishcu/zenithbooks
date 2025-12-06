@@ -30,8 +30,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, FileText, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from 'date-fns';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, deleteDoc } from "firebase/firestore";
@@ -86,7 +86,7 @@ function PurchaseOrderPreview({ order, suppliers }: { order: PurchaseOrder | nul
 
 export default function PurchaseOrdersPage() {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
@@ -104,9 +104,9 @@ export default function PurchaseOrdersPage() {
     } else if (action === 'Cancel') {
       try {
         await deleteDoc(doc(db, "purchase-orders", order.id));
-        toast({ title: "Purchase Order Cancelled", description: `Purchase order ${order.id} has been successfully cancelled.` });
+        console.log( title: "Purchase Order Cancelled", description: `Purchase order ${order.id} has been successfully cancelled.` );
       } catch (error) {
-        showEnhancedToast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order." });
+        console.error( variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order." );
       }
     }
   };

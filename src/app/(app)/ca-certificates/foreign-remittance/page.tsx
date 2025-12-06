@@ -11,8 +11,8 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, FileSignature, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useRef, useEffect } from "react";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -37,12 +37,12 @@ const formSchema = z.object({
   natureOfRemittance: z.string().min(5, "Nature of remittance is required."),
   taxability: z.string().min(10, "Taxability analysis is required."),
   dtaaClause: z.string().optional(),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function ForeignRemittancePage() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -58,7 +58,7 @@ export default function ForeignRemittancePage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'foreign_remittance'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -75,7 +75,7 @@ export default function ForeignRemittancePage() {
       taxability: "The remittance is in the nature of 'Fees for Technical Services' under Section 9(1)(vii) of the Income Tax Act, 1961 and is taxable in India.",
       dtaaClause: "As per Article 12 of the India-USA DTAA, the tax is to be withheld at the rate of 15%.",
     },
-  });
+  );
 
   useEffect(() => {
     if(docId && user) {
@@ -88,13 +88,13 @@ export default function ForeignRemittancePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
+                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
                 } else {
-                    showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."});
+                    console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document.");
                     router.push('/ca-certificates/foreign-remittance');
                 }
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."});
+                 console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found.");
                  router.push('/ca-certificates/foreign-remittance');
             }
             setIsLoading(false);
@@ -116,12 +116,12 @@ export default function ForeignRemittancePage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -130,15 +130,15 @@ export default function ForeignRemittancePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        toast({ title: "Draft Ready", description: "Review the Form 15CB before proceeding." });
+        console.log( title: "Draft Ready", description: "Review the Form 15CB before proceeding." );
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields."});
+        console.error( variant: "destructive", title: "Validation Error", description: "Please fill all required fields.");
     }
   }
   
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -146,8 +146,8 @@ export default function ForeignRemittancePage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated", description: `Updated "${formData.documentName}".`});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -156,13 +156,13 @@ export default function ForeignRemittancePage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!", description: `Saved "${formData.documentName}".`});
+              );
+              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
               router.push(`/ca-certificates/foreign-remittance?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
       } finally {
           setIsSubmitting(false);
       }
@@ -170,7 +170,7 @@ export default function ForeignRemittancePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
           return;
       }
       setIsSubmitting(true);
@@ -185,14 +185,14 @@ export default function ForeignRemittancePage() {
             draftUrl: "#",
             signedDocumentUrl: null,
             formData: form.getValues(),
-        });
-        toast({
+        );
+        console.log(
             title: "Request Sent",
             description: "Your Form 15CB certification request has been sent to the admin for review and signature."
-        });
+        );
       } catch (error) {
           console.error("Error sending request:", error);
-          showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+          console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
       } finally {
           setIsSubmitting(false);
       }
@@ -332,12 +332,12 @@ export default function ForeignRemittancePage() {
                                     reportType: "Form 15CB (Foreign Remittance)",
                                     clientName: form.getValues("remitterName"),
                                     formData: form.getValues(),
-                                  });
+                                  );
                                 }}
                                 onFailure={() => {
-                                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                  console.error( variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                  });
+                                  );
                                 }}
                               />
                             );

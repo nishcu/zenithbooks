@@ -25,8 +25,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PlusCircle, Printer, Trash2, FileSignature, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -50,7 +50,7 @@ const partnerSchema = z.object({
   isDesignated: z.boolean().default(false),
   contribution: z.coerce.number().min(0, "Contribution must be a positive number."),
   profitShare: z.coerce.number().min(0, "Profit share must be positive.").max(100, "Profit share cannot exceed 100."),
-});
+);
 
 const llpAgreementSchema = z.object({
   llpName: z.string().min(3, "LLP Name is required."),
@@ -66,14 +66,14 @@ const llpAgreementSchema = z.object({
 }, {
     message: "Total profit sharing percentage must be exactly 100%.",
     path: ["partners"],
-});
+);
 
 type LlpAgreementFormValues = z.infer<typeof llpAgreementSchema>;
 
 export default function LlpAgreementPage() {
     const [generatedAgreement, setGeneratedAgreement] = useState<string | null>(null);
     const [step, setStep] = useState(1);
-    const { toast } = useToast();
+    
     const printRef = useRef<HTMLDivElement>(null);
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState(null);
@@ -83,7 +83,7 @@ export default function LlpAgreementPage() {
     const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
       pricing,
       serviceId: 'llp_agreement'
-    });
+    );
 
     const form = useForm<LlpAgreementFormValues>({
         resolver: zodResolver(llpAgreementSchema),
@@ -96,12 +96,12 @@ export default function LlpAgreementPage() {
                 { name: "", isDesignated: true, contribution: 0, profitShare: 50 },
             ]
         },
-    });
+    );
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
         name: "partners",
-    });
+    );
 
     // Fetch user subscription info
     useEffect(() => {
@@ -116,19 +116,19 @@ export default function LlpAgreementPage() {
         setPricing(pricingData);
       }).catch(error => {
         console.error('Error loading pricing:', error);
-      });
+      );
 
       // Subscribe to real-time pricing updates
       const unsubscribe = onPricingUpdate(pricingData => {
         setPricing(pricingData);
-      });
+      );
 
       return () => unsubscribe();
     }, []);
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
-    });
+    );
     
     const totalProfit = form.watch("partners").reduce((acc, p) => acc + (Number(p.profitShare) || 0), 0);
 
@@ -186,11 +186,11 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
             const agreementText = generateAgreementText(data);
             setGeneratedAgreement(agreementText);
             setStep(2);
-            toast({ title: "LLP Agreement Generated Successfully!" });
+            console.log( title: "LLP Agreement Generated Successfully!" );
         } catch (error) {
-            showEnhancedToast({ variant: "destructive", title: "Error Generating Agreement",
+            console.error( variant: "destructive", title: "Error Generating Agreement",
                 description: "An unexpected error occurred."
-            });
+            );
             console.error(error);
         }
     }
@@ -355,15 +355,15 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
                                         userName={user?.displayName || ''}
                                         onSuccess={(paymentId) => {
                                             setShowDocument(true);
-                                            toast({
+                                            console.log(
                                                 title: "Payment Successful",
                                                 description: "Your document is ready for download."
-                                            });
+                                            );
                                         }}
                                         onFailure={() => {
-                                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                            console.error( variant: "destructive", title: "Payment Failed",
                                                 description: "Payment was not completed. Please try again."
-                                            });
+                                            );
                                         }}
                                     />
                                 ) : (

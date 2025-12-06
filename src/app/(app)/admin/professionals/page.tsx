@@ -24,8 +24,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { professionals as sampleProfessionals } from '@/lib/professionals';
 
@@ -51,7 +51,7 @@ export default function AdminProfessionals() {
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
   const [isRevokeDialogOpen, setIsRevokeDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -78,10 +78,10 @@ export default function AdminProfessionals() {
         ? { ...p, status: 'Verified' as Professional['status'] }
         : p
     ));
-    toast({
+    console.log(
       title: "Professional Verified",
       description: `${selectedProfessional.name} has been verified successfully.`,
-    });
+    );
     setIsVerifyDialogOpen(false);
     setSelectedProfessional(null);
     setIsLoading(null);
@@ -96,11 +96,11 @@ export default function AdminProfessionals() {
         ? { ...p, status: 'Pending Verification' as Professional['status'] }
         : p
     ));
-    toast({
+    console.log(
       title: "Verification Revoked",
       description: `${selectedProfessional.name}'s verification has been revoked.`,
       variant: "destructive",
-    });
+    );
     setIsRevokeDialogOpen(false);
     setSelectedProfessional(null);
     setIsLoading(null);

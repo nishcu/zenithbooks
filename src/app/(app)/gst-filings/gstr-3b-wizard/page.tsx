@@ -29,8 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Save, FileJson, FileDown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
@@ -62,7 +62,7 @@ export default function Gstr3bWizardPage() {
   const isFreemium = subscriptionPlan === 'freemium';
   
   // All hooks must be called before any early returns
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const { journalVouchers } = useContext(AccountingContext)!;
   const reportRef = useRef<HTMLDivElement>(null);
@@ -164,7 +164,7 @@ export default function Gstr3bWizardPage() {
         sgst: { igst: 0, cgst: 0, sgst: 0, cess: 0 },
         cess: { igst: 0, cgst: 0, sgst: 0, cess: 0 },
     }
-  });
+  );
 
   useEffect(() => {
     setStep1Data(initialStep1Data);
@@ -177,7 +177,7 @@ export default function Gstr3bWizardPage() {
       cgst: acc.cgst + row.centralTax,
       sgst: acc.sgst + row.stateTax,
       cess: acc.cess + row.cess,
-    }), { igst: 0, cgst: 0, sgst: 0, cess: 0 });
+    }), { igst: 0, cgst: 0, sgst: 0, cess: 0 );
 
     const totalAvailableItc = Object.values(step3Data).reduce((acc, section) => {
         if (section.hasOwnProperty('igst')) acc.igst += (section as {igst: number}).igst || 0;
@@ -185,7 +185,7 @@ export default function Gstr3bWizardPage() {
         if (section.hasOwnProperty('sgst')) acc.sgst += (section as {sgst: number}).sgst || 0;
         if (section.hasOwnProperty('cess')) acc.cess += (section as {cess: number}).cess || 0;
         return acc;
-    }, { igst: 0, cgst: 0, sgst: 0, cess: 0 });
+    }, { igst: 0, cgst: 0, sgst: 0, cess: 0 );
     
     // Subtract reversed ITC
     totalAvailableItc.igst -= step3Data.rule42_43.igst + step3Data.othersReversed.igst;
@@ -261,10 +261,10 @@ export default function Gstr3bWizardPage() {
   }
 
   const handleNext = () => {
-    toast({
+    console.log(
       title: `Step ${step} Saved!`,
       description: `Moving to Step ${step + 1}.`,
-    });
+    );
     setStep(prev => prev + 1);
   };
 
@@ -320,7 +320,7 @@ export default function Gstr3bWizardPage() {
 
       // Download JSON file
       const jsonStr = JSON.stringify(gstr3bData, null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
+      const blob = new Blob([jsonStr], { type: "application/json" );
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -330,30 +330,30 @@ export default function Gstr3bWizardPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast({
+      console.log(
         title: "JSON Generated",
         description: "Your GSTR-3B JSON file has been downloaded successfully.",
-      });
+      );
     } catch (error: any) {
-      showEnhancedToast({ variant: "destructive", title: "Generation Failed",
+      console.error( variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the JSON file.",
-      });
+      );
     }
   }
 
   const handleGeneratePdf = async () => {
     try {
       if (!reportRef.current) {
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Could not find the report content to generate PDF.",
-        });
+        );
         return;
       }
 
-      toast({
+      console.log(
         title: "Generating PDF...",
         description: "Your GSTR-3B PDF is being generated.",
-      });
+      );
 
       const opt = {
         margin: [10, 10, 10, 10],
@@ -366,14 +366,14 @@ export default function Gstr3bWizardPage() {
 
       await html2pdf().set(opt).from(reportRef.current).save();
 
-      toast({
+      console.log(
         title: "PDF Generated",
         description: "Your GSTR-3B PDF has been downloaded successfully.",
-      });
+      );
     } catch (error: any) {
-      showEnhancedToast({ variant: "destructive", title: "Generation Failed",
+      console.error( variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the PDF file.",
-      });
+      );
     }
   }
 

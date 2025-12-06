@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GitCompareArrows, Loader2, Wand2, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { compareGstrReportsAction } from '../actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -25,23 +25,23 @@ const fileToDataUri = (file: File): Promise<string> => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
-    });
+    );
 };
 
 const gstrCompareSchema = z.object({
     gstr1: z.custom<File>(val => val instanceof File, "GSTR-1 file is required."),
     gstr3b: z.custom<File>(val => val instanceof File, "GSTR-3B file is required."),
-});
+);
 
 export default function GstrComparisonPage() {
-    const { toast } = useToast();
+    
     const reportRef = useRef<HTMLDivElement>(null);
     const [gstrCompareResult, setGstrCompareResult] = useState<string | null>(null);
     const [isGstrLoading, setIsGstrLoading] = useState(false);
 
     const gstrCompareForm = useForm<z.infer<typeof gstrCompareSchema>>({
         resolver: zodResolver(gstrCompareSchema),
-    });
+    );
 
     async function onGstrCompareSubmit(values: z.infer<typeof gstrCompareSchema>) {
         setIsGstrLoading(true);
@@ -52,16 +52,16 @@ export default function GstrComparisonPage() {
                 fileToDataUri(values.gstr3b),
             ]);
 
-            const result = await compareGstrReportsAction({ gstr1DataUri, gstr3BDataUri });
+            const result = await compareGstrReportsAction({ gstr1DataUri, gstr3BDataUri );
             if (result?.report) {
                 setGstrCompareResult(result.report);
-                toast({ title: "GSTR Comparison Complete" });
+                console.log( title: "GSTR Comparison Complete" );
             } else {
-                showEnhancedToast({ variant: "destructive", title: 'Comparison Failed', description: 'Could not get GSTR comparison results.' });
+                console.error( variant: "destructive", title: 'Comparison Failed', description: 'Could not get GSTR comparison results.' );
             }
         } catch (error: any) {
             console.error(error);
-            showEnhancedToast({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during GSTR comparison.' });
+            console.error( variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during GSTR comparison.' );
         } finally {
             setIsGstrLoading(false);
         }

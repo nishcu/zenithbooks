@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileText, Folder, HardDrive, Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCategory } from "@/lib/vault-constants";
 import { formatBytes } from "@/lib/utils";
 import { DocumentUploadDialog } from "@/components/vault/document-upload-dialog";
@@ -48,7 +48,7 @@ interface VaultDocument {
 
 export default function VaultPage() {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<VaultCategory | "all">("all");
@@ -87,9 +87,9 @@ export default function VaultPage() {
       },
       (error) => {
         console.error("Error fetching documents:", error);
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Failed to load documents. Please try again.",
-        });
+        );
         setLoading(false);
       }
     );
@@ -177,7 +177,7 @@ export default function VaultPage() {
     }
 
     return true;
-  });
+  );
 
   // Group filtered documents by category (for "all" view)
   const documentsByCategory = filteredDocuments.reduce((acc, doc) => {
@@ -432,10 +432,10 @@ export default function VaultPage() {
         onOpenChange={setIsUploadDialogOpen}
         onUploadSuccess={() => {
           setIsUploadDialogOpen(false);
-          toast({
+          console.log(
             title: "Upload Successful",
             description: "Your document has been uploaded successfully.",
-          });
+          );
         }}
       />
     </div>

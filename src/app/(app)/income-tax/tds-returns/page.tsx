@@ -27,8 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileDown, Library } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { tdsSections } from "@/lib/tds-rates";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { useRef } from "react";
@@ -71,7 +71,7 @@ const months = [
 
 export default function TdsReturns() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
@@ -108,17 +108,17 @@ export default function TdsReturns() {
 
   const generateReport = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: "Authentication Required",
+      console.error( variant: "destructive", title: "Authentication Required",
         description: "Please log in to generate reports."
-      });
+      );
       return;
     }
 
     setReportData([]); // Clear previous data
-    toast({
+    console.log(
         title: "Generating Report...",
         description: "Analyzing journal entries for the selected period."
-    });
+    );
 
     try {
       // Determine the date range for the report
@@ -146,7 +146,7 @@ export default function TdsReturns() {
       const relevantVouchers = journalVouchers.filter(voucher => {
         const voucherDate = new Date(voucher.date);
         return voucherDate >= startDate && voucherDate <= endDate;
-      });
+      );
 
       console.log('Relevant vouchers:', relevantVouchers.length);
 
@@ -213,7 +213,7 @@ export default function TdsReturns() {
                 tdsSection: tdsSection,
                 tdsRate: tdsRate,
                 tdsAmount: tdsAmount,
-              });
+              );
             }
           }
         }
@@ -232,16 +232,16 @@ export default function TdsReturns() {
 
       console.log("Report generated with real data:", generatedData);
 
-      toast({
+      console.log(
           title: "Report Generated",
           description: `Found ${generatedData.length} ${reportType.toUpperCase()} transactions for ${periodLabel}.`
-      });
+      );
 
     } catch (error) {
       console.error("Error generating report:", error);
-      showEnhancedToast({ variant: "destructive", title: "Report Generation Failed",
+      console.error( variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
-      });
+      );
     }
   };
 

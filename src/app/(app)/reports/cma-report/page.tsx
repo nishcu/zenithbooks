@@ -52,8 +52,8 @@ import {
   Printer,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { getCmaObservationsAction } from "./actions";
 
 // Import CMA components
@@ -94,7 +94,7 @@ const initialAssets: FixedAsset[] = [
 ];
 
 export default function CmaReportGeneratorPage() {
-  const { toast } = useToast();
+  
   const [activeTab, setActiveTab] = useState("inputs");
   const [numProjectedYears, setNumProjectedYears] = useState(5);
   const [revenueGrowth, setRevenueGrowth] = useState<number[]>([15, 18, 20, 22, 25]);
@@ -106,7 +106,7 @@ export default function CmaReportGeneratorPage() {
     amount: 5000000,
     interestRate: 11,
     repaymentYears: 5,
-  });
+  );
 
   const [fixedAssets, setFixedAssets] = useState<FixedAsset[]>(initialAssets);
   const [generatedReport, setGeneratedReport] = useState<any | null>(null);
@@ -119,7 +119,7 @@ export default function CmaReportGeneratorPage() {
   const { handlePaymentSuccess } = useCertificationRequest({
     pricing,
     serviceId: 'cma_report'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -151,15 +151,15 @@ export default function CmaReportGeneratorPage() {
     setGeneratedReport(cmaData);
     setActiveTab("report");
     setIsGenerating(false);
-    toast({
+    console.log(
         title: "CMA Report Generated",
         description: "Review the generated statements in the 'Generated CMA Report' tab."
-    });
+    );
   };
 
   const handleGetAiObservations = async () => {
       if (!generatedReport) {
-          showEnhancedToast({ variant: "destructive", title: 'Error', description: 'Please generate the report first.'});
+          console.error( variant: "destructive", title: 'Error', description: 'Please generate the report first.');
           return;
       }
       setIsAiLoading(true);
@@ -174,17 +174,17 @@ export default function CmaReportGeneratorPage() {
       };
 
       try {
-          const result = await getCmaObservationsAction({ reportSummary: JSON.stringify(simplifiedReport) });
+          const result = await getCmaObservationsAction({ reportSummary: JSON.stringify(simplifiedReport) );
           if(result?.observations) {
               setAiObservations(result.observations);
               setActiveTab('ai-observations');
           } else {
-              showEnhancedToast({ variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.'});
+              console.error( variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.');
           }
       } catch (error: any) {
           console.error("CMA Observations Error:", error);
           const errorMessage = error?.message || 'An error occurred while fetching AI observations.';
-          showEnhancedToast({ variant: "destructive", title: 'Error', description: errorMessage});
+          console.error( variant: "destructive", title: 'Error', description: errorMessage);
       } finally {
           setIsAiLoading(false);
       }
@@ -281,7 +281,7 @@ export default function CmaReportGeneratorPage() {
     const ws = XLSX.utils.json_to_sheet(templateData);
     
     // Apply formatting
-    const headers = Object.keys(templateData[0] || {});
+    const headers = Object.keys(templateData[0] || {);
     const rows = templateData.map(row => headers.map(h => row[h as keyof typeof row]));
     applyExcelFormatting(ws, headers, rows);
     
@@ -300,17 +300,17 @@ export default function CmaReportGeneratorPage() {
     XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
     
     XLSX.writeFile(wb, `CMA_Audited_Financials_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ 
+    console.log( 
       title: "Template Downloaded", 
       description: "Audited financials template has been downloaded. Fill in your actual data and upload."
-    });
+    );
   }
 
   const handleCertificationRequest = () => {
-      toast({
+      console.log(
           title: "Certification Request Sent",
           description: "A request has been sent to the Admin for certification. You can track its status in the Admin panel."
-      });
+      );
   }
 
   const handleExportToExcel = () => {
@@ -568,14 +568,14 @@ export default function CmaReportGeneratorPage() {
                                         loanAssumptions,
                                         fixedAssets
                                     },
-                                });
+                                );
                                 // After successful payment, generate the report
                                 handleGenerateReport();
                             }}
                             onFailure={() => {
-                                showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                console.error( variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                });
+                                );
                             }}
                         />
                     ) : (

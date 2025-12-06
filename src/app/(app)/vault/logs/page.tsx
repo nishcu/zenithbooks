@@ -21,8 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VaultCategory } from "@/lib/vault-constants";
 import { PaginatedList } from "@/components/vault/paginated-list";
 import { OnboardingHint } from "@/components/vault/onboarding-hint";
@@ -51,7 +51,7 @@ interface ShareCode {
 
 export default function VaultAccessLogsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [logs, setLogs] = useState<AccessLog[]>([]);
   const [shareCodes, setShareCodes] = useState<ShareCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,9 +112,9 @@ export default function VaultAccessLogsPage() {
       },
       (error) => {
         console.error("Error fetching access logs:", error);
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Failed to load access logs. Please try again.",
-        });
+        );
         setLoading(false);
       }
     );
@@ -174,7 +174,7 @@ export default function VaultAccessLogsPage() {
       }
 
       return true;
-    });
+    );
   }, [logs, selectedShareCode, selectedCategory, selectedAction, dateFrom, dateTo, searchTerm]);
 
   // Statistics
@@ -263,14 +263,14 @@ export default function VaultAccessLogsPage() {
                   log.clientIp || "—",
                   log.suspicious ? "Yes" : "No"
                 ];
-              });
+              );
               
               const csvContent = [
                 headers.join(","),
                 ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
               ].join("\n");
               
-              const blob = new Blob([csvContent], { type: "text/csv" });
+              const blob = new Blob([csvContent], { type: "text/csv" );
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
@@ -278,10 +278,10 @@ export default function VaultAccessLogsPage() {
               a.click();
               URL.revokeObjectURL(url);
               
-              toast({
+              console.log(
                 title: "Export Started",
                 description: "Access logs exported to CSV file.",
-              });
+              );
             }}
           >
             <DownloadIcon className="mr-2 h-4 w-4" />

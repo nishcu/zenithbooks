@@ -19,8 +19,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect, SelectOption } from "@/components/ui/searchable-select";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCategory } from "@/lib/vault-constants";
 import { formatBytes } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -39,7 +39,7 @@ export function DocumentUploadDialog({
   onUploadSuccess,
 }: DocumentUploadDialogProps) {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<VaultCategory>(VAULT_CATEGORIES_LIST[0].value);
   const [description, setDescription] = useState("");
@@ -187,7 +187,7 @@ export function DocumentUploadDialog({
               await updateDoc(settingsRef, {
                 currentStorageUsed: currentStorageUsed + selectedFile.size,
                 lastUpdated: serverTimestamp(),
-              });
+              );
             } else {
               await setDoc(settingsRef, {
                 userId: user.uid,
@@ -196,15 +196,15 @@ export function DocumentUploadDialog({
                 maxFileSize: VAULT_FILE_LIMITS.MAX_FILE_SIZE,
                 createdAt: serverTimestamp(),
                 lastUpdated: serverTimestamp(),
-              });
+              );
             }
 
             // Success
             setUploadProgress(100);
-            toast({
+            console.log(
               title: "Upload Successful",
               description: "Your document has been uploaded successfully.",
-            });
+            );
 
             // Reset form
             setSelectedFile(null);

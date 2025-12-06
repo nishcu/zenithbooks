@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -28,12 +28,12 @@ const formSchema = z.object({
   auditorFirmName: z.string().min(3, "Auditor firm name is required."),
   auditorFirmAddress: z.string().min(10, "Auditor firm address is required."),
   auditorFirmRegNo: z.string().min(3, "FRN is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function AppointmentOfAuditorPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
@@ -53,11 +53,11 @@ export default function AppointmentOfAuditorPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -72,15 +72,15 @@ export default function AppointmentOfAuditorPage() {
       auditorFirmAddress: "456 Finance Tower, BKC, Mumbai, Maharashtra, 400051",
       auditorFirmRegNo: "123456W",
     },
-  });
+  );
 
   const formData = form.watch();
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Auditor_Appointment_${formData.companyName}`,
-    onAfterPrint: () => toast({ title: "Print Complete" }),
-  });
+    onAfterPrint: () => console.log( title: "Print Complete" }),
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -169,15 +169,15 @@ export default function AppointmentOfAuditorPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );

@@ -19,8 +19,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -46,12 +46,12 @@ const formSchema = z.object({
   termYears: z.coerce.number().positive("Term must be a positive number.").default(2),
   
   jurisdictionCity: z.string().min(2, "Jurisdiction city is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function NdaPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -62,7 +62,7 @@ export default function NdaPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'nda'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -83,13 +83,13 @@ export default function NdaPage() {
       termYears: 2,
       jurisdictionCity: "Mumbai",
     },
-  });
+  );
 
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       agreementDate: new Date().toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data with real-time updates
@@ -98,12 +98,12 @@ export default function NdaPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -123,12 +123,12 @@ export default function NdaPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 3) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to the next step.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to the next step.` );
       }
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Validation Error",
+      console.error( variant: "destructive", title: "Validation Error",
         description: "Please correct the errors before proceeding.",
-      });
+      );
     }
   };
 
@@ -268,15 +268,15 @@ export default function NdaPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -352,12 +352,12 @@ export default function NdaPage() {
                     reportType: "NDA Certification",
                     clientName: form.getValues("disclosingPartyName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

@@ -30,8 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 // samplePosts removed from blog page
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 
@@ -50,8 +50,8 @@ async function loadBlogPosts() {
                 id: doc.id,
                 ...doc.data(),
                 date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
-            });
-        });
+            );
+        );
 
         return posts;
     } catch (error) {
@@ -77,7 +77,7 @@ export default function AdminBlog() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const { toast } = useToast();
+  
 
   // Load posts from Firebase on component mount
   useEffect(() => {
@@ -106,15 +106,15 @@ export default function AdminBlog() {
       const updatedPosts = await loadBlogPosts();
       setPosts(updatedPosts);
 
-      toast({
+      console.log(
         title: "Post deleted",
         description: "The blog post has been deleted successfully.",
-      });
+      );
     } catch (error) {
       console.error('Error deleting post:', error);
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to delete the blog post.",
-      });
+      );
     } finally {
       setIsLoading(null);
       setSelectedPost(null);

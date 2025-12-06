@@ -30,8 +30,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, FileText, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from 'date-fns';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, deleteDoc } from "firebase/firestore";
@@ -91,7 +91,7 @@ function SalesOrderPreview({ order, customers }: { order: SalesOrder | null, cus
 
 export default function SalesOrdersPage() {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
 
@@ -109,9 +109,9 @@ export default function SalesOrdersPage() {
     } else if (action === 'Cancel') {
       try {
         await deleteDoc(doc(db, "sales-orders", order.id));
-        toast({ title: "Sales Order Cancelled", description: `Sales order ${order.id} has been successfully cancelled.` });
+        console.log( title: "Sales Order Cancelled", description: `Sales order ${order.id} has been successfully cancelled.` );
       } catch (error) {
-        showEnhancedToast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the sales order." });
+        console.error( variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the sales order." );
       }
     }
   };

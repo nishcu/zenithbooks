@@ -33,8 +33,8 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import {
     Dialog,
     DialogContent,
@@ -60,7 +60,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 
 
 export default function UserManagementPage() {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -77,22 +77,22 @@ export default function UserManagementPage() {
   }, [invitesSnapshot]);
 
   const handleAction = (action: string, userId: string) => {
-    toast({
+    console.log(
         title: `Action: ${action}`,
         description: `This is a placeholder for ${action} on user ${userId}.`
-    });
+    );
   }
 
   const handleSendInvite = async () => {
     if (!newUserEmail || !newUserRole) {
-        showEnhancedToast({ variant: "destructive", title: "Missing Information",
+        console.error( variant: "destructive", title: "Missing Information",
             description: "Please enter an email and select a role."
-        });
+        );
         return;
     }
 
     if (!user) {
-        showEnhancedToast({ variant: "destructive", title: "Not Authenticated" });
+        console.error( variant: "destructive", title: "Not Authenticated" );
         return;
     }
 
@@ -104,21 +104,21 @@ export default function UserManagementPage() {
             status: "Invited",
             invitedBy: user.uid,
             invitedAt: new Date(),
-        });
+        );
 
-        toast({
+        console.log(
             title: "Invitation Recorded",
             description: `${newUserEmail} has been invited as a ${newUserRole}. They need to sign up to accept.`
-        });
+        );
 
         setIsInviteDialogOpen(false);
         setNewUserEmail("");
         setNewUserRole("viewer");
 
     } catch(error: any) {
-         showEnhancedToast({ variant: "destructive", title: "Failed to send invite",
+         console.error( variant: "destructive", title: "Failed to send invite",
             description: error.message || "Could not save the invitation to the database."
-        });
+        );
     } finally {
         setIsInviting(false);
     }

@@ -27,8 +27,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountingContext } from "@/context/accounting-context";
@@ -68,7 +68,7 @@ export default function AdvanceTax() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
-  const { toast } = useToast();
+  
   const { journalVouchers } = useContext(AccountingContext)!;
   const reportRef = useRef<HTMLDivElement>(null);
   
@@ -79,15 +79,15 @@ export default function AdvanceTax() {
 
   const projectedAnnualIncome = useMemo(() => {
     const balances: Record<string, number> = {};
-    allAccounts.forEach(acc => { balances[acc.code] = 0; });
+    allAccounts.forEach(acc => { balances[acc.code] = 0; );
 
     journalVouchers.forEach(voucher => {
       voucher.lines.forEach(line => {
         if (balances.hasOwnProperty(line.account)) {
           balances[line.account] += parseFloat(line.debit) - parseFloat(line.credit);
         }
-      });
-    });
+      );
+    );
 
     const revenue = allAccounts.filter(a => a.type === 'Revenue' || a.type === 'Other Income').reduce((sum, acc) => sum - balances[acc.code], 0);
     const expenses = allAccounts.filter(a => a.type === 'Expense' || a.type === 'Cost of Goods Sold').reduce((sum, acc) => sum + balances[acc.code], 0);
@@ -127,9 +127,9 @@ export default function AdvanceTax() {
 
   const calculateTax = () => {
     if (estimatedIncome <= 0) {
-        showEnhancedToast({ variant: "destructive", title: "Invalid Input",
+        console.error( variant: "destructive", title: "Invalid Input",
             description: "Please enter a valid estimated income.",
-        });
+        );
         return;
     }
     
@@ -159,10 +159,10 @@ export default function AdvanceTax() {
     const totalTax = tax * 1.04;
     setTaxLiability(totalTax);
 
-    toast({
+    console.log(
         title: "Tax Calculated",
         description: `Your estimated tax liability is ₹${totalTax.toFixed(2)}.`
-    });
+    );
   };
 
   const installments = taxLiability !== null ? [

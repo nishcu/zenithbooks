@@ -27,7 +27,7 @@ import {
 import { format } from "date-fns";
 import { formatBytes } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+
 import { DocumentEditDialog } from "./document-edit-dialog";
 import { DocumentVersionDialog } from "./document-version-dialog";
 
@@ -57,7 +57,7 @@ interface DocumentListProps {
 
 export function DocumentList({ documents, onRefresh }: DocumentListProps) {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [versioningDocument, setVersioningDocument] = useState<Document | null>(null);

@@ -18,8 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCategory } from "@/lib/vault-constants";
 import { formatBytes } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -54,7 +54,7 @@ export function DocumentVersionDialog({
   onUploadSuccess,
 }: DocumentVersionDialogProps) {
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [versionNote, setVersionNote] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -193,7 +193,7 @@ export function DocumentVersionDialog({
               currentVersion: newVersion,
               versions: updatedVersions,
               lastUpdated: serverTimestamp(),
-            });
+            );
 
             // Update storage settings
             const settingsRef = doc(db, "vaultSettings", user.uid);
@@ -206,7 +206,7 @@ export function DocumentVersionDialog({
               await updateDoc(settingsRef, {
                 currentStorageUsed: currentStorageUsed + selectedFile.size,
                 lastUpdated: serverTimestamp(),
-              });
+              );
             } else {
               await updateDoc(settingsRef, {
                 userId: user.uid,
@@ -215,15 +215,15 @@ export function DocumentVersionDialog({
                 maxFileSize: VAULT_FILE_LIMITS.MAX_FILE_SIZE,
                 createdAt: serverTimestamp(),
                 lastUpdated: serverTimestamp(),
-              });
+              );
             }
 
             // Success
             setUploadProgress(100);
-            toast({
+            console.log(
               title: "New Version Uploaded",
               description: `Version ${newVersion} has been uploaded successfully.`,
-            });
+            );
 
             // Reset form
             setSelectedFile(null);

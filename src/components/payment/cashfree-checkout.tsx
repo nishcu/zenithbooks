@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Loader2 } from 'lucide-react';
 import { loadCashfree } from '@/lib/cashfree';
 
@@ -35,7 +35,7 @@ export function CashfreeCheckout({
   onFailure,
 }: CashfreeCheckoutProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  
 
   const handlePayment = async () => {
     setIsLoading(true);
@@ -43,16 +43,16 @@ export function CashfreeCheckout({
     try {
       // Validate user is authenticated
       if (!userId || !userEmail) {
-        toast({
+        console.log(
           variant: 'default',
           title: 'Please Sign In',
           description: 'You need to sign in to your account to proceed with payment.',
-        });
+        );
         setIsLoading(false);
         return;
       }
 
-      console.log('Creating payment order for:', { amount, planId, userId, userEmail, userName });
+      console.log('Creating payment order for:', { amount, planId, userId, userEmail, userName );
       
       // Store planId in localStorage for payment success page
       localStorage.setItem('pending_plan_id', planId);
@@ -94,7 +94,7 @@ export function CashfreeCheckout({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-      });
+      );
 
       const data = await response.json();
       console.log('PAYMENT API DATA:', data);
@@ -127,11 +127,11 @@ export function CashfreeCheckout({
       // Check if this is demo mode (no real API keys configured)
       if (data.demoMode === true) {
         console.log('Running in demo mode - payment UI will show but transactions won\'t process');
-        toast({
+        console.log(
           title: 'Demo Mode',
           description: 'Payment gateway is in demo mode. Configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY for real payments.',
           duration: 5000,
-        });
+        );
         return;
       }
 
@@ -145,11 +145,11 @@ export function CashfreeCheckout({
         console.error('❌ paymentSessionId missing from BACKEND');
         console.error('Response keys:', Object.keys(data));
         console.error('Full response:', data);
-        toast({
+        console.log(
           variant: 'default',
           title: 'Payment Setup Issue',
           description: 'We couldn\'t set up your payment session. Please refresh the page and try again.',
-        });
+        );
         setIsLoading(false);
         onFailure?.();
               return;
@@ -163,11 +163,11 @@ export function CashfreeCheckout({
         console.log('✅ Cashfree SDK loaded and ready');
       } catch (error) {
         console.error('❌ Failed to load Cashfree SDK:', error);
-        toast({
+        console.log(
           variant: 'default',
           title: 'Payment Gateway Loading',
           description: 'The payment gateway is taking a moment to load. Please refresh the page and try again.',
-        });
+        );
         setIsLoading(false);
         onFailure?.();
         return;
@@ -176,11 +176,11 @@ export function CashfreeCheckout({
       // Verify SDK is ready
       if (!window.Cashfree) {
         console.error('❌ Cashfree SDK not available on window object');
-        toast({
+        console.log(
           variant: 'default',
           title: 'Payment Gateway Not Ready',
           description: 'The payment gateway needs a moment to initialize. Please wait a second and try again.',
-        });
+        );
         setIsLoading(false);
         onFailure?.();
         return;
@@ -203,7 +203,7 @@ export function CashfreeCheckout({
         const cashfreeSDK = await loadCashfree();
         const cashfree = cashfreeSDK({
           mode: mode,
-        });
+        );
         console.log('✅ Cashfree SDK initialized');
         
         // Step 2: Launch checkout with paymentSessionId
@@ -211,7 +211,7 @@ export function CashfreeCheckout({
         console.log('Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
         const result = await cashfree.checkout({
           paymentSessionId: paymentSessionId,
-            });
+            );
         
         console.log('✅ Cashfree checkout completed:', result);
         // Checkout will redirect - don't reset loading state as user is being redirected
@@ -234,11 +234,11 @@ export function CashfreeCheckout({
           }
         }
 
-        toast({
+        console.log(
           variant: 'default',
           title: errorTitle,
           description: errorMessage,
-        });
+        );
         setIsLoading(false);
         onFailure?.();
       }
@@ -268,11 +268,11 @@ export function CashfreeCheckout({
         }
       }
 
-      toast({
+      console.log(
         variant: 'default',
         title: errorTitle,
         description: errorMessage,
-      });
+      );
       onFailure?.();
     } finally {
       setIsLoading(false);

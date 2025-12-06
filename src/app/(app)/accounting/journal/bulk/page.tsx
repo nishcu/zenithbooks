@@ -32,8 +32,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useContext } from "react";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
@@ -132,7 +132,7 @@ const accountingRules = [
 
 export default function BulkJournalEntryPage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-    const { toast } = useToast();
+    
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -207,17 +207,17 @@ export default function BulkJournalEntryPage() {
         // 1. Try exact match (case-insensitive)
         let account = allAccounts.find(acc => acc.name.toLowerCase() === normalizedName);
         if (account) {
-            matches.push({ code: account.code, name: account.name, type: 'exact' });
+            matches.push({ code: account.code, name: account.name, type: 'exact' );
         }
         
         let customer = customers.find(c => c.name.toLowerCase() === normalizedName);
         if (customer) {
-            matches.push({ code: customer.id, name: customer.name, type: 'exact' });
+            matches.push({ code: customer.id, name: customer.name, type: 'exact' );
         }
         
         let vendor = vendors.find(v => v.name.toLowerCase() === normalizedName);
         if (vendor) {
-            matches.push({ code: vendor.id, name: vendor.name, type: 'exact' });
+            matches.push({ code: vendor.id, name: vendor.name, type: 'exact' );
         }
         
         // If exact match found, return only that
@@ -227,23 +227,23 @@ export default function BulkJournalEntryPage() {
         allAccounts.forEach(acc => {
             const accNameLower = acc.name.toLowerCase();
             if (accNameLower.includes(normalizedName) || normalizedName.includes(accNameLower)) {
-                matches.push({ code: acc.code, name: acc.name, type: 'partial' });
+                matches.push({ code: acc.code, name: acc.name, type: 'partial' );
             }
-        });
+        );
         
         customers.forEach(c => {
             const cNameLower = c.name.toLowerCase();
             if (cNameLower.includes(normalizedName) || normalizedName.includes(cNameLower)) {
-                matches.push({ code: c.id, name: c.name, type: 'partial' });
+                matches.push({ code: c.id, name: c.name, type: 'partial' );
             }
-        });
+        );
         
         vendors.forEach(v => {
             const vNameLower = v.name.toLowerCase();
             if (vNameLower.includes(normalizedName) || normalizedName.includes(vNameLower)) {
-                matches.push({ code: v.id, name: v.name, type: 'partial' });
+                matches.push({ code: v.id, name: v.name, type: 'partial' );
             }
-        });
+        );
         
         // 3. Try fuzzy match (simple similarity - check if most words match)
         if (matches.length === 0) {
@@ -252,16 +252,16 @@ export default function BulkJournalEntryPage() {
                 const accWords = acc.name.toLowerCase().split(/\s+/);
                 const matchingWords = inputWords.filter(w => accWords.some(aw => aw.includes(w) || w.includes(aw)));
                 if (matchingWords.length >= Math.ceil(inputWords.length * 0.5)) {
-                    matches.push({ code: acc.code, name: acc.name, type: 'fuzzy' });
+                    matches.push({ code: acc.code, name: acc.name, type: 'fuzzy' );
                 }
-            });
+            );
         }
         
         // 4. If it's already a code
         if (validAccountCodes.has(name.trim())) {
             const code = name.trim();
             const accountName = getAccountName(code);
-            matches.push({ code, name: accountName, type: 'exact' });
+            matches.push({ code, name: accountName, type: 'exact' );
         }
         
         // Return top 5 matches
@@ -330,10 +330,10 @@ export default function BulkJournalEntryPage() {
         XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
         
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");
-        toast({
+        console.log(
             title: "Template Downloaded",
             description: "Template file has been downloaded. Use account names or ledger names (not codes). Fill in your journal entries and upload.",
-        });
+        );
     };
 
     const parseCSV = (text: string): BulkJournalEntry[] => {
@@ -374,8 +374,8 @@ export default function BulkJournalEntryPage() {
                 narration,
                 originalDebitAccount: debitAccount, // Store original for display
                 originalCreditAccount: creditAccount, // Store original for display
-            });
-        });
+            );
+        );
 
         return entries;
     };
@@ -386,7 +386,7 @@ export default function BulkJournalEntryPage() {
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target?.result as ArrayBuffer);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array' );
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet);
@@ -407,7 +407,7 @@ export default function BulkJournalEntryPage() {
                             originalDebitAccount: debitAccount, // Store original for display
                             originalCreditAccount: creditAccount, // Store original for display
                         };
-                    });
+                    );
 
                     resolve(entries);
                 } catch (error) {
@@ -416,7 +416,7 @@ export default function BulkJournalEntryPage() {
             };
             reader.onerror = reject;
             reader.readAsArrayBuffer(file);
-        });
+        );
     };
 
     const validateEntries = (entries: BulkJournalEntry[]): BulkJournalEntry[] => {
@@ -494,7 +494,7 @@ export default function BulkJournalEntryPage() {
                 status: errors.length === 0 && debitAccountCode && creditAccountCode ? 'valid' : 'error',
                 error: errors.join('; '),
             };
-        });
+        );
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -513,17 +513,17 @@ export default function BulkJournalEntryPage() {
             } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
                 entries = await parseExcel(selectedFile);
             } else {
-                showEnhancedToast({ variant: "destructive", title: "Invalid File Type",
+                console.error( variant: "destructive", title: "Invalid File Type",
                     description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)",
-                });
+                );
                 setIsProcessing(false);
                 return;
             }
 
             if (entries.length === 0) {
-                showEnhancedToast({ variant: "destructive", title: "No Entries Found",
+                console.error( variant: "destructive", title: "No Entries Found",
                     description: "The file appears to be empty or in an incorrect format.",
-                });
+                );
                 setIsProcessing(false);
                 return;
             }
@@ -545,7 +545,7 @@ export default function BulkJournalEntryPage() {
                         accountsNeedingMatch.set(`credit_${index}_${entry.creditAccount}`, matches);
                     }
                 }
-            });
+            );
 
             // If there are accounts needing confirmation, show dialog
             if (accountsNeedingMatch.size > 0) {
@@ -587,9 +587,9 @@ export default function BulkJournalEntryPage() {
                                 originalName: accountName,
                                 selectedCode: code,
                                 selectedName
-                            });
+                            );
                             return newMap;
-                        });
+                        );
                         
                         // Update confirmed count
                         setConfirmedAccountsCount(prev => prev + 1);
@@ -610,7 +610,7 @@ export default function BulkJournalEntryPage() {
                             }, 100);
                         }
                     }
-                });
+                );
                 setMatchDialogOpen(true);
                 setIsProcessing(false);
                 return;
@@ -623,16 +623,16 @@ export default function BulkJournalEntryPage() {
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
             const errorCount = validatedEntries.filter(e => e.status === 'error').length;
 
-            toast({
+            console.log(
                 title: "File Processed",
                 description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
-            });
+            );
             setIsProcessing(false);
         } catch (error: any) {
             console.error("Error processing file:", error);
-            showEnhancedToast({ variant: "destructive", title: "Processing Failed",
+            console.error( variant: "destructive", title: "Processing Failed",
                 description: error.message || "An error occurred while processing the file.",
-            });
+            );
             setIsProcessing(false);
         }
     };
@@ -648,13 +648,13 @@ export default function BulkJournalEntryPage() {
             const validCount = validatedEntries.filter(e => e.status === 'valid').length;
             const errorCount = validatedEntries.filter(e => e.status === 'error').length;
             
-            toast({
+            console.log(
                 title: "File Processed",
                 description: `Found ${entries.length} entries. ${validCount} valid, ${errorCount} with errors.`,
-            });
+            );
             
             return matchesCopy;
-        });
+        );
     };
 
     const validateEntriesWithMatches = (entries: BulkJournalEntry[], matches: Map<string, MatchConfirmation>): BulkJournalEntry[] => {
@@ -733,7 +733,7 @@ export default function BulkJournalEntryPage() {
                 status: errors.length === 0 && debitAccountCode && creditAccountCode ? 'valid' : 'error',
                 error: errors.join('; '),
             };
-        });
+        );
     };
 
     const processRemainingMatches = (entries: BulkJournalEntry[], accountsNeedingMatch: Map<string, AccountMatch[]>, remainingKeys: string[], currentIndex: number, totalCount: number) => {
@@ -770,9 +770,9 @@ export default function BulkJournalEntryPage() {
                         originalName: accountName,
                         selectedCode: code,
                         selectedName
-                    });
+                    );
                     return newMap;
-                });
+                );
                 
                 // Update confirmed count
                 setConfirmedAccountsCount(prev => prev + 1);
@@ -785,23 +785,23 @@ export default function BulkJournalEntryPage() {
                     processRemainingMatches(entries, accountsNeedingMatch, remainingKeys.slice(1), currentIndex + 1, totalCount);
                 }, 100);
             }
-        });
+        );
         setMatchDialogOpen(true);
     };
 
     const handleCreateEntries = async () => {
         if (!accountingContext) {
-            showEnhancedToast({ variant: "destructive", title: "Error",
+            console.error( variant: "destructive", title: "Error",
                 description: "Accounting context not available.",
-            });
+            );
             return;
         }
 
         const validEntries = parsedEntries.filter(e => e.status === 'valid');
         if (validEntries.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "No Valid Entries",
+            console.error( variant: "destructive", title: "No Valid Entries",
                 description: "Please fix errors before creating entries.",
-            });
+            );
             return;
         }
 
@@ -835,17 +835,17 @@ export default function BulkJournalEntryPage() {
                             account: entry.debitAccount,
                             debit: entry.amount.toFixed(2),
                             credit: '0',
-                        });
+                        );
 
                         // Add credit line
                         lines.push({
                             account: entry.creditAccount,
                             debit: '0',
                             credit: entry.amount.toFixed(2),
-                        });
+                        );
 
                         totalAmount += entry.amount;
-                    });
+                    );
 
                     // Verify debits equal credits
                     const totalDebits = lines.reduce((sum, line) => sum + parseFloat(line.debit), 0);
@@ -882,10 +882,10 @@ export default function BulkJournalEntryPage() {
                 }
             }
 
-            toast({
+            console.log(
                 title: "Entries Created",
                 description: `Successfully created ${successCount} journal voucher(s). ${errorCount > 0 ? `${errorCount} failed.` : ''}`,
-            });
+            );
 
             // Reset
             setFile(null);
@@ -894,9 +894,9 @@ export default function BulkJournalEntryPage() {
             if (fileInput) fileInput.value = '';
         } catch (error: any) {
             console.error("Error creating entries:", error);
-            showEnhancedToast({ variant: "destructive", title: "Creation Failed",
+            console.error( variant: "destructive", title: "Creation Failed",
                 description: error.message || "An error occurred while creating journal entries.",
-            });
+            );
         } finally {
             setIsCreating(false);
         }

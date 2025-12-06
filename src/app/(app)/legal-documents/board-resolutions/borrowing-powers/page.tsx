@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -30,12 +30,12 @@ const formSchema = z.object({
   loanAmount: z.coerce.number().positive("Loan amount must be a positive number."),
   authorizedDirector1: z.string().min(3, "At least one director's name is required."),
   authorizedDirector2: z.string().optional(),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function BorrowingPowersPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
@@ -55,11 +55,11 @@ export default function BorrowingPowersPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -75,15 +75,15 @@ export default function BorrowingPowersPage() {
       authorizedDirector1: "Rohan Sharma",
       authorizedDirector2: "Priya Mehta",
     },
-  });
+  );
 
   const formData = form.watch();
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Borrowing_Powers_${formData.companyName}`,
-    onAfterPrint: () => toast({ title: "Print Complete" }),
-  });
+    onAfterPrint: () => console.log( title: "Print Complete" }),
+  );
   
   const directorCount = [formData.authorizedDirector1, formData.authorizedDirector2].filter(Boolean).length;
   const directorNames = [formData.authorizedDirector1, formData.authorizedDirector2].filter(Boolean).join(' and ');
@@ -183,15 +183,15 @@ export default function BorrowingPowersPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );

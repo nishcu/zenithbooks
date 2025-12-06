@@ -27,8 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar as CalendarIcon, Send } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -73,12 +73,12 @@ const formSchema = z.object({
 }, {
     message: "Please describe the other service you require (min. 10 characters).",
     path: ["otherServiceDescription"],
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 function BookAppointmentForm() {
-  const { toast } = useToast();
+  
   const searchParams = useSearchParams();
   const proName = searchParams.get('proName');
   const proType = searchParams.get('proType');
@@ -97,7 +97,7 @@ function BookAppointmentForm() {
       phone: "",
       queryDescription: "",
     },
-  });
+  );
 
   useEffect(() => {
     if(service) {
@@ -109,10 +109,10 @@ function BookAppointmentForm() {
 
   function onSubmit(values: FormData) {
     console.log(values);
-    toast({
+    console.log(
       title: "Request Submitted!",
       description: "Our team will get in touch with you shortly to confirm your appointment.",
-    });
+    );
     form.reset();
   }
 

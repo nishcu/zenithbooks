@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Save } from "lucide-react";
 import Image from "next/image";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -34,13 +34,13 @@ const serviceAreas = [
 
 
 export default function ProfessionalProfilePage() {
-    const { toast } = useToast();
+    
 
     const handleSaveChanges = () => {
-        toast({
+        console.log(
             title: "Profile Saved",
             description: "Your professional profile has been updated."
-        });
+        );
     }
 
     return (

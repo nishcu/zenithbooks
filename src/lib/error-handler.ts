@@ -143,7 +143,7 @@ export function showSuccessToast(title: string, description?: string) {
  * Enhanced toast function for backward compatibility
  * Logs to console instead of showing toasts to prevent crashes
  */
-export function showEnhancedToast({ variant, title, description, ...props }: any) {
+export function console.error( variant, title, description, ...props }: any) {
   // Add contact information for error logging
   let finalDescription = description;
   if (variant === "destructive" || title?.toLowerCase().includes("error") ||

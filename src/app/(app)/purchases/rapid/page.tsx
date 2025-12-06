@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useAccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -17,7 +17,7 @@ import { RapidEntryForm, RapidEntryFormValues, rapidEntrySchema } from "@/compon
 
 export default function RapidPurchaseEntryPage() {
   const accountingContext = useAccountingContext();
-  const { toast } = useToast();
+  
   const router = useRouter();
   const [user] = useAuthState(auth);
   
@@ -38,7 +38,7 @@ export default function RapidPurchaseEntryPage() {
       itemId: "",
       amount: 0,
     },
-  });
+  );
 
   const handleSave = useCallback(async (values: RapidEntryFormValues, closeOnSave: boolean) => {
     if (!accountingContext) return;
@@ -48,7 +48,7 @@ export default function RapidPurchaseEntryPage() {
     const selectedItem: any = items.find((i:any) => i.id === values.itemId);
 
     if (!selectedParty || !selectedItem) {
-        showEnhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected." });
+        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected." );
         return;
     }
     
@@ -56,7 +56,7 @@ export default function RapidPurchaseEntryPage() {
     const isDuplicate = journalVouchers.some(voucher => voucher.id === voucherId);
 
     if (isDuplicate) {
-        toast({ variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${voucherId} already exists.` });
+        console.log( variant: "destructive", title: "Duplicate Bill Number", description: `A bill with the number ${voucherId} already exists.` );
         return;
     }
 
@@ -78,9 +78,9 @@ export default function RapidPurchaseEntryPage() {
             lines: journalLines,
             amount: totalAmount,
             vendorId: values.partyId,
-        });
+        );
 
-        toast({ title: "Purchase Saved", description: `Bill #${values.voucherNumber} has been created.` });
+        console.log( title: "Purchase Saved", description: `Bill #${values.voucherNumber} has been created.` );
 
         if (closeOnSave) {
             router.push("/purchases");
@@ -92,11 +92,11 @@ export default function RapidPurchaseEntryPage() {
                 voucherNumber: nextBillNumber,
                 itemId: "",
                 amount: 0,
-            });
+            );
             form.setFocus("itemId");
         }
     } catch (e: any) {
-        showEnhancedToast({ variant: "destructive", title: "Failed to save purchase", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save purchase", description: e.message );
     }
   }, [accountingContext, vendors, items, form, router, toast]);
 

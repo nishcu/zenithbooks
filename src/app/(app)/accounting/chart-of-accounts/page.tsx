@@ -46,8 +46,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { allAccounts } from "@/lib/accounts";
 import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
@@ -88,7 +88,7 @@ const accountSchema = z.object({
     name: z.string().min(3, "Account name is required."),
     code: z.string().regex(/^\d{4}$/, "Account code must be 4 digits."),
     type: z.string().min(1, "Account type is required."),
-});
+);
 
 export default function ChartOfAccountsPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -99,7 +99,7 @@ export default function ChartOfAccountsPage() {
   const isFreemium = subscriptionPlan === 'freemium';
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
+  
   
   const userAccountsRef = collection(db, "user_accounts");
   const userAccountsQuery = user ? query(userAccountsRef, where("userId", "==", user.uid), orderBy("code")) : null;
@@ -123,7 +123,7 @@ export default function ChartOfAccountsPage() {
   const form = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
     defaultValues: { name: "", code: "", type: "" }
-  });
+  );
 
   // Early return AFTER all hooks are called
   if (user && isFreemium) {
@@ -212,15 +212,15 @@ export default function ChartOfAccountsPage() {
     // Download
     XLSX.writeFile(wb, "zenithbooks-chart-of-accounts-sample.xlsx");
     
-    toast({
+    console.log(
       title: "Sample Excel Downloaded",
       description: "Chart of Accounts sample file has been downloaded. Use exact account names from this file in your journal entries.",
-    });
+    );
   };
 
   const onSubmit = async (values: z.infer<typeof accountSchema>) => {
     if (!user) {
-        showEnhancedToast({ variant: "destructive", title: "Not Authenticated" });
+        console.error( variant: "destructive", title: "Not Authenticated" );
         return;
     }
 
@@ -228,12 +228,12 @@ export default function ChartOfAccountsPage() {
 
     try {
         await addDoc(userAccountsRef, newAccount);
-        toast({ title: "Account Added", description: `${values.name} has been added.` });
+        console.log( title: "Account Added", description: `${values.name} has been added.` );
         form.reset();
         setIsAddDialogOpen(false);
     } catch (e) {
         console.error("Error adding document: ", e);
-        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not save the account." })
+        console.error( variant: "destructive", title: "Error", description: "Could not save the account." })
     }
   };
 

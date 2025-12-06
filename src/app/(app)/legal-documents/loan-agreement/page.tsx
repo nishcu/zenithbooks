@@ -26,8 +26,8 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -64,7 +64,7 @@ const formSchema = z.object({
   securityDetails: z.string().optional(),
 
   jurisdictionCity: z.string().min(2, "Jurisdiction city is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -85,7 +85,7 @@ const numberToWords = (num: number): string => {
 }
 
 export default function LoanAgreementPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -96,7 +96,7 @@ export default function LoanAgreementPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'loan_agreement'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function LoanAgreementPage() {
       isSecured: false,
       jurisdictionCity: "",
     },
-  });
+  );
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -133,12 +133,12 @@ export default function LoanAgreementPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -161,12 +161,12 @@ export default function LoanAgreementPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 4) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
-        });
+        );
     }
   };
 
@@ -364,15 +364,15 @@ export default function LoanAgreementPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -438,12 +438,12 @@ export default function LoanAgreementPage() {
                     reportType: "Loan Agreement Certification",
                     clientName: form.getValues("borrowerName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

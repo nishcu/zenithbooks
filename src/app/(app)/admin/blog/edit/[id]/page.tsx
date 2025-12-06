@@ -24,8 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -115,7 +115,7 @@ async function updateBlogPost(postId: string, updatedData: any) {
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
-});
+);
 
 const formSchema = z.object({
   title: z.string().min(5, "Title is required."),
@@ -126,7 +126,7 @@ const formSchema = z.object({
   image: z.custom<File>((val) => val instanceof File, "Featured image is required.").optional(),
 
   contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required."),
-});
+);
 
 export default function EditBlogPostPage() {
     const params = useParams();
@@ -137,7 +137,7 @@ export default function EditBlogPostPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [isUploading, setIsUploading] = useState(false);
-    const { toast } = useToast();
+    
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -149,12 +149,12 @@ export default function EditBlogPostPage() {
             category: "",
             contentBlocks: [{ value: "" }],
         },
-    });
+    );
 
     const { fields: contentFields, append: appendContent, remove: removeContent } = useFieldArray({
         control: form.control,
         name: "contentBlocks",
-    });
+    );
 
     // Load existing blog post data
     useEffect(() => {
@@ -165,9 +165,9 @@ export default function EditBlogPostPage() {
                 const docSnap = await getDoc(docRef);
 
                 if (!docSnap.exists()) {
-                    showEnhancedToast({ variant: "destructive", title: "Post Not Found",
+                    console.error( variant: "destructive", title: "Post Not Found",
                         description: "The blog post you're trying to edit could not be found.",
-                    });
+                    );
                     router.push('/admin/blog');
                     return;
                 }
@@ -188,16 +188,16 @@ export default function EditBlogPostPage() {
                     authorTitle: post.authorTitle || "",
                     category: post.category,
                     contentBlocks: contentBlocks.length > 0 ? contentBlocks : [{ value: "" }],
-                });
+                );
 
                 // Set image preview if available
                 setImagePreview(post.image);
 
             } catch (error) {
                 console.error('Error loading post:', error);
-                showEnhancedToast({ variant: "destructive", title: "Error",
+                console.error( variant: "destructive", title: "Error",
                     description: "Failed to load the blog post.",
-                });
+                );
                 router.push('/admin/blog');
             } finally {
                 setIsLoading(false);
@@ -215,9 +215,9 @@ export default function EditBlogPostPage() {
             // Validate the image file
             const validation = validateBlogImage(file);
             if (!validation.valid) {
-                showEnhancedToast({ variant: "destructive", title: "Invalid Image",
+                console.error( variant: "destructive", title: "Invalid Image",
                     description: validation.error,
-                });
+                );
                 // Clear the input
                 if (imageInputRef.current) {
                     imageInputRef.current.value = '';
@@ -246,14 +246,14 @@ export default function EditBlogPostPage() {
                 try {
                     firebaseImageUrl = await uploadBlogImage(values.image, (progress) => {
                         setUploadProgress(progress);
-                    });
+                    );
 
                     console.log('Image uploaded successfully:', firebaseImageUrl);
                 } catch (uploadError) {
                     console.error('Image upload failed:', uploadError);
-                    showEnhancedToast({ variant: "destructive", title: "Upload Failed",
+                    console.error( variant: "destructive", title: "Upload Failed",
                         description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
-                    });
+                    );
                     return;
                 } finally {
                     setIsUploading(false);
@@ -276,25 +276,25 @@ export default function EditBlogPostPage() {
             const success = await updateBlogPost(postId, postData);
 
             if (!success) {
-                showEnhancedToast({ variant: "destructive", title: "Update Failed",
+                console.error( variant: "destructive", title: "Update Failed",
                     description: "Failed to update the blog post. Please try again.",
-                });
+                );
                 return;
             }
 
-            toast({
+            console.log(
                 title: "Blog Post Updated!",
                 description: `"${values.title}" has been successfully updated.`,
-            });
+            );
 
             // Navigate back to blog list
             router.push('/admin/blog');
 
         } catch (error) {
             console.error('Error updating post:', error);
-            showEnhancedToast({ variant: "destructive", title: "Error",
+            console.error( variant: "destructive", title: "Error",
                 description: "Failed to update the blog post. Please try again.",
-            });
+            );
         } finally {
             setIsSaving(false);
             setIsUploading(false);

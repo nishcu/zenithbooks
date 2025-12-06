@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/select";
 import { FileText, Download } from "lucide-react";
 import { useState, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -37,14 +37,14 @@ export default function PayrollReportsPage() {
     const [reportType, setReportType] = useState("payroll_summary");
     const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth()));
     const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
-    const { toast } = useToast();
+    
     const reportRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = () => {
-        toast({
+        console.log(
             title: "Download Initiated",
             description: `Your ${reportType} report is being generated.`
-        });
+        );
         
         // Simulate data generation for the report
         const reportData = [

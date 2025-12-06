@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -29,7 +29,7 @@ const memberSchema = z.object({
   address: z.string().min(10, "Address is required."),
   occupation: z.string().min(2, "Occupation is required."),
   designation: z.string().min(2, "Designation is required (e.g., President, Member)."),
-});
+);
 
 const formSchema = z.object({
   societyName: z.string().min(3, "Society name is required."),
@@ -37,12 +37,12 @@ const formSchema = z.object({
   deedDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   societyAims: z.string().min(20, "Aims and objectives are required."),
   members: z.array(memberSchema).min(7, "A minimum of 7 members are required for registration."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function SocietyRegistrationDeed() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -53,7 +53,7 @@ export default function SocietyRegistrationDeed() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'society_deed'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -68,11 +68,11 @@ export default function SocietyRegistrationDeed() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -86,20 +86,20 @@ export default function SocietyRegistrationDeed() {
       societyAims: "To promote educational and cultural activities.\nTo work for the upliftment of the underprivileged.\nTo organize health and environmental awareness camps.",
       members: Array(7).fill({ name: "", address: "", occupation: "", designation: "Member" }),
     },
-  });
+  );
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "members",
-  });
+  );
 
-  const handlePrint = useReactToPrint({ content: () => printRef.current });
+  const handlePrint = useReactToPrint({ content: () => printRef.current );
 
   const processStep = async () => {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      toast({ title: "Details Saved", description: "Proceeding to the next step." });
+      console.log( title: "Details Saved", description: "Proceeding to the next step." );
     }
   };
 
@@ -201,15 +201,15 @@ export default function SocietyRegistrationDeed() {
                       userName={user?.displayName || ''}
                       onSuccess={(paymentId) => {
                         setShowDocument(true);
-                        toast({
+                        console.log(
                           title: "Payment Successful",
                           description: "Your document is ready for download."
-                        });
+                        );
                       }}
                       onFailure={() => {
-                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                        console.error( variant: "destructive", title: "Payment Failed",
                           description: "Payment was not completed. Please try again."
-                        });
+                        );
                       }}
                     />
                   );

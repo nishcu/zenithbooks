@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -28,7 +28,7 @@ const trusteeSchema = z.object({
   name: z.string().min(2, "Trustee name is required."),
   address: z.string().min(10, "Address is required."),
   designation: z.string().min(2, "Designation is required (e.g., Managing Trustee, Member)."),
-});
+);
 
 const formSchema = z.object({
   trustName: z.string().min(3, "Trust name is required."),
@@ -39,12 +39,12 @@ const formSchema = z.object({
   initialCorpus: z.coerce.number().positive("Corpus must be a positive number."),
   trustAims: z.string().min(20, "Aims and objectives are required."),
   trustees: z.array(trusteeSchema).min(2, "A minimum of 2 trustees are required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function TrustDeedPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -55,7 +55,7 @@ export default function TrustDeedPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'trust_deed'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -70,11 +70,11 @@ export default function TrustDeedPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -94,20 +94,20 @@ export default function TrustDeedPage() {
         { name: "Trustee Two", address: "Address Two", designation: "Trustee"},
       ],
     },
-  });
+  );
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "trustees",
-  });
+  );
 
-  const handlePrint = useReactToPrint({ content: () => printRef.current });
+  const handlePrint = useReactToPrint({ content: () => printRef.current );
 
   const processStep = async () => {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      toast({ title: "Details Saved", description: "Proceeding to the next step." });
+      console.log( title: "Details Saved", description: "Proceeding to the next step." );
     }
   };
 
@@ -207,15 +207,15 @@ export default function TrustDeedPage() {
                       userName={user?.displayName || ''}
                       onSuccess={(paymentId) => {
                         setShowDocument(true);
-                        toast({
+                        console.log(
                           title: "Payment Successful",
                           description: "Your document is ready for download."
-                        });
+                        );
                       }}
                       onFailure={() => {
-                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                        console.error( variant: "destructive", title: "Payment Failed",
                           description: "Payment was not completed. Please try again."
-                        });
+                        );
                       }}
                     />
                   );

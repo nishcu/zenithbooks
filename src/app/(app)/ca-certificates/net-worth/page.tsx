@@ -13,8 +13,8 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -32,12 +32,12 @@ import { Separator } from "@/components/ui/separator";
 const assetSchema = z.object({
   description: z.string().min(3, "Description is required."),
   value: z.coerce.number().positive("Value must be a positive number."),
-});
+);
 
 const liabilitySchema = z.object({
   description: z.string().min(3, "Description is required."),
   value: z.coerce.number().positive("Value must be a positive number."),
-});
+);
 
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
@@ -48,7 +48,7 @@ const formSchema = z.object({
   asOnDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   assets: z.array(assetSchema),
   liabilities: z.array(liabilitySchema),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -273,14 +273,14 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
             </div>
         </div>
     );
-});
+);
 CertificateToPrint.displayName = 'CertificateToPrint';
 
 
 export default function NetWorthCertificatePage() {
   console.log('🎯 NET-WORTH PAGE: Component rendered/mounted');
 
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -295,7 +295,7 @@ export default function NetWorthCertificatePage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting } = useCertificationRequest({
     pricing,
     serviceId: 'net_worth'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -309,7 +309,7 @@ export default function NetWorthCertificatePage() {
       assets: [{ description: "Immovable Property - Residential Flat", value: 5000000 }],
       liabilities: [{ description: "Housing Loan from HDFC Bank", value: 2000000 }],
     },
-  });
+  );
 
   useEffect(() => {
     if(docId && user) {
@@ -322,13 +322,13 @@ export default function NetWorthCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
+                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
                 } else {
-                    showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."});
+                    console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document.");
                     router.push('/ca-certificates/net-worth');
                 }
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."});
+                 console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found.");
                  router.push('/ca-certificates/net-worth');
             }
             setIsLoading(false);
@@ -353,13 +353,13 @@ export default function NetWorthCertificatePage() {
       console.log('🔄 NET-WORTH PAGE: Pricing state updated, should re-render');
     }).catch(error => {
       console.error('❌ NET-WORTH PAGE: Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       console.log('🔄 NET-WORTH PAGE: Real-time pricing update received:', pricingData);
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -372,27 +372,27 @@ export default function NetWorthCertificatePage() {
     }
   }, [pricing]);
 
-  const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({ control: form.control, name: "assets" });
-  const { fields: liabilityFields, append: appendLiability, remove: removeLiability } = useFieldArray({ control: form.control, name: "liabilities" });
+  const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({ control: form.control, name: "assets" );
+  const { fields: liabilityFields, append: appendLiability, remove: removeLiability } = useFieldArray({ control: form.control, name: "liabilities" );
   
   const handleGenerateDraft = async () => {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(4);
-        toast({
+        console.log(
             title: "Draft Ready for Preview",
             description: "Review the generated certificate below.",
-        });
+        );
     } else {
-         showEnhancedToast({ variant: "destructive", title: "Validation Error",
+         console.error( variant: "destructive", title: "Validation Error",
             description: "Please fill all required fields before generating the draft.",
-        });
+        );
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -400,8 +400,8 @@ export default function NetWorthCertificatePage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated", description: `Updated "${formData.documentName}".`});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated", description: `Updated "${formData.documentName}".`);
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -410,13 +410,13 @@ export default function NetWorthCertificatePage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!", description: `Saved "${formData.documentName}".`});
+              );
+              console.log(title: "Draft Saved!", description: `Saved "${formData.documentName}".`);
               router.push(`/ca-certificates/net-worth?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.');
       } finally {
           setIsSubmitting(false);
       }
@@ -427,14 +427,14 @@ export default function NetWorthCertificatePage() {
       reportType: "Net Worth Certificate",
       clientName: form.getValues("clientName"),
       formData: form.getValues(),
-    });
+    );
 
     // If result is an object with requiresPayment, it means payment is needed
     if (result && typeof result === 'object' && result.requiresPayment) {
-      toast({
+      console.log(
         title: "Payment Required",
         description: `This service costs ₹${result.price}. Please complete the payment to proceed.`,
-      });
+      );
     }
   }
 
@@ -568,12 +568,12 @@ export default function NetWorthCertificatePage() {
                                           reportType: "Net Worth Certificate",
                                           clientName: form.getValues("clientName"),
                                           formData: form.getValues(),
-                                        });
+                                        );
                                       }}
                                       onFailure={() => {
-                                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                        console.error( variant: "destructive", title: "Payment Failed",
                                           description: "Payment was not completed. Please try again."
-                                        });
+                                        );
                                       }}
                                     />
                                   );

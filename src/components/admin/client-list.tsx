@@ -25,7 +25,7 @@ interface ClientListProps {
 }
 
 export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProps) {
-  const { toast } = useToast();
+  
   const [clients, setClients] = useState<Array<{ id: string; name: string; gstin: string; email: string }>>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -38,23 +38,23 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
     if (client && client.id === activeClientId) {
       // If clicking the active client, switch back to own workspace
       onSwitchWorkspace(null);
-      toast({
+      console.log(
         title: "Switched to Own Workspace",
-      });
+      );
     } else {
       onSwitchWorkspace(client);
       if(client) {
-        toast({
+        console.log(
             title: `Switched to ${client.name}'s Workspace`,
             description: `You are now managing the account for ${client.name}.`,
-        });
+        );
       }
     }
   };
   
   const handleAddNewClient = () => {
     if (!newClientName || !newClientGstin || !newClientEmail) {
-        toast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries."});
+        console.log( variant: "destructive", title: "Missing fields", description: "Please fill out all client details.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.");
         return;
     }
     const newClient = {
@@ -64,7 +64,7 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
         email: newClientEmail,
     };
     setClients(prev => [...prev, newClient]);
-    toast({ title: "Client Added", description: `${newClient.name} has been added to your client list.`});
+    console.log( title: "Client Added", description: `${newClient.name} has been added to your client list.`);
     
     setNewClientName("");
     setNewClientGstin("");

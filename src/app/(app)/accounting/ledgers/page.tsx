@@ -20,8 +20,8 @@ import { formatCurrency } from '@/lib/utils';
 import { Calendar, FileText, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 
 // --- Type Definitions ---
 interface JournalVoucher { 
@@ -57,7 +57,7 @@ export default function LedgersPage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
-  const { toast } = useToast();
+  
   const [loading, setLoading] = useState(false);
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
@@ -96,7 +96,7 @@ export default function LedgersPage() {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       setFromDate(startOfMonth);
       setToDate(today);
-      setDateRange({ from: startOfMonth, to: today });
+      setDateRange({ from: startOfMonth, to: today );
     }
   }, [fromDate, toDate]);
 
@@ -168,7 +168,7 @@ export default function LedgersPage() {
               const lineAccount = String(line.account || '').trim();
               const selected = String(selectedAccount || '').trim();
               return lineAccount === selected;
-            });
+            );
             
             return inRange && hasAccount;
           })
@@ -176,30 +176,30 @@ export default function LedgersPage() {
             const dateA = new Date(a.date);
             const dateB = new Date(b.date);
             return dateB.getTime() - dateA.getTime();
-          });
+          );
 
         if (isMounted) {
           setJournalVouchers(filteredVouchers);
           if (filteredVouchers.length === 0 && vouchers.length > 0) {
-            toast({ 
+            console.log( 
               title: "No Entries Found", 
               description: `No entries found for account ${selectedAccount} in the selected date range. Found ${vouchers.length} total vouchers.`,
               variant: "default"
-            });
+            );
           } else if (filteredVouchers.length > 0) {
-            toast({ 
+            console.log( 
               title: "Report Generated", 
               description: `Found ${filteredVouchers.length} entries for the selected period.`,
-            });
+            );
           }
         }
       } catch (err) {
         console.error("Error fetching vouchers: ", err);
-        toast({ 
+        console.log( 
           title: "Error", 
           description: `Could not fetch ledger data: ${err instanceof Error ? err.message : 'Unknown error'}.`, 
           variant: "destructive"
-        });
+        );
         if (isMounted) {
           setJournalVouchers([]);
         }
@@ -231,7 +231,7 @@ export default function LedgersPage() {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
-    });
+    );
     
     sortedVouchers.forEach((voucher, vIndex) => {
       if (!voucher.lines || !Array.isArray(voucher.lines)) {
@@ -262,9 +262,9 @@ export default function LedgersPage() {
             debit, 
             credit, 
             balance: runningBalance 
-          });
-        });
-    });
+          );
+        );
+    );
     
     return { 
       ledgerEntries: entries, 
@@ -324,16 +324,16 @@ export default function LedgersPage() {
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      showEnhancedToast({ variant: "destructive", title: "Account Required",
+      console.error( variant: "destructive", title: "Account Required",
         description: "Please select an account first.",
-      });
+      );
       return;
     }
     
     if (!fromDate || !toDate) {
-      showEnhancedToast({ variant: "destructive", title: "Date Range Required",
+      console.error( variant: "destructive", title: "Date Range Required",
         description: "Please select both from and to dates.",
-      });
+      );
       return;
     }
     
@@ -343,19 +343,19 @@ export default function LedgersPage() {
     const end = new Date(toDate);
     end.setHours(23, 59, 59, 999);
     
-    setDateRange({ from: start, to: end });
+    setDateRange({ from: start, to: end );
     
-    toast({
+    console.log(
       title: "Generating Report",
       description: `Fetching ledger entries for ${selectedAccountDetails?.name || selectedAccount} from ${format(start, "dd MMM yyyy")} to ${format(end, "dd MMM yyyy")}.`,
-    });
+    );
   };
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Please select an account to export.",
-      });
+      );
       return;
     }
 
@@ -429,7 +429,7 @@ export default function LedgersPage() {
           4: { cellWidth: 25, halign: 'right' },
           5: { cellWidth: 25, halign: 'right' },
         },
-      });
+      );
 
       // Footer
       const pageCount = (doc as any).internal.getNumberOfPages();
@@ -447,15 +447,15 @@ export default function LedgersPage() {
       const fileName = `Ledger_${accountCode}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       doc.save(fileName);
 
-      toast({
+      console.log(
         title: "PDF Exported",
         description: `Ledger for ${accountName} has been exported successfully.`,
-      });
+      );
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      showEnhancedToast({ variant: "destructive", title: "Export Failed",
+      console.error( variant: "destructive", title: "Export Failed",
         description: "An error occurred while exporting the PDF. Please try again.",
-      });
+      );
     }
   };
 

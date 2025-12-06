@@ -30,8 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Edit, Trash2, MoreHorizontal } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Sample Data
@@ -45,12 +45,12 @@ const sampleUnits = [
 
 export default function UnitsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
+  
   
   const [units, setUnits] = useState(sampleUnits);
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    toast({
+    console.log(
         title: `Action: ${action}`,
         description: `This would ${action.toLowerCase()} unit ${id}. This functionality is a placeholder.`
     })

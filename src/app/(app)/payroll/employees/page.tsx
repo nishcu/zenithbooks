@@ -43,8 +43,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 
 
 const initialEmployees = [
@@ -57,19 +57,19 @@ const initialEmployees = [
 export default function PayrollEmployeesPage() {
     const [employees, setEmployees] = useState(initialEmployees);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [newEmployee, setNewEmployee] = useState({ name: "", designation: "" });
-    const { toast } = useToast();
+    const [newEmployee, setNewEmployee] = useState({ name: "", designation: "" );
+    
 
     const handleAddEmployee = () => {
         if (!newEmployee.name || !newEmployee.designation) {
-            showEnhancedToast({ variant: "destructive", title: "Missing Information", description: "Please provide both name and designation."});
+            console.error( variant: "destructive", title: "Missing Information", description: "Please provide both name and designation.");
             return;
         }
         const newId = `EMP-${String(employees.length + 1).padStart(3, '0')}`;
         setEmployees([...employees, { id: newId, ...newEmployee, status: "Active" }]);
-        toast({ title: "Employee Added", description: `${newEmployee.name} has been added.` });
+        console.log( title: "Employee Added", description: `${newEmployee.name} has been added.` );
         setIsDialogOpen(false);
-        setNewEmployee({ name: "", designation: "" });
+        setNewEmployee({ name: "", designation: "" );
     };
 
     return (

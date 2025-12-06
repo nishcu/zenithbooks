@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/form";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
@@ -44,7 +44,7 @@ const formSchema = z.object({
   rentAmount: z.coerce.number().positive("Rent must be a positive number."),
   rentPeriod: z.string().min(1, "Month is required."),
   receiptDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -65,7 +65,7 @@ const numberToWords = (num: number): string => {
 }
 
 export default function RentalReceiptsPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState<ServicePricing | null>(null);
@@ -97,7 +97,7 @@ export default function RentalReceiptsPage() {
       rentPeriod: new Date().toISOString().substring(0, 7),
       receiptDate: new Date().toISOString().split("T")[0],
     },
-  });
+  );
 
   const formData = form.watch();
   
@@ -219,15 +219,15 @@ export default function RentalReceiptsPage() {
                         userName={user?.displayName || ''}
                         onSuccess={(paymentId) => {
                           setShowDocument(true);
-                          toast({
+                          console.log(
                             title: "Payment Successful",
                             description: "Your document is ready for download."
-                          });
+                          );
                         }}
                         onFailure={() => {
-                          showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                          console.error( variant: "destructive", title: "Payment Failed",
                             description: "Payment was not completed. Please try again."
-                          });
+                          );
                         }}
                       />
                     );

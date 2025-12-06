@@ -55,8 +55,8 @@ import {
 } from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { allAccounts, costCentres } from '@/lib/accounts';
 import { AccountingContext } from '@/context/accounting-context';
 import { format, parse } from "date-fns";
@@ -182,7 +182,7 @@ const parseDateString = (dateStr: string): Date | null => {
 
 export default function BankReconciliationPage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-    const { toast } = useToast();
+    
     const accountingContext = useContext(AccountingContext);
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -249,7 +249,7 @@ export default function BankReconciliationPage() {
               if (!acc[groupName]) acc[groupName] = [];
               acc[groupName].push(account);
               return acc;
-          }, {});
+          }, {);
       }, [combinedAccounts]);
 
       const entryCategory = useMemo(() => {
@@ -327,7 +327,7 @@ export default function BankReconciliationPage() {
                   const from = savedState.dateRange.from ? new Date(savedState.dateRange.from) : undefined;
                   const to = savedState.dateRange.to ? new Date(savedState.dateRange.to) : undefined;
                   if (from || to) {
-                      setReconDateRange({ from, to });
+                      setReconDateRange({ from, to );
                   } else {
                       setReconDateRange(undefined);
                   }
@@ -424,7 +424,7 @@ export default function BankReconciliationPage() {
             }
             
             return true;
-        });
+        );
         
         const derivedTransactions = filteredVouchers
             .map(v => {
@@ -457,7 +457,7 @@ export default function BankReconciliationPage() {
                 const dateA = parseDateString(a.date) || new Date(0);
                 const dateB = parseDateString(b.date) || new Date(0);
                 return dateA.getTime() - dateB.getTime();
-            });
+            );
         setBookTransactions(derivedTransactions);
     }, [journalVouchers, bankAccount, reconDateRange]);
 
@@ -475,7 +475,7 @@ export default function BankReconciliationPage() {
                 return `${row.rowNumber},${escapeCsv(row.reason)},${escapeCsv(rowData)}`;
             })
             .join('\n');
-        const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8;' );
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -493,14 +493,14 @@ export default function BankReconciliationPage() {
                 if (newSelection.has(id)) newSelection.delete(id);
                 else newSelection.add(id);
                 return newSelection;
-            });
+            );
         } else {
              setSelectedBookTxs(prev => {
                 const newSelection = new Set(prev);
                 if (newSelection.has(id)) newSelection.delete(id);
                 else newSelection.add(id);
                 return newSelection;
-            });
+            );
         }
     }, []);
 
@@ -522,7 +522,7 @@ export default function BankReconciliationPage() {
             }
             
             return true;
-        });
+        );
     }, [statementTransactions, reconDateRange]);
     
     const bookBalance = useMemo(() => bookTransactions.reduce((acc, tx) => acc + (tx.type === 'Receipt' ? tx.amount : -tx.amount), 0), [bookTransactions]);
@@ -573,14 +573,14 @@ export default function BankReconciliationPage() {
                 try {
                     parsedResult = await parsePDF(file);
                 } catch (pdfError: any) {
-                    showEnhancedToast({ variant: "destructive", title: "PDF Parsing Not Available", 
+                    console.error( variant: "destructive", title: "PDF Parsing Not Available", 
                         description: pdfError.message || "Please convert your PDF to CSV or Excel format, or use our API endpoint for PDF processing." 
-                    });
+                    );
                     setIsProcessingFile(false);
                     return;
                 }
             } else {
-                showEnhancedToast({ variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." });
+                console.error( variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." );
                 setIsProcessingFile(false);
                 return;
             }
@@ -602,7 +602,7 @@ export default function BankReconciliationPage() {
                 parsedRows,
                 skippedRows,
                 warnings,
-            });
+            );
             setSkippedRowsDetail(parsedResult.skippedRows || []);
 
             setStatementTransactions(parsedData);
@@ -621,17 +621,17 @@ export default function BankReconciliationPage() {
             if (skippedRows > 0) {
                 summaryPieces.splice(1, 0, `${skippedRows} row${skippedRows === 1 ? '' : 's'} skipped`);
             }
-            toast({ 
+            console.log( 
                 title: "Statement Uploaded", 
                 description: summaryPieces.join(". ") 
-            });
+            );
         } catch (error: any) {
             console.error("Error parsing file:", error);
             setImportSummary(null);
             setSkippedRowsDetail([]);
-            showEnhancedToast({ variant: "destructive", title: "File Parsing Error", 
+            console.error( variant: "destructive", title: "File Parsing Error", 
                 description: error.message || "Could not parse the file. Please check the format and try again." 
-            });
+            );
         } finally {
             setIsProcessingFile(false);
             // Reset file input
@@ -655,7 +655,7 @@ export default function BankReconciliationPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast({ title: "Template Downloaded", description: "A sample CSV template has been downloaded." });
+        console.log( title: "Template Downloaded", description: "A sample CSV template has been downloaded." );
     };
     
     const handleMatch = () => {
@@ -663,7 +663,7 @@ export default function BankReconciliationPage() {
         const currentlySelectedBookTxs = Array.from(selectedBookTxs).filter(id => !matchedPairs.has(id));
 
         if (currentlySelectedStatementTxs.length === 0 || currentlySelectedBookTxs.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "Selection Error", description: "You must select at least one new transaction from each side to match." });
+            console.error( variant: "destructive", title: "Selection Error", description: "You must select at least one new transaction from each side to match." );
             return;
         }
 
@@ -679,7 +679,7 @@ export default function BankReconciliationPage() {
         }, 0);
         
         if (Math.abs(totalStatement - totalBook) > 0.01) {
-             toast({ variant: "destructive", title: "Mismatch Error", description: `Selected totals do not match. Bank: ${totalStatement.toFixed(2)}, Book: ${totalBook.toFixed(2)}` });
+             console.log( variant: "destructive", title: "Mismatch Error", description: `Selected totals do not match. Bank: ${totalStatement.toFixed(2)}, Book: ${totalBook.toFixed(2)}` );
              return;
         }
         
@@ -689,7 +689,7 @@ export default function BankReconciliationPage() {
         currentlySelectedBookTxs.forEach(bookId => newMatchedPairs.set(bookId, matchId));
         setMatchedPairs(newMatchedPairs);
         
-        toast({ title: "Transactions Matched", description: `${currentlySelectedStatementTxs.length} bank transaction(s) matched with ${currentlySelectedBookTxs.length} book transaction(s).` });
+        console.log( title: "Transactions Matched", description: `${currentlySelectedStatementTxs.length} bank transaction(s) matched with ${currentlySelectedBookTxs.length} book transaction(s).` );
 
         setSelectedStatementTxs(new Set());
         setSelectedBookTxs(new Set());
@@ -697,7 +697,7 @@ export default function BankReconciliationPage() {
     
     const handleOpenAddEntryDialog = (tx: StatementTransaction) => {
         if (matchedPairs.has(tx.id)) {
-             showEnhancedToast({ variant: "destructive", title: "Already Matched", description: "This transaction has already been reconciled." });
+             console.error( variant: "destructive", title: "Already Matched", description: "This transaction has already been reconciled." );
              return;
         }
         setEntryToCreate(tx);
@@ -725,7 +725,7 @@ export default function BankReconciliationPage() {
     
     const handleBulkCreateEntries = async () => {
         if (bulkTransactions.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "No Transactions", description: "No transactions to create entries for." });
+            console.error( variant: "destructive", title: "No Transactions", description: "No transactions to create entries for." );
             return;
         }
 
@@ -791,16 +791,16 @@ export default function BankReconciliationPage() {
         setBulkTransactions([]);
 
         if (successCount > 0) {
-            toast({ 
+            console.log( 
                 title: "Entries Created", 
                 description: `Successfully created ${successCount} receipt/payment ${successCount === 1 ? 'entry' : 'entries'}.${errorCount > 0 ? ` ${errorCount} failed.` : ''}` 
-            });
+            );
         } else {
-            toast({ 
+            console.log( 
                 variant: "destructive", 
                 title: "Creation Failed", 
                 description: `Could not create entries. ${errorCount} error${errorCount === 1 ? '' : 's'} occurred.` 
-            });
+            );
         }
     };
 
@@ -834,7 +834,7 @@ export default function BankReconciliationPage() {
     
     const handleCreateMissingEntry = async () => {
         if (!entryToCreate || !jvDate) {
-             showEnhancedToast({ variant: "destructive", title: "Error", description: "No entry to create." });
+             console.error( variant: "destructive", title: "Error", description: "No entry to create." );
              return;
         }
 
@@ -842,7 +842,7 @@ export default function BankReconciliationPage() {
         const totalCredits = jvLines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
         
         if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
-            showEnhancedToast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
+            console.error( variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." );
             return;
         }
         
@@ -866,17 +866,17 @@ export default function BankReconciliationPage() {
             newMatchedPairs.set(entryToCreate.id, `created-${voucherId}`);
             setMatchedPairs(newMatchedPairs);
             
-            toast({ 
+            console.log( 
                 title: "Entry Created", 
                 description: `${isReceipt ? 'Receipt' : 'Payment'} entry ${voucherId} has been created and recorded in your books.`
-            });
+            );
             setIsAddEntryDialogOpen(false);
             setEntryToCreate(null);
         } catch (error: any) {
             console.error("Error creating entry:", error);
-            showEnhancedToast({ variant: "destructive", title: "Error", 
+            console.error( variant: "destructive", title: "Error", 
                 description: error.message || "Could not create the accounting entry. Please try again." 
-            });
+            );
         }
     };
 
@@ -1021,7 +1021,7 @@ export default function BankReconciliationPage() {
                       setBulkTransactions(unmatched);
                       setIsBulkEntryDialogOpen(true);
                     } else {
-                      toast({ title: "All Matched", description: "All transactions have been matched or reconciled." });
+                      console.log( title: "All Matched", description: "All transactions have been matched or reconciled." );
                     }
                   }}
                   disabled={isProcessingFile}

@@ -23,8 +23,8 @@ import { FileDown, PieChart } from "lucide-react";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
 import * as XLSX from 'xlsx';
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData } from "react-firebase-hooks/firestore";
@@ -35,13 +35,13 @@ import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 
 const formatCurrency = (value: number) => {
     if (Math.abs(value) < 0.01) value = 0;
-    return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 );
 };
 
 export default function CostCentreSummaryPage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
     const { journalVouchers, loading } = useContext(AccountingContext)!;
-    const { toast } = useToast();
+    
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
     const [userData] = useDocumentData(userDocRef);
@@ -53,7 +53,7 @@ export default function CostCentreSummaryPage() {
 
         costCentres.forEach(cc => {
             summary[cc.id] = { name: cc.name, income: 0, expense: 0 };
-        });
+        );
 
         journalVouchers.forEach(voucher => {
             voucher.lines.forEach(line => {
@@ -70,8 +70,8 @@ export default function CostCentreSummaryPage() {
                         summary[line.costCentre].expense += debit - credit;
                     }
                 }
-            });
-        });
+            );
+        );
         
         return Object.values(summary).map(data => ({
             ...data,
@@ -85,7 +85,7 @@ export default function CostCentreSummaryPage() {
             income: acc.income + curr.income,
             expense: acc.expense + curr.expense,
             net: acc.net + curr.net,
-        }), { income: 0, expense: 0, net: 0 });
+        }), { income: 0, expense: 0, net: 0 );
     }, [costCentreData]);
 
     // Early return AFTER all hooks are called
@@ -105,7 +105,7 @@ export default function CostCentreSummaryPage() {
 
     const handleExport = () => {
         if (costCentreData.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "No data to export" });
+            console.error( variant: "destructive", title: "No data to export" );
             return;
         }
 
@@ -137,7 +137,7 @@ export default function CostCentreSummaryPage() {
         ];
         
         XLSX.writeFile(workbook, `Cost_Centre_Summary_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-        toast({ title: "Export Successful", description: "Cost Centre Summary has been exported to Excel." });
+        console.log( title: "Export Successful", description: "Cost Centre Summary has been exported to Excel." );
     };
 
 

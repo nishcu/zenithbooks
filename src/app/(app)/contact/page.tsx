@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Mail, Phone, MapPin, Send, Linkedin, Twitter, Facebook, Instagram } from "lucide-react";
 
 const formSchema = z.object({
@@ -18,21 +18,21 @@ const formSchema = z.object({
   email: z.string().email("A valid email is required."),
   subject: z.string().min(5, "Subject is required."),
   message: z.string().min(10, "Message must be at least 10 characters."),
-});
+);
 
 export default function ContactPage() {
-  const { toast } = useToast();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", email: "", subject: "", message: "" },
-  });
+  );
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    toast({
+    console.log(
       title: "Message Sent!",
       description: "Thank you for reaching out. Our team will get back to you shortly.",
-    });
+    );
     form.reset();
   }
 

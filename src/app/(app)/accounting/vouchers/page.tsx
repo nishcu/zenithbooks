@@ -67,8 +67,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { AccountingContext } from "@/context/accounting-context";
@@ -91,7 +91,7 @@ export default function VouchersPage() {
   const [transactionType, setTransactionType] = useState<string>("on_account");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const { toast } = useToast();
+  
 
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
@@ -136,7 +136,7 @@ export default function VouchersPage() {
                     mode: v.lines.some(l => l.account === '1010') ? 'Cash' : 'Bank',
                     status: isReversed ? 'Reversed' : 'Active'
                 };
-            });
+            );
 
         const allPayments = journalVouchers
             .filter(v => v && v.id && v.id.startsWith("PV-"))
@@ -150,7 +150,7 @@ export default function VouchersPage() {
                     mode: v.lines.some(l => l.account === '1010') ? 'Cash' : 'Bank',
                     status: isReversed ? 'Reversed' : 'Active'
                 };
-            });
+            );
 
         return { 
             receipts: allReceipts.filter(v => !reversedIds.has(v.id)),
@@ -181,7 +181,7 @@ export default function VouchersPage() {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);
 
         if (!originalVoucher) {
-            showEnhancedToast({ variant: "destructive", title: "Error", description: "Original voucher transaction not found." });
+            console.error( variant: "destructive", title: "Error", description: "Original voucher transaction not found." );
             return;
         }
 
@@ -202,9 +202,9 @@ export default function VouchersPage() {
 
         try {
             await addJournalVoucher(reversalVoucher as any);
-            toast({ title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.` });
+            console.log( title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.` );
         } catch (e: any) {
-            showEnhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
+            console.error( variant: "destructive", title: "Reversal Failed", description: e.message );
         }
     };
     
@@ -212,10 +212,10 @@ export default function VouchersPage() {
         if(action === 'Delete') {
             handleDeleteVoucher(voucherId);
         } else {
-            toast({
+            console.log(
                 title: `${action} Voucher`,
                 description: `Simulating ${action.toLowerCase()} action for voucher ${voucherId}.`,
-            });
+            );
         }
     };
 

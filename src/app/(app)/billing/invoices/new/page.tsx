@@ -38,8 +38,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { AccountingContext } from "@/context/accounting-context";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -52,11 +52,11 @@ import { ItemTable, type LineItem, type Item } from "@/components/billing/item-t
 const createNewLineItem = (): LineItem => ({
   id: `${Date.now()}-${Math.random()}`,
   itemId: "", description: "", hsn: "", qty: 1, rate: 0, taxRate: 18, amount: 0,
-});
+);
 
 export default function NewInvoicePage() {
   const accountingContext = useContext(AccountingContext);
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user] = useAuthState(auth);
@@ -163,7 +163,7 @@ export default function NewInvoicePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !invoiceNumber) {
-        showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number."});
+        console.error( variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number.");
         return;
     }
     
@@ -171,7 +171,7 @@ export default function NewInvoicePage() {
     const isDuplicate = journalVouchers.some(voucher => voucher.id === invoiceId);
 
     if (isDuplicate) {
-        toast({ variant: "destructive", title: "Duplicate Invoice", description: `An invoice with the number ${invoiceId} already exists.` });
+        console.log( variant: "destructive", title: "Duplicate Invoice", description: `An invoice with the number ${invoiceId} already exists.` );
         return;
     }
 
@@ -188,9 +188,9 @@ export default function NewInvoicePage() {
 
     if (taxOnSourceAmount > 0) {
       if (taxType === 'tds') {
-        journalLines.push({ account: '1460', debit: taxOnSourceAmount.toFixed(2), credit: '0'}); // TDS Receivable
+        journalLines.push({ account: '1460', debit: taxOnSourceAmount.toFixed(2), credit: '0'); // TDS Receivable
       } else if (taxType === 'tcs') {
-        journalLines.push({ account: '2423', debit: '0', credit: taxOnSourceAmount.toFixed(2)}); // TCS Payable
+        journalLines.push({ account: '2423', debit: '0', credit: taxOnSourceAmount.toFixed(2)); // TCS Payable
       }
     }
 
@@ -202,13 +202,13 @@ export default function NewInvoicePage() {
             lines: journalLines,
             amount: grandTotal, // Store the gross amount in the journal
             customerId: customer,
-        });
+        );
 
-        toast({ title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.` });
+        console.log( title: "Invoice Saved", description: `Journal entry for invoice #${invoiceId} has been automatically created.` );
         router.push("/billing/invoices");
     } catch (e: any) {
         console.error("Firebase error:", e);
-        showEnhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
     }
   }
 

@@ -25,8 +25,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 
 type Subscriber = {
@@ -51,7 +51,7 @@ export default function Subscribers() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'Professional' | 'Business'>('Professional');
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -84,10 +84,10 @@ export default function Subscribers() {
         ? { ...s, plan: selectedPlan }
         : s
     ));
-    toast({
+    console.log(
       title: "Plan Changed",
       description: `${selectedSubscriber.userName}'s subscription plan has been changed to ${selectedPlan}.`,
-    });
+    );
     setIsChangePlanDialogOpen(false);
     setSelectedSubscriber(null);
     setIsLoading(null);
@@ -102,11 +102,11 @@ export default function Subscribers() {
         ? { ...s, status: 'Cancelled' as Subscriber['status'] }
         : s
     ));
-    toast({
+    console.log(
       title: "Subscription Cancelled",
       description: `${selectedSubscriber.userName}'s subscription has been cancelled.`,
       variant: "destructive",
-    });
+    );
     setIsCancelDialogOpen(false);
     setSelectedSubscriber(null);
     setIsLoading(null);

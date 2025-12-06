@@ -33,8 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AccountingContext } from "@/context/accounting-context";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -47,13 +47,13 @@ const rapidInvoiceSchema = z.object({
   itemId: z.string().optional(),
   amount: z.coerce.number().positive("Amount must be greater than zero."),
   taxRate: z.coerce.number().min(0, "Tax rate cannot be negative."),
-});
+);
 
 type RapidInvoiceForm = z.infer<typeof rapidInvoiceSchema>;
 
 export default function RapidInvoiceEntryPage() {
   const accountingContext = useContext(AccountingContext);
-  const { toast } = useToast();
+  
   const router = useRouter();
   const [user] = useAuthState(auth);
   
@@ -75,7 +75,7 @@ export default function RapidInvoiceEntryPage() {
       amount: 0,
       taxRate: 18,
     },
-  });
+  );
 
   const handleSave = useCallback(async (values: RapidInvoiceForm, closeOnSave: boolean) => {
     if (!accountingContext) return;
@@ -84,7 +84,7 @@ export default function RapidInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        showEnhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
+        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." );
         return;
     }
     
@@ -120,7 +120,7 @@ export default function RapidInvoiceEntryPage() {
 
         await addJournalVoucher(newInvoice);
 
-        toast({ title: "Invoice Saved", description: `${invoiceId} has been created.` });
+        console.log( title: "Invoice Saved", description: `${invoiceId} has been created.` );
 
         if (closeOnSave) {
             router.push("/billing/invoices");
@@ -134,11 +134,11 @@ export default function RapidInvoiceEntryPage() {
                 customerId: "",
                 itemId: undefined,
                 amount: 0,
-            });
+            );
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        showEnhancedToast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save invoice", description: e.message );
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

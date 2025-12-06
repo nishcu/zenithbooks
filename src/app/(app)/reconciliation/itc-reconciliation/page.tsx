@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GitCompareArrows, Loader2, Wand2, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { reconcileItcAction } from '../actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -25,39 +25,39 @@ const fileToDataUri = (file: File): Promise<string> => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
-    });
+    );
 };
 
 const itcReconSchema = z.object({
     gstr2b: z.custom<File>(val => val instanceof File, "GSTR-2B JSON file is required."),
-});
+);
 
 
 export default function ItcReconciliationPage() {
-    const { toast } = useToast();
+    
     const reportRef = useRef<HTMLDivElement>(null);
     const [itcReconResult, setItcReconResult] = useState<string | null>(null);
     const [isItcLoading, setIsItcLoading] = useState(false);
 
     const itcReconForm = useForm<z.infer<typeof itcReconSchema>>({
         resolver: zodResolver(itcReconSchema),
-    });
+    );
 
     async function onItcReconSubmit(values: z.infer<typeof itcReconSchema>) {
         setIsItcLoading(true);
         setItcReconResult(null);
         try {
             const gstr2bDataUri = await fileToDataUri(values.gstr2b);
-            const result = await reconcileItcAction({ gstr2bDataUri, purchaseBills: "" }); // Purchase bills are handled on server
+            const result = await reconcileItcAction({ gstr2bDataUri, purchaseBills: "" ); // Purchase bills are handled on server
             if (result?.reconciliationResults) {
                 setItcReconResult(result.reconciliationResults);
-                toast({ title: "ITC Reconciliation Complete" });
+                console.log( title: "ITC Reconciliation Complete" );
             } else {
-                showEnhancedToast({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.' });
+                console.error( variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.' );
             }
         } catch (error: any) {
             console.error(error);
-            showEnhancedToast({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.' });
+            console.error( variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.' );
         } finally {
             setIsItcLoading(false);
         }

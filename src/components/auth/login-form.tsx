@@ -28,8 +28,8 @@ import { ZenithBooksLogo } from "../icons"
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, sendPasswordResetEmail } from "firebase/auth";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -57,15 +57,15 @@ const formSchema = z.object({
   acceptPolicies: z.boolean().refine(val => val === true, {
     message: "You must accept the Terms & Conditions and Cancellation & Refund Policy"
   }),
-});
+);
 
 const passwordResetSchema = z.object({
   resetEmail: z.string().email({ message: VALIDATION_MESSAGES.EMAIL }),
-});
+);
 
 export function LoginForm() {
   const router = useRouter();
-  const { toast } = useToast();
+  
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
@@ -81,7 +81,7 @@ export function LoginForm() {
       password: "",
       acceptPolicies: false,
     },
-  });
+  );
 
    useEffect(() => {
     const handleRedirectResult = async () => {
@@ -89,7 +89,7 @@ export function LoginForm() {
         const result = await getRedirectResult(auth);
         if (result) {
           // User has successfully signed in via redirect.
-          toast({ title: "Login Successful", description: "Welcome!" });
+          console.log( title: "Login Successful", description: "Welcome!" );
           router.push("/dashboard");
         } else {
             // No redirect result, probably a direct page load
@@ -115,11 +115,11 @@ export function LoginForm() {
           errorMessage = error.message;
         }
         
-        showEnhancedToast({
+        console.error(
           variant: "default",
           title: "Couldn't Sign In with Google",
           description: errorMessage,
-        });
+        );
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
       }
@@ -137,11 +137,11 @@ export function LoginForm() {
       // Check if account is locked
       const loginId = getLoginIdentifier(sanitizedEmail);
       if (isAccountLocked(loginId)) {
-        showEnhancedToast({
+        console.error(
           variant: "destructive",
           title: "Account Temporarily Locked",
           description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
-        });
+        );
         setIsEmailLoading(false);
         return;
       }
@@ -159,19 +159,19 @@ export function LoginForm() {
       const attemptResult = recordFailedLogin(loginId);
       
       if (attemptResult.locked) {
-        showEnhancedToast({
+        console.error(
           variant: "destructive",
           title: "Account Temporarily Locked",
           description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
-        });
+        );
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {
-          showEnhancedToast({
+          console.error(
             variant: "default",
             title: "Login Attempts Remaining",
             description: `You have ${attemptResult.remainingAttempts} attempt${attemptResult.remainingAttempts === 1 ? '' : 's'} remaining before your account is temporarily locked.`,
-          });
+          );
         }
       }
     } finally {
@@ -187,7 +187,7 @@ export function LoginForm() {
 
   async function handlePasswordReset() {
       if (!resetEmail) {
-          showEnhancedToast({ variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." });
+          console.error( variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." );
           return;
       }
       try {

@@ -26,8 +26,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
@@ -71,12 +71,12 @@ const formSchema = z.object({
   clientResponsibilities: z.string().optional(),
   accountantResponsibilities: z.string().optional(),
   termAndTermination: z.string().optional(),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function AccountingEngagementLetterPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -87,7 +87,7 @@ export default function AccountingEngagementLetterPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'accounting_engagement_letter'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function AccountingEngagementLetterPage() {
       accountantResponsibilities: "To maintain the books of accounts based on the information provided. To prepare financial statements in accordance with applicable accounting standards. To highlight any material compliance issues noticed during the course of our work. To maintain confidentiality.",
       termAndTermination: "This engagement is for a period of one year, renewable upon mutual consent. Either party may terminate this agreement by providing a written notice of 30 days. All outstanding dues must be cleared at the time of termination.",
     },
-  });
+  );
 
   // Load pricing data
   useEffect(() => {
@@ -119,19 +119,19 @@ export default function AccountingEngagementLetterPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-  });
+  );
 
   const processStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -151,12 +151,12 @@ export default function AccountingEngagementLetterPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 4) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
-        });
+        );
     }
   };
 
@@ -375,15 +375,15 @@ export default function AccountingEngagementLetterPage() {
                             userName={user?.displayName || ''}
                             onSuccess={(paymentId) => {
                               setShowDocument(true);
-                              toast({
+                              console.log(
                                 title: "Payment Successful",
                                 description: "Your document is ready for download."
-                              });
+                              );
                             }}
                             onFailure={() => {
-                              showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                              console.error( variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
-                              });
+                              );
                             }}
                           />
                         );
@@ -449,12 +449,12 @@ export default function AccountingEngagementLetterPage() {
                     reportType: "Accounting Engagement Letter Certification",
                     clientName: form.getValues("clientName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

@@ -32,8 +32,8 @@ import { MoreHorizontal, PlusCircle, Trash2, Edit, Ticket, Percent, IndianRupee 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
@@ -52,7 +52,7 @@ const couponSchema = z.object({
   }).refine(data => data.subscriptions.length > 0 || data.services.length > 0, {
       message: "Coupon must apply to at least one subscription or service."
   })
-});
+);
 
 type Coupon = z.infer<typeof couponSchema> & { id: string, status: "Active" | "Expired" | "Inactive" };
 type CouponFormValues = z.infer<typeof couponSchema>;
@@ -104,7 +104,7 @@ const subscriptionPlans = [
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState(initialCoupons);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  
   const [pricing, setPricing] = useState<ServicePricing | null>(null);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ export default function CouponsPage() {
         status: new Date(data.expiryDate) < new Date() ? 'Expired' : 'Active',
     };
     setCoupons(prev => [newCoupon, ...prev]);
-    toast({ title: "Coupon Created", description: `Coupon code ${newCoupon.code} has been added.`});
+    console.log( title: "Coupon Created", description: `Coupon code ${newCoupon.code} has been added.`);
     setIsDialogOpen(false);
     form.reset();
   }
@@ -309,7 +309,7 @@ export default function CouponsPage() {
                               value: couponToEdit.value,
                               expiryDate: new Date(couponToEdit.expiryDate).toISOString().split("T")[0],
                               appliesTo: couponToEdit.appliesTo
-                            });
+                            );
                             setCoupons(coupons.filter(c => c.id !== coupon.id));
                             setIsDialogOpen(true);
                           }
@@ -317,11 +317,11 @@ export default function CouponsPage() {
                         <DropdownMenuItem 
                           onClick={() => {
                             setCoupons(coupons.filter(c => c.id !== coupon.id));
-                            toast({ 
+                            console.log( 
                               title: "Coupon Deleted", 
                               description: `Coupon code ${coupon.code} has been deleted.`,
                               variant: "destructive"
-                            });
+                            );
                           }}
                           className="text-destructive"
                         >

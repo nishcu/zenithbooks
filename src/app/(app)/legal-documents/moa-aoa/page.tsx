@@ -26,8 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Wand2, ArrowLeft, FileSignature } from "lucide-react";
 import { generateMoaObjectsAction } from "./actions";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -43,13 +43,13 @@ import { useEffect, useRef } from "react";
 const formSchema = z.object({
   companyName: z.string().min(5, "Company name is required."),
   businessDescription: z.string().min(20, "A detailed business description is required."),
-});
+);
 
 
 export default function MoaAoaPage() {
     const [result, setResult] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
+    
     const printRef = useRef<HTMLDivElement>(null);
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState(null);
@@ -59,7 +59,7 @@ export default function MoaAoaPage() {
     const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
       pricing,
       serviceId: 'moa_aoa'
-    });
+    );
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -67,7 +67,7 @@ export default function MoaAoaPage() {
             companyName: "",
             businessDescription: "",
         },
-    });
+    );
 
     // Fetch user subscription info
     useEffect(() => {
@@ -82,12 +82,12 @@ export default function MoaAoaPage() {
         setPricing(pricingData);
       }).catch(error => {
         console.error('Error loading pricing:', error);
-      });
+      );
 
       // Subscribe to real-time pricing updates
       const unsubscribe = onPricingUpdate(pricingData => {
         setPricing(pricingData);
-      });
+      );
 
       return () => unsubscribe();
     }, []);
@@ -99,12 +99,12 @@ export default function MoaAoaPage() {
             const response = await generateMoaObjectsAction(values);
             if (response?.mainObjects) {
                 setResult(response.mainObjects);
-                toast({ title: "MOA Objects Generated!"});
+                console.log( title: "MOA Objects Generated!");
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Generation Failed" });
+                 console.error( variant: "destructive", title: "Generation Failed" );
             }
         } catch (e) {
-            showEnhancedToast({ variant: "destructive", title: "An Error Occurred" });
+            console.error( variant: "destructive", title: "An Error Occurred" );
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -197,15 +197,15 @@ export default function MoaAoaPage() {
                     userName={user?.displayName || ''}
                     onSuccess={(paymentId) => {
                       setShowDocument(true);
-                      toast({
+                      console.log(
                         title: "Payment Successful",
                         description: "Your document is ready for download."
-                      });
+                      );
                     }}
                     onFailure={() => {
-                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                      console.error( variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      });
+                      );
                     }}
                   />
                 ) : (

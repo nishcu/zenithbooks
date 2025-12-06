@@ -11,8 +11,8 @@ import {
 import { Download, FileSpreadsheet, FileText, FileDown } from "lucide-react";
 import React, { useRef } from "react";
 import { exportToCSV, exportToExcel, exportToPDF, ExportData } from "@/lib/export-utils";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 
 interface ExportButtonsProps {
   contentRef?: React.RefObject<HTMLDivElement>;
@@ -33,36 +33,36 @@ export function ExportButtons({
   showCSV = true,
   showExcel = true,
 }: ExportButtonsProps) {
-  const { toast } = useToast();
+  
 
   const handleExportPDF = async () => {
     if (!contentRef?.current) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "No content available for PDF export.",
-      });
+      );
       return;
     }
 
     try {
-      await exportToPDF(contentRef.current, { fileName });
-      toast({
+      await exportToPDF(contentRef.current, { fileName );
+      console.log(
         title: "PDF Exported",
         description: "Your document has been exported successfully.",
-      });
+      );
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Export Failed",
+      console.error( variant: "destructive", title: "Export Failed",
         description: "Failed to export PDF. Please try again.",
-      });
+      );
     }
   };
 
   const handleExportCSV = () => {
     if (data && !Array.isArray(data)) {
-      exportToCSV(data, { fileName });
-      toast({
+      exportToCSV(data, { fileName );
+      console.log(
         title: "CSV Exported",
         description: "Your data has been exported successfully.",
-      });
+      );
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -72,7 +72,7 @@ export function ExportButtons({
       if (headerRow) {
         headerRow.querySelectorAll("th, td").forEach((cell) => {
           headers.push(cell.textContent?.trim() || "");
-        });
+        );
       }
 
       tableRef.current.querySelectorAll("tbody tr").forEach((row) => {
@@ -81,31 +81,31 @@ export function ExportButtons({
           const text = cell.textContent?.trim() || "";
           const num = parseFloat(text.replace(/[₹,]/g, ""));
           rowData.push(isNaN(num) ? text : num);
-        });
+        );
         if (rowData.length > 0) {
           rows.push(rowData);
         }
-      });
+      );
 
-      exportToCSV({ headers, rows }, { fileName });
-      toast({
+      exportToCSV({ headers, rows }, { fileName );
+      console.log(
         title: "CSV Exported",
         description: "Your data has been exported successfully.",
-      });
+      );
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "No data available for CSV export.",
-      });
+      );
     }
   };
 
   const handleExportExcel = () => {
     if (data) {
-      exportToExcel(data, { fileName });
-      toast({
+      exportToExcel(data, { fileName );
+      console.log(
         title: "Excel Exported",
         description: "Your data has been exported successfully.",
-      });
+      );
     } else if (tableRef?.current) {
       // Extract data from table
       const headers: string[] = [];
@@ -115,7 +115,7 @@ export function ExportButtons({
       if (headerRow) {
         headerRow.querySelectorAll("th, td").forEach((cell) => {
           headers.push(cell.textContent?.trim() || "");
-        });
+        );
       }
 
       tableRef.current.querySelectorAll("tbody tr").forEach((row) => {
@@ -124,21 +124,21 @@ export function ExportButtons({
           const text = cell.textContent?.trim() || "";
           const num = parseFloat(text.replace(/[₹,]/g, ""));
           rowData.push(isNaN(num) ? text : num);
-        });
+        );
         if (rowData.length > 0) {
           rows.push(rowData);
         }
-      });
+      );
 
-      exportToExcel({ headers, rows }, { fileName });
-      toast({
+      exportToExcel({ headers, rows }, { fileName );
+      console.log(
         title: "Excel Exported",
         description: "Your data has been exported successfully.",
-      });
+      );
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "No data available for Excel export.",
-      });
+      );
     }
   };
 

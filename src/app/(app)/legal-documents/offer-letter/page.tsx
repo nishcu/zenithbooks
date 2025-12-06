@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, Printer, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { cn } from "@/lib/utils";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
@@ -35,12 +35,12 @@ const formSchema = z.object({
   acceptanceDeadline: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   signerName: z.string().min(3, "Signer's name is required."),
   signerTitle: z.string().min(3, "Signer's title is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function OfferLetterPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
@@ -50,7 +50,7 @@ export default function OfferLetterPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'offer_letter'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -67,14 +67,14 @@ export default function OfferLetterPage() {
       offerDate: "",
       acceptanceDeadline: "",
     },
-  });
+  );
 
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       offerDate: new Date().toISOString().split("T")[0],
       acceptanceDeadline: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data with real-time updates
@@ -83,12 +83,12 @@ export default function OfferLetterPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -220,15 +220,15 @@ export default function OfferLetterPage() {
                         userName={user?.displayName || ''}
                         onSuccess={(paymentId) => {
                           setShowDocument(true);
-                          toast({
+                          console.log(
                             title: "Payment Successful",
                             description: "Your document is ready for download."
-                          });
+                          );
                         }}
                         onFailure={() => {
-                          showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                          console.error( variant: "destructive", title: "Payment Failed",
                             description: "Payment was not completed. Please try again."
-                          });
+                          );
                         }}
                       />
                     );
@@ -273,12 +273,12 @@ export default function OfferLetterPage() {
                     reportType: "Offer Letter Certification",
                     clientName: form.getValues("companyName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

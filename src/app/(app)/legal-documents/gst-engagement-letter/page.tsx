@@ -26,8 +26,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
@@ -71,12 +71,12 @@ const formSchema = z.object({
   clientResponsibilities: z.string().optional(),
   consultantResponsibilities: z.string().optional(),
   termAndTermination: z.string().optional(),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function GstEngagementLetterPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -87,7 +87,7 @@ export default function GstEngagementLetterPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'gst_engagement_letter'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function GstEngagementLetterPage() {
       consultantResponsibilities: "To prepare and file the GST returns based on the information provided by the client. To advise the client on matters related to GST compliance as covered under the scope of this engagement. To maintain confidentiality of all information provided.",
       termAndTermination: "This engagement will be effective from the date of signing and will continue until terminated by either party with a written notice of 30 days. All outstanding fees must be settled upon termination.",
     },
-  });
+  );
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -120,19 +120,19 @@ export default function GstEngagementLetterPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-  });
+  );
 
   const processStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
@@ -152,12 +152,12 @@ export default function GstEngagementLetterPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 4) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
-        });
+        );
     }
   };
 
@@ -370,15 +370,15 @@ export default function GstEngagementLetterPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -444,12 +444,12 @@ export default function GstEngagementLetterPage() {
                     reportType: "GST Engagement Letter Certification",
                     clientName: form.getValues("clientName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

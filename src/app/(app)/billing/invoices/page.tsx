@@ -41,8 +41,8 @@ import { PlusCircle, MoreHorizontal, FileText, IndianRupee, AlertCircle, CheckCi
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format, addDays, isPast, subDays } from 'date-fns';
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
@@ -67,7 +67,7 @@ type Invoice = {
 }
 
 function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
-    const { toast } = useToast();
+    
     const [transporterName, setTransporterName] = useState("");
     const [vehicleNumber, setVehicleNumber] = useState("");
     
@@ -88,7 +88,7 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
 
             // Download JSON file
             const jsonStr = JSON.stringify(ewaybillData, null, 2);
-            const blob = new Blob([jsonStr], { type: "application/json" });
+            const blob = new Blob([jsonStr], { type: "application/json" );
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
@@ -98,10 +98,10 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            toast({ title: "E-Waybill Generated", description: "The E-Waybill JSON has been downloaded successfully." });
+            console.log( title: "E-Waybill Generated", description: "The E-Waybill JSON has been downloaded successfully." );
             onOpenChange(false);
         } catch (error: any) {
-            showEnhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill." });
+            console.error( variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill." );
         }
     }
 
@@ -147,7 +147,7 @@ export default function InvoicesPage() {
   const [user] = useAuthState(auth);
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
+  
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isEwaybillDialogOpen, setIsEwaybillDialogOpen] = useState(false);
   const [isQuickInvoiceOpen, setIsQuickInvoiceOpen] = useState(false);
@@ -207,7 +207,7 @@ export default function InvoicesPage() {
         const originalVoucher = journalVouchers.find(v => v.id === invoiceId);
 
         if (!originalVoucher) {
-            showEnhancedToast({ variant: "destructive", title: "Error", description: "Original invoice transaction not found." });
+            console.error( variant: "destructive", title: "Error", description: "Original invoice transaction not found." );
             return false;
         }
 
@@ -230,10 +230,10 @@ export default function InvoicesPage() {
 
         try {
             await addJournalVoucher(cancellationVoucher as any);
-            toast({ title: "Invoice Cancelled", description: `Invoice has been successfully cancelled.` });
+            console.log( title: "Invoice Cancelled", description: `Invoice has been successfully cancelled.` );
             return true;
         } catch (e: any) {
-            showEnhancedToast({ variant: "destructive", title: "Cancellation Failed", description: e.message });
+            console.error( variant: "destructive", title: "Cancellation Failed", description: e.message );
             return false;
         }
     };
@@ -257,7 +257,7 @@ export default function InvoicesPage() {
             }).toString();
             router.push(`/billing/invoices/new?${queryParams}`);
         } else if (action === 'Edit') {
-            toast({ title: 'Editing Invoice...', description: `Cancelling ${invoice.id} and creating a new draft.` });
+            console.log( title: 'Editing Invoice...', description: `Cancelling ${invoice.id} and creating a new draft.` );
             const cancelled = await handleCancelInvoice(invoice.id);
             if (cancelled) {
                 const queryParams = new URLSearchParams({
@@ -265,7 +265,7 @@ export default function InvoicesPage() {
                 }).toString();
                 router.push(`/billing/invoices/new?${queryParams}`);
             } else {
-                 showEnhancedToast({ variant: "destructive", title: 'Edit Failed', description: `Could not cancel the original invoice.` });
+                 console.error( variant: "destructive", title: 'Edit Failed', description: `Could not cancel the original invoice.` );
             }
         } else if (action === 'Remind') {
             const customer: any = customers.find(c => c.id === invoice.raw.customerId);
@@ -275,7 +275,7 @@ export default function InvoicesPage() {
                 );
                 window.open(`https://wa.me/${customer.phone}?text=${message}`, '_blank');
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Cannot Send Reminder", description: "Customer phone number is not available." });
+                 console.error( variant: "destructive", title: "Cannot Send Reminder", description: "Customer phone number is not available." );
             }
         }
         else if (action === 'Ewaybill') {
@@ -283,10 +283,10 @@ export default function InvoicesPage() {
           setIsEwaybillDialogOpen(true);
         }
         else {
-            toast({
+            console.log(
                 title: `Action: ${action}`,
                 description: `This would ${action.toLowerCase()} invoice ${invoice.id}. This is a placeholder.`
-            });
+            );
         }
     }
 

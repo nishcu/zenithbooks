@@ -28,14 +28,14 @@ import { Loader2, Wand2, ArrowLeft } from "lucide-react";
 import { suggestHsnCodeAction } from "./actions";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 
 const formSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-});
+);
 
 type SuggestionResult = {
   hsnCode: string;
@@ -45,14 +45,14 @@ type SuggestionResult = {
 export default function SuggestHsnPage() {
   const [result, setResult] = useState<SuggestionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
     },
-  });
+  );
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -60,20 +60,20 @@ export default function SuggestHsnPage() {
     try {
       const response = await suggestHsnCodeAction({
         productOrServiceDescription: values.description,
-      });
+      );
       if (response?.hsnCode) {
         setResult(response);
-        toast({ title: "HSN Code Suggestion Received!"});
+        console.log( title: "HSN Code Suggestion Received!");
       } else {
-        showEnhancedToast({ variant: "destructive", title: "Suggestion Failed",
+        console.error( variant: "destructive", title: "Suggestion Failed",
           description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.",
-        });
+        );
       }
     } catch (e: any) {
       const errorMessage = e?.message || "An unexpected error occurred. Please check the console and try again.";
-      showEnhancedToast({ variant: "destructive", title: "An Error Occurred",
+      console.error( variant: "destructive", title: "An Error Occurred",
         description: errorMessage,
-      });
+      );
       console.error("HSN Code Suggestion Error:", e);
     } finally {
       setIsLoading(false);

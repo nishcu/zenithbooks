@@ -27,8 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Save, Wand2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Image from 'next/image';
 import { generateTermsAction } from "./actions";
 import { Separator } from "@/components/ui/separator";
@@ -58,11 +58,11 @@ const formSchema = z.object({
 
   defaultPaymentTerms: z.string().default('net_30'),
   invoiceTerms: z.string().optional(),
-});
+);
 
 export default function BrandingPage() {
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
-    const { toast } = useToast();
+    
     const logoInputRef = useRef<HTMLInputElement>(null);
     const sigCanvasRef = useRef<SignatureCanvas | null>(null);
 
@@ -75,12 +75,12 @@ export default function BrandingPage() {
             ...defaultBrandingSettings,
             logo: null,
         },
-    });
+    );
 
     useEffect(() => {
         if (typeof window === "undefined") return;
         const saved = readBrandingSettings();
-        form.reset({ ...saved, logo: null });
+        form.reset({ ...saved, logo: null );
         setLogoPreview(saved.logoDataUrl || null);
     }, [form]);
 
@@ -98,7 +98,7 @@ export default function BrandingPage() {
     const saveSignature = () => {
         const dataUrl = sigCanvasRef.current?.getTrimmedCanvas().toDataURL('image/png');
         console.log("Signature saved (simulated):", dataUrl);
-        toast({title: "Signature Saved!"});
+        console.log(title: "Signature Saved!");
     }
 
     function onSubmit(values: z.infer<typeof formSchema>) {
@@ -113,28 +113,28 @@ export default function BrandingPage() {
         writeBrandingSettings(payload);
         setTimeout(() => {
             setIsSaving(false);
-            toast({
+            console.log(
                 title: "Branding Settings Saved!",
                 description: "Your company details have been updated.",
-            });
+            );
         }, 1500);
     }
     
     const handleGenerateTerms = async () => {
         const companyName = form.getValues("companyName");
         if (!companyName) {
-            form.setError("companyName", { type: "manual", message: "Company name is required to generate terms." });
+            form.setError("companyName", { type: "manual", message: "Company name is required to generate terms." );
             return;
         }
         setIsGeneratingTerms(true);
         try {
-            const result = await generateTermsAction({ companyName });
+            const result = await generateTermsAction({ companyName );
             if (result?.terms) {
                 form.setValue("invoiceTerms", result.terms);
-                toast({ title: "Terms & Conditions Generated!" });
+                console.log( title: "Terms & Conditions Generated!" );
             }
         } catch (e) {
-            showEnhancedToast({ variant: "destructive", title: "Error", description: "Failed to generate terms." });
+            console.error( variant: "destructive", title: "Error", description: "Failed to generate terms." );
         } finally {
             setIsGeneratingTerms(false);
         }

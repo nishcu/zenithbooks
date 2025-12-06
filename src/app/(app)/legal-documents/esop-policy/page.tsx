@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel, FormDescription } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, Save, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { db, auth } from "@/lib/firebase";
@@ -33,12 +33,12 @@ const formSchema = z.object({
   vestingPeriodYears: z.coerce.number().positive("Vesting period must be positive."),
   cliffPeriodMonths: z.coerce.number().min(0, "Cliff period cannot be negative."),
   exercisePrice: z.enum(["market_value", "face_value", "discounted"]),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function EsopPolicy() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -53,7 +53,7 @@ export default function EsopPolicy() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'esop_policy'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -65,7 +65,7 @@ export default function EsopPolicy() {
       cliffPeriodMonths: 12,
       exercisePrice: "face_value",
     },
-  });
+  );
 
   useEffect(() => {
     if (docId && user) {
@@ -77,13 +77,13 @@ export default function EsopPolicy() {
           const data = docSnap.data();
           if (data.userId === user.uid) {
             form.reset(data.formData);
-            toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
+            console.log( title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` );
           } else {
-            showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
+            console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." );
             router.push('/legal-documents/esop-policy');
           }
         } else {
-          showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
+          console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." );
           router.push('/legal-documents/esop-policy');
         }
         setIsLoading(false);
@@ -105,19 +105,19 @@ export default function EsopPolicy() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
   const handleSaveDraft = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: 'Authentication Error' });
+      console.error( variant: "destructive", title: 'Authentication Error' );
       return;
     }
     setIsSubmitting(true);
@@ -125,8 +125,8 @@ export default function EsopPolicy() {
     try {
       if (docId) {
         const docRef = doc(db, "userDocuments", docId);
-        await updateDoc(docRef, { formData, updatedAt: new Date() });
-        toast({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
+        await updateDoc(docRef, { formData, updatedAt: new Date() );
+        console.log( title: "Draft Updated", description: `Updated "${formData.documentName}".` );
       } else {
         const docRef = await addDoc(collection(db, 'userDocuments'), {
           userId: user.uid,
@@ -135,13 +135,13 @@ export default function EsopPolicy() {
           status: 'Draft',
           formData,
           createdAt: new Date(),
-        });
-        toast({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
+        );
+        console.log( title: "Draft Saved!", description: `Saved "${formData.documentName}".` );
         router.push(`/legal-documents/esop-policy?id=${docRef.id}`);
       }
     } catch (e) {
       console.error(e);
-      showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+      console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' );
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +151,7 @@ export default function EsopPolicy() {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      toast({ title: "Details Saved", description: "Proceeding to the next step." });
+      console.log( title: "Details Saved", description: "Proceeding to the next step." );
     }
   };
 
@@ -218,10 +218,10 @@ export default function EsopPolicy() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    console.error( variant: "destructive", title: "Error", description: "Could not find document content." );
                     return;
                   }
-                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
+                  console.log( title: "Generating PDF...", description: "Your document is being prepared." );
                   const opt = {
                     margin: [10, 10, 10, 10],
                     filename: `ESOP-Policy-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(), "yyyy-MM-dd")}.pdf`,
@@ -231,9 +231,9 @@ export default function EsopPolicy() {
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                   };
                   await html2pdf().set(opt).from(documentRef.current).save();
-                  toast({ title: "PDF Generated", description: "Your ESOP Policy has been downloaded successfully." });
+                  console.log( title: "PDF Generated", description: "Your ESOP Policy has been downloaded successfully." );
                 } catch (error: any) {
-                  showEnhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                  console.error( variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." );
                 }
               }}><FileDown className="mr-2"/> Download Full Policy</Button>
             </CardFooter>
@@ -297,12 +297,12 @@ export default function EsopPolicy() {
                         reportType: "ESOP Policy Certification",
                         clientName: form.getValues("companyName"),
                         formData: form.getValues(),
-                      });
+                      );
                     }}
                     onFailure={() => {
-                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                      console.error( variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      });
+                      );
                     }}
                   />
                 );

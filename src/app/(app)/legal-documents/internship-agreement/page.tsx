@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, Printer, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -41,12 +41,12 @@ const formSchema = z.object({
   confidentiality: z.string().default("The Intern agrees to keep all proprietary information, trade secrets, and business information of the Company confidential during and after the internship period."),
   signerName: z.string().min(3, "Signer's name is required."),
   signerTitle: z.string().min(3, "Signer's title is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function InternshipAgreementPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -57,7 +57,7 @@ export default function InternshipAgreementPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'internship_agreement'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -80,13 +80,13 @@ export default function InternshipAgreementPage() {
       signerName: "",
       signerTitle: "",
     },
-  });
+  );
 
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       agreementDate: new Date().toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data with real-time updates
@@ -95,12 +95,12 @@ export default function InternshipAgreementPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -121,10 +121,10 @@ export default function InternshipAgreementPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 3) {
-        toast({ title: `Step ${step} Saved` });
+        console.log( title: `Step ${step} Saved` );
       }
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Validation Error" });
+      console.error( variant: "destructive", title: "Validation Error" );
     }
   };
 
@@ -251,15 +251,15 @@ export default function InternshipAgreementPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -325,12 +325,12 @@ export default function InternshipAgreementPage() {
                     reportType: "Internship Agreement Certification",
                     clientName: form.getValues("companyName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

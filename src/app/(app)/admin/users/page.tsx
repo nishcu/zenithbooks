@@ -26,8 +26,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -61,8 +61,8 @@ export default function AdminUsers() {
     email: '',
     userType: 'business' as 'business' | 'professional' | 'freemium',
     companyName: ''
-  });
-  const { toast } = useToast();
+  );
+  
 
   // Check if user is super admin
   const isSuperAdmin = user?.uid === SUPER_ADMIN_UID;
@@ -102,7 +102,7 @@ export default function AdminUsers() {
         headers: {
           'x-user-id': user?.uid || '',
         },
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -112,15 +112,15 @@ export default function AdminUsers() {
         }));
         setUsers(usersWithStatus);
       } else {
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Failed to fetch users. You may not have admin privileges.",
-        });
+        );
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to load users. Please try again.",
-      });
+      );
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +163,7 @@ export default function AdminUsers() {
       email: user.email,
       userType: user.userType,
       companyName: user.companyName
-    });
+    );
     setIsEditDialogOpen(true);
   };
 
@@ -182,7 +182,7 @@ export default function AdminUsers() {
           targetUserId: selectedUser.id,
           updates: editFormData,
         }),
-      });
+      );
 
       if (response.ok) {
         // Update local state
@@ -191,23 +191,23 @@ export default function AdminUsers() {
             ? { ...u, ...editFormData }
             : u
         ));
-        toast({
+        console.log(
           title: "User Updated",
           description: `User ${editFormData.email} has been updated successfully.`,
-        });
+        );
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: error.error || "Failed to update user.",
-        });
+        );
       }
     } catch (error) {
       console.error("Error updating user:", error);
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to update user. Please try again.",
-      });
+      );
     } finally {
       setIsLoadingAction(null);
     }
@@ -220,16 +220,16 @@ export default function AdminUsers() {
     try {
       // For now, simulate password reset since we don't have the actual implementation
       await new Promise(resolve => setTimeout(resolve, 800));
-      toast({
+      console.log(
         title: "Password Reset",
         description: `Password reset functionality will be implemented soon.`,
-      });
+      );
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to reset password.",
-      });
+      );
     } finally {
       setIsLoadingAction(null);
     }
@@ -246,17 +246,17 @@ export default function AdminUsers() {
           ? { ...u, status: 'Suspended' as User['status'] }
           : u
       ));
-      toast({
+      console.log(
         title: "User Suspended",
         description: `${selectedUser.email} has been suspended.`,
         variant: "destructive",
-      });
+      );
       setIsSuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to suspend user.",
-      });
+      );
     } finally {
       setIsLoadingAction(null);
     }
@@ -273,16 +273,16 @@ export default function AdminUsers() {
           ? { ...u, status: 'Active' as User['status'] }
           : u
       ));
-      toast({
+      console.log(
         title: "User Unsuspended",
         description: `${selectedUser.email} has been unsuspended and can now access the platform.`,
-      });
+      );
       setIsUnsuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to unsuspend user.",
-      });
+      );
     } finally {
       setIsLoadingAction(null);
     }
@@ -302,29 +302,29 @@ export default function AdminUsers() {
         body: JSON.stringify({
           targetUserId: selectedUser.id,
         }),
-      });
+      );
 
       if (response.ok) {
         // Remove user from local state
         setUsers(users.filter((u: User) => u.id !== selectedUser.id));
-        toast({
+        console.log(
           title: "User Deleted",
           description: `${selectedUser.email} has been deleted from the system.`,
           variant: "destructive",
-        });
+        );
         setIsDeleteDialogOpen(false);
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: error.error || "Failed to delete user.",
-        });
+        );
       }
     } catch (error) {
       console.error("Error deleting user:", error);
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to delete user. Please try again.",
-      });
+      );
     } finally {
       setIsLoadingAction(null);
     }

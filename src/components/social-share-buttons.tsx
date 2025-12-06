@@ -4,8 +4,8 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Twitter, Facebook, MessageSquare } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -15,7 +15,7 @@ interface SocialShareButtonsProps {
 }
 
 export const SocialShareButtons = ({ url, title }: SocialShareButtonsProps) => {
-  const { toast } = useToast();
+  
   const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${url}` : url;
 
   const handleShare = (platform: "linkedin" | "twitter" | "facebook" | "whatsapp") => {

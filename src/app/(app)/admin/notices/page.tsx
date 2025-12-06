@@ -24,8 +24,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 
 type Notice = {
@@ -54,7 +54,7 @@ export default function AdminNotices() {
   const [selectedProfessional, setSelectedProfessional] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<Notice['status']>('Pending Assignment');
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -89,10 +89,10 @@ export default function AdminNotices() {
         ? { ...n, assignedTo: selectedProfessional, status: 'In Progress' as Notice['status'] }
         : n
     ));
-    toast({
+    console.log(
       title: "Notice Assigned",
       description: `Notice ${selectedNotice.id} has been assigned to ${selectedProfessional}.`,
-    });
+    );
     setIsAssignDialogOpen(false);
     setSelectedNotice(null);
     setSelectedProfessional('');
@@ -114,10 +114,10 @@ export default function AdminNotices() {
         ? { ...n, status: selectedStatus }
         : n
     ));
-    toast({
+    console.log(
       title: "Status Updated",
       description: `Notice ${selectedNotice.id} status has been updated to ${selectedStatus}.`,
-    });
+    );
     setIsUpdateStatusDialogOpen(false);
     setSelectedNotice(null);
     setIsLoading(null);

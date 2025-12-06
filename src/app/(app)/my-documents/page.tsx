@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, FileText, Edit, Trash2, Download, FileArchive, CheckCircle, Bell, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { readBrandingSettings } from "@/lib/branding";
 import {
   AlertDialog,
@@ -50,7 +50,7 @@ const numberToWords = (num: number): string => {
 export default function MyDocumentsPage() {
     const [user, loadingUser] = useAuthState(auth);
     const router = useRouter();
-    const { toast } = useToast();
+    
 
     const userDocsQuery = user ? query(collection(db, "userDocuments"), where("userId", "==", user.uid)) : null;
     const [docsSnapshot, docsLoading] = useCollection(userDocsQuery);
@@ -118,16 +118,16 @@ export default function MyDocumentsPage() {
         if (baseUrl) {
             router.push(`${baseUrl}?id=${doc.id}`);
         } else {
-            showEnhancedToast({ variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.' });
+            console.error( variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.' );
         }
     }
 
      const handleDelete = async (docId: string, docName: string) => {
         try {
             await deleteDoc(doc(db, "userDocuments", docId));
-            toast({ title: "Draft Deleted", description: `"${docName}" has been removed.` });
+            console.log( title: "Draft Deleted", description: `"${docName}" has been removed.` );
         } catch (error) {
-            showEnhancedToast({ variant: "destructive", title: 'Error', description: 'Could not delete the document draft.' });
+            console.error( variant: "destructive", title: 'Error', description: 'Could not delete the document draft.' );
             console.error("Error deleting document: ", error);
         }
     };
@@ -136,10 +136,10 @@ export default function MyDocumentsPage() {
         // For certified documents, generate PDF on-demand
         if (doc.isCertified) {
             try {
-                toast({
+                console.log(
                     title: "Generating PDF...",
                     description: "Your certified document is being prepared for download.",
-                });
+                );
 
                 // Create a temporary element with the certificate content
                 const tempDiv = document.createElement('div');
@@ -202,34 +202,34 @@ export default function MyDocumentsPage() {
                 // Close the print window
                 printWindow.close();
 
-                toast({
+                console.log(
                     title: "PDF Downloaded",
                     description: "Your certified document has been downloaded successfully.",
-                });
+                );
             } catch (error) {
                 console.error("PDF generation error:", error);
-                showEnhancedToast({ variant: "destructive", title: "Download Failed",
+                console.error( variant: "destructive", title: "Download Failed",
                     description: "Failed to generate PDF. Please try again or contact support.",
-                });
+                );
             }
         } else if (doc.downloadUrl) {
             window.open(doc.downloadUrl, '_blank');
         } else {
-            toast({
+            console.log(
                 title: "Download Not Available",
                 description: "The PDF for this document is not available. Please contact support.",
                 variant: "destructive",
-            });
+            );
         }
     };
 
     const handleView = (doc: any) => {
         // For certified documents, show details
         if (doc.isCertified) {
-            toast({
+            console.log(
                 title: "Certified Document",
                 description: `This is a certified ${doc.documentType} for ${doc.documentName}. Use the download button to get the PDF.`,
-            });
+            );
         }
     }
 

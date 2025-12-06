@@ -25,8 +25,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 
 type Appointment = {
@@ -54,7 +54,7 @@ export default function AdminAppointments() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -98,10 +98,10 @@ export default function AdminAppointments() {
         ? { ...a, date: newDate, status: 'Confirmed' as Appointment['status'] }
         : a
     ));
-    toast({
+    console.log(
       title: "Appointment Rescheduled",
       description: `Appointment ${selectedAppointment.id} has been rescheduled successfully.`,
-    });
+    );
     setIsRescheduleDialogOpen(false);
     setSelectedAppointment(null);
     setRescheduleDate('');
@@ -118,11 +118,11 @@ export default function AdminAppointments() {
         ? { ...a, status: 'Cancelled' as Appointment['status'] }
         : a
     ));
-    toast({
+    console.log(
       title: "Appointment Cancelled",
       description: `Appointment ${selectedAppointment.id} has been cancelled.`,
       variant: "destructive",
-    });
+    );
     setIsCancelDialogOpen(false);
     setSelectedAppointment(null);
     setIsLoading(null);

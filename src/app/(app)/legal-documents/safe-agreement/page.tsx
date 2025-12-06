@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, Printer, FileDown, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -30,12 +30,12 @@ const formSchema = z.object({
   agreementDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
   valuationCap: z.coerce.number().positive("Valuation cap is required."),
   discountRate: z.coerce.number().min(0).max(100).default(20),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function SafeAgreement() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -45,7 +45,7 @@ export default function SafeAgreement() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'safe_agreement'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -57,7 +57,7 @@ export default function SafeAgreement() {
       valuationCap: 50000000,
       discountRate: 20,
     },
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -72,25 +72,25 @@ export default function SafeAgreement() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-  });
+  );
 
   const processStep = async () => {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      toast({ title: "Details Saved", description: "Proceeding to the next step." });
+      console.log( title: "Details Saved", description: "Proceeding to the next step." );
     }
   };
 
@@ -221,12 +221,12 @@ export default function SafeAgreement() {
                         reportType: "SAFE Agreement Certification",
                         clientName: form.getValues("companyName"),
                         formData: form.getValues(),
-                      });
+                      );
                     }}
                     onFailure={() => {
-                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                      console.error( variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      });
+                      );
                     }}
                   />
                 );

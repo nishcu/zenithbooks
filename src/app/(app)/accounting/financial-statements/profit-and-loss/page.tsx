@@ -30,8 +30,8 @@ import {
 import { DateRangeSelector } from "@/components/date-range-selector";
 import { Separator } from "@/components/ui/separator";
 import { ReportRow } from "@/components/accounting/report-row";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { AccountingContext, JournalVoucher } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -76,7 +76,7 @@ export default function ProfitAndLossPage() {
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
 
-  const { toast } = useToast();
+  
   const context = useContext(AccountingContext);
   const journalVouchers: JournalVoucher[] = context?.journalVouchers ?? [];
   const reportRef = useRef<HTMLDivElement>(null);
@@ -105,14 +105,14 @@ export default function ProfitAndLossPage() {
       const voucherDate = new Date(voucher.date);
       if (isNaN(voucherDate.getTime())) return false;
       return voucherDate >= fromDate && voucherDate <= toDate;
-    });
+    );
   }, [journalVouchers, dateRange]);
 
   const accountBalances = useMemo(() => {
     const balances: Record<string, number> = {};
     combinedAccounts.forEach((acc) => {
       balances[acc.code] = 0;
-    });
+    );
     filteredJournalVouchers.forEach((voucher) => {
       voucher.lines.forEach((line) => {
         const accountDetails = combinedAccounts.find((a) => a.code === line.account);
@@ -121,8 +121,8 @@ export default function ProfitAndLossPage() {
           const credit = parseFloat(line.credit) || 0;
           balances[line.account] += DEBIT_INCREASING_TYPES.has(accountDetails.type) ? debit - credit : credit - debit;
         }
-      });
-    });
+      );
+    );
     return balances;
   }, [filteredJournalVouchers, combinedAccounts]);
 
@@ -185,7 +185,7 @@ export default function ProfitAndLossPage() {
     if (grossProfit < 0) rows.push(["", "To Gross Loss b/d", sanitizeNaN(-grossProfit)]);
     expenseAccounts.forEach((acc) => {
       rows.push(["", `To ${acc.name}`, sanitizeNaN(accountBalances[acc.code])]);
-    });
+    );
     if (netProfit >= 0) rows.push(["", "To Net Profit", sanitizeNaN(netProfit)]);
     rows.push(["", "TOTAL", sanitizeNaN(plTotal)]);
     rows.push([]);
@@ -202,7 +202,7 @@ export default function ProfitAndLossPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast({ title: "CSV Downloaded Successfully!" });
+    console.log( title: "CSV Downloaded Successfully!" );
   };
 
   return (
@@ -245,7 +245,7 @@ export default function ProfitAndLossPage() {
             onToDateChange={setToDate}
             onSubmit={() => {
               if (fromDate && toDate) {
-                setDateRange({ from: fromDate, to: toDate });
+                setDateRange({ from: fromDate, to: toDate );
               }
             }}
             submitLabel="Generate Report"

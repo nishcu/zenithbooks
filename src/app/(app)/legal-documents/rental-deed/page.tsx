@@ -32,8 +32,8 @@ import {
   Printer
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -73,12 +73,12 @@ const formSchema = z.object({
 
   allowPets: z.boolean().default(false),
   allowSubletting: z.boolean().default(false),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function RentalDeedPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -89,7 +89,7 @@ export default function RentalDeedPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'rental_deed'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -122,7 +122,7 @@ export default function RentalDeedPage() {
       allowPets: false,
       allowSubletting: false,
     },
-  });
+  );
 
   // Load pricing data with real-time updates
   useEffect(() => {
@@ -130,12 +130,12 @@ export default function RentalDeedPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -158,15 +158,15 @@ export default function RentalDeedPage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 4) {
-        toast({
+        console.log(
             title: `Step ${step} Saved`,
             description: `Proceeding to step ${step + 1}.`,
-        });
+        );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
-        });
+        );
     }
   };
 
@@ -360,15 +360,15 @@ export default function RentalDeedPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -434,12 +434,12 @@ export default function RentalDeedPage() {
                     reportType: "Rental Agreement Certification",
                     clientName: form.getValues("tenantName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

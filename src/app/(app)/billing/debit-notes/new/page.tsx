@@ -48,8 +48,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { AccountingContext } from "@/context/accounting-context";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -58,7 +58,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function NewDebitNotePage() {
   const accountingContext = useContext(AccountingContext);
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
 
   const [debitNoteDate, setDebitNoteDate] = useState<Date | undefined>(new Date());
@@ -126,7 +126,7 @@ export default function NewDebitNotePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !originalPurchase) {
-        showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill."});
+        console.error( variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill.");
         return;
     }
     
@@ -148,10 +148,10 @@ export default function NewDebitNotePage() {
             lines: journalLines,
             amount: totalAmount,
             vendorId: vendor,
-        });
-        toast({ title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.` });
+        );
+        console.log( title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.` );
     } catch (e: any) {
-        showEnhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
     }
   }
 

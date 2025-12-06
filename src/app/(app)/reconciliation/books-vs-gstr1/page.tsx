@@ -22,8 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Upload, GitCompareArrows, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import * as XLSX from 'xlsx';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -56,7 +56,7 @@ type ReconciliationResult = {
 };
 
 export default function BooksVsGstr1Page() {
-    const { toast } = useToast();
+    
     const { journalVouchers, loading: jvLoading } = useContext(AccountingContext)!;
     const reportRef = useRef<HTMLDivElement>(null);
     
@@ -76,7 +76,7 @@ export default function BooksVsGstr1Page() {
                     taxableValue,
                     taxAmount
                 };
-            });
+            );
     }, [journalVouchers]);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +86,7 @@ export default function BooksVsGstr1Page() {
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array' );
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet) as Gstr1Record[];
@@ -94,9 +94,9 @@ export default function BooksVsGstr1Page() {
             // Basic validation
             if (json.length > 0 && 'Invoice number' in json[0] && 'Invoice value' in json[0]) {
                  setGstr1Data(json);
-                 toast({ title: "GSTR-1 Data Loaded", description: `${json.length} records found.` });
+                 console.log( title: "GSTR-1 Data Loaded", description: `${json.length} records found.` );
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Invalid File", description: "The uploaded file does not seem to be a valid GSTR-1 report." });
+                 console.error( variant: "destructive", title: "Invalid File", description: "The uploaded file does not seem to be a valid GSTR-1 report." );
             }
         };
         reader.readAsArrayBuffer(file);
@@ -113,17 +113,17 @@ export default function BooksVsGstr1Page() {
         bookSalesData.forEach(bookInv => {
             const gstr1Inv = gstr1InvoicesMap.get(bookInv.invoiceNumber);
             if (gstr1Inv) {
-                reconciled.push({ ...bookInv, gstr1Value: gstr1Inv['Invoice value'] });
+                reconciled.push({ ...bookInv, gstr1Value: gstr1Inv['Invoice value'] );
                 gstr1InvoicesMap.delete(bookInv.invoiceNumber); // Remove from map to find what's left
             } else {
                 onlyInBooks.push(bookInv);
             }
-        });
+        );
 
         onlyInGstr1.push(...Array.from(gstr1InvoicesMap.values()));
 
-        setReconciliationResult({ reconciled, onlyInBooks, onlyInGstr1 });
-        toast({ title: "Reconciliation Complete!", description: "Review the results below." });
+        setReconciliationResult({ reconciled, onlyInBooks, onlyInGstr1 );
+        console.log( title: "Reconciliation Complete!", description: "Review the results below." );
     };
 
     const bookTotal = bookSalesData.reduce((acc, curr) => acc + curr.taxableValue, 0);

@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Printer, MessageSquare, Share2, Mail, Copy, Download } from "lucide-react";
 import React, { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import html2pdf from "html2pdf.js";
 import { EmailDialog } from "./email-dialog";
 
@@ -37,30 +37,30 @@ export function ShareButtons({
   showDownloadOnly = false,
   enableEmailSend = true
 }: ShareButtonsProps) {
-  const { toast } = useToast();
+  
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const handleDownloadPdf = async () => {
     const element = contentRef.current;
     if (!element) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Could not find the content to download.",
-      });
+      );
       return;
     }
 
     // Check if element has content
     if (!element.innerHTML || element.innerHTML.trim() === '') {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "The content appears to be empty. Please ensure the page is fully loaded.",
-      });
+      );
       return;
     }
 
-    toast({
+    console.log(
       title: "Generating PDF...",
       description: "Your document is being prepared for download.",
-    });
+    );
 
     try {
       // Ensure content is fully loaded before generating PDF
@@ -88,16 +88,16 @@ export function ShareButtons({
 
       await html2pdf().set(opt).from(element).save();
 
-      toast({
+      console.log(
         title: "PDF Generated",
         description: "Your PDF has been downloaded successfully.",
-      });
+      );
     } catch (error: any) {
       console.error("PDF generation error:", error);
       console.error("Element:", element);
-      showEnhancedToast({ variant: "destructive", title: "PDF Generation Failed",
+      console.error( variant: "destructive", title: "PDF Generation Failed",
         description: error.message || "An error occurred while generating the PDF. Please try again.",
-      });
+      );
     }
   };
 
@@ -123,7 +123,7 @@ export function ShareButtons({
 
         const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
 
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' );
 
         // Check if we can share the file
         if (navigator.canShare({ files: [file] })) {
@@ -131,12 +131,12 @@ export function ShareButtons({
             title: shareTitle || fileName,
             text: message,
             files: [file]
-          });
+          );
 
-          toast({
+          console.log(
             title: "Shared successfully",
             description: "Document shared with PDF attachment.",
-          });
+          );
           return;
         }
       } catch (error) {
@@ -163,10 +163,10 @@ export function ShareButtons({
 
       await html2pdf().set(opt).from(element).save(fileName);
 
-      toast({
+      console.log(
         title: "PDF Downloaded",
         description: "PDF has been downloaded. Please attach it manually to WhatsApp.",
-      });
+      );
 
       // Small delay to ensure download starts, then open WhatsApp
       setTimeout(() => {
@@ -181,10 +181,10 @@ export function ShareButtons({
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
 
-      toast({
+      console.log(
         title: "WhatsApp opened",
         description: "Please download the PDF and attach it manually.",
-      });
+      );
     }
   };
 
@@ -205,14 +205,14 @@ export function ShareButtons({
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
       await navigator.clipboard.writeText(url);
-      toast({
+      console.log(
         title: "Link copied!",
         description: "The page link has been copied to your clipboard.",
-      });
+      );
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Failed to copy link to clipboard.",
-      });
+      );
     }
   };
 
@@ -224,12 +224,12 @@ export function ShareButtons({
           title: shareTitle || fileName,
           text: whatsappMessage || `Check out this ${fileName}`,
           url: url,
-        });
+        );
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          showEnhancedToast({ variant: "destructive", title: "Error",
+          console.error( variant: "destructive", title: "Error",
             description: "Failed to share. Please try another method.",
-          });
+          );
         }
       }
     } else {

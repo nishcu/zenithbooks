@@ -40,7 +40,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { showEnhancedToast } from "@/lib/error-handler";
+import {  } from "@/lib/error-handler";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
@@ -58,11 +58,11 @@ const formSchema = z.object({
   acceptPolicies: z.boolean().refine(val => val === true, {
     message: "You must accept the Terms & Conditions and Cancellation & Refund Policy"
   }),
-});
+);
 
 export function SignupForm() {
   const router = useRouter();
-  const { toast } = useToast();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
@@ -78,7 +78,7 @@ export function SignupForm() {
         password: "",
         acceptPolicies: false,
     }
-  });
+  );
 
   useEffect(() => {
     const handleRedirectResult = async () => {
@@ -100,10 +100,10 @@ export function SignupForm() {
               userType: "business", // Default to business
               companyName: user.displayName || "My Company",
               createdAt: new Date(),
-            });
+            );
           }
           
-          toast({ title: "Signup Successful", description: "Welcome to ZenithBooks!" });
+          console.log( title: "Signup Successful", description: "Welcome to ZenithBooks!" );
           router.push("/dashboard");
         } else {
           // No redirect result, probably a direct page load
@@ -111,11 +111,11 @@ export function SignupForm() {
         }
       } catch (error: any) {
         console.error("Google Signup Error:", error);
-        showEnhancedToast({
+        console.error(
           variant: "default",
           title: "Couldn't Sign Up with Google",
           description: error.message || "Something went wrong. Please try again or sign up with email.",
-        });
+        );
         setIsCheckingRedirect(false);
         setIsGoogleLoading(false);
       }
@@ -133,11 +133,11 @@ export function SignupForm() {
       // Check password strength
       const passwordCheck = checkPasswordStrength(values.password);
       if (!passwordCheck.valid) {
-        showEnhancedToast({
+        console.error(
           variant: "default",
           title: "Password Needs to be Stronger",
           description: passwordCheck.feedback.join(" ") + " Please create a stronger password to keep your account secure.",
-        });
+        );
         setIsLoading(false);
         return;
       }
@@ -157,7 +157,7 @@ export function SignupForm() {
         userType: values.userType,
         companyName: values.companyName,
         createdAt: new Date(),
-      });
+      );
 
       showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
 

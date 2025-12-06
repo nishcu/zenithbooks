@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Wand2, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { showEnhancedToast } from "@/lib/error-handler";
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -47,7 +47,7 @@ type Item = {
 
 export default function ItemsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const { toast } = useToast();
+  
 
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -74,9 +74,9 @@ export default function ItemsPage() {
     const itemDocRef = doc(db, "items", item.id);
     try {
         await deleteDoc(itemDocRef);
-        toast({ title: "Item Deleted", description: `${item.name} has been removed.` });
+        console.log( title: "Item Deleted", description: `${item.name} has been removed.` );
     } catch (e) {
-        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the item." });
+        console.error( variant: "destructive", title: "Error", description: "Could not delete the item." );
     }
   }
 

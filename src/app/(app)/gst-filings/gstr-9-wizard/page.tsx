@@ -24,8 +24,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, FileJson, FileDown, Upload, Download } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -58,7 +58,7 @@ const initialTaxPaid = [
 
 export default function Gstr9WizardPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-  const { toast } = useToast();
+  
   const reportRef = useRef<HTMLDivElement>(null);
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
@@ -88,10 +88,10 @@ export default function Gstr9WizardPage() {
   }
 
   const handleNext = () => {
-    toast({
+    console.log(
       title: `Step ${step} Saved!`,
       description: `Moving to the next step.`,
-    });
+    );
     setStep(prev => prev + 1);
   };
 
@@ -108,7 +108,7 @@ export default function Gstr9WizardPage() {
         // ... include data from other steps
     };
     const jsonString = JSON.stringify(reportData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
+    const blob = new Blob([jsonString], { type: "application/json" );
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -117,10 +117,10 @@ export default function Gstr9WizardPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast({
+    console.log(
       title: `JSON Generation Complete`,
       description: `Your GSTR-9 JSON file has been downloaded.`,
-    });
+    );
   };
 
   const renderStep = () => {
@@ -149,7 +149,7 @@ export default function Gstr9WizardPage() {
                             "Note": "This is a sample template. Replace with your actual GSTR-9 data."
                         };
                         const jsonString = JSON.stringify(templateData, null, 2);
-                        const blob = new Blob([jsonString], { type: "application/json" });
+                        const blob = new Blob([jsonString], { type: "application/json" );
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement("a");
                         link.href = url;
@@ -158,10 +158,10 @@ export default function Gstr9WizardPage() {
                         link.click();
                         document.body.removeChild(link);
                         URL.revokeObjectURL(url);
-                        toast({
+                        console.log(
                             title: "Template Downloaded",
                             description: "GSTR-9 template has been downloaded. Fill in your data and upload.",
-                        });
+                        );
                     }}><Download className="mr-2"/> Download Template</Button>
                 </div>
             </CardContent>
@@ -367,10 +367,10 @@ export default function Gstr9WizardPage() {
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={async () => {
                             if (!reportRef.current) {
-                                showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
+                                console.error( variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." );
                                 return;
                             }
-                            toast({ title: "Generating PDF...", description: "Your GSTR-9 PDF is being generated." });
+                            console.log( title: "Generating PDF...", description: "Your GSTR-9 PDF is being generated." );
                             const opt = {
                                 margin: [10, 10, 10, 10],
                                 filename: `GSTR-9-${format(new Date(), "yyyy-MM-dd")}.pdf`,
@@ -380,7 +380,7 @@ export default function Gstr9WizardPage() {
                                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                             };
                             await html2pdf().set(opt).from(reportRef.current).save();
-                            toast({ title: "PDF Generated", description: "Your GSTR-9 PDF has been downloaded successfully." });
+                            console.log( title: "PDF Generated", description: "Your GSTR-9 PDF has been downloaded successfully." );
                         }}>
                             <FileDown className="mr-2" />
                             Download GSTR-9 PDF

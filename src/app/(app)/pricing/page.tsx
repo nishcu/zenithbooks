@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRoleSimulator } from "@/context/role-simulator-context";
 import { Badge } from "@/components/ui/badge";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -105,7 +105,7 @@ export default function PricingPage() {
     }))
   );
   const [editingTier, setEditingTier] = useState<string | null>(null);
-  const { toast } = useToast();
+  
   const { simulatedRole } = useRoleSimulator();
   const isSuperAdmin = simulatedRole === 'super_admin';
   const [user] = useAuthState(auth);
@@ -149,7 +149,7 @@ export default function PricingPage() {
   
   const handleSave = (tierId: string) => {
     setEditingTier(null);
-    toast({ title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId)?.name} plan have been saved.`});
+    console.log( title: "Pricing Updated", description: `Prices for the ${tiers.find(t=>t.id === tierId)?.name} plan have been saved.`);
   };
   
   const handlePriceChange = (tierId: string, cycle: 'monthly' | 'annually', value: number) => {
@@ -345,18 +345,18 @@ export default function PricingPage() {
                           userEmail={user.email || ''}
                           userName={user.displayName || user.email || ''}
                           onSuccess={(paymentId) => {
-                            toast({
+                            console.log(
                               title: 'Subscription Activated!',
                               description: `Welcome to ${tier.name} plan. Your subscription is now active.`,
-                            });
+                            );
                             // You might want to redirect to dashboard or show success page
                           }}
                           onFailure={() => {
-                            toast({
+                            console.log(
                               variant: 'default',
                               title: 'Payment Couldn\'t Be Processed',
                               description: 'We couldn\'t complete your payment. Please check your payment details and try again.',
-                            });
+                            );
                           }}
                         />
                       )
@@ -364,10 +364,10 @@ export default function PricingPage() {
                       <Button
                         className="w-full"
                         onClick={() => {
-                          toast({
+                          console.log(
                             title: 'Login Required',
                             description: 'Please login or sign up to purchase a subscription.',
-                          });
+                          );
                         }}
                       >
                         Login to Subscribe

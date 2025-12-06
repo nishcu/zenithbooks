@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MailWarning, Upload, UserCheck, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -47,14 +47,14 @@ const noticeSchema = z.object({
   noticeFile: z.custom<File>((val) => val instanceof File, "Notice document is required."),
   dueDate: z.date({ required_error: "A due date for the reply is required."}),
   description: z.string().optional(),
-});
+);
 
 type NoticeFormData = z.infer<typeof noticeSchema>;
 
 
 export default function NoticesPage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-    const { toast } = useToast();
+    
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
     const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
@@ -64,12 +64,12 @@ export default function NoticesPage() {
         defaultValues: {
             noticeType: "GST_NOTICE",
         },
-    });
+    );
 
     const { handlePaymentSuccess } = useCertificationRequest({
         pricing,
         serviceId: form.watch("noticeType").toLowerCase()
-    });
+    );
 
     useEffect(() => {
         getServicePricing().then(setPricing);
@@ -98,7 +98,7 @@ export default function NoticesPage() {
 
     const handleSubmit = async (values: NoticeFormData) => {
         if (!user) {
-            showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit a notice." });
+            console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit a notice." );
             return;
         }
 
@@ -114,16 +114,16 @@ export default function NoticesPage() {
                 description: values.description,
                 status: "Pending Assignment",
                 requestedAt: new Date(),
-            });
+            );
 
-            toast({
+            console.log(
                 title: "Request Submitted Successfully!",
                 description: "Your notice has been sent to the admin panel. A professional will be assigned shortly and will get in touch with you.",
-            });
+            );
             form.reset();
         } catch (error) {
             console.error("Error submitting notice request: ", error);
-            toast({ variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."} );
+            console.log( variant: "destructive", title: "Submission Failed", description: "There was a problem submitting your request."} );
         }
     }
 
@@ -200,14 +200,14 @@ export default function NoticesPage() {
                                     reportType: "Notice Reply",
                                     clientName: "Notice Reply Service",
                                     formData: form.getValues(),
-                                });
+                                );
                                 // Now submit the form
                                 form.handleSubmit((values) => handleSubmit(values))();
                             }}
                             onFailure={() => {
-                                showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                console.error( variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
-                                });
+                                );
                             }}
                         />
                     ) : (

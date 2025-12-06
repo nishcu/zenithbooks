@@ -27,8 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileDown } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useAccountingContext } from "@/context/accounting-context";
@@ -89,7 +89,7 @@ export default function TdsTcsReportsPage() {
       </div>
     );
   }
-  const { toast } = useToast();
+  
   const reportRef = useRef<HTMLDivElement>(null);
   const [reportType, setReportType] = useState("tds");
   const [period, setPeriod] = useState("monthly");
@@ -104,17 +104,17 @@ export default function TdsTcsReportsPage() {
 
   const generateReport = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: "Authentication Required",
+      console.error( variant: "destructive", title: "Authentication Required",
         description: "Please log in to generate reports."
-      });
+      );
       return;
     }
 
     setReportData([]); // Clear previous data
-    toast({
+    console.log(
         title: "Generating Report...",
         description: "Analyzing journal entries for the selected period."
-    });
+    );
 
     try {
       // Determine the date range for the report
@@ -142,7 +142,7 @@ export default function TdsTcsReportsPage() {
       const relevantVouchers = journalVouchers.filter(voucher => {
         const voucherDate = new Date(voucher.date);
         return voucherDate >= startDate && voucherDate <= endDate;
-      });
+      );
 
       console.log('Relevant vouchers:', relevantVouchers.length);
 
@@ -209,7 +209,7 @@ export default function TdsTcsReportsPage() {
                 tdsSection: tdsSection,
                 tdsRate: tdsRate,
                 tdsAmount: tdsAmount,
-              });
+              );
             }
           }
         }
@@ -225,16 +225,16 @@ export default function TdsTcsReportsPage() {
 
       console.log("Report generated with real data:", generatedData);
 
-      toast({
+      console.log(
           title: "Report Generated",
           description: `Found ${generatedData.length} ${reportType.toUpperCase()} transactions for ${periodLabel}.`
-      });
+      );
 
     } catch (error) {
       console.error("Error generating report:", error);
-      showEnhancedToast({ variant: "destructive", title: "Report Generation Failed",
+      console.error( variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
-      });
+      );
     }
   };
 
@@ -356,7 +356,7 @@ export default function TdsTcsReportsPage() {
                 ])
               ].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
 
-              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" );
               const url = URL.createObjectURL(blob);
               const link = document.createElement("a");
               link.href = url;
@@ -366,10 +366,10 @@ export default function TdsTcsReportsPage() {
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
 
-              toast({
+              console.log(
                 title: "Report Exported",
                 description: "The report has been downloaded as a CSV file."
-              });
+              );
             }}
           >
             <FileDown className="mr-2" />

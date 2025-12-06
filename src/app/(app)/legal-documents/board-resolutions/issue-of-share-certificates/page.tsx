@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -31,12 +31,12 @@ const formSchema = z.object({
   certificateNumber: z.string().min(1, "Certificate number is required."),
   director1: z.string().min(3, "Director's name is required."),
   director2: z.string().min(3, "Director's name is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function IssueOfSharesPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
@@ -56,11 +56,11 @@ export default function IssueOfSharesPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -78,15 +78,15 @@ export default function IssueOfSharesPage() {
       director1: "Rohan Sharma",
       director2: "Anjali Singh",
     },
-  });
+  );
 
   const formData = form.watch();
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     documentTitle: `Board_Resolution_Share_Certificate_${formData.companyName}`,
-    onAfterPrint: () => toast({ title: "Print Complete" }),
-  });
+    onAfterPrint: () => console.log( title: "Print Complete" }),
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -183,15 +183,15 @@ export default function IssueOfSharesPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );

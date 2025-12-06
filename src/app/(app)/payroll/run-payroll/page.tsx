@@ -28,8 +28,8 @@ import {
   Shield,
   IndianRupee,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
@@ -61,23 +61,23 @@ const sampleEmployees = [
 ];
 
 export default function RunPayrollPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const [employees, setEmployees] = useState(sampleEmployees);
 
   const handleNext = () => {
-    toast({
+    console.log(
       title: `Step ${step} Complete!`,
-    });
+    );
     setStep((prev) => prev + 1);
   };
   const handleBack = () => setStep((prev) => prev - 1);
   
   const handleFinalize = () => {
-    toast({
+    console.log(
       title: "Payroll Finalized!",
       description: "July 2024 payroll has been processed and recorded."
-    });
+    );
     setStep(1); // Reset
   }
 

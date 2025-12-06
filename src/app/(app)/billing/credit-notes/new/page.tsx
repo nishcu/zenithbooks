@@ -48,8 +48,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { AccountingContext } from "@/context/accounting-context";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -63,7 +63,7 @@ const items = [
 
 export default function NewCreditNotePage() {
   const accountingContext = useContext(AccountingContext);
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   
   const [creditNoteDate, setCreditNoteDate] = useState<Date | undefined>(new Date());
@@ -131,7 +131,7 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice."});
+        console.error( variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice.");
         return;
     }
     
@@ -156,10 +156,10 @@ export default function NewCreditNotePage() {
             lines: journalLines,
             amount: totalAmount,
             customerId: customer,
-        });
-        toast({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.` });
+        );
+        console.log( title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.` );
     } catch (e: any) {
-        showEnhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save journal entry", description: e.message );
     }
   }
 

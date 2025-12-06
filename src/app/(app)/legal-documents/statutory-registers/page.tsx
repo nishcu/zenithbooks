@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileArchive, FileDown, ArrowLeft, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
@@ -30,7 +30,7 @@ const registers = [
 ];
 
 export default function StatutoryRegisters() {
-    const { toast } = useToast();
+    
     const [selectedRegisters, setSelectedRegisters] = useState<string[]>(["reg_members", "reg_directors"]);
     const [user] = useAuthState(auth);
     const [pricing, setPricing] = useState(null);
@@ -50,11 +50,11 @@ export default function StatutoryRegisters() {
         setPricing(pricingData);
       }).catch(error => {
         console.error('Error loading pricing:', error);
-      });
+      );
 
       const unsubscribe = onPricingUpdate(pricingData => {
         setPricing(pricingData);
-      });
+      );
 
       return () => unsubscribe();
     }, []);
@@ -67,26 +67,26 @@ export default function StatutoryRegisters() {
 
     const handleGenerate = async () => {
         if (selectedRegisters.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "No Selection",
+            console.error( variant: "destructive", title: "No Selection",
                 description: "Please select at least one register to generate."
-            });
+            );
             return;
         }
 
-        toast({
+        console.log(
             title: "Generation Started",
             description: `Generating ${selectedRegisters.length} selected registers in Excel format.`
-        });
+        );
 
         try {
             if (selectedRegisters.length === 1) {
                 // Single file download
                 const selectedRegister = registers.find(r => r.id === selectedRegisters[0]);
                 if (selectedRegister) {
-                    const ws = XLSX.utils.json_to_sheet([{}], {header: getHeaders(selectedRegister.id)});
+                    const ws = XLSX.utils.json_to_sheet([{}], {header: getHeaders(selectedRegister.id));
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, selectedRegister.label.substring(0, 31));
-                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' );
                     saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `${selectedRegister.label}.xlsx`);
                 }
             } else {
@@ -95,27 +95,27 @@ export default function StatutoryRegisters() {
                 for (const regId of selectedRegisters) {
                     const selectedRegister = registers.find(r => r.id === regId);
                     if (selectedRegister) {
-                        const ws = XLSX.utils.json_to_sheet([{}], {header: getHeaders(selectedRegister.id)});
+                        const ws = XLSX.utils.json_to_sheet([{}], {header: getHeaders(selectedRegister.id));
                         const wb = XLSX.utils.book_new();
                         XLSX.utils.book_append_sheet(wb, ws, selectedRegister.label.substring(0, 31));
-                        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' );
                         zip.file(`${selectedRegister.label}.xlsx`, new Blob([wbout], { type: 'application/octet-stream' }));
                     }
                 }
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const zipBlob = await zip.generateAsync({ type: 'blob' );
                 saveAs(zipBlob, "Statutory-Registers.zip");
             }
 
-            toast({
+            console.log(
                 title: "Generation Complete",
                 description: "Your files have been downloaded."
-            });
+            );
 
         } catch (error) {
             console.error("Error generating files:", error);
-            showEnhancedToast({ variant: "destructive", title: "Generation Failed",
+            console.error( variant: "destructive", title: "Generation Failed",
                 description: "An error occurred while generating the files."
-            });
+            );
         }
     };
 
@@ -198,15 +198,15 @@ export default function StatutoryRegisters() {
                       userName={user?.displayName || ''}
                       onSuccess={(paymentId) => {
                         setShowDocument(true);
-                        toast({
+                        console.log(
                           title: "Payment Successful",
                           description: "You can now generate the registers."
-                        });
+                        );
                       }}
                       onFailure={() => {
-                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                        console.error( variant: "destructive", title: "Payment Failed",
                           description: "Payment was not completed. Please try again."
-                        });
+                        );
                       }}
                     />
                   ) : (

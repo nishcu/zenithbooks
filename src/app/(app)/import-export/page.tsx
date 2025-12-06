@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Upload, Download, FileSpreadsheet, FileText, Loader2, File, Database, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,7 +42,7 @@ export default function ImportExportPage() {
     const [tallyMasterFile, setTallyMasterFile] = useState<File | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [isExporting, setIsExporting] = useState<string | null>(null);
-    const { toast } = useToast();
+    
 
     const [gstr1File, setGstr1File] = useState<File | null>(null);
     const [gstr2bFile, setGstr2bFile] = useState<File | null>(null);
@@ -70,17 +70,17 @@ export default function ImportExportPage() {
     const handleTallyImport = async (importType: 'vouchers' | 'masters') => {
         const fileToImport = importType === 'vouchers' ? tallyVoucherFile : tallyMasterFile;
         if (!fileToImport) {
-            showEnhancedToast({ variant: "destructive", title: "No File Selected",
+            console.error( variant: "destructive", title: "No File Selected",
                 description: "Please select a Tally XML file to import.",
-            });
+            );
             return;
         }
 
         setIsImporting(true);
-        toast({
+        console.log(
             title: `Importing Tally ${importType}...`,
             description: "This may take a few moments.",
-        });
+        );
 
         const formData = new FormData();
         formData.append('file', fileToImport);
@@ -90,7 +90,7 @@ export default function ImportExportPage() {
             const response = await fetch('/api/import/tally', {
                 method: 'POST',
                 body: formData,
-            });
+            );
 
             const result = await response.json();
 
@@ -98,15 +98,15 @@ export default function ImportExportPage() {
                 throw new Error(result.error || "An unknown error occurred.");
             }
             
-            toast({
+            console.log(
                 title: "Import Successful!",
                 description: result.message,
-            });
+            );
 
         } catch (error: any) {
-             showEnhancedToast({ variant: "destructive", title: "Import Failed",
+             console.error( variant: "destructive", title: "Import Failed",
                 description: error.message,
-            });
+            );
         } finally {
             setIsImporting(false);
             if(importType === 'vouchers') setTallyVoucherFile(null);
@@ -116,7 +116,7 @@ export default function ImportExportPage() {
     
     const handleGenericImport = async (file: File | null, type: string) => {
          if (!file) {
-            toast({ variant: "destructive", title: "No File Selected", description: `Please select a file for ${type}.` });
+            console.log( variant: "destructive", title: "No File Selected", description: `Please select a file for ${type}.` );
             return;
         }
         
@@ -127,23 +127,23 @@ export default function ImportExportPage() {
             
             // Basic validation based on file type
             if (type.includes("JSON") && !fileContent.trim().startsWith("{")) {
-                showEnhancedToast({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.` });
+                console.error( variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid JSON file.` );
                 return;
             }
             
             if (type.includes("XML") && !fileContent.trim().startsWith("<")) {
-                showEnhancedToast({ variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.` });
+                console.error( variant: "destructive", title: "Invalid File", description: `The selected file does not appear to be a valid XML file.` );
                 return;
             }
             
             // For now, we'll validate and show success
             // Actual parsing and import logic would be implemented based on specific requirements
-            toast({ 
+            console.log( 
                 title: "File Validated", 
                 description: `Your ${type} file '${file.name}' has been validated successfully. File size: ${(file.size / 1024).toFixed(2)} KB. Note: Full import functionality will be implemented based on specific requirements.` 
-            });
+            );
         } catch (error: any) {
-            showEnhancedToast({ variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file." });
+            console.error( variant: "destructive", title: "Import Failed", description: error.message || "An error occurred while processing the file." );
         } finally {
             setIsImporting(false);
         }
@@ -176,10 +176,10 @@ export default function ImportExportPage() {
                     await exportItems();
                     break;
                 default:
-                    toast({ variant: "destructive", title: "Unknown Export Type", description: `Export type "${exportType}" is not supported.` });
+                    console.log( variant: "destructive", title: "Unknown Export Type", description: `Export type "${exportType}" is not supported.` );
             }
         } catch (error: any) {
-            showEnhancedToast({ variant: "destructive", title: "Export Failed", description: error.message || "An error occurred during export." });
+            console.error( variant: "destructive", title: "Export Failed", description: error.message || "An error occurred during export." );
         } finally {
             setIsExporting(null);
         }
@@ -199,8 +199,8 @@ export default function ImportExportPage() {
                 v.amount || 0
             ])
         );
-        exportToExcel({ headers, rows }, { fileName: "Day_Book", includeDate: true });
-        toast({ title: "Export Successful", description: "Day Book has been exported successfully." });
+        exportToExcel({ headers, rows }, { fileName: "Day_Book", includeDate: true );
+        console.log( title: "Export Successful", description: "Day Book has been exported successfully." );
     };
 
     const exportGeneralLedger = async () => {
@@ -217,9 +217,9 @@ export default function ImportExportPage() {
                     narration: v.narration,
                     debit: parseFloat(line.debit) || 0,
                     credit: parseFloat(line.credit) || 0
-                });
-            });
-        });
+                );
+            );
+        );
 
         const sheets: ExportData[] = [];
         accountMap.forEach((entries, account) => {
@@ -228,12 +228,12 @@ export default function ImportExportPage() {
             const rows = entries.map(entry => {
                 balance += entry.debit - entry.credit;
                 return [entry.date, entry.voucherId, entry.narration, entry.debit, entry.credit, balance];
-            });
-            sheets.push({ headers, rows, sheetName: account.substring(0, 31) });
-        });
+            );
+            sheets.push({ headers, rows, sheetName: account.substring(0, 31) );
+        );
 
-        exportToExcel(sheets, { fileName: "General_Ledger", includeDate: true });
-        toast({ title: "Export Successful", description: "General Ledger has been exported successfully." });
+        exportToExcel(sheets, { fileName: "General_Ledger", includeDate: true );
+        console.log( title: "Export Successful", description: "General Ledger has been exported successfully." );
     };
 
     const exportTrialBalance = async () => {
@@ -241,13 +241,13 @@ export default function ImportExportPage() {
         journalVouchers.forEach(v => {
             v.lines.forEach(line => {
                 if (!accountMap.has(line.account)) {
-                    accountMap.set(line.account, { debit: 0, credit: 0 });
+                    accountMap.set(line.account, { debit: 0, credit: 0 );
                 }
                 const acc = accountMap.get(line.account)!;
                 acc.debit += parseFloat(line.debit) || 0;
                 acc.credit += parseFloat(line.credit) || 0;
-            });
-        });
+            );
+        );
 
         const headers = ["Account Code", "Account Name", "Debit", "Credit"];
         const rows = Array.from(accountMap.entries()).map(([code, balances]) => [
@@ -257,8 +257,8 @@ export default function ImportExportPage() {
             balances.credit
         ]);
 
-        exportToCSV({ headers, rows }, { fileName: "Trial_Balance", includeDate: true });
-        toast({ title: "Export Successful", description: "Trial Balance has been exported successfully." });
+        exportToCSV({ headers, rows }, { fileName: "Trial_Balance", includeDate: true );
+        console.log( title: "Export Successful", description: "Trial Balance has been exported successfully." );
     };
 
     const exportSalesInvoices = async () => {
@@ -277,9 +277,9 @@ export default function ImportExportPage() {
                 tax,
                 v.amount
             ];
-        });
-        exportToExcel({ headers, rows }, { fileName: "Sales_Invoices", includeDate: true });
-        toast({ title: "Export Successful", description: "Sales Invoices have been exported successfully." });
+        );
+        exportToExcel({ headers, rows }, { fileName: "Sales_Invoices", includeDate: true );
+        console.log( title: "Export Successful", description: "Sales Invoices have been exported successfully." );
     };
 
     const exportPurchaseBills = async () => {
@@ -298,9 +298,9 @@ export default function ImportExportPage() {
                 tax,
                 bill.amount
             ];
-        });
-        exportToExcel({ headers, rows }, { fileName: "Purchase_Bills", includeDate: true });
-        toast({ title: "Export Successful", description: "Purchase Bills have been exported successfully." });
+        );
+        exportToExcel({ headers, rows }, { fileName: "Purchase_Bills", includeDate: true );
+        console.log( title: "Export Successful", description: "Purchase Bills have been exported successfully." );
     };
 
     const exportParties = async () => {
@@ -329,8 +329,8 @@ export default function ImportExportPage() {
             v.state || "",
             v.pincode || ""
         ]);
-        exportToCSV({ headers, rows: [...customerRows, ...vendorRows] }, { fileName: "Parties", includeDate: true });
-        toast({ title: "Export Successful", description: "Customer & Vendor list has been exported successfully." });
+        exportToCSV({ headers, rows: [...customerRows, ...vendorRows] }, { fileName: "Parties", includeDate: true );
+        console.log( title: "Export Successful", description: "Customer & Vendor list has been exported successfully." );
     };
 
     const exportItems = async () => {
@@ -345,8 +345,8 @@ export default function ImportExportPage() {
             item.salesRate || 0,
             item.stock || 0
         ]);
-        exportToCSV({ headers, rows }, { fileName: "Stock_Items", includeDate: true });
-        toast({ title: "Export Successful", description: "Stock Item list has been exported successfully." });
+        exportToCSV({ headers, rows }, { fileName: "Stock_Items", includeDate: true );
+        console.log( title: "Export Successful", description: "Stock Item list has been exported successfully." );
     };
 
     // Template download functions
@@ -363,10 +363,10 @@ export default function ImportExportPage() {
                     downloadTrialBalanceTemplate();
                     break;
                 default:
-                    toast({ variant: "destructive", title: "Unknown Template", description: `Template type "${templateType}" is not available.` });
+                    console.log( variant: "destructive", title: "Unknown Template", description: `Template type "${templateType}" is not available.` );
             }
         } catch (error: any) {
-            showEnhancedToast({ variant: "destructive", title: "Template Download Failed", description: error.message || "An error occurred." });
+            console.error( variant: "destructive", title: "Template Download Failed", description: error.message || "An error occurred." );
         }
     };
 
@@ -386,7 +386,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "parties_import_template.xlsx");
-        toast({ title: "Template Downloaded", description: "Parties import template has been downloaded." });
+        console.log( title: "Template Downloaded", description: "Parties import template has been downloaded." );
     };
 
     const downloadItemsTemplate = () => {
@@ -404,7 +404,7 @@ export default function ImportExportPage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
         XLSX.writeFile(workbook, "items_import_template.xlsx");
-        toast({ title: "Template Downloaded", description: "Items import template has been downloaded." });
+        console.log( title: "Template Downloaded", description: "Items import template has been downloaded." );
     };
 
     const downloadTrialBalanceTemplate = () => {
@@ -418,7 +418,7 @@ export default function ImportExportPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast({ title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded." });
+        console.log( title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded." );
     };
 
     return (

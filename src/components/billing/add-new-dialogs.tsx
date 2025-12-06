@@ -62,7 +62,7 @@ const partySchema = z.object({
     city: z.string().optional(),
     state: z.string().optional(),
     pincode: z.string().optional(),
-});
+);
 
 const itemSchema = z.object({
     name: z.string().min(2, "Item name is required."),
@@ -73,7 +73,7 @@ const itemSchema = z.object({
     purchasePrice: z.coerce.number().min(0).optional(),
     sellingPrice: z.coerce.number().min(0).optional(),
     stockGroupId: z.string().optional(),
-});
+);
 
 const getNextAvailableCode = async (userId: string, type: string): Promise<string> => {
     const accountCodeRanges: Record<string, { start: number, end: number }> = {
@@ -121,11 +121,11 @@ export const assignAccountCode = async (party: Party, userId: string) => {
         name: party.name,
         type: "Current Asset",
         userId: userId,
-    });
+    );
 
     // 2. Update the party with the new account code
     const partyDocRef = doc(db, "customers", party.id);
-    batch.update(partyDocRef, { accountCode: nextCode });
+    batch.update(partyDocRef, { accountCode: nextCode );
 
     await batch.commit();
     return nextCode;
@@ -133,25 +133,25 @@ export const assignAccountCode = async (party: Party, userId: string) => {
 
 
 export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean, onOpenChange: (open: boolean) => void, type: 'Customer' | 'Vendor', party?: Party | null }) {
-    const { toast } = useToast();
+    
     const [user] = useAuthState(auth);
 
     const form = useForm<z.infer<typeof partySchema>>({
         resolver: zodResolver(partySchema),
         defaultValues: { name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' },
-    });
+    );
 
     useEffect(() => {
       if (party && open) {
         form.reset(party);
       } else if (!open) {
-        form.reset({ name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' });
+        form.reset({ name: '', gstin: '', email: '', phone: '', address1: '', city: '', state: '', pincode: '' );
       }
     }, [party, open, form]);
 
     const onSubmit = async (values: z.infer<typeof partySchema>) => {
          if (!user) {
-            toast({ variant: "destructive", title: "Not Authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
+            console.log( variant: "destructive", title: "Not Authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
             return;
         }
         const collectionName = type === 'Customer' ? 'customers' : 'vendors';
@@ -160,12 +160,12 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 // Update existing party
                 const partyDocRef = doc(db, collectionName, party.id);
                 await updateDoc(partyDocRef, values);
-                toast({ title: `${type} Updated`, description: `${values.name} has been updated.` });
+                console.log( title: `${type} Updated`, description: `${values.name} has been updated.` );
             } else {
                 // Add new party
                 const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
                 if (!nextCode) {
-                    toast({ variant: "destructive", title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
+                    console.log( variant: "destructive", title: "Error", description: "Could not generate an account code.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
                     return;
                 }
                 const batch = writeBatch(db);
@@ -177,21 +177,21 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                     name: values.name,
                     type: "Current Asset",
                     userId: user.uid,
-                });
+                );
 
                 // 2. Add new party with the account code
                 const newPartyRef = doc(collection(db, collectionName));
-                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode });
+                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode );
                 
                 await batch.commit();
 
-                toast({ title: `${type} Added`, description: `${values.name} has been saved with account code ${nextCode}.` });
+                console.log( title: `${type} Added`, description: `${values.name} has been saved with account code ${nextCode}.` );
             }
 
             onOpenChange(false);
         } catch (e) {
             console.error("Error saving document: ", e);
-            toast({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` });
+            console.log( variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.` );
         }
     };
 
@@ -234,30 +234,30 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 };
 
 export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: boolean, onOpenChange: (open: boolean) => void, item?: Item | null, stockGroups?: {id: string, name: string}[] }) {
-    const { toast } = useToast();
+    
     const [user] = useAuthState(auth);
     const [isSuggestingHsn, setIsSuggestingHsn] = useState(false);
 
     const form = useForm<z.infer<typeof itemSchema>>({
         resolver: zodResolver(itemSchema),
         defaultValues: { name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" },
-    });
+    );
 
     useEffect(() => {
       if (item && open) {
         form.reset(item);
       } else if (!open) {
-        form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" });
+        form.reset({ name: "", description: "", hsn: "", gstRate: 0, stock: 0, purchasePrice: 0, sellingPrice: 0, stockGroupId: "" );
       }
     }, [item, open, form]);
 
     const handleSuggestHsn = async (description: string) => {
         if (!description || description.trim().length < 3) {
-            toast({ 
+            console.log( 
                 variant: "destructive", 
                 title: "Description Required", 
                 description: "Please enter at least 3 characters to get HSN code suggestion." 
-            });
+            );
             return;
         }
 
@@ -265,28 +265,28 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
         try {
             const result = await suggestHsnCodeAction({
                 productOrServiceDescription: description,
-            });
+            );
             
             if (result?.hsnCode) {
                 form.setValue("hsn", result.hsnCode);
-                toast({ 
+                console.log( 
                     title: "HSN Code Suggested", 
                     description: `Suggested HSN code: ${result.hsnCode}` 
-                });
+                );
             } else {
-                toast({ 
+                console.log( 
                     variant: "destructive", 
                     title: "Suggestion Failed", 
                     description: "Could not get HSN code suggestion. Please try again." 
-                });
+                );
             }
         } catch (error: any) {
             console.error("Error suggesting HSN code:", error);
-            toast({ 
+            console.log( 
                 variant: "destructive", 
                 title: "Error", 
                 description: error.message || "Failed to get HSN code suggestion. Please try again." 
-            });
+            );
         } finally {
             setIsSuggestingHsn(false);
         }
@@ -294,22 +294,22 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const onSubmit = async (values: z.infer<typeof itemSchema>) => {
         if (!user) {
-           toast({ variant: "destructive", title: "Not authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
+           console.log( variant: "destructive", title: "Not authenticated", description: "Please take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
            return;
        }
        try {
             if (item) {
                 const itemDocRef = doc(db, "items", item.id);
                 await updateDoc(itemDocRef, values);
-                toast({ title: "Item Updated", description: `${values.name} has been updated.` });
+                console.log( title: "Item Updated", description: `${values.name} has been updated.` );
             } else {
-                await addDoc(collection(db, 'items'), { ...values, userId: user.uid });
-                toast({ title: "Item Added", description: `${values.name} has been added.` });
+                await addDoc(collection(db, 'items'), { ...values, userId: user.uid );
+                console.log( title: "Item Added", description: `${values.name} has been added.` );
             }
            onOpenChange(false);
        } catch (e) {
            console.error("Error adding document: ", e);
-           toast({ variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." });
+           console.log( variant: "destructive", title: "Error", description: "Could not save the item.\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries." );
        }
     };
 

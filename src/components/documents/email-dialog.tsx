@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Mail, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { sendReportViaEmail, isValidEmail, formatEmailAddresses } from "@/lib/email-utils";
 
 interface EmailDialogProps {
@@ -37,7 +37,7 @@ export function EmailDialog({
   defaultBody,
   defaultTo,
 }: EmailDialogProps) {
-  const { toast } = useToast();
+  
   const [to, setTo] = useState(defaultTo || "");
   const [subject, setSubject] = useState(defaultSubject || fileName);
   const [body, setBody] = useState(defaultBody || `Please find attached ${fileName}.`);
@@ -49,32 +49,32 @@ export function EmailDialog({
     const invalidEmails = emailAddresses.filter((email) => !isValidEmail(email));
 
     if (emailAddresses.length === 0) {
-      showEnhancedToast({ variant: "destructive", title: "Email Required",
+      console.error( variant: "destructive", title: "Email Required",
         description: "Please enter at least one email address.",
-      });
+      );
       return;
     }
 
     if (invalidEmails.length > 0) {
-      toast({
+      console.log(
         variant: "destructive",
         title: "Invalid Email",
         description: `The following email addresses are invalid: ${invalidEmails.join(", ")}`,
-      });
+      );
       return;
     }
 
     if (!contentRef.current) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: "Could not find the content to send.",
-      });
+      );
       return;
     }
 
     if (!subject.trim()) {
-      showEnhancedToast({ variant: "destructive", title: "Subject Required",
+      console.error( variant: "destructive", title: "Subject Required",
         description: "Please enter an email subject.",
-      });
+      );
       return;
     }
 
@@ -86,27 +86,27 @@ export function EmailDialog({
         subject: subject.trim(),
         body: body.trim(),
         fileName,
-      });
+      );
 
       if (result.success) {
-        toast({
+        console.log(
           title: "Email Sent",
           description: result.message || "Your report has been sent successfully.",
-        });
+        );
         onOpenChange(false);
         // Reset form
         setTo(defaultTo || "");
         setSubject(defaultSubject || fileName);
         setBody(defaultBody || `Please find attached ${fileName}.`);
       } else {
-        showEnhancedToast({ variant: "destructive", title: "Failed to Send Email",
+        console.error( variant: "destructive", title: "Failed to Send Email",
           description: result.error || "An error occurred while sending the email.",
-        });
+        );
       }
     } catch (error) {
-      showEnhancedToast({ variant: "destructive", title: "Error",
+      console.error( variant: "destructive", title: "Error",
         description: error instanceof Error ? error.message : "Failed to send email.",
-      });
+      );
     } finally {
       setIsSending(false);
     }

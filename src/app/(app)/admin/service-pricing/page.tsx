@@ -21,8 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, Save, Search, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from '@/components/ui/separator';
 import { servicePricing as initialServices } from '@/lib/on-demand-pricing';
 import { saveServicePricingAction } from './actions';
@@ -38,7 +38,7 @@ type ServiceCategories = keyof typeof initialServices;
 
 
 export default function ServicePricingPage() {
-  const { toast } = useToast();
+  
   const [services, setServices] = useState(initialServices);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -49,12 +49,12 @@ export default function ServicePricingPage() {
     getServicePricing().then(pricing => {
         setServices(pricing);
         setIsLoading(false);
-    });
+    );
 
     // Subscribe to real-time updates
     const unsubscribe = onPricingUpdate(pricing => {
         setServices(pricing);
-    });
+    );
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
@@ -73,14 +73,14 @@ export default function ServicePricingPage() {
       setIsSaving(false);
       
       if (result.success) {
-        toast({
+        console.log(
           title: "Prices Updated",
           description: "The new service prices have been saved successfully. Changes will be live for all users."
-        });
+        );
       } else {
-        showEnhancedToast({ variant: "destructive", title: "Save Failed",
+        console.error( variant: "destructive", title: "Save Failed",
             description: "Could not update the pricing file. Please check server logs."
-        });
+        );
       }
   }
 

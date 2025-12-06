@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Save, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import html2pdf from "html2pdf.js";
@@ -32,7 +32,7 @@ const shareholderSchema = z.object({
   name: z.string().min(2, "Shareholder name is required."),
   shareCount: z.coerce.number().positive("Must be a positive number."),
   isFounder: z.boolean().default(false),
-});
+);
 
 const formSchema = z.object({
   documentName: z.string().min(3, "A document name is required for saving."),
@@ -41,12 +41,12 @@ const formSchema = z.object({
   shareholders: z.array(shareholderSchema).min(2, "At least two shareholders are required."),
   quorumPercentage: z.coerce.number().min(1).max(100).default(51),
   dragAlongThreshold: z.coerce.number().min(51).max(100).default(75),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function ShareholdersAgreement() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -61,7 +61,7 @@ export default function ShareholdersAgreement() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'shareholders_agreement'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -76,7 +76,7 @@ export default function ShareholdersAgreement() {
       quorumPercentage: 51,
       dragAlongThreshold: 75,
     },
-  });
+  );
 
   useEffect(() => {
     if (docId && user) {
@@ -88,13 +88,13 @@ export default function ShareholdersAgreement() {
           const data = docSnap.data();
           if (data.userId === user.uid) {
             form.reset(data.formData);
-            toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
+            console.log( title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` );
           } else {
-            showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
+            console.error( variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." );
             router.push('/legal-documents/shareholders-agreement');
           }
         } else {
-          showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
+          console.error( variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." );
           router.push('/legal-documents/shareholders-agreement');
         }
         setIsLoading(false);
@@ -116,12 +116,12 @@ export default function ShareholdersAgreement() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -129,11 +129,11 @@ export default function ShareholdersAgreement() {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "shareholders",
-  });
+  );
 
   const handleSaveDraft = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: 'Authentication Error' });
+      console.error( variant: "destructive", title: 'Authentication Error' );
       return;
     }
     setIsSubmitting(true);
@@ -141,8 +141,8 @@ export default function ShareholdersAgreement() {
     try {
       if (docId) {
         const docRef = doc(db, "userDocuments", docId);
-        await updateDoc(docRef, { formData, updatedAt: new Date() });
-        toast({ title: "Draft Updated", description: `Updated "${formData.documentName}".` });
+        await updateDoc(docRef, { formData, updatedAt: new Date() );
+        console.log( title: "Draft Updated", description: `Updated "${formData.documentName}".` );
       } else {
         const docRef = await addDoc(collection(db, 'userDocuments'), {
           userId: user.uid,
@@ -151,13 +151,13 @@ export default function ShareholdersAgreement() {
           status: 'Draft',
           formData,
           createdAt: new Date(),
-        });
-        toast({ title: "Draft Saved!", description: `Saved "${formData.documentName}".` });
+        );
+        console.log( title: "Draft Saved!", description: `Saved "${formData.documentName}".` );
         router.push(`/legal-documents/shareholders-agreement?id=${docRef.id}`);
       }
     } catch (e) {
       console.error(e);
-      showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+      console.error( variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' );
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +167,7 @@ export default function ShareholdersAgreement() {
     const isValid = await form.trigger();
     if (isValid) {
       setStep((prev) => prev + 1);
-      toast({ title: "Details Saved", description: "Proceeding to the next step." });
+      console.log( title: "Details Saved", description: "Proceeding to the next step." );
     }
   };
 
@@ -256,10 +256,10 @@ export default function ShareholdersAgreement() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    console.error( variant: "destructive", title: "Error", description: "Could not find document content." );
                     return;
                   }
-                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
+                  console.log( title: "Generating PDF...", description: "Your document is being prepared." );
                   const opt = {
                     margin: [10, 10, 10, 10],
                     filename: `Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}.pdf`,
@@ -269,9 +269,9 @@ export default function ShareholdersAgreement() {
                     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
                   };
                   await html2pdf().set(opt).from(documentRef.current).save();
-                  toast({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." });
+                  console.log( title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." );
                 } catch (error: any) {
-                  showEnhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                  console.error( variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." );
                 }
               }}><FileDown className="mr-2"/> Download Full Agreement</Button>
             </CardFooter>
@@ -335,12 +335,12 @@ export default function ShareholdersAgreement() {
                         reportType: "Shareholders' Agreement Certification",
                         clientName: form.getValues("companyName"),
                         formData: form.getValues(),
-                      });
+                      );
                     }}
                     onFailure={() => {
-                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                      console.error( variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
-                      });
+                      );
                     }}
                   />
                 );

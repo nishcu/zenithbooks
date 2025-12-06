@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IndianRupee, Printer, ArrowLeft, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import { auth } from "@/lib/firebase";
 import { ShareButtons } from "@/components/documents/share-buttons";
 
 export default function RentalReceiptPage() {
-    const { toast } = useToast();
+    
     const printRef = useRef<HTMLDivElement>(null);
     const [user] = useAuthState(auth);
     const [tenantName, setTenantName] = useState("");
@@ -41,9 +41,9 @@ export default function RentalReceiptPage() {
 
     const handleGenerate = () => {
         if (!tenantName || !landlordName || !rentAmount || !address) {
-            showEnhancedToast({ variant: "destructive", title: "Missing Information",
+            console.error( variant: "destructive", title: "Missing Information",
                 description: "Please fill in all the required fields to generate the receipt."
-            });
+            );
             return;
         }
         
@@ -55,14 +55,14 @@ export default function RentalReceiptPage() {
         
         // No payment required - show receipt directly
         setShowReceipt(true);
-        toast({
+        console.log(
             title: "Receipt Generated",
             description: "Your rental receipt has been generated and is ready for download."
-        });
+        );
         
         // Scroll to receipt
         setTimeout(() => {
-            printRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            printRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' );
         }, 300);
     };
 
@@ -70,14 +70,14 @@ export default function RentalReceiptPage() {
         // After successful payment, show the receipt
         setShowReceipt(true);
         
-        toast({
+        console.log(
             title: "Payment Successful",
             description: "Your rental receipt has been generated and is ready for download."
-        });
+        );
         
         // Scroll to receipt
         setTimeout(() => {
-            printRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            printRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' );
         }, 300);
     };
     
@@ -143,9 +143,9 @@ export default function RentalReceiptPage() {
                                     userName={user?.displayName || ''}
                                     onSuccess={handlePaymentSuccessCallback}
                                     onFailure={() => {
-                                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                        console.error( variant: "destructive", title: "Payment Failed",
                                             description: "Payment was not completed. Please try again."
-                                        });
+                                        );
                                     }}
                                 />
                             )}

@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, X } from "lucide-react";
 import { format } from "date-fns";
 import { formatBytes } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+
 
 interface Document {
   id: string;
@@ -48,7 +48,7 @@ export function DocumentVersionHistory({
   onOpenChange,
   document,
 }: DocumentVersionHistoryProps) {
-  const { toast } = useToast();
+  
 
   const handleDownload = async (versionNumber: number, fileUrl: string, fileName: string) => {
     try {

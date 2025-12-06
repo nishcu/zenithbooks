@@ -40,8 +40,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AccountingContext } from "@/context/accounting-context";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -55,7 +55,7 @@ const voiceInvoiceSchema = z.object({
   quantity: z.coerce.number().min(0.01, "Quantity must be greater than zero.").optional(),
   amount: z.coerce.number().positive("Amount must be greater than zero."),
   taxRate: z.coerce.number().min(0, "Tax rate cannot be negative."),
-});
+);
 
 type VoiceInvoiceForm = z.infer<typeof voiceInvoiceSchema>;
 
@@ -252,7 +252,7 @@ function parseVoiceInput(
 
 export default function VoiceInvoiceEntryPage() {
   const accountingContext = useContext(AccountingContext);
-  const { toast } = useToast();
+  
   const router = useRouter();
   const [user] = useAuthState(auth);
   
@@ -286,7 +286,7 @@ export default function VoiceInvoiceEntryPage() {
       amount: 0,
       taxRate: 18,
     },
-  });
+  );
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -295,9 +295,9 @@ export default function VoiceInvoiceEntryPage() {
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
 
       if (!isSecure) {
-        showEnhancedToast({ variant: "destructive", title: "HTTPS Required",
+        console.error( variant: "destructive", title: "HTTPS Required",
           description: "Speech recognition requires a secure connection (HTTPS).",
-        });
+        );
         return;
       }
 
@@ -370,9 +370,9 @@ export default function VoiceInvoiceEntryPage() {
             }
 
             setIsListening(false);
-            showEnhancedToast({ variant: "destructive", title: errorTitle,
+            console.error( variant: "destructive", title: errorTitle,
               description: errorMessage,
-            });
+            );
           };
 
           recognitionInstance.onend = () => {
@@ -389,10 +389,10 @@ export default function VoiceInvoiceEntryPage() {
               })
               .catch((error) => {
                 console.error('Microphone permission denied:', error);
-                showEnhancedToast({ variant: "destructive", title: "Microphone Access Required",
+                console.error( variant: "destructive", title: "Microphone Access Required",
                   description: "Please allow microphone access to use voice-to-invoice feature.",
-                });
-              });
+                );
+              );
           } else {
             // Fallback for older browsers
             setRecognition(recognitionInstance);
@@ -400,14 +400,14 @@ export default function VoiceInvoiceEntryPage() {
 
         } catch (error) {
           console.error('Error initializing speech recognition:', error);
-          showEnhancedToast({ variant: "destructive", title: "Speech Recognition Unavailable",
+          console.error( variant: "destructive", title: "Speech Recognition Unavailable",
             description: "Speech recognition could not be initialized. Please try a different browser.",
-          });
+          );
         }
       } else {
-        showEnhancedToast({ variant: "destructive", title: "Browser Not Supported",
+        console.error( variant: "destructive", title: "Browser Not Supported",
           description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.",
-        });
+        );
       }
     }
 
@@ -440,9 +440,9 @@ export default function VoiceInvoiceEntryPage() {
 
   const startListening = () => {
     if (!recognition) {
-      showEnhancedToast({ variant: "destructive", title: "Speech Recognition Not Available",
+      console.error( variant: "destructive", title: "Speech Recognition Not Available",
         description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.",
-      });
+      );
       return;
     }
 
@@ -466,16 +466,16 @@ export default function VoiceInvoiceEntryPage() {
         try {
           recognition.start();
           console.log('Speech recognition started successfully');
-          toast({
+          console.log(
             title: "🎤 Listening...",
             description: "Speak clearly: 'Customer name, Product name, Quantity'",
-          });
+          );
         } catch (error) {
           console.error('Error starting recognition after delay:', error);
           setIsListening(false);
-          showEnhancedToast({ variant: "destructive", title: "Speech Recognition Failed",
+          console.error( variant: "destructive", title: "Speech Recognition Failed",
             description: "Could not start speech recognition. Please try again.",
-          });
+          );
         }
       }, 100);
 
@@ -486,13 +486,13 @@ export default function VoiceInvoiceEntryPage() {
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          showEnhancedToast({ variant: "destructive", title: "Recognition Busy",
+          console.error( variant: "destructive", title: "Recognition Busy",
             description: "Speech recognition is already running. Please wait.",
-          });
+          );
         } else {
-          showEnhancedToast({ variant: "destructive", title: "Speech Recognition Error",
+          console.error( variant: "destructive", title: "Speech Recognition Error",
             description: error.message || "Failed to start speech recognition.",
-          });
+          );
         }
       }
     }
@@ -514,9 +514,9 @@ export default function VoiceInvoiceEntryPage() {
 
   const processVoiceInput = useCallback(() => {
     if (!transcript.trim()) {
-      showEnhancedToast({ variant: "destructive", title: "No Input",
+      console.error( variant: "destructive", title: "No Input",
         description: "Please speak to create an invoice.",
-      });
+      );
       return;
     }
     
@@ -557,12 +557,12 @@ export default function VoiceInvoiceEntryPage() {
     
     setIsProcessing(false);
     
-    toast({
+    console.log(
       title: "Voice Input Processed",
       description: parsed.customerId && parsed.itemId 
         ? "Customer and product identified. Please review and create invoice."
         : "Some information may need manual entry. Please review.",
-    });
+    );
   }, [transcript, customers, items, form, toast]);
 
   const handleSave = useCallback(async (values: VoiceInvoiceForm, closeOnSave: boolean) => {
@@ -572,13 +572,13 @@ export default function VoiceInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        showEnhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
+        console.error( variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." );
         return;
     }
     
     // Validate amount
     if (!values.amount || values.amount <= 0) {
-        showEnhancedToast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." });
+        console.error( variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." );
         return;
     }
     
@@ -615,10 +615,10 @@ export default function VoiceInvoiceEntryPage() {
 
         await addJournalVoucher(newInvoice);
 
-        toast({ 
+        console.log( 
           title: "Invoice Created!", 
           description: `${invoiceId} has been created successfully and will appear in GSTR-1 and GSTR-3B.` 
-        });
+        );
 
         // Reset form and transcript
         setTranscript("");
@@ -637,14 +637,14 @@ export default function VoiceInvoiceEntryPage() {
                 quantity: 1,
                 amount: 0,
                 taxRate: 18,
-            });
+            );
             form.setFocus("customerId");
         }
     } catch (e: any) {
         console.error("Error creating invoice:", e);
-        showEnhancedToast({ variant: "destructive", title: "Failed to save invoice", 
+        console.error( variant: "destructive", title: "Failed to save invoice", 
           description: e.message || "An error occurred while creating the invoice. Please try again." 
-        });
+        );
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

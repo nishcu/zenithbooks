@@ -25,8 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
@@ -35,7 +35,7 @@ import { uploadBlogImage } from '@/lib/storage';
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
-});
+);
 
 const formSchema = z.object({
   title: z.string().min(5, "Title is required."),
@@ -46,11 +46,11 @@ const formSchema = z.object({
   image: z.custom<File>((val) => val instanceof File, "Featured image is required."),
 
   contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required."),
-});
+);
 
 export default function NewBlogPostPage() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const { toast } = useToast();
+    
     const imageInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -63,12 +63,12 @@ export default function NewBlogPostPage() {
             category: "",
             contentBlocks: [{ value: "" }],
         },
-    });
+    );
 
     const { fields, append, remove } = useFieldArray({
       control: form.control,
       name: "contentBlocks",
-    });
+    );
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -112,19 +112,19 @@ export default function NewBlogPostPage() {
             // Save to Firebase
             await addDoc(collection(db, 'blogPosts'), blogPostData);
 
-            toast({
+            console.log(
                 title: "Blog Post Published!",
                 description: "Your new blog post has been created and published successfully.",
-            });
+            );
 
             form.reset();
             setImagePreview(null);
 
         } catch (error: any) {
             console.error('Blog creation error:', error);
-            showEnhancedToast({ variant: "destructive", title: "Upload Failed",
+            console.error( variant: "destructive", title: "Upload Failed",
                 description: error.message || "Failed to upload image. Please try again.",
-            });
+            );
         } finally {
             setIsLoading(false);
         }

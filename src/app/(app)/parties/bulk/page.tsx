@@ -22,8 +22,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -103,7 +103,7 @@ const createRowAccessor = (row: Record<string, any>) => {
   const normalized: Record<string, any> = {};
   Object.entries(row).forEach(([key, value]) => {
     normalized[key.toLowerCase().trim()] = value;
-  });
+  );
   return (aliases: string[]) => {
     for (const alias of aliases) {
       const key = alias.toLowerCase();
@@ -134,7 +134,7 @@ const createAccountCodeAllocator = async (userId: string) => {
       const parsed = parseInt(acc.code, 10);
       if (!Number.isNaN(parsed)) existingCodes.add(parsed);
     }
-  });
+  );
 
   let pointer = range.start;
   return () => {
@@ -157,7 +157,7 @@ const numberToString = (value: any) => {
 };
 
 export default function PartiesBulkUploadPage() {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const [defaultType, setDefaultType] = useState<PartyType>("Customer");
   const [parsedRows, setParsedRows] = useState<ParsedPartyRow[]>([]);
@@ -177,10 +177,10 @@ export default function PartiesBulkUploadPage() {
   const handleDownloadTemplate = () => {
     const workbook = buildTemplateWorkbook();
     XLSX.writeFile(workbook, "parties_import_template.xlsx");
-    toast({
+    console.log(
       title: "Template downloaded",
       description: "Fill the sheet and upload it to import customers and vendors.",
-    });
+    );
   };
 
   const parseFile = (file: File) => {
@@ -195,10 +195,10 @@ export default function PartiesBulkUploadPage() {
         const workbook =
           extension === "csv"
             ? XLSX.read(data as string, { type: "binary", raw: false })
-            : XLSX.read(data as ArrayBuffer, { type: "array", raw: false });
+            : XLSX.read(data as ArrayBuffer, { type: "array", raw: false );
 
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" );
         const rows = json.map((row, idx) => {
           const getValue = createRowAccessor(row);
           const typeValue = String(getValue(COLUMN_ALIASES.type) || "");
@@ -223,18 +223,18 @@ export default function PartiesBulkUploadPage() {
           }
 
           return party;
-        });
+        );
 
         setParsedRows(rows);
-        toast({
+        console.log(
           title: "File parsed",
           description: `${rows.length} row${rows.length === 1 ? "" : "s"} ready for review.`,
-        });
+        );
       } catch (error: any) {
         console.error(error);
-        showEnhancedToast({ variant: "destructive", title: "Parsing failed",
+        console.error( variant: "destructive", title: "Parsing failed",
           description: error.message || "Could not read the file.",
-        });
+        );
       } finally {
         setIsParsing(false);
       }
@@ -256,14 +256,14 @@ export default function PartiesBulkUploadPage() {
 
   const handleCreateParties = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: "Please sign in to continue." });
+      console.error( variant: "destructive", title: "Please sign in to continue." );
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      showEnhancedToast({ variant: "destructive", title: "No rows to import",
+      console.error( variant: "destructive", title: "No rows to import",
         description: "Fix validation errors or upload a file first.",
-      });
+      );
       return;
     }
 
@@ -292,7 +292,7 @@ export default function PartiesBulkUploadPage() {
             name: row.name,
             type: "Current Asset",
             userId: user.uid,
-          });
+          );
 
           const customerRef = doc(collection(db, "customers"));
           batch.set(customerRef, {
@@ -306,7 +306,7 @@ export default function PartiesBulkUploadPage() {
             state: row.state || "",
             pincode: row.pincode || "",
             accountCode,
-          });
+          );
 
           await batch.commit();
         } else {
@@ -320,7 +320,7 @@ export default function PartiesBulkUploadPage() {
             city: row.city || "",
             state: row.state || "",
             pincode: row.pincode || "",
-          });
+          );
         }
 
         row.status = "success";
@@ -335,13 +335,13 @@ export default function PartiesBulkUploadPage() {
 
     setParsedRows(updatedRows);
     setIsSaving(false);
-    toast({
+    console.log(
       title: "Import finished",
       description: `${successCount} record${successCount === 1 ? "" : "s"} created. ${
         errorCount ? `${errorCount} failed.` : "All good!"
       }`,
       variant: errorCount ? "destructive" : "default",
-    });
+    );
   };
 
   return (

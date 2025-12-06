@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from '@/lib/service-pricing-utils';
 
 interface CertificationRequestData {
@@ -22,7 +22,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
   const [user] = useAuthState(auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
-  const { toast } = useToast();
+  
 
   // Fetch user subscription info
   useEffect(() => {
@@ -33,17 +33,17 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
 
   const handleCertificationRequest = async (requestData: CertificationRequestData) => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: "Authentication Error",
+      console.error( variant: "destructive", title: "Authentication Error",
         description: "You must be logged in to make a request."
-      });
+      );
       return false;
     }
 
     // Check if pricing is loaded
     if (!pricing) {
-      showEnhancedToast({ variant: "destructive", title: "Loading",
+      console.error( variant: "destructive", title: "Loading",
         description: "Please wait while we load pricing information."
-      });
+      );
       return false;
     }
 
@@ -73,17 +73,17 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
           draftUrl: "#",
           signedDocumentUrl: null,
           amount: 0, // Free
-        });
-        toast({
+        );
+        console.log(
           title: "Request Sent",
           description: "Your certification request has been sent to the admin for review and signature."
-        });
+        );
         return true;
       } catch (error) {
         console.error("Error sending request:", error);
-        showEnhancedToast({ variant: "destructive", title: "Request Failed",
+        console.error( variant: "destructive", title: "Request Failed",
           description: "Could not send the request. Please try again."
-        });
+        );
         return false;
       } finally {
         setIsSubmitting(false);
@@ -116,18 +116,18 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
         signedDocumentUrl: null,
         amount: effectivePrice,
         paymentId: paymentId,
-      });
-      toast({
+      );
+      console.log(
         title: "Payment Successful & Request Sent",
         description: "Your payment has been processed and certification request sent to admin."
-      });
+      );
       onPaymentSuccess?.(paymentId);
       return true;
     } catch (error) {
       console.error("Error sending request:", error);
-      showEnhancedToast({ variant: "destructive", title: "Request Failed",
+      console.error( variant: "destructive", title: "Request Failed",
         description: "Payment was successful but request submission failed. Please contact support."
-      });
+      );
       return false;
     } finally {
       setIsSubmitting(false);

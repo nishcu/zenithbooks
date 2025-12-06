@@ -30,8 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, FileText, IndianRupee, AlertCircle, CheckCircle, Edit, Copy, Trash2, Search, Zap } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format, isPast, subDays } from 'date-fns';
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
@@ -51,7 +51,7 @@ type Bill = {
 export default function PurchasesPage() {
   const { journalVouchers, loading: journalLoading, addJournalVoucher } = useContext(AccountingContext)!;
   const [user] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState("");
 
   const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
@@ -104,7 +104,7 @@ export default function PurchasesPage() {
         vendorId: originalVoucher.vendorId,
     };
     await addJournalVoucher(cancellationVoucher as any);
-    toast({ title: "Bill Cancelled", description: `Purchase bill #${billId} has been cancelled.` });
+    console.log( title: "Bill Cancelled", description: `Purchase bill #${billId} has been cancelled.` );
   };
   
   const getStatusBadge = (status: string) => {

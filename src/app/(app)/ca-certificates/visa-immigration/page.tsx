@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -30,7 +30,7 @@ import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service
 const assetSchema = z.object({
   description: z.string().min(3, "Description is required."),
   value: z.coerce.number().positive("Value must be a positive number."),
-});
+);
 
 const formSchema = z.object({
   documentName: z.string().min(3, "Document name is required."),
@@ -48,12 +48,12 @@ const formSchema = z.object({
   bankBalances: z.array(assetSchema),
   currentIncome: z.array(assetSchema),
   educationLoan: z.array(assetSchema),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function VisaImmigrationCertificatePage() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -69,7 +69,7 @@ export default function VisaImmigrationCertificatePage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'visa_immigration'
-  });
+  );
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,7 +90,7 @@ export default function VisaImmigrationCertificatePage() {
       currentIncome: [],
       educationLoan: [],
     },
-  });
+  );
   
   useEffect(() => {
     if(docId && user) {
@@ -103,13 +103,13 @@ export default function VisaImmigrationCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    toast({title: "Draft Loaded"});
+                    console.log(title: "Draft Loaded");
                 } else {
-                    showEnhancedToast({ variant: "destructive", title: "Unauthorized"});
+                    console.error( variant: "destructive", title: "Unauthorized");
                     router.push('/ca-certificates/visa-immigration');
                 }
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Not Found"});
+                 console.error( variant: "destructive", title: "Not Found");
                  router.push('/ca-certificates/visa-immigration');
             }
             setIsLoading(false);
@@ -131,21 +131,21 @@ export default function VisaImmigrationCertificatePage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
 
-  const { fields: immovableFields, append: appendImmovable, remove: removeImmovable } = useFieldArray({ control: form.control, name: "immovableProperties" });
-  const { fields: liquidFields, append: appendLiquid, remove: removeLiquid } = useFieldArray({ control: form.control, name: "liquidAssets" });
-  const { fields: bankFields, append: appendBank, remove: removeBank } = useFieldArray({ control: form.control, name: "bankBalances" });
-  const { fields: incomeFields, append: appendIncome, remove: removeIncome } = useFieldArray({ control: form.control, name: "currentIncome" });
-  const { fields: loanFields, append: appendLoan, remove: removeLoan } = useFieldArray({ control: form.control, name: "educationLoan" });
+  const { fields: immovableFields, append: appendImmovable, remove: removeImmovable } = useFieldArray({ control: form.control, name: "immovableProperties" );
+  const { fields: liquidFields, append: appendLiquid, remove: removeLiquid } = useFieldArray({ control: form.control, name: "liquidAssets" );
+  const { fields: bankFields, append: appendBank, remove: removeBank } = useFieldArray({ control: form.control, name: "bankBalances" );
+  const { fields: incomeFields, append: appendIncome, remove: removeIncome } = useFieldArray({ control: form.control, name: "currentIncome" );
+  const { fields: loanFields, append: appendLoan, remove: removeLoan } = useFieldArray({ control: form.control, name: "educationLoan" );
 
   const watchAllFields = form.watch();
   const totalImmovable = watchAllFields.immovableProperties.reduce((acc, asset) => acc + (Number(asset.value) || 0), 0);
@@ -161,17 +161,17 @@ export default function VisaImmigrationCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(3); // Move to preview step
-        toast({ title: "Draft Ready", description: "Review the generated certificate below." });
+        console.log( title: "Draft Ready", description: "Review the generated certificate below." );
     } else {
-         showEnhancedToast({ variant: "destructive", title: "Validation Error",
+         console.error( variant: "destructive", title: "Validation Error",
             description: "Please fill all required fields.",
-        });
+        );
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -179,8 +179,8 @@ export default function VisaImmigrationCertificatePage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated"});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated");
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -189,13 +189,13 @@ export default function VisaImmigrationCertificatePage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!"});
+              );
+              console.log(title: "Draft Saved!");
               router.push(`/ca-certificates/visa-immigration?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed'});
+          console.error( variant: "destructive", title: 'Save Failed');
       } finally {
           setIsSubmitting(false);
       }
@@ -203,7 +203,7 @@ export default function VisaImmigrationCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
           return;
       }
       setIsSubmitting(true);
@@ -218,14 +218,14 @@ export default function VisaImmigrationCertificatePage() {
             draftUrl: "#", 
             signedDocumentUrl: null,
             formData: form.getValues(),
-        });
-        toast({
+        );
+        console.log(
             title: "Request Sent",
             description: "Your certification request has been sent to the admin for review and signature."
-        });
+        );
       } catch (error) {
           console.error("Error sending request:", error);
-          showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+          console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
       } finally {
           setIsSubmitting(false);
       }
@@ -247,12 +247,12 @@ export default function VisaImmigrationCertificatePage() {
     if (isValid) {
       setStep(prev => prev + 1);
        if (step < 3) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors on this page before proceeding.",
-        });
+        );
     }
   };
 
@@ -465,12 +465,12 @@ export default function VisaImmigrationCertificatePage() {
                                           reportType: "Visa & Immigration Financials",
                                           clientName: form.getValues("studentName"),
                                           formData: form.getValues(),
-                                        });
+                                        );
                                       }}
                                       onFailure={() => {
-                                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                        console.error( variant: "destructive", title: "Payment Failed",
                                           description: "Payment was not completed. Please try again."
-                                        });
+                                        );
                                       }}
                                     />
                                   );

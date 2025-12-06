@@ -37,8 +37,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -49,10 +49,10 @@ import { ItemTable, type LineItem, type Item } from "@/components/billing/item-t
 const createNewLineItem = (): LineItem => ({
   id: `${Date.now()}-${Math.random()}`,
   itemId: "", description: "", hsn: "", qty: 1, rate: 0, taxRate: 18, amount: 0,
-});
+);
 
 export default function NewSalesOrderPage() {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,7 +90,7 @@ export default function NewSalesOrderPage() {
                 }
                 setLineItems(orderData.lineItems);
             } else {
-                showEnhancedToast({ variant: "destructive", title: "Error", description: "Sales order not found." });
+                console.error( variant: "destructive", title: "Error", description: "Sales order not found." );
                 router.push("/billing/sales-orders");
             }
         };
@@ -112,19 +112,19 @@ export default function NewSalesOrderPage() {
 
   const handleSave = async () => {
     if (!user) {
-      toast({ title: "Error", description: "You must be logged in to save.", variant: "destructive" });
+      console.log( title: "Error", description: "You must be logged in to save.", variant: "destructive" );
       return;
     }
     if (!customer) {
-      toast({ title: "Error", description: "Please select a customer.", variant: "destructive" });
+      console.log( title: "Error", description: "Please select a customer.", variant: "destructive" );
       return;
     }
     if (!orderDate) {
-      toast({ title: "Error", description: "Please select an order date.", variant: "destructive" });
+      console.log( title: "Error", description: "Please select an order date.", variant: "destructive" );
       return;
     }
     if (lineItems.some(item => !item.itemId || item.qty <= 0 || item.rate < 0)) {
-      toast({ title: "Error", description: "Please ensure all line items are valid.", variant: "destructive" });
+      console.log( title: "Error", description: "Please ensure all line items are valid.", variant: "destructive" );
       return;
     }
 
@@ -146,11 +146,11 @@ export default function NewSalesOrderPage() {
             await updateDoc(orderRef, {
                 ...orderData,
                 updatedAt: serverTimestamp(),
-            });
-            toast({
+            );
+            console.log(
                 title: "Sales Order Updated",
                 description: `Sales order ${editId} has been updated successfully.`,
-            });
+            );
         } else {
             const newId = await runTransaction(db, async (transaction) => {
                 const counterRef = doc(db, "counters", "sales-orders");
@@ -159,19 +159,19 @@ export default function NewSalesOrderPage() {
                 const newId = `SO-${String(newCount).padStart(4, '0')}`;
 
                 const newOrderRef = doc(db, "sales-orders", newId);
-                transaction.set(counterRef, { count: newCount });
+                transaction.set(counterRef, { count: newCount );
                 transaction.set(newOrderRef, {
                      ...orderData,
                     createdAt: serverTimestamp(),
-                });
+                );
 
                 return newId;
-            });
+            );
 
-            toast({
+            console.log(
                 title: "Sales Order Saved",
                 description: `Sales order saved with ID: ${newId}`,
-            });
+            );
         }
         setEditId(null);
         setCustomer("");
@@ -182,11 +182,11 @@ export default function NewSalesOrderPage() {
 
     } catch (error) {
       console.error("Error saving document: ", error);
-      toast({
+      console.log(
         title: "Error Saving",
         description: "There was an error saving the sales order.",
         variant: "destructive",
-      });
+      );
     }
   };
 

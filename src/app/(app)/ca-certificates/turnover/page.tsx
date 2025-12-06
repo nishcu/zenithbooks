@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -34,7 +34,7 @@ const formSchema = z.object({
   financialYear: z.string().regex(/^\d{4}-\d{2}$/, "Invalid format. Use YYYY-YY."),
   turnoverAmount: z.coerce.number().positive("Turnover must be a positive number."),
   dataSource: z.string().min(3, "Source of data is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -55,7 +55,7 @@ const numberToWords = (num: number): string => {
 }
 
 export default function TurnoverCertificatePage() {
-  const { toast } = useToast();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('id');
@@ -71,7 +71,7 @@ export default function TurnoverCertificatePage() {
   const { handleCertificationRequest, handlePaymentSuccess } = useCertificationRequest({
     pricing,
     serviceId: 'turnover'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function TurnoverCertificatePage() {
       turnoverAmount: 0,
       dataSource: "audited financial statements",
     },
-  });
+  );
 
   useEffect(() => {
     if(docId && user) {
@@ -105,13 +105,13 @@ export default function TurnoverCertificatePage() {
                 const data = docSnap.data();
                 if(data.userId === user.uid) {
                     form.reset(data.formData);
-                    toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
+                    console.log(title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`);
                 } else {
-                    showEnhancedToast({ variant: "destructive", title: "Unauthorized"});
+                    console.error( variant: "destructive", title: "Unauthorized");
                     router.push('/ca-certificates/turnover');
                 }
             } else {
-                 showEnhancedToast({ variant: "destructive", title: "Not Found"});
+                 console.error( variant: "destructive", title: "Not Found");
                  router.push('/ca-certificates/turnover');
             }
             setIsLoading(false);
@@ -126,12 +126,12 @@ export default function TurnoverCertificatePage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -140,15 +140,15 @@ export default function TurnoverCertificatePage() {
     const isValid = await form.trigger();
     if(isValid) {
         setStep(2);
-        toast({ title: "Draft Ready", description: "Review the certificate before proceeding." });
+        console.log( title: "Draft Ready", description: "Review the certificate before proceeding." );
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields."});
+        console.error( variant: "destructive", title: "Validation Error", description: "Please fill all required fields.");
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          console.error( variant: "destructive", title: 'Authentication Error');
           return;
       }
       setIsSubmitting(true);
@@ -156,8 +156,8 @@ export default function TurnoverCertificatePage() {
       try {
           if (docId) {
               const docRef = doc(db, "userDocuments", docId);
-              await updateDoc(docRef, { formData, updatedAt: new Date() });
-              toast({title: "Draft Updated"});
+              await updateDoc(docRef, { formData, updatedAt: new Date() );
+              console.log(title: "Draft Updated");
           } else {
               const docRef = await addDoc(collection(db, 'userDocuments'), {
                   userId: user.uid,
@@ -166,13 +166,13 @@ export default function TurnoverCertificatePage() {
                   status: 'Draft',
                   formData,
                   createdAt: new Date(),
-              });
-              toast({title: "Draft Saved!"});
+              );
+              console.log(title: "Draft Saved!");
               router.push(`/ca-certificates/turnover?id=${docRef.id}`);
           }
       } catch (e) {
           console.error(e);
-          showEnhancedToast({ variant: "destructive", title: 'Save Failed'});
+          console.error( variant: "destructive", title: 'Save Failed');
       } finally {
           setIsSubmitting(false);
       }
@@ -180,13 +180,13 @@ export default function TurnoverCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          console.error( variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." );
           return;
       }
 
       // Check if pricing is loaded
       if (!pricing) {
-          showEnhancedToast({ variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." });
+          console.error( variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." );
           return;
       }
 
@@ -216,23 +216,23 @@ export default function TurnoverCertificatePage() {
                 signedDocumentUrl: null,
                 formData: form.getValues(),
                 amount: 0, // Free
-            });
-            toast({
+            );
+            console.log(
                 title: "Request Sent",
                 description: "Your certification request has been sent to the admin for review and signature."
-            });
+            );
           } catch (error) {
               console.error("Error sending request:", error);
-              showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+              console.error( variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." );
           } finally {
               setIsSubmitting(false);
           }
       } else {
           // Paid certificate - show payment modal or redirect to payment
-          toast({
+          console.log(
               title: "Payment Required",
               description: `This service costs ₹${effectivePrice}. Please complete the payment to proceed.`,
-          });
+          );
           // Payment will be handled by the CashfreeCheckout component
       }
   }
@@ -386,24 +386,24 @@ export default function TurnoverCertificatePage() {
                                            formData: form.getValues(),
                                            amount: effectivePrice,
                                            paymentId: paymentId,
-                                       });
-                                       toast({
+                                       );
+                                       console.log(
                                            title: "Payment Successful & Request Sent",
                                            description: "Your payment has been processed and certification request sent to admin."
-                                       });
+                                       );
                                    } catch (error) {
                                        console.error("Error sending request:", error);
-                                       showEnhancedToast({ variant: "destructive", title: "Request Failed",
+                                       console.error( variant: "destructive", title: "Request Failed",
                                            description: "Payment was successful but request submission failed. Please contact support."
-                                       });
+                                       );
                                    } finally {
                                        setIsSubmitting(false);
                                    }
                                }}
                                onFailure={() => {
-                                   showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                                   console.error( variant: "destructive", title: "Payment Failed",
                                        description: "Payment was not completed. Please try again."
-                                   });
+                                   );
                                }}
                            />
                        ) : (

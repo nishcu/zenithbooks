@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Bell, Save, Loader2, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VaultErrorBoundary } from "@/components/vault/error-boundary";
 
@@ -22,12 +22,12 @@ interface NotificationPreferences {
 
 export default function VaultSettingsPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     accessAlerts: true,
     expiryWarnings: true,
     storageWarnings: true,
-  });
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -48,13 +48,13 @@ export default function VaultSettingsPage() {
             accessAlerts: notificationPrefs.accessAlerts ?? true,
             expiryWarnings: notificationPrefs.expiryWarnings ?? true,
             storageWarnings: notificationPrefs.storageWarnings ?? true,
-          });
+          );
         }
       } catch (error) {
         console.error("Error loading preferences:", error);
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Failed to load notification preferences.",
-        });
+        );
       } finally {
         setLoading(false);
       }
@@ -91,17 +91,17 @@ export default function VaultSettingsPage() {
         { merge: true }
       );
 
-      toast({
+      console.log(
         title: "Preferences Saved",
         description: "Your notification preferences have been updated.",
-      });
+      );
       
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving preferences:", error);
-      showEnhancedToast({ variant: "destructive", title: "Save Failed",
+      console.error( variant: "destructive", title: "Save Failed",
         description: "Failed to save notification preferences. Please try again.",
-      });
+      );
     } finally {
       setSaving(false);
     }

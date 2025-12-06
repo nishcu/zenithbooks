@@ -26,8 +26,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
@@ -100,7 +100,7 @@ export default function AdminCertificationRequests() {
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -122,16 +122,16 @@ export default function AdminCertificationRequests() {
 
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
-      showEnhancedToast({ variant: "destructive", title: "Approval Failed",
+      console.error( variant: "destructive", title: "Approval Failed",
         description: "Invalid request data. User information is missing.",
-      });
+      );
       return;
     }
 
     if (!udin.trim()) {
-      showEnhancedToast({ variant: "destructive", title: "UDIN Required",
+      console.error( variant: "destructive", title: "UDIN Required",
         description: "Please enter the UDIN (Unique Document Identification Number) for this certificate.",
-      });
+      );
       return;
     }
 
@@ -148,7 +148,7 @@ export default function AdminCertificationRequests() {
         udin: udin.trim(),
         digitalSignature: digitalSignature.trim(),
         signatureFileUrl: null, // Will be set if file is uploaded
-      });
+      );
 
       // Save the certified document to user's userDocuments collection
       const certifiedDocData = {
@@ -169,10 +169,10 @@ export default function AdminCertificationRequests() {
 
       await addDoc(collection(db, "userDocuments"), certifiedDocData);
 
-      toast({
+      console.log(
         title: "Request Approved",
         description: `Certification request has been approved with UDIN: ${udin}. The certified document is now available in the client's "My Documents" section.`,
-      });
+      );
 
       // Reset form fields
       setUdin('');
@@ -182,9 +182,9 @@ export default function AdminCertificationRequests() {
       setSelectedRequest(null);
     } catch (error) {
       console.error("Error approving certification request:", error);
-      showEnhancedToast({ variant: "destructive", title: "Approval Failed",
+      console.error( variant: "destructive", title: "Approval Failed",
         description: "Failed to approve the certification request. Please try again.",
-      });
+      );
     } finally {
       setIsLoading(null);
     }
@@ -192,9 +192,9 @@ export default function AdminCertificationRequests() {
 
   const handleDownloadDraft = async (request: Request) => {
     if (!request.certificateData) {
-      showEnhancedToast({ variant: "destructive", title: "Download Failed",
+      console.error( variant: "destructive", title: "Download Failed",
         description: "Certificate data is not available for this draft.",
-      });
+      );
       return;
     }
 
@@ -210,10 +210,10 @@ export default function AdminCertificationRequests() {
         gstin: "GSTIN of CA Firm",
         pan: "PAN of CA Firm"
       };
-      toast({
+      console.log(
         title: "Generating PDF...",
         description: "Your draft certificate is being prepared for download.",
-      });
+      );
 
       const data = request.certificateData;
       const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -420,15 +420,15 @@ export default function AdminCertificationRequests() {
       // Close the print window
       printWindow.close();
 
-      toast({
+      console.log(
         title: "Draft Downloaded",
         description: "Your draft certificate has been downloaded successfully.",
-      });
+      );
     } catch (error) {
       console.error("Draft download error:", error);
-      showEnhancedToast({ variant: "destructive", title: "Download Failed",
+      console.error( variant: "destructive", title: "Download Failed",
         description: "Failed to generate draft PDF. Please try again or contact support.",
-      });
+      );
     }
   };
 
@@ -441,11 +441,11 @@ export default function AdminCertificationRequests() {
         ? { ...r, status: 'Rejected' as Request['status'] }
         : r
     ));
-    toast({
+    console.log(
       title: "Request Rejected",
       description: `Certification request ${selectedRequest.id} has been rejected.`,
       variant: "destructive",
-    });
+    );
     setIsRejectDialogOpen(false);
     setSelectedRequest(null);
     setIsLoading(null);

@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Key, Loader2, AlertCircle, Download, FileText, Clock, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,7 +32,7 @@ interface SharedDocument {
 }
 
 export default function VaultAccessPage() {
-  const { toast } = useToast();
+  
   const [shareCode, setShareCode] = useState("");
   const [validated, setValidated] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -55,7 +55,7 @@ export default function VaultAccessPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: shareCode.trim() }),
-      });
+      );
 
       let data;
       try {
@@ -157,7 +157,7 @@ export default function VaultAccessPage() {
           documentId: document.id,
           action: "download",
         }),
-      });
+      );
 
       // Properly download the file
       const response = await fetch(document.fileUrl);
@@ -177,15 +177,15 @@ export default function VaultAccessPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast({
+      console.log(
         title: "Download Started",
         description: `${document.fileName} download has started.`,
-      });
+      );
     } catch (error) {
       console.error("Error downloading:", error);
-      showEnhancedToast({ variant: "destructive", title: "Download Failed",
+      console.error( variant: "destructive", title: "Download Failed",
         description: "Failed to download document. Please try again.",
-      });
+      );
     }
   };
 
@@ -200,15 +200,15 @@ export default function VaultAccessPage() {
           documentId: document.id,
           action: "view",
         }),
-      });
+      );
 
       // Open view
       window.open(document.fileUrl, "_blank");
     } catch (error) {
       console.error("Error viewing:", error);
-      showEnhancedToast({ variant: "destructive", title: "View Failed",
+      console.error( variant: "destructive", title: "View Failed",
         description: "Failed to view document. Please try again.",
-      });
+      );
     }
   };
 

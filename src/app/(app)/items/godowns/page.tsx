@@ -30,8 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Edit, Trash2, MoreHorizontal } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Sample Data
@@ -53,14 +53,14 @@ export default function GodownsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [godowns, setGodowns] = useState(sampleGodowns);
   const [selectedGodown, setSelectedGodown] = useState<Godown | null>(null);
-  const [formData, setFormData] = useState<Omit<Godown, 'id'> >({ name: '', address: '', inCharge: '', contact: '' });
-  const { toast } = useToast();
+  const [formData, setFormData] = useState<Omit<Godown, 'id'> >({ name: '', address: '', inCharge: '', contact: '' );
+  
 
   useEffect(() => {
     if (selectedGodown) {
         setFormData(selectedGodown);
     } else {
-        setFormData({ name: '', address: '', inCharge: '', contact: '' });
+        setFormData({ name: '', address: '', inCharge: '', contact: '' );
     }
   }, [selectedGodown]);
 
@@ -76,17 +76,17 @@ export default function GodownsPage() {
 
   const handleDelete = (id: string) => {
     setGodowns(godowns.filter(g => g.id !== id));
-    toast({ title: "Godown Deleted", description: "The godown has been removed." });
+    console.log( title: "Godown Deleted", description: "The godown has been removed." );
   };
 
   const handleSave = () => {
     if (selectedGodown) {
         setGodowns(godowns.map(g => g.id === selectedGodown.id ? { ...g, ...formData } : g));
-        toast({ title: "Godown Updated", description: "The godown details have been updated." });
+        console.log( title: "Godown Updated", description: "The godown details have been updated." );
     } else {
         const newGodown = { id: `loc-${Date.now()}`, ...formData };
         setGodowns([...godowns, newGodown]);
-        toast({ title: "Godown Added", description: "A new godown has been created." });
+        console.log( title: "Godown Added", description: "A new godown has been created." );
     }
     setIsDialogOpen(false);
   };

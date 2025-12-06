@@ -40,8 +40,8 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileDown, AlertTriangle, ChevronDown, Upload, Download, FileSpreadsheet, Calendar as CalendarIcon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -60,7 +60,7 @@ import { applyExcelFormatting } from "@/lib/export-utils";
 
 export default function TrialBalancePage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-    const { toast } = useToast();
+    
     const router = useRouter();
     const { journalVouchers } = useContext(AccountingContext)!;
     const [user] = useAuthState(auth);
@@ -86,9 +86,9 @@ export default function TrialBalancePage() {
         const balances: Record<string, number> = {};
 
         // Initialize all possible accounts
-        allAccounts.forEach(acc => { balances[acc.code] = 0; });
-        customers.forEach(c => { balances[c.id] = 0; });
-        vendors.forEach(v => { balances[v.id] = 0; });
+        allAccounts.forEach(acc => { balances[acc.code] = 0; );
+        customers.forEach(c => { balances[c.id] = 0; );
+        vendors.forEach(v => { balances[v.id] = 0; );
 
         journalVouchers.forEach(voucher => {
             voucher.lines.forEach(line => {
@@ -97,8 +97,8 @@ export default function TrialBalancePage() {
                     const credit = parseFloat(line.credit);
                     balances[line.account] += debit - credit;
                 }
-            });
-        });
+            );
+        );
         
         const combinedData = [
             ...allAccounts.map(acc => ({...acc, group: acc.type})),
@@ -176,16 +176,16 @@ export default function TrialBalancePage() {
     
     const handleFileUpload = () => {
         if (!uploadFile) {
-            showEnhancedToast({ variant: "destructive", title: "Missing Information", description: "Please select a file to upload."});
+            console.error( variant: "destructive", title: "Missing Information", description: "Please select a file to upload.");
             return;
         }
 
         // File upload processing
 
-        toast({
+        console.log(
             title: "Upload Simulated",
             description: `File '${uploadFile.name}' processed. In a real app, this would update your financial data.`,
-        });
+        );
         setIsUploadDialogOpen(false);
     }
     
@@ -200,7 +200,7 @@ export default function TrialBalancePage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast({ title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded." });
+        console.log( title: "Template Downloaded", description: "Trial Balance CSV template has been downloaded." );
     }
 
     const handleExportCsv = () => {
@@ -222,7 +222,7 @@ export default function TrialBalancePage() {
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         
         // Convert to array format for formatting
-        const headers = Object.keys(dataToExport[0] || {});
+        const headers = Object.keys(dataToExport[0] || {);
         const rows = dataToExport.map(row => headers.map(h => row[h as keyof typeof row]));
         
         // Apply formatting for print-ready output
@@ -231,7 +231,7 @@ export default function TrialBalancePage() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Trial Balance");
         XLSX.writeFile(workbook, `Trial_Balance_${format(date || new Date(), 'yyyy-MM-dd')}.xlsx`);
-        toast({ title: "Export Successful", description: "Trial Balance has been exported to Excel with proper formatting." });
+        console.log( title: "Export Successful", description: "Trial Balance has been exported to Excel with proper formatting." );
     };
 
 

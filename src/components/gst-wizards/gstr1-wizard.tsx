@@ -30,8 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, PlusCircle, Trash2, FileDown, FileJson } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
@@ -74,7 +74,7 @@ export default function Gstr1Wizard() {
   const isFreemium = subscriptionPlan === 'freemium';
 
   // All hooks must be called before any early returns
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +130,7 @@ export default function Gstr1Wizard() {
           b2b.push({
             ...invoiceData,
             gstin: customer.gstin,
-          });
+          );
         } else {
           // B2C: Customer doesn't have GSTIN
           if (invoiceValue > 250000) {
@@ -141,7 +141,7 @@ export default function Gstr1Wizard() {
             b2cOther.push(invoiceData);
           }
         }
-      });
+      );
 
     // Process cancelled invoices (CANCEL-*) - treat them as credit notes
     journalVouchers
@@ -181,7 +181,7 @@ export default function Gstr1Wizard() {
         };
 
         cancelled.push(creditNoteData);
-      });
+      );
 
     return {
       b2bInvoicesFromJournal: b2b,
@@ -235,7 +235,7 @@ export default function Gstr1Wizard() {
           reason: "Credit Note",
           gstin: customer?.gstin || "",
         };
-      });
+      );
 
     // Combine with cancelled invoices
     setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);
@@ -262,7 +262,7 @@ export default function Gstr1Wizard() {
           cgst: invoice.cgst,
           sgst: invoice.sgst,
           cess: invoice.cess,
-        });
+        );
       }
       return acc;
     }, [] as any[]);
@@ -413,10 +413,10 @@ export default function Gstr1Wizard() {
 
 
   const handleNext = () => {
-    toast({
+    console.log(
       title: `Step ${step} Saved!`,
       description: `Moving to the next step.`,
-    });
+    );
     setStep(prev => prev + 1);
   };
 
@@ -501,7 +501,7 @@ export default function Gstr1Wizard() {
 
         // Download JSON file
         const jsonStr = JSON.stringify(gstr1Data, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
+        const blob = new Blob([jsonStr], { type: "application/json" );
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -511,23 +511,23 @@ export default function Gstr1Wizard() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast({
+        console.log(
           title: "JSON Generated",
           description: "Your GSTR-1 JSON file has been downloaded successfully.",
-        });
+        );
       } else if (type === 'PDF') {
         // Generate PDF from report content
         if (!reportRef.current) {
-          showEnhancedToast({ variant: "destructive", title: "Error",
+          console.error( variant: "destructive", title: "Error",
             description: "Could not find the report content to generate PDF.",
-          });
+          );
           return;
         }
 
-        toast({
+        console.log(
           title: "Generating PDF...",
           description: "Your GSTR-1 PDF is being generated.",
-        });
+        );
 
         const opt = {
           margin: [10, 10, 10, 10],
@@ -539,15 +539,15 @@ export default function Gstr1Wizard() {
 
         await html2pdf().set(opt).from(reportRef.current).save();
 
-        toast({
+        console.log(
           title: "PDF Generated",
           description: "Your GSTR-1 PDF has been downloaded successfully.",
-        });
+        );
       }
     } catch (error: any) {
-      showEnhancedToast({ variant: "destructive", title: "Generation Failed",
+      console.error( variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the file.",
-      });
+      );
     }
   };
 

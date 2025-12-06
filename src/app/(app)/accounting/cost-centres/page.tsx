@@ -30,8 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Edit, Trash2, MoreHorizontal } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { costCentres } from "@/lib/accounts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -43,7 +43,7 @@ import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 export default function CostCentresPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
@@ -69,7 +69,7 @@ export default function CostCentresPage() {
   }
 
   const handleAction = (action: 'Edit' | 'Delete', id: string) => {
-    toast({
+    console.log(
         title: `Action: ${action}`,
         description: `This would ${action.toLowerCase()} cost centre ${id}. This functionality is a placeholder.`
     })

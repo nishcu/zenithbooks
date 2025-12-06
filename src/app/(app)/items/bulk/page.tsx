@@ -21,8 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Download, Loader2, UploadCloud, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import * as XLSX from "xlsx";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
@@ -68,7 +68,7 @@ const createRowAccessor = (row: Record<string, any>) => {
   const normalized: Record<string, any> = {};
   Object.entries(row).forEach(([key, value]) => {
     normalized[key.toLowerCase().trim()] = value;
-  });
+  );
   return (aliases: string[]) => {
     for (const alias of aliases) {
       if (alias.toLowerCase() in normalized) {
@@ -97,7 +97,7 @@ const buildTemplateWorkbook = () => {
 };
 
 export default function ItemBulkUploadPage() {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const [parsedRows, setParsedRows] = useState<ParsedItemRow[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -114,10 +114,10 @@ export default function ItemBulkUploadPage() {
   const handleDownloadTemplate = () => {
     const workbook = buildTemplateWorkbook();
     XLSX.writeFile(workbook, "items_import_template.xlsx");
-    toast({
+    console.log(
       title: "Template downloaded",
       description: "Fill the Excel file and upload it here.",
-    });
+    );
   };
 
   const normalizeRow = (row: Record<string, any>, index: number): ParsedItemRow => {
@@ -164,21 +164,21 @@ export default function ItemBulkUploadPage() {
         const workbook =
           extension === "csv"
             ? XLSX.read(data as string, { type: "binary", raw: false })
-            : XLSX.read(data as ArrayBuffer, { type: "array", raw: false });
+            : XLSX.read(data as ArrayBuffer, { type: "array", raw: false );
 
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" );
         const rows = json.map((row, idx) => normalizeRow(row, idx + 1));
         setParsedRows(rows);
-        toast({
+        console.log(
           title: "File parsed",
           description: `${rows.length} row${rows.length === 1 ? "" : "s"} ready for review.`,
-        });
+        );
       } catch (error: any) {
         console.error(error);
-        showEnhancedToast({ variant: "destructive", title: "Parsing failed",
+        console.error( variant: "destructive", title: "Parsing failed",
           description: error.message || "Could not read the file.",
-        });
+        );
       } finally {
         setIsParsing(false);
       }
@@ -200,14 +200,14 @@ export default function ItemBulkUploadPage() {
 
   const handleCreateItems = async () => {
     if (!user) {
-      showEnhancedToast({ variant: "destructive", title: "Please sign in to continue." });
+      console.error( variant: "destructive", title: "Please sign in to continue." );
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      showEnhancedToast({ variant: "destructive", title: "No rows to import",
+      console.error( variant: "destructive", title: "No rows to import",
         description: "Fix validation errors or upload a file first.",
-      });
+      );
       return;
     }
 
@@ -229,7 +229,7 @@ export default function ItemBulkUploadPage() {
           sellingPrice: row.sellingPrice ?? 0,
             stockGroupId: row.stockGroup || "",
           createdAt: new Date().toISOString(),
-        });
+        );
         row.status = "success";
         row.error = undefined;
         successCount++;
@@ -242,13 +242,13 @@ export default function ItemBulkUploadPage() {
 
     setParsedRows(updatedRows);
     setIsSaving(false);
-    toast({
+    console.log(
       title: "Import finished",
       description: `${successCount} item${successCount === 1 ? "" : "s"} created. ${
         errorCount ? `${errorCount} failed.` : "All good!"
       }`,
       variant: errorCount ? "destructive" : "default",
-    });
+    );
   };
 
   return (

@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/form";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -41,12 +41,12 @@ const formSchema = z.object({
   address: z.string().min(10, "A full address is required."),
   aadhaar: z.string().regex(/^\d{12}$/, "Must be a 12-digit Aadhaar number.").optional().or(z.literal("")),
   firmName: z.string().min(3, "Firm name is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function SelfAffidavitGstPage() {
-  const { toast } = useToast();
+  
   const printRef = useRef<HTMLDivElement>(null);
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState<ServicePricing | null>(null);
@@ -76,7 +76,7 @@ export default function SelfAffidavitGstPage() {
       aadhaar: "",
       firmName: "",
     },
-  });
+  );
 
   const formData = form.watch();
 
@@ -105,9 +105,9 @@ Date:                                       Deponent Signature
 
   const handleGenerate = () => {
     if (!formData.deponentName || !formData.parentage || !formData.address || !formData.firmName) {
-      showEnhancedToast({ variant: "destructive", title: "Missing Information",
+      console.error( variant: "destructive", title: "Missing Information",
         description: "Please fill in all the required fields to generate the affidavit."
-      });
+      );
       return;
     }
 
@@ -129,18 +129,18 @@ Date:                                       Deponent Signature
 
     // No payment required - show document
     setShowDocument(true);
-    toast({
+    console.log(
       title: "Affidavit Generated",
       description: "Your affidavit has been generated and is ready for download."
-    });
+    );
   };
 
   const handlePaymentSuccess = (paymentId: string) => {
     setShowDocument(true);
-    toast({
+    console.log(
       title: "Payment Successful",
       description: "Your affidavit has been generated and is ready for download."
-    });
+    );
   };
 
   const basePrice = pricing?.gst_documents?.find(s => s.id === 'self_affidavit_gst')?.price || 0;
@@ -221,9 +221,9 @@ Date:                                       Deponent Signature
                         userName={user?.displayName || ''}
                         onSuccess={handlePaymentSuccess}
                         onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
-                            });
+                            );
                         }}
                     />
                 ) : (

@@ -34,8 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Save, FileSpreadsheet } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import * as XLSX from 'xlsx';
@@ -63,7 +63,7 @@ type BudgetEntry = {
 
 export default function BudgetsPage() {
     // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-    const { toast } = useToast();
+    
     const [user] = useAuthState(auth);
     const userDocRef = user ? doc(db, 'users', user.uid) : null;
     const [userData] = useDocumentData(userDocRef);
@@ -121,15 +121,15 @@ export default function BudgetsPage() {
 
     const handleSaveBudget = () => {
         console.log("Saving budget for FY:", financialYear, budgetData);
-        toast({
+        console.log(
             title: "Budget Saved!",
             description: `Your budget for the financial year ${financialYear} has been saved.`,
-        });
+        );
     };
 
     const handleExportBudget = () => {
         if (budgetData.length === 0) {
-            showEnhancedToast({ variant: "destructive", title: "No data to export" });
+            console.error( variant: "destructive", title: "No data to export" );
             return;
         }
 
@@ -151,7 +151,7 @@ export default function BudgetsPage() {
         ];
         
         XLSX.writeFile(workbook, `Budget_${financialYear}.xlsx`);
-        toast({ title: "Export Successful", description: `Budget for ${financialYear} has been exported to Excel.` });
+        console.log( title: "Export Successful", description: `Budget for ${financialYear} has been exported to Excel.` );
     };
     
     return (

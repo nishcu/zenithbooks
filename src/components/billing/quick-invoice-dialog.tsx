@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -23,7 +23,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 
 export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const accountingContext = useContext(AccountingContext);
 
@@ -54,9 +54,9 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
   const handleQuickInvoiceCreate = async () => {
     const selectedCustomer = customers.find((c: any) => c.id === quickCustomer);
     if (!quickInvNum || !selectedCustomer || !quickItem || quickRate <= 0) {
-      showEnhancedToast({ variant: "destructive", title: "Missing Information",
+      console.error( variant: "destructive", title: "Missing Information",
         description: "Please fill out all fields for the quick invoice.",
-      });
+      );
       return;
     }
     
@@ -82,12 +82,12 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
             lines: journalLines,
             amount: totalAmount,
             customerId: quickCustomer,
-        });
+        );
 
-        toast({
+        console.log(
             title: "Quick Invoice Created!",
             description: `Invoice ${invoiceId} has been created and recorded.`
-        });
+        );
 
         // Reset form
         setQuickInvNum("");
@@ -98,7 +98,7 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
         onOpenChange(false);
 
     } catch (e: any) {
-        showEnhancedToast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        console.error( variant: "destructive", title: "Failed to save invoice", description: e.message );
     }
   }
 

@@ -4,19 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Smartphone, Download, Monitor } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ZENITH_BOOKS_VERSION } from "@/lib/constants";
 
 export function AppDownloads() {
-  const { toast } = useToast();
+  
 
   const handleAppDownload = (platform: string) => {
-    toast({
+    console.log(
       title: "Coming Soon! 🚀",
       description: `ZenithBooks mobile app for ${platform} will be available soon. We'll notify you when it's ready!`,
       duration: 5000,
-    });
+    );
   };
 
   return (

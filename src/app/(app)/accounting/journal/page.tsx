@@ -66,8 +66,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
@@ -89,7 +89,7 @@ export default function JournalVoucherPage() {
     { account: "", debit: "0", credit: "0", costCentre: "" },
     { account: "", debit: "0", credit: "0", costCentre: "" },
   ]);
-  const { toast } = useToast();
+  
   const [selectedVoucher, setSelectedVoucher] = useState<JournalVoucher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -153,7 +153,7 @@ export default function JournalVoucherPage() {
         const debit = parseFloat(line.debit || "0");
         const credit = parseFloat(line.credit || "0");
         return line.account && (debit > 0 || credit > 0);
-      });
+      );
 
       if (hasValidLines) {
         const accounts = allAccounts.map(acc => ({ code: acc.code, name: acc.name, type: acc.type }));
@@ -218,7 +218,7 @@ export default function JournalVoucherPage() {
     const originalVoucher = allVouchers.find((v: JournalVoucher | null) => v && v.id === voucherId);
 
     if (!originalVoucher) {
-      showEnhancedToast({ variant: "destructive", title: "Error", description: "Original journal voucher not found." });
+      console.error( variant: "destructive", title: "Error", description: "Original journal voucher not found." );
       return;
     }
 
@@ -240,16 +240,16 @@ export default function JournalVoucherPage() {
 
     try {
       await addJournalVoucher(reversalVoucher as any);
-      toast({ title: "Voucher Reversed", description: `A reversing entry for voucher #${voucherId} has been created.` });
+      console.log( title: "Voucher Reversed", description: `A reversing entry for voucher #${voucherId} has been created.` );
     } catch (e: any) {
-      showEnhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
+      console.error( variant: "destructive", title: "Reversal Failed", description: e.message );
     }
   };
 
   const handleVoucherAction = (action: string, voucher: JournalVoucher) => {
     if (action === "Delete") {
       if (voucher.reverses) {
-        showEnhancedToast({ variant: "destructive", title: "Cannot Delete", description: "This is a reversal entry and cannot be deleted." });
+        console.error( variant: "destructive", title: "Cannot Delete", description: "This is a reversal entry and cannot be deleted." );
         return;
       }
       handleDeleteJournalVoucher(voucher.id);
@@ -257,15 +257,15 @@ export default function JournalVoucherPage() {
       setSelectedVoucher(voucher);
     } else if (action === "Edit") {
       if (voucher.reverses) {
-        showEnhancedToast({ variant: "destructive", title: "Cannot Edit", description: "Reversal entries cannot be edited." });
+        console.error( variant: "destructive", title: "Cannot Edit", description: "Reversal entries cannot be edited." );
         return;
       }
       setEditingVoucher(voucher);
     } else {
-      toast({
+      console.log(
         title: `${action} Voucher`,
         description: `This would ${action.toLowerCase()} voucher ${voucher.id}. This feature is a placeholder.`,
-      });
+      );
     }
   };
 
@@ -309,7 +309,7 @@ export default function JournalVoucherPage() {
 
   const handleSaveVoucher = async () => {
     if (!date) {
-      showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please provide a date." });
+      console.error( variant: "destructive", title: "Missing Details", description: "Please provide a date." );
       return;
     }
 
@@ -317,7 +317,7 @@ export default function JournalVoucherPage() {
     const totalCredits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.credit || "0"), 0);
 
     if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
-      showEnhancedToast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
+      console.error( variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." );
       return;
     }
 
@@ -340,22 +340,22 @@ export default function JournalVoucherPage() {
     try {
       if (editingVoucher) {
         await updateJournalVoucher(editingVoucher.id, voucherData);
-        toast({
+        console.log(
           title: "Voucher Updated",
           description: "Your journal voucher has been updated successfully.",
-        });
+        );
       } else {
         const newVoucherId = `JV-${Date.now()}`;
-        await addJournalVoucher({ id: newVoucherId, ...voucherData });
-        toast({
+        await addJournalVoucher({ id: newVoucherId, ...voucherData );
+        console.log(
           title: "Voucher Saved",
           description: "Your journal voucher has been saved successfully.",
-        });
+        );
       }
 
       handleDialogClose(false);
     } catch (e: any) {
-      showEnhancedToast({ variant: "destructive", title: "Save failed", description: e.message });
+      console.error( variant: "destructive", title: "Save failed", description: e.message );
     }
   };
 

@@ -26,8 +26,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -60,12 +60,12 @@ const formSchema = z.object({
   ipOwnership: z.string().default("Any intellectual property created by the Consultant in the performance of the Services will be the sole and exclusive property of the Client."),
   
   jurisdictionCity: z.string().min(2, "Jurisdiction city is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function ConsultantAgreementPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -76,7 +76,7 @@ export default function ConsultantAgreementPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'consultant_agreement'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -98,13 +98,13 @@ export default function ConsultantAgreementPage() {
       paymentTerms: "Net 30 days after invoice",
       jurisdictionCity: "Mumbai",
     },
-  });
+  );
 
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       agreementDate: new Date().toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data with real-time updates
@@ -113,12 +113,12 @@ export default function ConsultantAgreementPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -142,12 +142,12 @@ export default function ConsultantAgreementPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 4) {
-        toast({ title: `Step ${step} Saved`, description: `Proceeding to the next step.` });
+        console.log( title: `Step ${step} Saved`, description: `Proceeding to the next step.` );
       }
     } else {
-        showEnhancedToast({ variant: "destructive", title: "Validation Error",
+        console.error( variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
-        });
+        );
     }
   };
 
@@ -305,15 +305,15 @@ export default function ConsultantAgreementPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -379,12 +379,12 @@ export default function ConsultantAgreementPage() {
                     reportType: "Consultant Agreement Certification",
                     clientName: form.getValues("clientName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

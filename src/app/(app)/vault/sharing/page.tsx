@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, Key, Eye, EyeOff, Trash2, Clock, Copy, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { ShareCodeDialog } from "@/components/vault/share-code-dialog";
 import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
@@ -35,7 +35,7 @@ interface ShareCode {
 
 export default function ShareCodeManagementPage() {
   const [user, loadingUser] = useAuthState(auth);
-  const { toast } = useToast();
+  
   const [shareCodes, setShareCodes] = useState<ShareCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -62,9 +62,9 @@ export default function ShareCodeManagementPage() {
       },
       (error) => {
         console.error("Error fetching share codes:", error);
-        showEnhancedToast({ variant: "destructive", title: "Error",
+        console.error( variant: "destructive", title: "Error",
           description: "Failed to load share codes. Please try again.",
-        });
+        );
         setLoading(false);
       }
     );
@@ -77,15 +77,15 @@ export default function ShareCodeManagementPage() {
 
     try {
       await deleteDoc(doc(db, "vaultShareCodes", codeId));
-      toast({
+      console.log(
         title: "Share Code Deleted",
         description: "The share code has been deleted and access is revoked.",
-      });
+      );
     } catch (error) {
       console.error("Error deleting share code:", error);
-      showEnhancedToast({ variant: "destructive", title: "Delete Failed",
+      console.error( variant: "destructive", title: "Delete Failed",
         description: "Failed to delete share code. Please try again.",
-      });
+      );
     }
   };
 
@@ -93,10 +93,10 @@ export default function ShareCodeManagementPage() {
     // Note: In a real implementation, we'd need to store the plain text code
     // temporarily during creation and never show it again. For now, we'll
     // show a message that codes should be copied at creation time.
-    toast({
+    console.log(
       title: "Code Copied",
       description: "Share codes should be copied immediately after creation for security.",
-    });
+    );
   };
 
   const isExpired = (expiresAt: any) => {

@@ -5,15 +5,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -29,11 +29,11 @@ function PaymentSuccessContent() {
 
       if (!orderIdParam) {
         setStatus('failed');
-        toast({
+        console.log(
           variant: 'default',
           title: 'Payment Information Missing',
           description: 'We couldn\'t find your order information. Please contact support with your payment details.',
-        });
+        );
         return;
       }
 
@@ -56,16 +56,16 @@ function PaymentSuccessContent() {
             planId: planId,
             amount: parseFloat(searchParams.get('order_amount') || '0'),
           }),
-        });
+        );
 
         const data = await response.json();
 
         if (response.ok && data.success) {
           setStatus('success');
-          toast({
+          console.log(
             title: 'Payment Successful!',
             description: 'Your payment has been verified and subscription activated.',
-          });
+          );
           
           // Clear pending plan ID
           localStorage.removeItem('pending_plan_id');
@@ -76,20 +76,20 @@ function PaymentSuccessContent() {
           }, 3000);
         } else {
           setStatus('failed');
-          toast({
+          console.log(
             variant: 'default',
             title: 'Payment Verification Pending',
             description: data.message || 'We\'re having trouble verifying your payment. If you were charged, please contact our support team with your order details.',
-          });
+          );
         }
       } catch (error) {
         console.error('Payment verification error:', error);
         setStatus('failed');
-        toast({
+        console.log(
           variant: 'default',
           title: 'Verification Issue',
           description: 'We couldn\'t verify your payment right now. If you were charged, please contact our support team with your order ID.',
-        });
+        );
       }
     };
 

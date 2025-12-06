@@ -13,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, FileDown, Printer, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -42,12 +42,12 @@ const formSchema = z.object({
   jurisdictionCity: z.string().min(2, "Jurisdiction city is required.").default("Mumbai"),
   signerName: z.string().min(3, "Signer's name is required."),
   signerTitle: z.string().min(3, "Signer's title is required."),
-});
+);
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function AppointmentLetterPage() {
-  const { toast } = useToast();
+  
   const [step, setStep] = useState(1);
   const printRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -58,7 +58,7 @@ export default function AppointmentLetterPage() {
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
     serviceId: 'appointment_letter'
-  });
+  );
 
   // Fetch user subscription info
   useEffect(() => {
@@ -74,13 +74,13 @@ export default function AppointmentLetterPage() {
       companyAddress: "123 Business Avenue, Commerce City, Maharashtra - 400001",
       // Default dates will be set in useEffect to avoid hydration issues
     },
-  });
+  );
 
   useEffect(() => {
     form.reset({
       ...form.getValues(),
       appointmentDate: new Date().toISOString().split("T")[0],
-    });
+    );
   }, [form]);
 
   // Load pricing data
@@ -89,12 +89,12 @@ export default function AppointmentLetterPage() {
       setPricing(pricingData);
     }).catch(error => {
       console.error('Error loading pricing:', error);
-    });
+    );
 
     // Subscribe to real-time pricing updates
     const unsubscribe = onPricingUpdate(pricingData => {
       setPricing(pricingData);
-    });
+    );
 
     return () => unsubscribe();
   }, []);
@@ -117,10 +117,10 @@ export default function AppointmentLetterPage() {
     if (isValid) {
       setStep(prev => prev + 1);
       if (step < 4) {
-        toast({ title: `Step ${step} Saved` });
+        console.log( title: `Step ${step} Saved` );
       }
     } else {
-      showEnhancedToast({ variant: "destructive", title: "Validation Error" });
+      console.error( variant: "destructive", title: "Validation Error" );
     }
   };
 
@@ -256,15 +256,15 @@ export default function AppointmentLetterPage() {
                           userName={user?.displayName || ''}
                           onSuccess={(paymentId) => {
                             setShowDocument(true);
-                            toast({
+                            console.log(
                               title: "Payment Successful",
                               description: "Your document is ready for download."
-                            });
+                            );
                           }}
                           onFailure={() => {
-                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                            console.error( variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
-                            });
+                            );
                           }}
                         />
                       );
@@ -330,12 +330,12 @@ export default function AppointmentLetterPage() {
                     reportType: "Appointment Letter Certification",
                     clientName: form.getValues("companyName"),
                     formData: form.getValues(),
-                  });
+                  );
                 }}
                 onFailure={() => {
-                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
+                  console.error( variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
-                  });
+                  );
                 }}
               />
             ) : (

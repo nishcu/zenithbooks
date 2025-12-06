@@ -52,8 +52,8 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { showEnhancedToast } from "@/lib/error-handler";
+
+import {  } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -80,7 +80,7 @@ interface Party {
 }
 
 export default function PartiesPage() {
-  const { toast } = useToast();
+  
   const [user] = useAuthState(auth);
   const router = useRouter();
 
@@ -111,9 +111,9 @@ export default function PartiesPage() {
     const partyDocRef = doc(db, collectionName, party.id);
     try {
         await deleteDoc(partyDocRef);
-        toast({ title: "Party Deleted", description: `${party.name} has been removed.`})
+        console.log( title: "Party Deleted", description: `${party.name} has been removed.`})
     } catch (e) {
-        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the party."})
+        console.error( variant: "destructive", title: "Error", description: "Could not delete the party."})
     }
   }
   
@@ -121,10 +121,10 @@ export default function PartiesPage() {
       if (!user) return;
       try {
           const newCode = await assignAccountCode(party, user.uid);
-          toast({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.`});
+          console.log( title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.`);
       } catch (error) {
           console.error(error);
-          showEnhancedToast({ variant: "destructive", title: "Assignment Failed", description: (error as Error).message });
+          console.error( variant: "destructive", title: "Assignment Failed", description: (error as Error).message );
       }
   }
   
@@ -164,7 +164,7 @@ export default function PartiesPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, type.charAt(0).toUpperCase() + type.slice(1));
     XLSX.writeFile(workbook, `${type}_export.xlsx`);
-    toast({ title: "Export Successful", description: `Your ${type} list has been downloaded.` });
+    console.log( title: "Export Successful", description: `Your ${type} list has been downloaded.` );
   };
   
   const handleDownloadTemplate = () => {
@@ -186,14 +186,14 @@ export default function PartiesPage() {
   
   const handleImport = async () => {
     if (!importFile || !user) {
-        showEnhancedToast({ variant: "destructive", title: "No file selected", description: "Please upload a file to import."});
+        console.error( variant: "destructive", title: "No file selected", description: "Please upload a file to import.");
         return;
     }
     
     const reader = new FileReader();
     reader.onload = async (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array' );
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet) as any[];
@@ -227,11 +227,11 @@ export default function PartiesPage() {
 
         try {
             await batch.commit();
-            toast({ title: "Import Successful", description: `${json.length} parties were imported.`});
+            console.log( title: "Import Successful", description: `${json.length} parties were imported.`);
             setIsImportDialogOpen(false);
             setImportFile(null);
         } catch (error) {
-            showEnhancedToast({ variant: "destructive", title: "Import Failed", description: "There was an error writing to the database." });
+            console.error( variant: "destructive", title: "Import Failed", description: "There was an error writing to the database." );
         }
     };
     reader.readAsArrayBuffer(importFile);
