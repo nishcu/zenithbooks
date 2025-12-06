@@ -463,7 +463,8 @@ toast({
       const fileName = `Ledger_${accountCode}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       doc.save(fileName);
 
-      console.log(
+      const { toast } = require("@/hooks/use-toast");
+      toast({
         title: "PDF Exported",
         description: `Ledger for ${accountName} has been exported successfully.`,
       );

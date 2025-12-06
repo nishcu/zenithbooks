@@ -35,6 +35,7 @@ import { uploadBlogImage } from '@/lib/storage';
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
+});
 );
 
 const formSchema = z.object({

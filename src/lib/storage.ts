@@ -45,7 +45,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
     const imageRef = ref(storage, path);
     await deleteObject(imageRef);
 
-    console.log({ 'Image deleted successfully:', path });
+    console.log('Image deleted successfully:', path);
   } catch (error) {
     console.error("Error deleting image", error );
     // Don't throw error for delete failures as it's not critical

@@ -451,9 +451,9 @@ export default function BooksOfAccountPage() {
                 grandTotal += total;
 
                 // Find vendor/party
-                const vendorLine = v.lines.find(l => 
-                    vendors.some(vendor => vendor.id === String(l.account).trim())
-                });
+                const vendorLine = v.lines.find(l =>
+                    vendors.some(vendor => vendor.id === String(l.account).trim()));
+                );
                 const supplierName = vendorLine ? getAccountName(String(vendorLine.account).trim()) : 
                     (v.narration?.includes('from') ? v.narration.split('from')[1]?.trim() : '');
 
