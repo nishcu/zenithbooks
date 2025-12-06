@@ -159,11 +159,18 @@ export async function showErrorToast(error: unknown, context?: string) {
 /**
  * Show success toast notification
  */
-export function showSuccessToast(title: string, description?: string) {
-  toast({
-    title,
-    description,
-  });
+export async function showSuccessToast(title: string, description?: string) {
+  try {
+    const toast = await getToastFunction();
+    toast({
+      title,
+      description,
+    });
+  } catch (error) {
+    console.error("showSuccessToast failed:", error);
+    // Fallback to console logging
+    console.log("Success:", title, description);
+  }
 }
 
 /**

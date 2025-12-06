@@ -151,7 +151,7 @@ export function LoginForm() {
       // Clear failed login attempts on success
       clearFailedLoginAttempts(loginId);
       
-      showSuccessToast(TOAST_MESSAGES.SUCCESS.LOGIN.title, TOAST_MESSAGES.SUCCESS.LOGIN.description);
+      await showSuccessToast(TOAST_MESSAGES.SUCCESS.LOGIN.title, TOAST_MESSAGES.SUCCESS.LOGIN.description);
       router.push("/dashboard");
     } catch (error: any) {
       // Record failed login attempt
@@ -192,7 +192,7 @@ export function LoginForm() {
       }
       try {
           await sendPasswordResetEmail(auth, resetEmail);
-          showSuccessToast("Password Reset Email Sent", "Please check your inbox for instructions to reset your password.");
+          await showSuccessToast("Password Reset Email Sent", "Please check your inbox for instructions to reset your password.");
           setIsForgotPasswordOpen(false);
           setResetEmail("");
       } catch (error: any) {
