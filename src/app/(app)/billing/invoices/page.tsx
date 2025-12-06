@@ -307,7 +307,7 @@ toast({
         }
         else {
             console.log({ title: `Action: ${action}`,
-                description: `This would ${action.toLowerCase( })} invoice ${invoice.id}. This is a placeholder.`
+                description: `This would ${action.toLowerCase()} invoice ${invoice.id}. This is a placeholder.`
             );
         }
     }

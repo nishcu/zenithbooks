@@ -375,7 +375,7 @@ export default function BulkInvoicePage() {
       };
       reader.onerror = reject;
       reader.readAsArrayBuffer(file);
-    );
+    });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

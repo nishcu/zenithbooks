@@ -1046,7 +1046,7 @@ toast({
 
             XLSX.writeFile(workbook, filename);
 
-            console.log(
+            console.log({
                 title: "Books of Account Generated",
                 description: `Excel file with ${sheets.length} sheets has been generated successfully.`,
             });

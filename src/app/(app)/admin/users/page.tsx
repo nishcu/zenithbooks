@@ -241,6 +241,7 @@ toast({
       await new Promise(resolve => setTimeout(resolve, 800));
       console.log({ title: "Password Reset",
         description: `Password reset functionality will be implemented soon.`,
+      });
       );
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null });
