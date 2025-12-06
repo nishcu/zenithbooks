@@ -75,13 +75,13 @@ toast({
 
 // Function to update a blog post in Firebase
 async function updateBlogPost(postId: string, updatedData: any) {
-    console.log({ 'Updating blog post in Firebase:', postId, updatedData);
+    console.log('Updating blog post in Firebase:', postId, updatedData);
 
     try {
         // Convert contentBlocks back to content array format
         const content = updatedData.contentBlocks
             .filter((block: any) => block.value.trim() !== '')
-            .map((block: any) => block.value });
+            .map((block: any) => block.value);
 
         // Prepare update data for Firebase
         const updateData: any = {
@@ -130,7 +130,7 @@ toast({
 
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
-);
+ });
 
 const formSchema = z.object({
   title: z.string().min(5, "Title is required."),

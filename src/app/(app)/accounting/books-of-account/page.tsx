@@ -72,10 +72,8 @@ export default function BooksOfAccountPage() {
                     backLabel="Back to Dashboard"
                 />
             </div>
-        </>
-    );
-    }
-    }
+        );
+}
 
     if (!accountingContext) {
         return (

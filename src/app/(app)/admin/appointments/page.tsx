@@ -103,7 +103,7 @@ export default function AdminAppointments() {
       title: "Appointment Rescheduled",
       description: `Appointment ${selectedAppointment.id} has been rescheduled successfully.`,
     });
-    );
+
     setIsRescheduleDialogOpen(false);
     setSelectedAppointment(null);
     setRescheduleDate('');
@@ -120,7 +120,8 @@ export default function AdminAppointments() {
         ? { ...a, status: 'Cancelled' as Appointment['status'] }
         : a
     ));
-    console.log(
+    const { toast } = require("@/hooks/use-toast");
+    toast({
       title: "Appointment Cancelled",
       description: `Appointment ${selectedAppointment.id} has been cancelled.`,
       variant: "destructive",

@@ -358,10 +358,11 @@ toast({
     
     setDateRange({ from: start, to: end });
     
-    console.log(
+    const { toast } = require("@/hooks/use-toast");
+    toast({
       title: "Generating Report",
       description: `Fetching ledger entries for ${selectedAccountDetails?.name || selectedAccount} from ${format(start, "dd MMM yyyy")} to ${format(end, "dd MMM yyyy")}.`,
-    );
+    });
   };
 
   const handleExportPdf = () => {

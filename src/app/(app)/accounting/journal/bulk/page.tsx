@@ -183,8 +183,8 @@ export default function BulkJournalEntryPage() {
                     backLabel="Back to Journal"
                 />
             </div>
-        });
-    }
+        );
+}
 
     // Get account name by code
     const getAccountName = (code: string): string => {
