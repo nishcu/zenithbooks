@@ -4,23 +4,34 @@
 
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
 
-// Simple approach - import toast directly but handle gracefully
-let toastFunction: any = null;
-
-// Try to import toast function safely
-if (typeof window !== 'undefined') {
-  try {
-    import("@/hooks/use-toast").then(({ toast }) => {
-      toastFunction = toast;
-    }).catch(() => {
-      console.warn("Toast import failed");
-    });
-  } catch (error) {
-    console.warn("Toast initialization failed:", error);
-  }
+// Global toast function registry
+declare global {
+  var __zenithToast: any;
 }
 
-const getToast = () => toastFunction;
+const getToast = () => {
+  // Try to get toast from global registry first
+  if (typeof globalThis !== 'undefined' && (globalThis as any).__zenithToast) {
+    return (globalThis as any).__zenithToast;
+  }
+
+  // Fallback to window if available
+  if (typeof window !== 'undefined' && (window as any).__zenithToast) {
+    return (window as any).__zenithToast;
+  }
+
+  return null;
+};
+
+// Export function to set the toast globally
+export const setGlobalToast = (toast: any) => {
+  if (typeof globalThis !== 'undefined') {
+    (globalThis as any).__zenithToast = toast;
+  }
+  if (typeof window !== 'undefined') {
+    (window as any).__zenithToast = toast;
+  }
+};
 
 
 

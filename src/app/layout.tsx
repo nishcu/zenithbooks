@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ClientOnly } from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { ToastProvider } from '@/components/toast-provider';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -63,10 +64,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-            <Toaster />
+            <ToastProvider>
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+              <Toaster />
+            </ToastProvider>
           </ThemeProvider>
         </ClientOnly>
       </body>
