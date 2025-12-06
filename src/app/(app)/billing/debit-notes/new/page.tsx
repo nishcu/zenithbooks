@@ -152,7 +152,7 @@ toast({
             lines: journalLines,
             amount: totalAmount,
             vendorId: vendor,
-        );
+        });
         console.log({ title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.`  });
     } catch (e: any) {
         const { toast } = require("@/hooks/use-toast");

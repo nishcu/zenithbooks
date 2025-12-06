@@ -991,7 +991,7 @@ toast({
                     // Period row
                     const periodRowIndex = sheetHeaders.findIndex(row => String(row[0]).startsWith("From"));
                     if (periodRowIndex >= 0) {
-                        const periodCell = XLSX.utils.encode_cell({ r: periodRowIndex, c: 0 );
+                        const periodCell = XLSX.utils.encode_cell({ r: periodRowIndex, c: 0 });
                         if (!worksheet[periodCell]) worksheet[periodCell] = { t: 's', v: sheetHeaders[periodRowIndex][0] };
                         worksheet[periodCell].s = {
                             alignment: { horizontal: 'center' }

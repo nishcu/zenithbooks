@@ -103,7 +103,6 @@ export default function AdminUsers() {
           'x-user-id': user?.uid || '',
         },
       });
-      );
 
       if (response.ok) {
         const data = await response.json();

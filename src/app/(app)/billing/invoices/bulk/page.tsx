@@ -243,7 +243,7 @@ export default function BulkInvoicePage() {
               taxRateIndex = index;
             }
             if (h.includes('date') && h.includes('invoice')) dateIndex = index;
-          );
+          });
 
           // Default indices if not found
           if (customerIndex === -1) customerIndex = 0;
@@ -273,7 +273,7 @@ export default function BulkInvoicePage() {
                 price,
                 taxRate: taxRate || defaultTaxRate,
                 invoiceDate: invoiceDate || format(new Date(), "yyyy-MM-dd"),
-              );
+              });
             }
           }
 
@@ -330,7 +330,7 @@ export default function BulkInvoicePage() {
               taxRateIndex = index;
             }
             if (h.includes('date') && h.includes('invoice')) dateIndex = index;
-          );
+          });
 
           if (customerIndex === -1) customerIndex = 0;
           if (productIndex === -1) productIndex = 1;
@@ -359,7 +359,7 @@ export default function BulkInvoicePage() {
                 price,
                 taxRate: taxRate || defaultTaxRate,
                 invoiceDate: invoiceDate || format(new Date(), "yyyy-MM-dd"),
-              );
+              });
             }
           }
 
