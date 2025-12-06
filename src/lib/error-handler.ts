@@ -3,7 +3,25 @@
  */
 
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
-import { toast } from "@/hooks/use-toast";
+
+// Import toast function dynamically to avoid issues
+let toastFunction: any = null;
+
+const getToastFunction = async () => {
+  if (!toastFunction) {
+    try {
+      const { toast } = await import("@/hooks/use-toast");
+      toastFunction = toast;
+    } catch (error) {
+      console.error("Failed to load toast function:", error);
+      // Fallback to console
+      toastFunction = ({ title, description }: any) => {
+        console.error(title, description);
+      };
+    }
+  }
+  return toastFunction;
+};
 
 
 
@@ -156,11 +174,17 @@ export function showEnhancedToast({ variant, title, description, ...props }: any
     finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
   }
 
-  toast({
-    variant,
-    title,
-    description: finalDescription,
-    ...props
+  // Use dynamic toast loading
+  getToastFunction().then(toast => {
+    toast({
+      variant,
+      title,
+      description: finalDescription,
+      ...props
+    });
+  }).catch(error => {
+    console.error("Toast function failed:", error);
+    console.error(title, finalDescription);
   });
 }
 
