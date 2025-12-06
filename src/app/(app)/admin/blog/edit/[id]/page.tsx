@@ -227,7 +227,7 @@ toast({
         if (postId) {
             loadPost();
         }
-    }, [postId, form, router, toast]);
+    }, [postId, form, router]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -315,26 +315,21 @@ toast({
                 return;
             }
 
-            console.log(
+            console.log({
                 title: "Blog Post Updated!",
                 description: `"${values.title}" has been successfully updated.`,
-            );
+            });
 
             // Navigate back to blog list
             router.push('/admin/blog');
 
         } catch (error) {
             const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error updating post",
-  description: error ,
-});
-            const { toast } = require("@/hooks/use-toast");
-toast({
-  variant: "destructive",
-  title: "Error: Failed to update the blog post. Please try again.",
-});
+            toast({
+              variant: "destructive",
+              title: "Error updating post",
+              description: "Failed to update the blog post. Please try again.",
+            });
         } finally {
             setIsSaving(false);
             setIsUploading(false);
