@@ -126,7 +126,7 @@ export function ShareButtons({
           return;
         }
       } catch (error) {
-        console.error({ 'Web Share API failed:', error });
+        console.error('Web Share API failed:', error);
         // Fall back to regular WhatsApp sharing
       }
     }

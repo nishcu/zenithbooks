@@ -157,11 +157,7 @@ export function LoginForm() {
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {
-          console.error(
-            variant: "default",
-            title: "Login Attempts Remaining",
-            description: `You have ${attemptResult.remainingAttempts} attempt${attemptResult.remainingAttempts === 1 ? '' : 's'} remaining before your account is temporarily locked.`,
-          );
+          console.error("Login Attempts Remaining:", `You have ${attemptResult.remainingAttempts} attempt${attemptResult.remainingAttempts === 1 ? '' : 's'} remaining before your account is temporarily locked.`);
         }
       }
     } finally {

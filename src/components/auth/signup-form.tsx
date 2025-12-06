@@ -100,7 +100,7 @@ export function SignupForm() {
               userType: "business", // Default to business
               companyName: user.displayName || "My Company",
               createdAt: new Date(),
-            );
+            });
           }
           
           console.log("Signup Successful: Welcome to ZenithBooks!");

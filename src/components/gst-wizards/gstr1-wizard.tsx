@@ -181,7 +181,7 @@ export default function Gstr1Wizard() {
         };
 
         cancelled.push(creditNoteData);
-      );
+      });
 
     return {
       b2bInvoicesFromJournal: b2b,
@@ -234,8 +234,8 @@ export default function Gstr1Wizard() {
           cess: 0,
           reason: "Credit Note",
           gstin: customer?.gstin || "",
-        };
-      );
+        });
+      };
 
     // Combine with cancelled invoices
     setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);
