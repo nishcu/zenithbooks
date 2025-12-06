@@ -200,10 +200,10 @@ toast({
             ? { ...u, ...editFormData }
             : u
         ));
-        console.log(
+        console.log({
           title: "User Updated",
           description: `User ${editFormData.email} has been updated successfully.`,
-        );
+        });
         setIsEditDialogOpen(false);
         setSelectedUser(null);
       } else {
@@ -266,11 +266,11 @@ toast({
           ? { ...u, status: 'Suspended' as User['status'] }
           : u
       ));
-      console.log(
+      console.log({
         title: "User Suspended",
         description: `${selectedUser.email} has been suspended.`,
         variant: "destructive",
-      );
+      });
       setIsSuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
@@ -295,10 +295,10 @@ toast({
           ? { ...u, status: 'Active' as User['status'] }
           : u
       ));
-      console.log(
+      console.log({
         title: "User Unsuspended",
         description: `${selectedUser.email} has been unsuspended and can now access the platform.`,
-      );
+      });
       setIsUnsuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
@@ -331,11 +331,11 @@ toast({
       if (response.ok) {
         // Remove user from local state
         setUsers(users.filter((u: User) => u.id !== selectedUser.id));
-        console.log(
+        console.log({
           title: "User Deleted",
           description: `${selectedUser.email} has been deleted from the system.`,
           variant: "destructive",
-        );
+        });
         setIsDeleteDialogOpen(false);
         setSelectedUser(null);
       } else {
