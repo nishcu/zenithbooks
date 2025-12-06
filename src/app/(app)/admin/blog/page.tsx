@@ -50,7 +50,7 @@ async function loadBlogPosts() {
                 id: doc.id,
                 ...doc.data(),
                 date: doc.data().createdAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
-            );
+            });
         );
 
         return posts;
