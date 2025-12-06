@@ -83,10 +83,9 @@ export function ShareButtons({
 
       console.log("PDF Generated: Your PDF has been downloaded successfully.");
     } catch (error: any) {
-      console.error({ "PDF generation error:", error });
-      console.error({ "Element:", element });
-      console.error({ variant: "destructive", title: "PDF Generation Failed",
-        description: error.message || "An error occurred while generating the PDF. Please try again.", });
+      console.error("PDF generation error:", error);
+      console.error("Element:", element);
+      console.error("PDF Generation Failed:", error.message || "An error occurred while generating the PDF. Please try again.");
     }
   };
 

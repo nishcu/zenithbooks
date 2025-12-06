@@ -102,7 +102,7 @@ export function VaultStatistics() {
         setShareCodesCount(snapshot.size);
       },
       (error) => {
-        console.error({ "Error fetching share codes:", error });
+        console.error("Error fetching share codes:", error);
       }
     );
 

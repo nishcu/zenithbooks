@@ -73,7 +73,7 @@ const itemSchema = z.object({
     purchasePrice: z.coerce.number().min(0).optional(),
     sellingPrice: z.coerce.number().min(0).optional(),
     stockGroupId: z.string().optional(),
-);
+});
 
 const getNextAvailableCode = async (userId: string, type: string): Promise<string> => {
     const accountCodeRanges: Record<string, { start: number, end: number }> = {

@@ -81,7 +81,7 @@ export function LoginForm() {
       password: "",
       acceptPolicies: false,
     },
-  };
+  }
 
    useEffect(() => {
     const handleRedirectResult = async () => {
