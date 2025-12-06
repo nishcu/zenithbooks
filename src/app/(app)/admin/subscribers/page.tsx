@@ -84,10 +84,10 @@ export default function Subscribers() {
         ? { ...s, plan: selectedPlan }
         : s
     ));
-    console.log(
+    console.log({
       title: "Plan Changed",
       description: `${selectedSubscriber.userName}'s subscription plan has been changed to ${selectedPlan}.`,
-    );
+    });
     setIsChangePlanDialogOpen(false);
     setSelectedSubscriber(null);
     setIsLoading(null);

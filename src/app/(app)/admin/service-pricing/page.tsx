@@ -49,7 +49,7 @@ export default function ServicePricingPage() {
     getServicePricing().then(pricing => {
         setServices(pricing);
         setIsLoading(false);
-    );
+    });
 
     // Subscribe to real-time updates
     const unsubscribe = onPricingUpdate(pricing => {

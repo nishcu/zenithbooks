@@ -122,20 +122,18 @@ export default function AdminCertificationRequests() {
 
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
-      const { toast } = require("@/hooks/use-toast");
-      toast({
-        variant: "destructive",
+toast({
+  variant: "destructive",
         title: "Approval Failed",
         description: "Invalid request data. User information is missing.",
-      });
+});
       return;
     }
 
     if (!udin.trim()) {
-      const { toast } = require("@/hooks/use-toast");
-      toast({
-        variant: "destructive",
-        title: "UDIN Required",
+toast({
+  variant: "destructive",
+  title: "UDIN Required",
         description: "Please enter the UDIN (Unique Document Identification Number) for this certificate.",
       });
       return;
@@ -187,12 +185,11 @@ export default function AdminCertificationRequests() {
       setIsApproveDialogOpen(false);
       setSelectedRequest(null);
     } catch (error) {
-      const { toast } = require("@/hooks/use-toast");
-      toast({
-        variant: "destructive",
+toast({
+  variant: "destructive",
         title: "Approval Failed",
         description: "Failed to approve the certification request. Please try again.",
-      });
+});
     } finally {
       setIsLoading(null);
     }
@@ -200,7 +197,6 @@ export default function AdminCertificationRequests() {
 
   const handleDownloadDraft = async (request: Request) => {
     if (!request.certificateData) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Download Failed: Certificate data is not available for this draft.",
@@ -429,13 +425,11 @@ toast({
 
       console.log("Draft Downloaded: Your draft certificate has been downloaded successfully.");
     } catch (error) {
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Draft download error",
   description: error ,
 });
-      const { toast } = require("@/hooks/use-toast");
 toast({
   variant: "destructive",
   title: "Download Failed: Failed to generate draft PDF. Please try again or contact support.",

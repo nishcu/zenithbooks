@@ -73,7 +73,7 @@ export default function BooksOfAccountPage() {
                 />
             </div>
         );
-}
+    }
 
     if (!accountingContext) {
         return (
@@ -81,7 +81,7 @@ export default function BooksOfAccountPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
-}
+    }
     }
 
     // Get account name by code
@@ -451,7 +451,7 @@ export default function BooksOfAccountPage() {
                 grandTotal += total;
 
                 // Find vendor/party
-                const vendorLine = v.lines.find(l =>
+                const vendorLine = v.lines.find(l => 
                     vendors.some(vendor => vendor.id === String(l.account).trim()));
                 const supplierName = vendorLine ? getAccountName(String(vendorLine.account).trim()) : 
                     (v.narration?.includes('from') ? v.narration.split('from')[1]?.trim() : '');
@@ -496,7 +496,7 @@ export default function BooksOfAccountPage() {
         let totalGST = 0;
         let grandTotal = 0;
 
-        const salesVouchers = vouchers.filter(v =>
+        const salesVouchers = vouchers.filter(v => 
             v.id && (v.id.startsWith("INV-") || v.id.startsWith("SI-")) && !v.reverses
         );
 
@@ -518,7 +518,7 @@ export default function BooksOfAccountPage() {
             grandTotal += total;
 
             // Find customer/party
-            const customerLine = v.lines.find(l =>
+            const customerLine = v.lines.find(l => 
                 customers.some(customer => customer.id === String(l.account).trim())
             );
             const customerName = customerLine ? getAccountName(String(customerLine.account).trim()) : 
@@ -668,7 +668,7 @@ export default function BooksOfAccountPage() {
         sortedTypes.forEach(type => {
             // Add type header
             rows.push([type, "", "", "", "", ""]);
-
+            
             const accounts = accountsByType[type].sort((a, b) => getAccountName(a[0]).localeCompare(getAccountName(b[0])));
 
             accounts.forEach(([code, balance]) => {
@@ -962,7 +962,7 @@ toast({
                     
                     // GST row if exists
                     if (sheetHeaders.length > 3 && sheetHeaders[2][0]) {
-                        const gstCell = XLSX.utils.encode_cell({ r: 2, c: 0 );
+                        const gstCell = XLSX.utils.encode_cell({ r: 2, c: 0 });
                         if (!worksheet[gstCell]) worksheet[gstCell] = { t: 's', v: sheetHeaders[2][0] };
                         worksheet[gstCell].s = {
                             alignment: { horizontal: 'center' }

@@ -61,7 +61,7 @@ export default function AdminUsers() {
     email: '',
     userType: 'business' as 'business' | 'professional' | 'freemium',
     companyName: ''
-  );
+  });
   
 
   // Check if user is super admin
