@@ -11,12 +11,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-    Upload, 
-    FileSpreadsheet, 
-    Download, 
-    CheckCircle2, 
-    XCircle, 
+import { toast } from "@/hooks/use-toast";
+import {
+    Upload,
+    FileSpreadsheet,
+    Download,
+    CheckCircle2,
+    XCircle,
     AlertCircle, 
     Loader2,
     BookOpen,
@@ -330,7 +331,6 @@ export default function BulkJournalEntryPage() {
         XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
         
         XLSX.writeFile(wb, "bulk-journal-entries-template.xlsx");
-        const { toast } = require("@/hooks/use-toast");
         toast({
             title: "Template Downloaded",
             description: "Template file has been downloaded. Use account names or ledger names (not codes). Fill in your journal entries and upload."

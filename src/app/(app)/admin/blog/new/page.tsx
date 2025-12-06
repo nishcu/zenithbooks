@@ -36,7 +36,6 @@ import { uploadBlogImage } from '@/lib/storage';
 const contentSchema = z.object({
   value: z.string().min(10, "Paragraph content must be at least 10 characters."),
 });
-);
 
 const formSchema = z.object({
   title: z.string().min(5, "Title is required."),
@@ -47,7 +46,7 @@ const formSchema = z.object({
   image: z.custom<File>((val) => val instanceof File, "Featured image is required."),
 
   contentBlocks: z.array(contentSchema).min(1, "At least one content paragraph is required."),
-);
+});
 
 export default function NewBlogPostPage() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);

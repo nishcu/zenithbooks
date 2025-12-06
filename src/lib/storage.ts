@@ -112,7 +112,7 @@ export async function uploadBlogImage(
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log({ 'Blog image uploaded successfully:', downloadURL);
+              console.log('Blog image uploaded successfully:', downloadURL);
               resolve(downloadURL });
             } catch (error) {
               console.error("Error getting download URL", error );

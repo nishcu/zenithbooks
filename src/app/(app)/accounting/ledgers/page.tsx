@@ -467,6 +467,7 @@ toast({
       toast({
         title: "PDF Exported",
         description: `Ledger for ${accountName} has been exported successfully.`,
+      });
       );
     } catch (error) {
       const { toast } = require("@/hooks/use-toast");
