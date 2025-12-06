@@ -31,6 +31,7 @@ import { DateRangeSelector } from "@/components/date-range-selector";
 import { Separator } from "@/components/ui/separator";
 import { ReportRow } from "@/components/accounting/report-row";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { AccountingContext, JournalVoucher } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { formatCurrency, cn } from "@/lib/utils";

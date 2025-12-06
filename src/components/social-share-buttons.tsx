@@ -5,6 +5,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Twitter, Facebook, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 

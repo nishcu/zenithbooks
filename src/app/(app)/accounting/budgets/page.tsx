@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Save, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import * as XLSX from 'xlsx';
@@ -128,7 +129,7 @@ export default function BudgetsPage() {
 
     const handleExportBudget = () => {
         if (budgetData.length === 0) {
-            toast({ variant: "destructive", title: "No data to export" });
+            enhancedToast({ variant: "destructive", title: "No data to export" });
             return;
         }
 

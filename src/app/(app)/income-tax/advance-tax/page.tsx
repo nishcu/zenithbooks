@@ -28,6 +28,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountingContext } from "@/context/accounting-context";
@@ -126,9 +127,7 @@ export default function AdvanceTax() {
 
   const calculateTax = () => {
     if (estimatedIncome <= 0) {
-        toast({
-            variant: "destructive",
-            title: "Invalid Input",
+        enhancedToast({ variant: "destructive", title: "Invalid Input",
             description: "Please enter a valid estimated income.",
         });
         return;

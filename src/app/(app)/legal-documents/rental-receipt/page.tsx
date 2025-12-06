@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IndianRupee, Printer, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
@@ -40,9 +41,7 @@ export default function RentalReceiptPage() {
 
     const handleGenerate = () => {
         if (!tenantName || !landlordName || !rentAmount || !address) {
-            toast({
-                variant: "destructive",
-                title: "Missing Information",
+            enhancedToast({ variant: "destructive", title: "Missing Information",
                 description: "Please fill in all the required fields to generate the receipt."
             });
             return;
@@ -144,9 +143,7 @@ export default function RentalReceiptPage() {
                                     userName={user?.displayName || ''}
                                     onSuccess={handlePaymentSuccessCallback}
                                     onFailure={() => {
-                                        toast({
-                                            variant: "destructive",
-                                            title: "Payment Failed",
+                                        enhancedToast({ variant: "destructive", title: "Payment Failed",
                                             description: "Payment was not completed. Please try again."
                                         });
                                     }}

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { useAccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -47,7 +48,7 @@ export default function RapidPurchaseEntryPage() {
     const selectedItem: any = items.find((i:any) => i.id === values.itemId);
 
     if (!selectedParty || !selectedItem) {
-        toast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected." });
+        enhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure vendor and item are selected." });
         return;
     }
     
@@ -95,7 +96,7 @@ export default function RapidPurchaseEntryPage() {
             form.setFocus("itemId");
         }
     } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed to save purchase", description: e.message });
+        enhancedToast({ variant: "destructive", title: "Failed to save purchase", description: e.message });
     }
   }, [accountingContext, vendors, items, form, router, toast]);
 

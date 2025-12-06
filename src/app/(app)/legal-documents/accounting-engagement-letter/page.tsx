@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
@@ -153,9 +154,7 @@ export default function AccountingEngagementLetterPage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
       }
     } else {
-        toast({
-            variant: "destructive",
-            title: "Validation Error",
+        enhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
         });
     }
@@ -382,9 +381,7 @@ export default function AccountingEngagementLetterPage() {
                               });
                             }}
                             onFailure={() => {
-                              toast({
-                                variant: "destructive",
-                                title: "Payment Failed",
+                              enhancedToast({ variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
                               });
                             }}
@@ -455,9 +452,7 @@ export default function AccountingEngagementLetterPage() {
                   });
                 }}
                 onFailure={() => {
-                  toast({
-                    variant: "destructive",
-                    title: "Payment Failed",
+                  enhancedToast({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
                   });
                 }}

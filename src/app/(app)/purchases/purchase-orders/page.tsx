@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, FileText, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { format } from 'date-fns';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, deleteDoc } from "firebase/firestore";
@@ -105,7 +106,7 @@ export default function PurchaseOrdersPage() {
         await deleteDoc(doc(db, "purchase-orders", order.id));
         toast({ title: "Purchase Order Cancelled", description: `Purchase order ${order.id} has been successfully cancelled.` });
       } catch (error) {
-        toast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order." });
+        enhancedToast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the purchase order." });
       }
     }
   };

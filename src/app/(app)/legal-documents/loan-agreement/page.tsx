@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -163,9 +164,7 @@ export default function LoanAgreementPage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
       }
     } else {
-        toast({
-            variant: "destructive",
-            title: "Validation Error",
+        enhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
         });
     }
@@ -371,9 +370,7 @@ export default function LoanAgreementPage() {
                             });
                           }}
                           onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
+                            enhancedToast({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
                             });
                           }}
@@ -444,9 +441,7 @@ export default function LoanAgreementPage() {
                   });
                 }}
                 onFailure={() => {
-                  toast({
-                    variant: "destructive",
-                    title: "Payment Failed",
+                  enhancedToast({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
                   });
                 }}

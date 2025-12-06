@@ -27,6 +27,7 @@ import {
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -104,9 +105,7 @@ Date:                                       Deponent Signature
 
   const handleGenerate = () => {
     if (!formData.deponentName || !formData.parentage || !formData.address || !formData.firmName) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
+      enhancedToast({ variant: "destructive", title: "Missing Information",
         description: "Please fill in all the required fields to generate the affidavit."
       });
       return;
@@ -222,9 +221,7 @@ Date:                                       Deponent Signature
                         userName={user?.displayName || ''}
                         onSuccess={handlePaymentSuccess}
                         onFailure={() => {
-                            toast({
-                                variant: "destructive",
-                                title: "Payment Failed",
+                            enhancedToast({ variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
                             });
                         }}

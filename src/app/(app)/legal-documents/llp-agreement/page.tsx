@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PlusCircle, Printer, Trash2, FileSignature, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -187,9 +188,7 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
             setStep(2);
             toast({ title: "LLP Agreement Generated Successfully!" });
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error Generating Agreement",
+            enhancedToast({ variant: "destructive", title: "Error Generating Agreement",
                 description: "An unexpected error occurred."
             });
             console.error(error);
@@ -362,9 +361,7 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
                                             });
                                         }}
                                         onFailure={() => {
-                                            toast({
-                                                variant: "destructive",
-                                                title: "Payment Failed",
+                                            enhancedToast({ variant: "destructive", title: "Payment Failed",
                                                 description: "Payment was not completed. Please try again."
                                             });
                                         }}

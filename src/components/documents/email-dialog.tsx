@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { sendReportViaEmail, isValidEmail, formatEmailAddresses } from "@/lib/email-utils";
 
 interface EmailDialogProps {
@@ -48,9 +49,7 @@ export function EmailDialog({
     const invalidEmails = emailAddresses.filter((email) => !isValidEmail(email));
 
     if (emailAddresses.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Email Required",
+      enhancedToast({ variant: "destructive", title: "Email Required",
         description: "Please enter at least one email address.",
       });
       return;
@@ -66,18 +65,14 @@ export function EmailDialog({
     }
 
     if (!contentRef.current) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Could not find the content to send.",
       });
       return;
     }
 
     if (!subject.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Subject Required",
+      enhancedToast({ variant: "destructive", title: "Subject Required",
         description: "Please enter an email subject.",
       });
       return;
@@ -104,16 +99,12 @@ export function EmailDialog({
         setSubject(defaultSubject || fileName);
         setBody(defaultBody || `Please find attached ${fileName}.`);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Failed to Send Email",
+        enhancedToast({ variant: "destructive", title: "Failed to Send Email",
           description: result.error || "An error occurred while sending the email.",
         });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: error instanceof Error ? error.message : "Failed to send email.",
       });
     } finally {

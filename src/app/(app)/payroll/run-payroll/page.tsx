@@ -29,6 +29,7 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 

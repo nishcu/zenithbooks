@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Bell, Save, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VaultErrorBoundary } from "@/components/vault/error-boundary";
 
@@ -51,9 +52,7 @@ export default function VaultSettingsPage() {
         }
       } catch (error) {
         console.error("Error loading preferences:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: "Failed to load notification preferences.",
         });
       } finally {
@@ -100,9 +99,7 @@ export default function VaultSettingsPage() {
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving preferences:", error);
-      toast({
-        variant: "destructive",
-        title: "Save Failed",
+      enhancedToast({ variant: "destructive", title: "Save Failed",
         description: "Failed to save notification preferences. Please try again.",
       });
     } finally {

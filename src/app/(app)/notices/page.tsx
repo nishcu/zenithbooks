@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MailWarning, Upload, UserCheck, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -97,7 +98,7 @@ export default function NoticesPage() {
 
     const handleSubmit = async (values: NoticeFormData) => {
         if (!user) {
-            toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit a notice." });
+            enhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to submit a notice." });
             return;
         }
 
@@ -204,9 +205,7 @@ export default function NoticesPage() {
                                 form.handleSubmit((values) => handleSubmit(values))();
                             }}
                             onFailure={() => {
-                                toast({
-                                    variant: "destructive",
-                                    title: "Payment Failed",
+                                enhancedToast({ variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
                                 });
                             }}

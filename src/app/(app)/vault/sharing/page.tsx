@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Key, Eye, EyeOff, Trash2, Clock, Copy, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { ShareCodeDialog } from "@/components/vault/share-code-dialog";
 import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
@@ -61,9 +62,7 @@ export default function ShareCodeManagementPage() {
       },
       (error) => {
         console.error("Error fetching share codes:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: "Failed to load share codes. Please try again.",
         });
         setLoading(false);
@@ -84,9 +83,7 @@ export default function ShareCodeManagementPage() {
       });
     } catch (error) {
       console.error("Error deleting share code:", error);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
+      enhancedToast({ variant: "destructive", title: "Delete Failed",
         description: "Failed to delete share code. Please try again.",
       });
     }

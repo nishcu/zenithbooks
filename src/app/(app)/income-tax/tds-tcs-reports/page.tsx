@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useAccountingContext } from "@/context/accounting-context";
@@ -103,9 +104,7 @@ export default function TdsTcsReportsPage() {
 
   const generateReport = async () => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Required",
+      enhancedToast({ variant: "destructive", title: "Authentication Required",
         description: "Please log in to generate reports."
       });
       return;
@@ -233,9 +232,7 @@ export default function TdsTcsReportsPage() {
 
     } catch (error) {
       console.error("Error generating report:", error);
-      toast({
-        variant: "destructive",
-        title: "Report Generation Failed",
+      enhancedToast({ variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
       });
     }

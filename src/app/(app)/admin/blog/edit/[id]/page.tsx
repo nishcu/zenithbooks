@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -164,9 +165,7 @@ export default function EditBlogPostPage() {
                 const docSnap = await getDoc(docRef);
 
                 if (!docSnap.exists()) {
-                    toast({
-                        variant: "destructive",
-                        title: "Post Not Found",
+                    enhancedToast({ variant: "destructive", title: "Post Not Found",
                         description: "The blog post you're trying to edit could not be found.",
                     });
                     router.push('/admin/blog');
@@ -196,9 +195,7 @@ export default function EditBlogPostPage() {
 
             } catch (error) {
                 console.error('Error loading post:', error);
-                toast({
-                    variant: "destructive",
-                    title: "Error",
+                enhancedToast({ variant: "destructive", title: "Error",
                     description: "Failed to load the blog post.",
                 });
                 router.push('/admin/blog');
@@ -218,9 +215,7 @@ export default function EditBlogPostPage() {
             // Validate the image file
             const validation = validateBlogImage(file);
             if (!validation.valid) {
-                toast({
-                    variant: "destructive",
-                    title: "Invalid Image",
+                enhancedToast({ variant: "destructive", title: "Invalid Image",
                     description: validation.error,
                 });
                 // Clear the input
@@ -256,9 +251,7 @@ export default function EditBlogPostPage() {
                     console.log('Image uploaded successfully:', firebaseImageUrl);
                 } catch (uploadError) {
                     console.error('Image upload failed:', uploadError);
-                    toast({
-                        variant: "destructive",
-                        title: "Upload Failed",
+                    enhancedToast({ variant: "destructive", title: "Upload Failed",
                         description: uploadError instanceof Error ? uploadError.message : "Failed to upload image. Please try again.",
                     });
                     return;
@@ -283,9 +276,7 @@ export default function EditBlogPostPage() {
             const success = await updateBlogPost(postId, postData);
 
             if (!success) {
-                toast({
-                    variant: "destructive",
-                    title: "Update Failed",
+                enhancedToast({ variant: "destructive", title: "Update Failed",
                     description: "Failed to update the blog post. Please try again.",
                 });
                 return;
@@ -301,9 +292,7 @@ export default function EditBlogPostPage() {
 
         } catch (error) {
             console.error('Error updating post:', error);
-            toast({
-                variant: "destructive",
-                title: "Error",
+            enhancedToast({ variant: "destructive", title: "Error",
                 description: "Failed to update the blog post. Please try again.",
             });
         } finally {

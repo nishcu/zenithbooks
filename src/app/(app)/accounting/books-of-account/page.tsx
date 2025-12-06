@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { FileSpreadsheet, Download, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
 import { format, startOfYear, endOfYear, parse, startOfMonth, endOfMonth } from "date-fns";
@@ -876,9 +877,7 @@ export default function BooksOfAccountPage() {
             const { from, to } = getDateRange();
 
             if (filteredVouchers.length === 0) {
-                toast({
-                    variant: "destructive",
-                    title: "No Data",
+                enhancedToast({ variant: "destructive", title: "No Data",
                     description: "No transactions found for the selected period.",
                 });
                 setIsGenerating(false);
@@ -1054,9 +1053,7 @@ export default function BooksOfAccountPage() {
             });
         } catch (error: any) {
             console.error("Error generating books:", error);
-            toast({
-                variant: "destructive",
-                title: "Generation Failed",
+            enhancedToast({ variant: "destructive", title: "Generation Failed",
                 description: error.message || "An error occurred while generating books of account.",
             });
         } finally {

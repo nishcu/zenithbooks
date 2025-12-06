@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, PlusCircle, Trash2, FileDown, FileJson } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
@@ -517,9 +518,7 @@ export default function Gstr1Wizard() {
       } else if (type === 'PDF') {
         // Generate PDF from report content
         if (!reportRef.current) {
-          toast({
-            variant: "destructive",
-            title: "Error",
+          enhancedToast({ variant: "destructive", title: "Error",
             description: "Could not find the report content to generate PDF.",
           });
           return;
@@ -546,9 +545,7 @@ export default function Gstr1Wizard() {
         });
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Generation Failed",
+      enhancedToast({ variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the file.",
       });
     }

@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -125,7 +126,7 @@ export default function NewDebitNotePage() {
 
     const selectedVendor = vendors.find(v => v.id === vendor);
     if (!selectedVendor || !originalPurchase) {
-        toast({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill."});
+        enhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a vendor and original purchase bill."});
         return;
     }
     
@@ -150,7 +151,7 @@ export default function NewDebitNotePage() {
         });
         toast({ title: "Debit Note Saved", description: `Journal entry for ${debitNoteId} has been created.` });
     } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        enhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
     }
   }
 

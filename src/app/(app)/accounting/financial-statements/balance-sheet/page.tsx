@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Printer, FileDown, AlertTriangle, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { useState, useContext, useMemo, useRef, FC, ReactNode } from "react";
 import { format } from "date-fns";
 import { AccountingContext } from "@/context/accounting-context";

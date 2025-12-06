@@ -34,6 +34,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import {
     Dialog,
     DialogContent,
@@ -84,16 +85,14 @@ export default function UserManagementPage() {
 
   const handleSendInvite = async () => {
     if (!newUserEmail || !newUserRole) {
-        toast({
-            variant: "destructive",
-            title: "Missing Information",
+        enhancedToast({ variant: "destructive", title: "Missing Information",
             description: "Please enter an email and select a role."
         });
         return;
     }
 
     if (!user) {
-        toast({ variant: "destructive", title: "Not Authenticated" });
+        enhancedToast({ variant: "destructive", title: "Not Authenticated" });
         return;
     }
 
@@ -117,9 +116,7 @@ export default function UserManagementPage() {
         setNewUserRole("viewer");
 
     } catch(error: any) {
-         toast({
-            variant: "destructive",
-            title: "Failed to send invite",
+         enhancedToast({ variant: "destructive", title: "Failed to send invite",
             description: error.message || "Could not save the invitation to the database."
         });
     } finally {

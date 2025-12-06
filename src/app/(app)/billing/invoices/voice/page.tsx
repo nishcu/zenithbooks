@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -294,9 +295,7 @@ export default function VoiceInvoiceEntryPage() {
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
 
       if (!isSecure) {
-        toast({
-          variant: "destructive",
-          title: "HTTPS Required",
+        enhancedToast({ variant: "destructive", title: "HTTPS Required",
           description: "Speech recognition requires a secure connection (HTTPS).",
         });
         return;
@@ -371,9 +370,7 @@ export default function VoiceInvoiceEntryPage() {
             }
 
             setIsListening(false);
-            toast({
-              variant: "destructive",
-              title: errorTitle,
+            enhancedToast({ variant: "destructive", title: errorTitle,
               description: errorMessage,
             });
           };
@@ -392,9 +389,7 @@ export default function VoiceInvoiceEntryPage() {
               })
               .catch((error) => {
                 console.error('Microphone permission denied:', error);
-                toast({
-                  variant: "destructive",
-                  title: "Microphone Access Required",
+                enhancedToast({ variant: "destructive", title: "Microphone Access Required",
                   description: "Please allow microphone access to use voice-to-invoice feature.",
                 });
               });
@@ -405,16 +400,12 @@ export default function VoiceInvoiceEntryPage() {
 
         } catch (error) {
           console.error('Error initializing speech recognition:', error);
-          toast({
-            variant: "destructive",
-            title: "Speech Recognition Unavailable",
+          enhancedToast({ variant: "destructive", title: "Speech Recognition Unavailable",
             description: "Speech recognition could not be initialized. Please try a different browser.",
           });
         }
       } else {
-        toast({
-          variant: "destructive",
-          title: "Browser Not Supported",
+        enhancedToast({ variant: "destructive", title: "Browser Not Supported",
           description: "Your browser does not support speech recognition. Please use Chrome, Safari, or Edge on mobile.",
         });
       }
@@ -449,9 +440,7 @@ export default function VoiceInvoiceEntryPage() {
 
   const startListening = () => {
     if (!recognition) {
-      toast({
-        variant: "destructive",
-        title: "Speech Recognition Not Available",
+      enhancedToast({ variant: "destructive", title: "Speech Recognition Not Available",
         description: "Speech recognition is not available in your browser. Please use Chrome, Safari, or Edge.",
       });
       return;
@@ -484,9 +473,7 @@ export default function VoiceInvoiceEntryPage() {
         } catch (error) {
           console.error('Error starting recognition after delay:', error);
           setIsListening(false);
-          toast({
-            variant: "destructive",
-            title: "Speech Recognition Failed",
+          enhancedToast({ variant: "destructive", title: "Speech Recognition Failed",
             description: "Could not start speech recognition. Please try again.",
           });
         }
@@ -499,15 +486,11 @@ export default function VoiceInvoiceEntryPage() {
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          toast({
-            variant: "destructive",
-            title: "Recognition Busy",
+          enhancedToast({ variant: "destructive", title: "Recognition Busy",
             description: "Speech recognition is already running. Please wait.",
           });
         } else {
-          toast({
-            variant: "destructive",
-            title: "Speech Recognition Error",
+          enhancedToast({ variant: "destructive", title: "Speech Recognition Error",
             description: error.message || "Failed to start speech recognition.",
           });
         }
@@ -531,9 +514,7 @@ export default function VoiceInvoiceEntryPage() {
 
   const processVoiceInput = useCallback(() => {
     if (!transcript.trim()) {
-      toast({
-        variant: "destructive",
-        title: "No Input",
+      enhancedToast({ variant: "destructive", title: "No Input",
         description: "Please speak to create an invoice.",
       });
       return;
@@ -591,13 +572,13 @@ export default function VoiceInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        toast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
+        enhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
         return;
     }
     
     // Validate amount
     if (!values.amount || values.amount <= 0) {
-        toast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." });
+        enhancedToast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid amount greater than zero." });
         return;
     }
     
@@ -661,9 +642,7 @@ export default function VoiceInvoiceEntryPage() {
         }
     } catch (e: any) {
         console.error("Error creating invoice:", e);
-        toast({ 
-          variant: "destructive", 
-          title: "Failed to save invoice", 
+        enhancedToast({ variant: "destructive", title: "Failed to save invoice", 
           description: e.message || "An error occurred while creating the invoice. Please try again." 
         });
     }

@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Save, FileJson, FileDown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import html2pdf from "html2pdf.js";
@@ -334,9 +335,7 @@ export default function Gstr3bWizardPage() {
         description: "Your GSTR-3B JSON file has been downloaded successfully.",
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Generation Failed",
+      enhancedToast({ variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the JSON file.",
       });
     }
@@ -345,9 +344,7 @@ export default function Gstr3bWizardPage() {
   const handleGeneratePdf = async () => {
     try {
       if (!reportRef.current) {
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: "Could not find the report content to generate PDF.",
         });
         return;
@@ -374,9 +371,7 @@ export default function Gstr3bWizardPage() {
         description: "Your GSTR-3B PDF has been downloaded successfully.",
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Generation Failed",
+      enhancedToast({ variant: "destructive", title: "Generation Failed",
         description: error.message || "An error occurred while generating the PDF file.",
       });
     }

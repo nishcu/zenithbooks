@@ -20,7 +20,8 @@ import { formatCurrency } from '@/lib/utils';
 import { Calendar, FileText, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 
 // --- Type Definitions ---
 interface JournalVoucher { 
@@ -323,18 +324,14 @@ export default function LedgersPage() {
 
   const handleGenerateReport = () => {
     if (!selectedAccount) {
-      toast({
-        variant: "destructive",
-        title: "Account Required",
+      enhancedToast({ variant: "destructive", title: "Account Required",
         description: "Please select an account first.",
       });
       return;
     }
     
     if (!fromDate || !toDate) {
-      toast({
-        variant: "destructive",
-        title: "Date Range Required",
+      enhancedToast({ variant: "destructive", title: "Date Range Required",
         description: "Please select both from and to dates.",
       });
       return;
@@ -356,9 +353,7 @@ export default function LedgersPage() {
 
   const handleExportPdf = () => {
     if (!selectedAccount || !selectedAccountDetails) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Please select an account to export.",
       });
       return;
@@ -458,9 +453,7 @@ export default function LedgersPage() {
       });
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      toast({
-        variant: "destructive",
-        title: "Export Failed",
+      enhancedToast({ variant: "destructive", title: "Export Failed",
         description: "An error occurred while exporting the PDF. Please try again.",
       });
     }

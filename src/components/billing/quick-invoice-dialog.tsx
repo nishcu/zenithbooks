@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -53,9 +54,7 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
   const handleQuickInvoiceCreate = async () => {
     const selectedCustomer = customers.find((c: any) => c.id === quickCustomer);
     if (!quickInvNum || !selectedCustomer || !quickItem || quickRate <= 0) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
+      enhancedToast({ variant: "destructive", title: "Missing Information",
         description: "Please fill out all fields for the quick invoice.",
       });
       return;
@@ -99,7 +98,7 @@ export function QuickInvoiceDialog({ open, onOpenChange }: { open: boolean, onOp
         onOpenChange(false);
 
     } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        enhancedToast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
     }
   }
 

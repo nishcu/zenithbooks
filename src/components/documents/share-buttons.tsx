@@ -12,6 +12,7 @@ import {
 import { Printer, MessageSquare, Share2, Mail, Copy, Download } from "lucide-react";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import html2pdf from "html2pdf.js";
 import { EmailDialog } from "./email-dialog";
 
@@ -42,9 +43,7 @@ export function ShareButtons({
   const handleDownloadPdf = async () => {
     const element = contentRef.current;
     if (!element) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Could not find the content to download.",
       });
       return;
@@ -52,9 +51,7 @@ export function ShareButtons({
 
     // Check if element has content
     if (!element.innerHTML || element.innerHTML.trim() === '') {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "The content appears to be empty. Please ensure the page is fully loaded.",
       });
       return;
@@ -98,9 +95,7 @@ export function ShareButtons({
     } catch (error: any) {
       console.error("PDF generation error:", error);
       console.error("Element:", element);
-      toast({
-        variant: "destructive",
-        title: "PDF Generation Failed",
+      enhancedToast({ variant: "destructive", title: "PDF Generation Failed",
         description: error.message || "An error occurred while generating the PDF. Please try again.",
       });
     }
@@ -215,9 +210,7 @@ export function ShareButtons({
         description: "The page link has been copied to your clipboard.",
       });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to copy link to clipboard.",
       });
     }
@@ -234,9 +227,7 @@ export function ShareButtons({
         });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          toast({
-            variant: "destructive",
-            title: "Error",
+          enhancedToast({ variant: "destructive", title: "Error",
             description: "Failed to share. Please try another method.",
           });
         }

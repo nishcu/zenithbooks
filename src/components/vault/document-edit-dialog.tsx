@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VaultCategory } from "@/lib/vault-constants";
 
 interface Document {
@@ -68,18 +69,14 @@ export function DocumentEditDialog({
 
   const handleSave = async () => {
     if (!user || !document) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "User or document not found.",
       });
       return;
     }
 
     if (!fileName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Document name is required.",
       });
       return;
@@ -109,9 +106,7 @@ export function DocumentEditDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating document:", error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
+      enhancedToast({ variant: "destructive", title: "Update Failed",
         description: "Failed to update document. Please try again.",
       });
     } finally {

@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Save, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import Image from 'next/image';
 import { generateTermsAction } from "./actions";
 import { Separator } from "@/components/ui/separator";
@@ -133,7 +134,7 @@ export default function BrandingPage() {
                 toast({ title: "Terms & Conditions Generated!" });
             }
         } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "Failed to generate terms." });
+            enhancedToast({ variant: "destructive", title: "Error", description: "Failed to generate terms." });
         } finally {
             setIsGeneratingTerms(false);
         }

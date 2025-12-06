@@ -20,6 +20,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, ArrowRight, FileDown, Printer, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { cn } from "@/lib/utils";
@@ -125,9 +126,7 @@ export default function NdaPage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to the next step.` });
       }
     } else {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
+      enhancedToast({ variant: "destructive", title: "Validation Error",
         description: "Please correct the errors before proceeding.",
       });
     }
@@ -275,9 +274,7 @@ export default function NdaPage() {
                             });
                           }}
                           onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
+                            enhancedToast({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
                             });
                           }}
@@ -358,9 +355,7 @@ export default function NdaPage() {
                   });
                 }}
                 onFailure={() => {
-                  toast({
-                    variant: "destructive",
-                    title: "Payment Failed",
+                  enhancedToast({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
                   });
                 }}

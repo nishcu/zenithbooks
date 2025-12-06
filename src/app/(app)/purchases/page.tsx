@@ -31,6 +31,7 @@ import { PlusCircle, MoreHorizontal, FileText, IndianRupee, AlertCircle, CheckCi
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { format, isPast, subDays } from 'date-fns';
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";

@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GitCompareArrows, Loader2, Wand2, ArrowLeft } from "lucide-react";
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { compareGstrReportsAction } from '../actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -56,11 +57,11 @@ export default function GstrComparisonPage() {
                 setGstrCompareResult(result.report);
                 toast({ title: "GSTR Comparison Complete" });
             } else {
-                toast({ variant: 'destructive', title: 'Comparison Failed', description: 'Could not get GSTR comparison results.' });
+                enhancedToast({ variant: "destructive", title: 'Comparison Failed', description: 'Could not get GSTR comparison results.' });
             }
         } catch (error: any) {
             console.error(error);
-            toast({ variant: 'destructive', title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during GSTR comparison.' });
+            enhancedToast({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during GSTR comparison.' });
         } finally {
             setIsGstrLoading(false);
         }

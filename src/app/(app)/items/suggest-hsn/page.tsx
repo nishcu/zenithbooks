@@ -29,6 +29,7 @@ import { suggestHsnCodeAction } from "./actions";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 
 const formSchema = z.object({
   description: z.string().min(10, {
@@ -64,17 +65,13 @@ export default function SuggestHsnPage() {
         setResult(response);
         toast({ title: "HSN Code Suggestion Received!"});
       } else {
-        toast({
-          variant: "destructive",
-          title: "Suggestion Failed",
+        enhancedToast({ variant: "destructive", title: "Suggestion Failed",
           description: "Failed to get a suggestion. The AI model might be unavailable. Please try again later.",
         });
       }
     } catch (e: any) {
       const errorMessage = e?.message || "An unexpected error occurred. Please check the console and try again.";
-      toast({
-        variant: "destructive",
-        title: "An Error Occurred",
+      enhancedToast({ variant: "destructive", title: "An Error Occurred",
         description: errorMessage,
       });
       console.error("HSN Code Suggestion Error:", e);

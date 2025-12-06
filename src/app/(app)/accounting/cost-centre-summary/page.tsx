@@ -24,6 +24,7 @@ import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useDocumentData } from "react-firebase-hooks/firestore";
@@ -104,7 +105,7 @@ export default function CostCentreSummaryPage() {
 
     const handleExport = () => {
         if (costCentreData.length === 0) {
-            toast({ variant: "destructive", title: "No data to export" });
+            enhancedToast({ variant: "destructive", title: "No data to export" });
             return;
         }
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Key, Loader2, AlertCircle, Download, FileText, Clock, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -182,9 +183,7 @@ export default function VaultAccessPage() {
       });
     } catch (error) {
       console.error("Error downloading:", error);
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
+      enhancedToast({ variant: "destructive", title: "Download Failed",
         description: "Failed to download document. Please try again.",
       });
     }
@@ -207,9 +206,7 @@ export default function VaultAccessPage() {
       window.open(document.fileUrl, "_blank");
     } catch (error) {
       console.error("Error viewing:", error);
-      toast({
-        variant: "destructive",
-        title: "View Failed",
+      enhancedToast({ variant: "destructive", title: "View Failed",
         description: "Failed to view document. Please try again.",
       });
     }

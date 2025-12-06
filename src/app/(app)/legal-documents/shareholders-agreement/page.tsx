@@ -12,6 +12,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, ArrowRight, FileDown, PlusCircle, Trash2, Save, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import html2pdf from "html2pdf.js";
@@ -89,11 +90,11 @@ export default function ShareholdersAgreement() {
             form.reset(data.formData);
             toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
           } else {
-            toast({ variant: 'destructive', title: "Unauthorized", description: "You don't have permission to access this document." });
+            enhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
             router.push('/legal-documents/shareholders-agreement');
           }
         } else {
-          toast({ variant: 'destructive', title: "Not Found", description: "The requested document draft could not be found." });
+          enhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
           router.push('/legal-documents/shareholders-agreement');
         }
         setIsLoading(false);
@@ -132,7 +133,7 @@ export default function ShareholdersAgreement() {
 
   const handleSaveDraft = async () => {
     if (!user) {
-      toast({ variant: 'destructive', title: 'Authentication Error' });
+      enhancedToast({ variant: "destructive", title: 'Authentication Error' });
       return;
     }
     setIsSubmitting(true);
@@ -156,7 +157,7 @@ export default function ShareholdersAgreement() {
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the draft.' });
+      enhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -255,7 +256,7 @@ export default function ShareholdersAgreement() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    toast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    enhancedToast({ variant: "destructive", title: "Error", description: "Could not find document content." });
                     return;
                   }
                   toast({ title: "Generating PDF...", description: "Your document is being prepared." });
@@ -270,7 +271,7 @@ export default function ShareholdersAgreement() {
                   await html2pdf().set(opt).from(documentRef.current).save();
                   toast({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." });
                 } catch (error: any) {
-                  toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                  enhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
                 }
               }}><FileDown className="mr-2"/> Download Full Agreement</Button>
             </CardFooter>
@@ -337,9 +338,7 @@ export default function ShareholdersAgreement() {
                       });
                     }}
                     onFailure={() => {
-                      toast({
-                        variant: "destructive",
-                        title: "Payment Failed",
+                      enhancedToast({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
                       });
                     }}

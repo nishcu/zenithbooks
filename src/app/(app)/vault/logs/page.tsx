@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VaultCategory } from "@/lib/vault-constants";
 import { PaginatedList } from "@/components/vault/paginated-list";
 import { OnboardingHint } from "@/components/vault/onboarding-hint";
@@ -111,9 +112,7 @@ export default function VaultAccessLogsPage() {
       },
       (error) => {
         console.error("Error fetching access logs:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: "Failed to load access logs. Please try again.",
         });
         setLoading(false);

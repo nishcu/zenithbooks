@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -130,7 +131,7 @@ export default function NewCreditNotePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !originalInvoice) {
-        toast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice."});
+        enhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and original invoice."});
         return;
     }
     
@@ -158,7 +159,7 @@ export default function NewCreditNotePage() {
         });
         toast({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.` });
     } catch (e: any) {
-        toast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        enhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
     }
   }
 

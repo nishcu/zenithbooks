@@ -31,6 +31,7 @@ import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react"
 import { format } from "date-fns";
 // samplePosts removed from blog page
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 
@@ -111,9 +112,7 @@ export default function AdminBlog() {
       });
     } catch (error) {
       console.error('Error deleting post:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to delete the blog post.",
       });
     } finally {

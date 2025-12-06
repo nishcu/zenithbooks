@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -166,9 +167,7 @@ export default function LeaseDeedPage() {
         });
       }
     } else {
-        toast({
-            variant: "destructive",
-            title: "Validation Error",
+        enhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
         });
     }
@@ -376,9 +375,7 @@ export default function LeaseDeedPage() {
                             });
                           }}
                           onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
+                            enhancedToast({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
                             });
                           }}
@@ -449,9 +446,7 @@ export default function LeaseDeedPage() {
                   });
                 }}
                 onFailure={() => {
-                  toast({
-                    variant: "destructive",
-                    title: "Payment Failed",
+                  enhancedToast({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
                   });
                 }}

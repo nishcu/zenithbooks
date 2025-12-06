@@ -55,7 +55,8 @@ import {
 } from "lucide-react";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { allAccounts, costCentres } from '@/lib/accounts';
 import { AccountingContext } from '@/context/accounting-context';
 import { format, parse } from "date-fns";
@@ -572,16 +573,14 @@ export default function BankReconciliationPage() {
                 try {
                     parsedResult = await parsePDF(file);
                 } catch (pdfError: any) {
-                    toast({ 
-                        variant: "destructive", 
-                        title: "PDF Parsing Not Available", 
+                    enhancedToast({ variant: "destructive", title: "PDF Parsing Not Available", 
                         description: pdfError.message || "Please convert your PDF to CSV or Excel format, or use our API endpoint for PDF processing." 
                     });
                     setIsProcessingFile(false);
                     return;
                 }
             } else {
-                toast({ variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." });
+                enhancedToast({ variant: "destructive", title: "Unsupported File Format", description: "Please upload a CSV, Excel, or PDF file." });
                 setIsProcessingFile(false);
                 return;
             }
@@ -630,9 +629,7 @@ export default function BankReconciliationPage() {
             console.error("Error parsing file:", error);
             setImportSummary(null);
             setSkippedRowsDetail([]);
-            toast({ 
-                variant: "destructive", 
-                title: "File Parsing Error", 
+            enhancedToast({ variant: "destructive", title: "File Parsing Error", 
                 description: error.message || "Could not parse the file. Please check the format and try again." 
             });
         } finally {
@@ -666,7 +663,7 @@ export default function BankReconciliationPage() {
         const currentlySelectedBookTxs = Array.from(selectedBookTxs).filter(id => !matchedPairs.has(id));
 
         if (currentlySelectedStatementTxs.length === 0 || currentlySelectedBookTxs.length === 0) {
-            toast({ variant: "destructive", title: "Selection Error", description: "You must select at least one new transaction from each side to match." });
+            enhancedToast({ variant: "destructive", title: "Selection Error", description: "You must select at least one new transaction from each side to match." });
             return;
         }
 
@@ -700,7 +697,7 @@ export default function BankReconciliationPage() {
     
     const handleOpenAddEntryDialog = (tx: StatementTransaction) => {
         if (matchedPairs.has(tx.id)) {
-             toast({ variant: "destructive", title: "Already Matched", description: "This transaction has already been reconciled." });
+             enhancedToast({ variant: "destructive", title: "Already Matched", description: "This transaction has already been reconciled." });
              return;
         }
         setEntryToCreate(tx);
@@ -728,7 +725,7 @@ export default function BankReconciliationPage() {
     
     const handleBulkCreateEntries = async () => {
         if (bulkTransactions.length === 0) {
-            toast({ variant: "destructive", title: "No Transactions", description: "No transactions to create entries for." });
+            enhancedToast({ variant: "destructive", title: "No Transactions", description: "No transactions to create entries for." });
             return;
         }
 
@@ -837,7 +834,7 @@ export default function BankReconciliationPage() {
     
     const handleCreateMissingEntry = async () => {
         if (!entryToCreate || !jvDate) {
-             toast({ variant: "destructive", title: "Error", description: "No entry to create." });
+             enhancedToast({ variant: "destructive", title: "Error", description: "No entry to create." });
              return;
         }
 
@@ -845,7 +842,7 @@ export default function BankReconciliationPage() {
         const totalCredits = jvLines.reduce((sum, line) => sum + parseFloat(line.credit || '0'), 0);
         
         if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
-            toast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
+            enhancedToast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
             return;
         }
         
@@ -877,9 +874,7 @@ export default function BankReconciliationPage() {
             setEntryToCreate(null);
         } catch (error: any) {
             console.error("Error creating entry:", error);
-            toast({ 
-                variant: "destructive", 
-                title: "Error", 
+            enhancedToast({ variant: "destructive", title: "Error", 
                 description: error.message || "Could not create the accounting entry. Please try again." 
             });
         }

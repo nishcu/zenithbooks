@@ -16,6 +16,7 @@ import { MoreHorizontal, FileText, Edit, Trash2, Download, FileArchive, CheckCir
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { readBrandingSettings } from "@/lib/branding";
 import {
   AlertDialog,
@@ -117,7 +118,7 @@ export default function MyDocumentsPage() {
         if (baseUrl) {
             router.push(`${baseUrl}?id=${doc.id}`);
         } else {
-            toast({ variant: 'destructive', title: 'Cannot Edit', description: 'This document type does not support editing.' });
+            enhancedToast({ variant: "destructive", title: 'Cannot Edit', description: 'This document type does not support editing.' });
         }
     }
 
@@ -126,7 +127,7 @@ export default function MyDocumentsPage() {
             await deleteDoc(doc(db, "userDocuments", docId));
             toast({ title: "Draft Deleted", description: `"${docName}" has been removed.` });
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the document draft.' });
+            enhancedToast({ variant: "destructive", title: 'Error', description: 'Could not delete the document draft.' });
             console.error("Error deleting document: ", error);
         }
     };
@@ -207,9 +208,7 @@ export default function MyDocumentsPage() {
                 });
             } catch (error) {
                 console.error("PDF generation error:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Download Failed",
+                enhancedToast({ variant: "destructive", title: "Download Failed",
                     description: "Failed to generate PDF. Please try again or contact support.",
                 });
             }

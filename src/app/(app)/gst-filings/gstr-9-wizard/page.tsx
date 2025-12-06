@@ -25,6 +25,7 @@ import { ArrowLeft, ArrowRight, FileJson, FileDown, Upload, Download } from "luc
 import html2pdf from "html2pdf.js";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -366,7 +367,7 @@ export default function Gstr9WizardPage() {
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={async () => {
                             if (!reportRef.current) {
-                                toast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
+                                enhancedToast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
                                 return;
                             }
                             toast({ title: "Generating PDF...", description: "Your GSTR-9 PDF is being generated." });

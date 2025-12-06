@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -111,17 +112,13 @@ export default function AdminUsers() {
         }));
         setUsers(usersWithStatus);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: "Failed to fetch users. You may not have admin privileges.",
         });
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to load users. Please try again.",
       });
     } finally {
@@ -202,17 +199,13 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: error.error || "Failed to update user.",
         });
       }
     } catch (error) {
       console.error("Error updating user:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to update user. Please try again.",
       });
     } finally {
@@ -234,9 +227,7 @@ export default function AdminUsers() {
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to reset password.",
       });
     } finally {
@@ -263,9 +254,7 @@ export default function AdminUsers() {
       setIsSuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to suspend user.",
       });
     } finally {
@@ -291,9 +280,7 @@ export default function AdminUsers() {
       setIsUnsuspendDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to unsuspend user.",
       });
     } finally {
@@ -329,17 +316,13 @@ export default function AdminUsers() {
         setSelectedUser(null);
       } else {
         const error = await response.json();
-        toast({
-          variant: "destructive",
-          title: "Error",
+        enhancedToast({ variant: "destructive", title: "Error",
           description: error.error || "Failed to delete user.",
         });
       }
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      enhancedToast({ variant: "destructive", title: "Error",
         description: "Failed to delete user. Please try again.",
       });
     } finally {

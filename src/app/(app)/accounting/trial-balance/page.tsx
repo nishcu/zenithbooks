@@ -41,6 +41,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileDown, AlertTriangle, ChevronDown, Upload, Download, FileSpreadsheet, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedToast } from "@/lib/error-handler";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -175,7 +176,7 @@ export default function TrialBalancePage() {
     
     const handleFileUpload = () => {
         if (!uploadFile) {
-            toast({ variant: "destructive", title: "Missing Information", description: "Please select a file to upload."});
+            enhancedToast({ variant: "destructive", title: "Missing Information", description: "Please select a file to upload."});
             return;
         }
 
