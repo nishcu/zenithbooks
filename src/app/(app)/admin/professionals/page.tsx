@@ -78,10 +78,10 @@ export default function AdminProfessionals() {
         ? { ...p, status: 'Verified' as Professional['status'] }
         : p
     ));
-    console.log(
+    console.log({
       title: "Professional Verified",
       description: `${selectedProfessional.name} has been verified successfully.`,
-    );
+    });
     setIsVerifyDialogOpen(false);
     setSelectedProfessional(null);
     setIsLoading(null);
