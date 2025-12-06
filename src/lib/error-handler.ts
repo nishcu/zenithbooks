@@ -4,34 +4,6 @@
 
 import { ERROR_CODES, TOAST_MESSAGES } from "./constants";
 
-// Global toast function registry
-declare global {
-  var __zenithToast: any;
-}
-
-const getToast = () => {
-  // Try to get toast from global registry first
-  if (typeof globalThis !== 'undefined' && (globalThis as any).__zenithToast) {
-    return (globalThis as any).__zenithToast;
-  }
-
-  // Fallback to window if available
-  if (typeof window !== 'undefined' && (window as any).__zenithToast) {
-    return (window as any).__zenithToast;
-  }
-
-  return null;
-};
-
-// Export function to set the toast globally
-export const setGlobalToast = (toast: any) => {
-  if (typeof globalThis !== 'undefined') {
-    (globalThis as any).__zenithToast = toast;
-  }
-  if (typeof window !== 'undefined') {
-    (window as any).__zenithToast = toast;
-  }
-};
 
 
 
@@ -140,55 +112,28 @@ export function handleError(error: unknown, context?: string): AppError {
 }
 
 /**
- * Show error toast notification (friendly, non-destructive for user errors)
+ * Show error toast notification (logs to console to prevent crashes)
  */
 export function showErrorToast(error: unknown, context?: string) {
   try {
     const appError = handleError(error, context);
-    // Only use destructive variant for security-critical errors
-    const isCritical = appError.code === ERROR_CODES.AUTH_REQUIRED &&
-                       (appError.message.includes('disabled') ||
-                        appError.message.includes('locked'));
 
     // Add contact information for error resolution
     const contactMessage = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
 
-    const toast = getToast();
-    if (toast) {
-      toast({
-        variant: isCritical ? "destructive" : "default",
-        title: isCritical ? "Security Alert" : "Oops!",
-        description: appError.message + contactMessage,
-      });
-    } else {
-      console.error("Toast function not available:", context, appError);
-    }
+    // Log to console instead of showing toast to prevent crashes
+    console.error(`[${context || 'Error'}] ${appError.code}: ${appError.message}${contactMessage}`);
   } catch (error) {
     console.error("showErrorToast failed:", error);
-    // Fallback to console logging
-    console.error("Error occurred:", context, error);
   }
 }
 
 /**
- * Show success toast notification
+ * Show success toast notification (logs to console)
  */
 export function showSuccessToast(title: string, description?: string) {
-  try {
-    const toast = getToast();
-    if (toast) {
-      toast({
-        title,
-        description,
-      });
-    } else {
-      console.log("Success:", title, description);
-    }
-  } catch (error) {
-    console.error("showSuccessToast failed:", error);
-    // Fallback to console logging
-    console.log("Success:", title, description);
-  }
+  // Log to console instead of showing toast to prevent crashes
+  console.log(`[Success] ${title}${description ? ': ' + description : ''}`);
 }
 
 /**
@@ -196,27 +141,18 @@ export function showSuccessToast(title: string, description?: string) {
  */
 /**
  * Enhanced toast function for backward compatibility
- * Automatically adds contact info for error toasts
+ * Logs to console instead of showing toasts to prevent crashes
  */
 export function showEnhancedToast({ variant, title, description, ...props }: any) {
-  // Add contact information for error toasts
+  // Add contact information for error logging
   let finalDescription = description;
   if (variant === "destructive" || title?.toLowerCase().includes("error") ||
       title?.toLowerCase().includes("failed") || title?.toLowerCase().includes("oops")) {
-    finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
+    finalDescription = (description || "") + "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution.";
   }
 
-  const toast = getToast();
-  if (toast) {
-    toast({
-      variant,
-      title,
-      description: finalDescription,
-      ...props
-    });
-  } else {
-    console.error("Enhanced toast failed - function not available:", title, finalDescription);
-  }
+  // Log to console instead of showing toast to prevent crashes
+  console.error(`[${title || 'Error'}]`, finalDescription);
 }
 
 export async function withErrorHandling<T>(
