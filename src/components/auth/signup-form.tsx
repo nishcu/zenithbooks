@@ -232,13 +232,20 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
-              {/* Mobile-optimized spacing and visual separator */}
-              <div className="relative py-8 md:py-10">
+
+              {/* Clear section break with more mobile spacing */}
+              <div className="py-6"></div>
+
+              {/* Business Details section - properly positioned after user type selection */}
+              <div className="relative py-6 md:py-8">
                 <div className="absolute inset-x-0 top-1/2 border-t border-border/30 md:border-border/50"></div>
                 <div className="relative bg-background px-4 md:px-0">
-                  <span className="text-xs text-muted-foreground bg-background px-2">Business Details</span>
+                  <span className="text-sm font-medium text-muted-foreground bg-background px-3">Business Details</span>
                 </div>
               </div>
+
+              {/* Additional mobile spacing after section header */}
+              <div className="pb-4 md:pb-6"></div>
               <FormField
                 control={form.control}
                 name="companyName"
