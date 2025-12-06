@@ -44,7 +44,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 
 
 const initialEmployees = [
@@ -62,7 +62,7 @@ export default function PayrollEmployeesPage() {
 
     const handleAddEmployee = () => {
         if (!newEmployee.name || !newEmployee.designation) {
-            enhancedToast({ variant: "destructive", title: "Missing Information", description: "Please provide both name and designation."});
+            showEnhancedToast({ variant: "destructive", title: "Missing Information", description: "Please provide both name and designation."});
             return;
         }
         const newId = `EMP-${String(employees.length + 1).padStart(3, '0')}`;

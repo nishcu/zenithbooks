@@ -12,7 +12,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel, FormDes
 import { ArrowLeft, ArrowRight, FileDown, Save, Loader2, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { db, auth } from "@/lib/firebase";
@@ -79,11 +79,11 @@ export default function EsopPolicy() {
             form.reset(data.formData);
             toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
           } else {
-            enhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
+            showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document." });
             router.push('/legal-documents/esop-policy');
           }
         } else {
-          enhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
+          showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found." });
           router.push('/legal-documents/esop-policy');
         }
         setIsLoading(false);
@@ -117,7 +117,7 @@ export default function EsopPolicy() {
 
   const handleSaveDraft = async () => {
     if (!user) {
-      enhancedToast({ variant: "destructive", title: 'Authentication Error' });
+      showEnhancedToast({ variant: "destructive", title: 'Authentication Error' });
       return;
     }
     setIsSubmitting(true);
@@ -141,7 +141,7 @@ export default function EsopPolicy() {
       }
     } catch (e) {
       console.error(e);
-      enhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
+      showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -218,7 +218,7 @@ export default function EsopPolicy() {
               <Button type="button" onClick={async () => {
                 try {
                   if (!documentRef.current) {
-                    enhancedToast({ variant: "destructive", title: "Error", description: "Could not find document content." });
+                    showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not find document content." });
                     return;
                   }
                   toast({ title: "Generating PDF...", description: "Your document is being prepared." });
@@ -233,7 +233,7 @@ export default function EsopPolicy() {
                   await html2pdf().set(opt).from(documentRef.current).save();
                   toast({ title: "PDF Generated", description: "Your ESOP Policy has been downloaded successfully." });
                 } catch (error: any) {
-                  enhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
+                  showEnhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
                 }
               }}><FileDown className="mr-2"/> Download Full Policy</Button>
             </CardFooter>
@@ -300,7 +300,7 @@ export default function EsopPolicy() {
                       });
                     }}
                     onFailure={() => {
-                      enhancedToast({ variant: "destructive", title: "Payment Failed",
+                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
                       });
                     }}

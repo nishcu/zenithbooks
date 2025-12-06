@@ -8,10 +8,13 @@ import { toast } from "@/hooks/use-toast";
 // Contact information for error resolution
 const ERROR_CONTACT_INFO = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
 
+// Contact information for error resolution
+const ERROR_CONTACT_INFO = "\n\nPlease take a screenshot and email it to info@zenithbooks.in for faster resolution of queries.";
+
 /**
  * Enhanced toast function that automatically adds contact info for error toasts
  */
-export function enhancedToast({ variant, title, description, ...props }: any) {
+function enhancedToast({ variant, title, description, ...props }: any) {
   // Add contact information for error/destructive toasts
   let finalDescription = description;
   if (variant === "destructive" || title?.toLowerCase().includes("error") ||
@@ -176,6 +179,22 @@ export async function withErrorHandling<T>(
   }
 }
 
-// Export the enhanced toast function for use throughout the app
-export { enhancedToast };
+/**
+ * Enhanced toast function for error notifications with contact info
+ */
+export function showEnhancedToast({ variant, title, description, ...props }: any) {
+  // Add contact information for error toasts
+  let finalDescription = description;
+  if (variant === "destructive" || title?.toLowerCase().includes("error") ||
+      title?.toLowerCase().includes("failed") || title?.toLowerCase().includes("oops")) {
+    finalDescription = (description || "") + ERROR_CONTACT_INFO;
+  }
+
+  return toast({
+    variant,
+    title,
+    description: finalDescription,
+    ...props
+  });
+}
 

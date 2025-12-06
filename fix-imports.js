@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// Files to update (found by grep earlier) - comprehensive list
+// Files that need to be updated (based on previous bulk update)
 const filesToUpdate = [
   'src/app/(app)/accounting/bank-reconciliation/page.tsx',
   'src/app/(app)/legal-documents/loan-agreement/page.tsx',
@@ -139,21 +139,16 @@ function updateFile(filePath) {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
 
-    // Add enhancedToast import if not already present
-    if (!content.includes('enhancedToast')) {
-      const importRegex = /import \{ useToast \} from ["']@\/hooks\/use-toast["'];/;
-      const enhancedImport = `import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";`;
-
-      if (importRegex.test(content)) {
-        content = content.replace(importRegex, enhancedImport);
-      }
-    }
-
-    // Replace destructive toast calls
+    // Update import statement
     content = content.replace(
-      /toast\(\{\s*variant:\s*["']destructive["'],\s*([^}]+)\}\)/g,
-      'enhancedToast({ variant: "destructive", $1})'
+      /import \{ enhancedToast \} from ["']@\/lib\/error-handler["'];/g,
+      'import { showEnhancedToast } from "@/lib/error-handler";'
+    );
+
+    // Update function calls
+    content = content.replace(
+      /enhancedToast\(/g,
+      'showEnhancedToast('
     );
 
     fs.writeFileSync(filePath, content);
@@ -166,6 +161,5 @@ import { enhancedToast } from "@/lib/error-handler";`;
 // Update files
 filesToUpdate.forEach(updateFile);
 
-console.log('\n🎯 Toast update script completed!');
-console.log('📝 Remember to test the application after these changes.');
-console.log('🔍 Check for any syntax errors in the updated files.');
+console.log('\n🎯 Import fix script completed!');
+console.log('📝 All enhancedToast references have been updated to showEnhancedToast.');

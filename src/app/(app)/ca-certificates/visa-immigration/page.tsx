@@ -13,7 +13,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -105,11 +105,11 @@ export default function VisaImmigrationCertificatePage() {
                     form.reset(data.formData);
                     toast({title: "Draft Loaded"});
                 } else {
-                    enhancedToast({ variant: "destructive", title: "Unauthorized"});
+                    showEnhancedToast({ variant: "destructive", title: "Unauthorized"});
                     router.push('/ca-certificates/visa-immigration');
                 }
             } else {
-                 enhancedToast({ variant: "destructive", title: "Not Found"});
+                 showEnhancedToast({ variant: "destructive", title: "Not Found"});
                  router.push('/ca-certificates/visa-immigration');
             }
             setIsLoading(false);
@@ -163,7 +163,7 @@ export default function VisaImmigrationCertificatePage() {
         setStep(3); // Move to preview step
         toast({ title: "Draft Ready", description: "Review the generated certificate below." });
     } else {
-         enhancedToast({ variant: "destructive", title: "Validation Error",
+         showEnhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please fill all required fields.",
         });
     }
@@ -171,7 +171,7 @@ export default function VisaImmigrationCertificatePage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
           return;
       }
       setIsSubmitting(true);
@@ -195,7 +195,7 @@ export default function VisaImmigrationCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          enhancedToast({ variant: "destructive", title: 'Save Failed'});
+          showEnhancedToast({ variant: "destructive", title: 'Save Failed'});
       } finally {
           setIsSubmitting(false);
       }
@@ -203,7 +203,7 @@ export default function VisaImmigrationCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
           return;
       }
       setIsSubmitting(true);
@@ -225,7 +225,7 @@ export default function VisaImmigrationCertificatePage() {
         });
       } catch (error) {
           console.error("Error sending request:", error);
-          enhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+          showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
       } finally {
           setIsSubmitting(false);
       }
@@ -250,7 +250,7 @@ export default function VisaImmigrationCertificatePage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
       }
     } else {
-        enhancedToast({ variant: "destructive", title: "Validation Error",
+        showEnhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors on this page before proceeding.",
         });
     }
@@ -468,7 +468,7 @@ export default function VisaImmigrationCertificatePage() {
                                         });
                                       }}
                                       onFailure={() => {
-                                        enhancedToast({ variant: "destructive", title: "Payment Failed",
+                                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                           description: "Payment was not completed. Please try again."
                                         });
                                       }}

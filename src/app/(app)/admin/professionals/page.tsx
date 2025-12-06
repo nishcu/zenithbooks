@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { professionals as sampleProfessionals } from '@/lib/professionals';
 

@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreditCard, Save, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Separator } from '@/components/ui/separator';
 import { servicePricing as initialServices } from '@/lib/on-demand-pricing';
 import { saveServicePricingAction } from './actions';
@@ -78,7 +78,7 @@ export default function ServicePricingPage() {
           description: "The new service prices have been saved successfully. Changes will be live for all users."
         });
       } else {
-        enhancedToast({ variant: "destructive", title: "Save Failed",
+        showEnhancedToast({ variant: "destructive", title: "Save Failed",
             description: "Could not update the pricing file. Please check server logs."
         });
       }

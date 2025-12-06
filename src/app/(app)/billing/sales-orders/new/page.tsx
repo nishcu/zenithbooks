@@ -38,7 +38,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -90,7 +90,7 @@ export default function NewSalesOrderPage() {
                 }
                 setLineItems(orderData.lineItems);
             } else {
-                enhancedToast({ variant: "destructive", title: "Error", description: "Sales order not found." });
+                showEnhancedToast({ variant: "destructive", title: "Error", description: "Sales order not found." });
                 router.push("/billing/sales-orders");
             }
         };

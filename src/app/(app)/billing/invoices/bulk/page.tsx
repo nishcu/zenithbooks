@@ -37,7 +37,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -396,7 +396,7 @@ export default function BulkInvoicePage() {
       } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         rows = await parseExcel(file);
       } else {
-        enhancedToast({ variant: "destructive", title: "Unsupported Format", description: "Please upload a CSV or Excel file." });
+        showEnhancedToast({ variant: "destructive", title: "Unsupported Format", description: "Please upload a CSV or Excel file." });
         setIsProcessing(false);
         return;
       }
@@ -470,7 +470,7 @@ export default function BulkInvoicePage() {
       });
     } catch (error: any) {
       console.error("Error processing file:", error);
-      enhancedToast({ variant: "destructive", title: "Processing Error", 
+      showEnhancedToast({ variant: "destructive", title: "Processing Error", 
         description: error.message || "Could not process the file. Please check the format and try again." 
       });
     } finally {
@@ -490,7 +490,7 @@ export default function BulkInvoicePage() {
     const validInvoices = parsedInvoices.filter(p => p.status === 'valid');
     
     if (validInvoices.length === 0) {
-      enhancedToast({ variant: "destructive", title: "No Valid Invoices", description: "Please fix errors before creating invoices." });
+      showEnhancedToast({ variant: "destructive", title: "No Valid Invoices", description: "Please fix errors before creating invoices." });
       return;
     }
 

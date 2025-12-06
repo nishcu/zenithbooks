@@ -33,7 +33,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useContext } from "react";
 import { AccountingContext } from "@/context/accounting-context";
 import { allAccounts } from "@/lib/accounts";
@@ -513,7 +513,7 @@ export default function BulkJournalEntryPage() {
             } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
                 entries = await parseExcel(selectedFile);
             } else {
-                enhancedToast({ variant: "destructive", title: "Invalid File Type",
+                showEnhancedToast({ variant: "destructive", title: "Invalid File Type",
                     description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)",
                 });
                 setIsProcessing(false);
@@ -521,7 +521,7 @@ export default function BulkJournalEntryPage() {
             }
 
             if (entries.length === 0) {
-                enhancedToast({ variant: "destructive", title: "No Entries Found",
+                showEnhancedToast({ variant: "destructive", title: "No Entries Found",
                     description: "The file appears to be empty or in an incorrect format.",
                 });
                 setIsProcessing(false);
@@ -630,7 +630,7 @@ export default function BulkJournalEntryPage() {
             setIsProcessing(false);
         } catch (error: any) {
             console.error("Error processing file:", error);
-            enhancedToast({ variant: "destructive", title: "Processing Failed",
+            showEnhancedToast({ variant: "destructive", title: "Processing Failed",
                 description: error.message || "An error occurred while processing the file.",
             });
             setIsProcessing(false);
@@ -791,7 +791,7 @@ export default function BulkJournalEntryPage() {
 
     const handleCreateEntries = async () => {
         if (!accountingContext) {
-            enhancedToast({ variant: "destructive", title: "Error",
+            showEnhancedToast({ variant: "destructive", title: "Error",
                 description: "Accounting context not available.",
             });
             return;
@@ -799,7 +799,7 @@ export default function BulkJournalEntryPage() {
 
         const validEntries = parsedEntries.filter(e => e.status === 'valid');
         if (validEntries.length === 0) {
-            enhancedToast({ variant: "destructive", title: "No Valid Entries",
+            showEnhancedToast({ variant: "destructive", title: "No Valid Entries",
                 description: "Please fix errors before creating entries.",
             });
             return;
@@ -894,7 +894,7 @@ export default function BulkJournalEntryPage() {
             if (fileInput) fileInput.value = '';
         } catch (error: any) {
             console.error("Error creating entries:", error);
-            enhancedToast({ variant: "destructive", title: "Creation Failed",
+            showEnhancedToast({ variant: "destructive", title: "Creation Failed",
                 description: error.message || "An error occurred while creating journal entries.",
             });
         } finally {

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { FileArchive, FileDown, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
@@ -67,7 +67,7 @@ export default function StatutoryRegisters() {
 
     const handleGenerate = async () => {
         if (selectedRegisters.length === 0) {
-            enhancedToast({ variant: "destructive", title: "No Selection",
+            showEnhancedToast({ variant: "destructive", title: "No Selection",
                 description: "Please select at least one register to generate."
             });
             return;
@@ -113,7 +113,7 @@ export default function StatutoryRegisters() {
 
         } catch (error) {
             console.error("Error generating files:", error);
-            enhancedToast({ variant: "destructive", title: "Generation Failed",
+            showEnhancedToast({ variant: "destructive", title: "Generation Failed",
                 description: "An error occurred while generating the files."
             });
         }
@@ -204,7 +204,7 @@ export default function StatutoryRegisters() {
                         });
                       }}
                       onFailure={() => {
-                        enhancedToast({ variant: "destructive", title: "Payment Failed",
+                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                           description: "Payment was not completed. Please try again."
                         });
                       }}

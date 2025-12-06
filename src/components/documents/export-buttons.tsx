@@ -12,7 +12,7 @@ import { Download, FileSpreadsheet, FileText, FileDown } from "lucide-react";
 import React, { useRef } from "react";
 import { exportToCSV, exportToExcel, exportToPDF, ExportData } from "@/lib/export-utils";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 
 interface ExportButtonsProps {
   contentRef?: React.RefObject<HTMLDivElement>;
@@ -37,7 +37,7 @@ export function ExportButtons({
 
   const handleExportPDF = async () => {
     if (!contentRef?.current) {
-      enhancedToast({ variant: "destructive", title: "Error",
+      showEnhancedToast({ variant: "destructive", title: "Error",
         description: "No content available for PDF export.",
       });
       return;
@@ -50,7 +50,7 @@ export function ExportButtons({
         description: "Your document has been exported successfully.",
       });
     } catch (error) {
-      enhancedToast({ variant: "destructive", title: "Export Failed",
+      showEnhancedToast({ variant: "destructive", title: "Export Failed",
         description: "Failed to export PDF. Please try again.",
       });
     }
@@ -93,7 +93,7 @@ export function ExportButtons({
         description: "Your data has been exported successfully.",
       });
     } else {
-      enhancedToast({ variant: "destructive", title: "Error",
+      showEnhancedToast({ variant: "destructive", title: "Error",
         description: "No data available for CSV export.",
       });
     }
@@ -136,7 +136,7 @@ export function ExportButtons({
         description: "Your data has been exported successfully.",
       });
     } else {
-      enhancedToast({ variant: "destructive", title: "Error",
+      showEnhancedToast({ variant: "destructive", title: "Error",
         description: "No data available for Excel export.",
       });
     }

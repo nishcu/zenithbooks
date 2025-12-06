@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Wand2, ArrowLeft, FileSignature } from "lucide-react";
 import { generateMoaObjectsAction } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -101,10 +101,10 @@ export default function MoaAoaPage() {
                 setResult(response.mainObjects);
                 toast({ title: "MOA Objects Generated!"});
             } else {
-                 enhancedToast({ variant: "destructive", title: "Generation Failed" });
+                 showEnhancedToast({ variant: "destructive", title: "Generation Failed" });
             }
         } catch (e) {
-            enhancedToast({ variant: "destructive", title: "An Error Occurred" });
+            showEnhancedToast({ variant: "destructive", title: "An Error Occurred" });
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -203,7 +203,7 @@ export default function MoaAoaPage() {
                       });
                     }}
                     onFailure={() => {
-                      enhancedToast({ variant: "destructive", title: "Payment Failed",
+                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
                       });
                     }}

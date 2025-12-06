@@ -34,7 +34,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -84,7 +84,7 @@ export default function RapidInvoiceEntryPage() {
     const selectedCustomer = customers.find(c => c.id === values.customerId);
 
     if (!selectedCustomer) {
-        enhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
+        showEnhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a customer is selected." });
         return;
     }
     
@@ -138,7 +138,7 @@ export default function RapidInvoiceEntryPage() {
             form.setFocus("customerId");
         }
     } catch (e: any) {
-        enhancedToast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
+        showEnhancedToast({ variant: "destructive", title: "Failed to save invoice", description: e.message });
     }
   }, [accountingContext, customers, items, toast, router, form]);
 

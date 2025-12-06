@@ -12,7 +12,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, FileSignature, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -107,11 +107,11 @@ export default function TurnoverCertificatePage() {
                     form.reset(data.formData);
                     toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
                 } else {
-                    enhancedToast({ variant: "destructive", title: "Unauthorized"});
+                    showEnhancedToast({ variant: "destructive", title: "Unauthorized"});
                     router.push('/ca-certificates/turnover');
                 }
             } else {
-                 enhancedToast({ variant: "destructive", title: "Not Found"});
+                 showEnhancedToast({ variant: "destructive", title: "Not Found"});
                  router.push('/ca-certificates/turnover');
             }
             setIsLoading(false);
@@ -142,13 +142,13 @@ export default function TurnoverCertificatePage() {
         setStep(2);
         toast({ title: "Draft Ready", description: "Review the certificate before proceeding." });
     } else {
-        enhancedToast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields."});
+        showEnhancedToast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields."});
     }
   }
 
   const handleSaveDraft = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
           return;
       }
       setIsSubmitting(true);
@@ -172,7 +172,7 @@ export default function TurnoverCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          enhancedToast({ variant: "destructive", title: 'Save Failed'});
+          showEnhancedToast({ variant: "destructive", title: 'Save Failed'});
       } finally {
           setIsSubmitting(false);
       }
@@ -180,13 +180,13 @@ export default function TurnoverCertificatePage() {
 
   const handleLocalCertificationRequest = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
+          showEnhancedToast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to make a request." });
           return;
       }
 
       // Check if pricing is loaded
       if (!pricing) {
-          enhancedToast({ variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." });
+          showEnhancedToast({ variant: "destructive", title: "Loading", description: "Please wait while we load pricing information." });
           return;
       }
 
@@ -223,7 +223,7 @@ export default function TurnoverCertificatePage() {
             });
           } catch (error) {
               console.error("Error sending request:", error);
-              enhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
+              showEnhancedToast({ variant: "destructive", title: "Request Failed", description: "Could not send the request. Please try again." });
           } finally {
               setIsSubmitting(false);
           }
@@ -393,7 +393,7 @@ export default function TurnoverCertificatePage() {
                                        });
                                    } catch (error) {
                                        console.error("Error sending request:", error);
-                                       enhancedToast({ variant: "destructive", title: "Request Failed",
+                                       showEnhancedToast({ variant: "destructive", title: "Request Failed",
                                            description: "Payment was successful but request submission failed. Please contact support."
                                        });
                                    } finally {
@@ -401,7 +401,7 @@ export default function TurnoverCertificatePage() {
                                    }
                                }}
                                onFailure={() => {
-                                   enhancedToast({ variant: "destructive", title: "Payment Failed",
+                                   showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                        description: "Payment was not completed. Please try again."
                                    });
                                }}

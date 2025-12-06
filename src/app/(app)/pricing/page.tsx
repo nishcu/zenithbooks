@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useRoleSimulator } from "@/context/role-simulator-context";
 import { Badge } from "@/components/ui/badge";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";

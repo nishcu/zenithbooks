@@ -36,7 +36,7 @@ import { AccountingContext } from "@/context/accounting-context";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
 import { allAccounts } from "@/lib/accounts";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
 import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
@@ -114,7 +114,7 @@ export default function RapidVoucherEntryPage() {
     const selectedParty = partyList.find(p => p.id === values.partyId);
 
     if (!selectedParty) {
-        enhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a party is selected." });
+        showEnhancedToast({ variant: "destructive", title: "Invalid Selection", description: "Please ensure a party is selected." });
         return;
     }
     
@@ -182,7 +182,7 @@ export default function RapidVoucherEntryPage() {
             form.setFocus("partyId");
         }
     } catch (e: any) {
-        enhancedToast({ variant: "destructive", title: "Failed to save voucher", description: e.message });
+        showEnhancedToast({ variant: "destructive", title: "Failed to save voucher", description: e.message });
     }
   }, [accountingContext, partyList, toast, router, form, voucherPrefix]);
 

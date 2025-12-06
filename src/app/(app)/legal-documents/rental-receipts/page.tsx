@@ -27,7 +27,7 @@ import {
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
@@ -225,7 +225,7 @@ export default function RentalReceiptsPage() {
                           });
                         }}
                         onFailure={() => {
-                          enhancedToast({ variant: "destructive", title: "Payment Failed",
+                          showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                             description: "Payment was not completed. Please try again."
                           });
                         }}

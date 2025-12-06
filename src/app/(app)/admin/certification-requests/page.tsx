@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
@@ -122,14 +122,14 @@ export default function AdminCertificationRequests() {
 
   const handleApprove = async () => {
     if (!selectedRequest || !user || !selectedRequest.userId) {
-      enhancedToast({ variant: "destructive", title: "Approval Failed",
+      showEnhancedToast({ variant: "destructive", title: "Approval Failed",
         description: "Invalid request data. User information is missing.",
       });
       return;
     }
 
     if (!udin.trim()) {
-      enhancedToast({ variant: "destructive", title: "UDIN Required",
+      showEnhancedToast({ variant: "destructive", title: "UDIN Required",
         description: "Please enter the UDIN (Unique Document Identification Number) for this certificate.",
       });
       return;
@@ -182,7 +182,7 @@ export default function AdminCertificationRequests() {
       setSelectedRequest(null);
     } catch (error) {
       console.error("Error approving certification request:", error);
-      enhancedToast({ variant: "destructive", title: "Approval Failed",
+      showEnhancedToast({ variant: "destructive", title: "Approval Failed",
         description: "Failed to approve the certification request. Please try again.",
       });
     } finally {
@@ -192,7 +192,7 @@ export default function AdminCertificationRequests() {
 
   const handleDownloadDraft = async (request: Request) => {
     if (!request.certificateData) {
-      enhancedToast({ variant: "destructive", title: "Download Failed",
+      showEnhancedToast({ variant: "destructive", title: "Download Failed",
         description: "Certificate data is not available for this draft.",
       });
       return;
@@ -426,7 +426,7 @@ export default function AdminCertificationRequests() {
       });
     } catch (error) {
       console.error("Draft download error:", error);
-      enhancedToast({ variant: "destructive", title: "Download Failed",
+      showEnhancedToast({ variant: "destructive", title: "Download Failed",
         description: "Failed to generate draft PDF. Please try again or contact support.",
       });
     }

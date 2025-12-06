@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Copy, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_SHARE_CODE, VaultCategory } from "@/lib/vault-constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -113,7 +113,7 @@ export function ShareCodeDialog({
         });
         setTimeout(() => setCodeCopied(false), 2000);
       } catch (error) {
-        enhancedToast({ variant: "destructive", title: "Copy Failed",
+        showEnhancedToast({ variant: "destructive", title: "Copy Failed",
           description: "Failed to copy code. Please copy it manually.",
         });
       }

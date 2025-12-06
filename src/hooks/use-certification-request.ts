@@ -3,7 +3,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from '@/lib/service-pricing-utils';
 
 interface CertificationRequestData {
@@ -33,7 +33,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
 
   const handleCertificationRequest = async (requestData: CertificationRequestData) => {
     if (!user) {
-      enhancedToast({ variant: "destructive", title: "Authentication Error",
+      showEnhancedToast({ variant: "destructive", title: "Authentication Error",
         description: "You must be logged in to make a request."
       });
       return false;
@@ -41,7 +41,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
 
     // Check if pricing is loaded
     if (!pricing) {
-      enhancedToast({ variant: "destructive", title: "Loading",
+      showEnhancedToast({ variant: "destructive", title: "Loading",
         description: "Please wait while we load pricing information."
       });
       return false;
@@ -81,7 +81,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
         return true;
       } catch (error) {
         console.error("Error sending request:", error);
-        enhancedToast({ variant: "destructive", title: "Request Failed",
+        showEnhancedToast({ variant: "destructive", title: "Request Failed",
           description: "Could not send the request. Please try again."
         });
         return false;
@@ -125,7 +125,7 @@ export function useCertificationRequest({ pricing, serviceId, onPaymentSuccess }
       return true;
     } catch (error) {
       console.error("Error sending request:", error);
-      enhancedToast({ variant: "destructive", title: "Request Failed",
+      showEnhancedToast({ variant: "destructive", title: "Request Failed",
         description: "Payment was successful but request submission failed. Please contact support."
       });
       return false;

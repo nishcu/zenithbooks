@@ -27,7 +27,7 @@ import {
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Wand2, UploadCloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -77,7 +77,7 @@ export default function ItemsPage() {
         await deleteDoc(itemDocRef);
         toast({ title: "Item Deleted", description: `${item.name} has been removed.` });
     } catch (e) {
-        enhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the item." });
+        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the item." });
     }
   }
 

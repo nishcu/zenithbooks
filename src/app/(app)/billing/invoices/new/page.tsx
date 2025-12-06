@@ -39,7 +39,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -163,7 +163,7 @@ export default function NewInvoicePage() {
 
     const selectedCustomer = customers.find(c => c.id === customer);
     if (!selectedCustomer || !invoiceNumber) {
-        enhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number."});
+        showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please select a customer and enter an invoice number."});
         return;
     }
     
@@ -208,7 +208,7 @@ export default function NewInvoicePage() {
         router.push("/billing/invoices");
     } catch (e: any) {
         console.error("Firebase error:", e);
-        enhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
+        showEnhancedToast({ variant: "destructive", title: "Failed to save journal entry", description: e.message });
     }
   }
 

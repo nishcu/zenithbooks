@@ -47,7 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { allAccounts } from "@/lib/accounts";
 import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
@@ -220,7 +220,7 @@ export default function ChartOfAccountsPage() {
 
   const onSubmit = async (values: z.infer<typeof accountSchema>) => {
     if (!user) {
-        enhancedToast({ variant: "destructive", title: "Not Authenticated" });
+        showEnhancedToast({ variant: "destructive", title: "Not Authenticated" });
         return;
     }
 
@@ -233,7 +233,7 @@ export default function ChartOfAccountsPage() {
         setIsAddDialogOpen(false);
     } catch (e) {
         console.error("Error adding document: ", e);
-        enhancedToast({ variant: "destructive", title: "Error", description: "Could not save the account." })
+        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not save the account." })
     }
   };
 

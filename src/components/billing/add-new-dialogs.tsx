@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { collection, addDoc, doc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
@@ -152,7 +152,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
 
     const onSubmit = async (values: z.infer<typeof partySchema>) => {
          if (!user) {
-            enhancedToast({ variant: "destructive", title: "Not Authenticated" });
+            showEnhancedToast({ variant: "destructive", title: "Not Authenticated" });
             return;
         }
         const collectionName = type === 'Customer' ? 'customers' : 'vendors';
@@ -166,7 +166,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                 // Add new party
                 const nextCode = await getNextAvailableCode(user.uid, "Current Asset");
                 if (!nextCode) {
-                    enhancedToast({ variant: "destructive", title: "Error", description: "Could not generate an account code." });
+                    showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not generate an account code." });
                     return;
                 }
                 const batch = writeBatch(db);
@@ -192,7 +192,7 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
             onOpenChange(false);
         } catch (e) {
             console.error("Error saving document: ", e);
-            enhancedToast({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.` });
+            showEnhancedToast({ variant: "destructive", title: "Error", description: `Could not save ${type.toLowerCase()}.` });
         }
     };
 
@@ -295,7 +295,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
 
     const onSubmit = async (values: z.infer<typeof itemSchema>) => {
         if (!user) {
-           enhancedToast({ variant: "destructive", title: "Not authenticated" });
+           showEnhancedToast({ variant: "destructive", title: "Not authenticated" });
            return;
        }
        try {
@@ -310,7 +310,7 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
            onOpenChange(false);
        } catch (e) {
            console.error("Error adding document: ", e);
-           enhancedToast({ variant: "destructive", title: "Error", description: "Could not save the item." });
+           showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not save the item." });
        }
     };
 

@@ -68,7 +68,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { AccountingContext } from "@/context/accounting-context";
@@ -181,7 +181,7 @@ export default function VouchersPage() {
         const originalVoucher = journalVouchers.find(v => v.id === voucherId);
 
         if (!originalVoucher) {
-            enhancedToast({ variant: "destructive", title: "Error", description: "Original voucher transaction not found." });
+            showEnhancedToast({ variant: "destructive", title: "Error", description: "Original voucher transaction not found." });
             return;
         }
 
@@ -204,7 +204,7 @@ export default function VouchersPage() {
             await addJournalVoucher(reversalVoucher as any);
             toast({ title: "Voucher Reversed", description: `Voucher #${voucherId} has been successfully reversed.` });
         } catch (e: any) {
-            enhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
+            showEnhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
         }
     };
     

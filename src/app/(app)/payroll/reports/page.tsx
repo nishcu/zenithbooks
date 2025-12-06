@@ -19,7 +19,7 @@ import {
 import { FileText, Download } from "lucide-react";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";

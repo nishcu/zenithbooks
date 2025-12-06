@@ -22,7 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Download, Loader2, UploadCloud, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import * as XLSX from "xlsx";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
@@ -176,7 +176,7 @@ export default function ItemBulkUploadPage() {
         });
       } catch (error: any) {
         console.error(error);
-        enhancedToast({ variant: "destructive", title: "Parsing failed",
+        showEnhancedToast({ variant: "destructive", title: "Parsing failed",
           description: error.message || "Could not read the file.",
         });
       } finally {
@@ -200,12 +200,12 @@ export default function ItemBulkUploadPage() {
 
   const handleCreateItems = async () => {
     if (!user) {
-      enhancedToast({ variant: "destructive", title: "Please sign in to continue." });
+      showEnhancedToast({ variant: "destructive", title: "Please sign in to continue." });
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      enhancedToast({ variant: "destructive", title: "No rows to import",
+      showEnhancedToast({ variant: "destructive", title: "No rows to import",
         description: "Fix validation errors or upload a file first.",
       });
       return;

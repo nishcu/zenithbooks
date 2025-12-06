@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -232,7 +232,7 @@ export default function PartiesBulkUploadPage() {
         });
       } catch (error: any) {
         console.error(error);
-        enhancedToast({ variant: "destructive", title: "Parsing failed",
+        showEnhancedToast({ variant: "destructive", title: "Parsing failed",
           description: error.message || "Could not read the file.",
         });
       } finally {
@@ -256,12 +256,12 @@ export default function PartiesBulkUploadPage() {
 
   const handleCreateParties = async () => {
     if (!user) {
-      enhancedToast({ variant: "destructive", title: "Please sign in to continue." });
+      showEnhancedToast({ variant: "destructive", title: "Please sign in to continue." });
       return;
     }
     const rowsToSave = parsedRows.filter((row) => row.status === "pending");
     if (rowsToSave.length === 0) {
-      enhancedToast({ variant: "destructive", title: "No rows to import",
+      showEnhancedToast({ variant: "destructive", title: "No rows to import",
         description: "Fix validation errors or upload a file first.",
       });
       return;

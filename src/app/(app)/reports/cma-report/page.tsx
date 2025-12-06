@@ -53,7 +53,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { getCmaObservationsAction } from "./actions";
 
 // Import CMA components
@@ -159,7 +159,7 @@ export default function CmaReportGeneratorPage() {
 
   const handleGetAiObservations = async () => {
       if (!generatedReport) {
-          enhancedToast({ variant: "destructive", title: 'Error', description: 'Please generate the report first.'});
+          showEnhancedToast({ variant: "destructive", title: 'Error', description: 'Please generate the report first.'});
           return;
       }
       setIsAiLoading(true);
@@ -179,12 +179,12 @@ export default function CmaReportGeneratorPage() {
               setAiObservations(result.observations);
               setActiveTab('ai-observations');
           } else {
-              enhancedToast({ variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.'});
+              showEnhancedToast({ variant: "destructive", title: 'AI Analysis Failed', description: 'Could not retrieve AI observations.'});
           }
       } catch (error: any) {
           console.error("CMA Observations Error:", error);
           const errorMessage = error?.message || 'An error occurred while fetching AI observations.';
-          enhancedToast({ variant: "destructive", title: 'Error', description: errorMessage});
+          showEnhancedToast({ variant: "destructive", title: 'Error', description: errorMessage});
       } finally {
           setIsAiLoading(false);
       }
@@ -573,7 +573,7 @@ export default function CmaReportGeneratorPage() {
                                 handleGenerateReport();
                             }}
                             onFailure={() => {
-                                enhancedToast({ variant: "destructive", title: "Payment Failed",
+                                showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                     description: "Payment was not completed. Please try again."
                                 });
                             }}

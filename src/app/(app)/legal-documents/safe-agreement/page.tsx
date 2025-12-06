@@ -12,7 +12,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, ArrowRight, Printer, FileDown, FileSignature, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
@@ -224,7 +224,7 @@ export default function SafeAgreement() {
                       });
                     }}
                     onFailure={() => {
-                      enhancedToast({ variant: "destructive", title: "Payment Failed",
+                      showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                         description: "Payment was not completed. Please try again."
                       });
                     }}

@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, sendPasswordResetEmail } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -115,7 +115,7 @@ export function LoginForm() {
           errorMessage = error.message;
         }
         
-        enhancedToast({
+        showEnhancedToast({
           variant: "default",
           title: "Couldn't Sign In with Google",
           description: errorMessage,
@@ -137,7 +137,7 @@ export function LoginForm() {
       // Check if account is locked
       const loginId = getLoginIdentifier(sanitizedEmail);
       if (isAccountLocked(loginId)) {
-        enhancedToast({
+        showEnhancedToast({
           variant: "destructive",
           title: "Account Temporarily Locked",
           description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
@@ -159,7 +159,7 @@ export function LoginForm() {
       const attemptResult = recordFailedLogin(loginId);
       
       if (attemptResult.locked) {
-        enhancedToast({
+        showEnhancedToast({
           variant: "destructive",
           title: "Account Temporarily Locked",
           description: "For your security, we've temporarily locked your account due to multiple failed login attempts. Please try again in 15 minutes.",
@@ -167,7 +167,7 @@ export function LoginForm() {
       } else {
         showErrorToast(error, "Login");
         if (attemptResult.remainingAttempts < 3) {
-          enhancedToast({
+          showEnhancedToast({
             variant: "default",
             title: "Login Attempts Remaining",
             description: `You have ${attemptResult.remainingAttempts} attempt${attemptResult.remainingAttempts === 1 ? '' : 's'} remaining before your account is temporarily locked.`,
@@ -187,7 +187,7 @@ export function LoginForm() {
 
   async function handlePasswordReset() {
       if (!resetEmail) {
-          enhancedToast({ variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." });
+          showEnhancedToast({ variant: "default", title: "Email Required", description: "Please enter your email address to reset your password." });
           return;
       }
       try {

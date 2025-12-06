@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
@@ -162,7 +162,7 @@ export default function FoundersAgreementPage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
       }
     } else {
-        enhancedToast({ variant: "destructive", title: "Validation Error",
+        showEnhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors before proceeding.",
         });
     }
@@ -376,7 +376,7 @@ export default function FoundersAgreementPage() {
                             });
                           }}
                           onFailure={() => {
-                            enhancedToast({ variant: "destructive", title: "Payment Failed",
+                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
                             });
                           }}
@@ -447,7 +447,7 @@ export default function FoundersAgreementPage() {
                   });
                 }}
                 onFailure={() => {
-                  enhancedToast({ variant: "destructive", title: "Payment Failed",
+                  showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                     description: "Payment was not completed. Please try again."
                   });
                 }}

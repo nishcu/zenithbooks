@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Upload, GitCompareArrows, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { AccountingContext } from "@/context/accounting-context";
 import * as XLSX from 'xlsx';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -96,7 +96,7 @@ export default function BooksVsGstr1Page() {
                  setGstr1Data(json);
                  toast({ title: "GSTR-1 Data Loaded", description: `${json.length} records found.` });
             } else {
-                 enhancedToast({ variant: "destructive", title: "Invalid File", description: "The uploaded file does not seem to be a valid GSTR-1 report." });
+                 showEnhancedToast({ variant: "destructive", title: "Invalid File", description: "The uploaded file does not seem to be a valid GSTR-1 report." });
             }
         };
         reader.readAsArrayBuffer(file);

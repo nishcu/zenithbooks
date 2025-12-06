@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { suggestClausesAction } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { db, auth } from "@/lib/firebase";
@@ -457,11 +457,11 @@ export default function PartnershipDeedPage() {
             form.reset(data.formData);
             toast({ title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}` });
           } else {
-            enhancedToast({ variant: "destructive", title: "Unauthorized" });
+            showEnhancedToast({ variant: "destructive", title: "Unauthorized" });
             router.push('/legal-documents/partnership-deed');
           }
         } else {
-          enhancedToast({ variant: "destructive", title: "Not Found" });
+          showEnhancedToast({ variant: "destructive", title: "Not Found" });
           router.push('/legal-documents/partnership-deed');
         }
         setIsLoading(false);
@@ -501,7 +501,7 @@ export default function PartnershipDeedPage() {
   const handleDownloadPdf = (contentRef: React.RefObject<HTMLDivElement>, fileName: string) => {
     const element = contentRef.current;
     if (!element) {
-      enhancedToast({ variant: "destructive", title: "Error",
+      showEnhancedToast({ variant: "destructive", title: "Error",
         description: "Could not find the content to download.",
       });
       return;
@@ -525,7 +525,7 @@ export default function PartnershipDeedPage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
           return;
       }
       setIsSubmitting(true);
@@ -549,7 +549,7 @@ export default function PartnershipDeedPage() {
           }
       } catch (e) {
           console.error(e);
-          enhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
       } finally {
           setIsSubmitting(false);
       }
@@ -574,11 +574,11 @@ export default function PartnershipDeedPage() {
             form.setValue("extraClauses", (existingClauses || "") + newClausesText);
             toast({ title: "AI Clauses Added", description: "Suggested clauses have been appended." });
         } else {
-             enhancedToast({ variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses." });
+             showEnhancedToast({ variant: "destructive", title: "Suggestion Failed", description: "Could not generate clauses." });
         }
     } catch (error) {
         console.error(error);
-        enhancedToast({ variant: "destructive", title: "Error", description: "An error occurred while generating clauses." });
+        showEnhancedToast({ variant: "destructive", title: "Error", description: "An error occurred while generating clauses." });
     } finally {
         setIsSuggestingClauses(false);
     }
@@ -622,7 +622,7 @@ export default function PartnershipDeedPage() {
         toast({ title: `Step ${step} Saved`, description: `Proceeding to step ${step + 1}.` });
       }
     } else {
-        enhancedToast({ variant: "destructive", title: "Validation Error",
+        showEnhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please correct the errors on this page before proceeding.",
         });
     }
@@ -938,7 +938,7 @@ export default function PartnershipDeedPage() {
                               });
                             }}
                             onFailure={() => {
-                              enhancedToast({ variant: "destructive", title: "Payment Failed",
+                              showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                 description: "Payment was not completed. Please try again."
                               });
                             }}
@@ -1037,7 +1037,7 @@ export default function PartnershipDeedPage() {
                                     });
                                 }}
                                 onFailure={() => {
-                                    enhancedToast({ variant: "destructive", title: "Payment Failed",
+                                    showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                         description: "Payment was not completed. Please try again."
                                     });
                                 }}

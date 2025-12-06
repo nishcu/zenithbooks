@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, FileText, ArrowLeft, PlusCircle, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
@@ -122,7 +122,7 @@ export default function NewBlogPostPage() {
 
         } catch (error: any) {
             console.error('Blog creation error:', error);
-            enhancedToast({ variant: "destructive", title: "Upload Failed",
+            showEnhancedToast({ variant: "destructive", title: "Upload Failed",
                 description: error.message || "Failed to upload image. Please try again.",
             });
         } finally {

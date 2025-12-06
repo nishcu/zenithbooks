@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, FileText, Edit, Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { format } from 'date-fns';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, deleteDoc } from "firebase/firestore";
@@ -111,7 +111,7 @@ export default function SalesOrdersPage() {
         await deleteDoc(doc(db, "sales-orders", order.id));
         toast({ title: "Sales Order Cancelled", description: `Sales order ${order.id} has been successfully cancelled.` });
       } catch (error) {
-        enhancedToast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the sales order." });
+        showEnhancedToast({ variant: "destructive", title: "Cancellation Failed", description: "There was an error cancelling the sales order." });
       }
     }
   };

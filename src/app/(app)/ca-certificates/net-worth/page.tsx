@@ -14,7 +14,7 @@ import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -324,11 +324,11 @@ export default function NetWorthCertificatePage() {
                     form.reset(data.formData);
                     toast({title: "Draft Loaded", description: `Loaded saved draft: ${data.formData.documentName}`});
                 } else {
-                    enhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."});
+                    showEnhancedToast({ variant: "destructive", title: "Unauthorized", description: "You don't have permission to access this document."});
                     router.push('/ca-certificates/net-worth');
                 }
             } else {
-                 enhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."});
+                 showEnhancedToast({ variant: "destructive", title: "Not Found", description: "The requested document draft could not be found."});
                  router.push('/ca-certificates/net-worth');
             }
             setIsLoading(false);
@@ -384,7 +384,7 @@ export default function NetWorthCertificatePage() {
             description: "Review the generated certificate below.",
         });
     } else {
-         enhancedToast({ variant: "destructive", title: "Validation Error",
+         showEnhancedToast({ variant: "destructive", title: "Validation Error",
             description: "Please fill all required fields before generating the draft.",
         });
     }
@@ -392,7 +392,7 @@ export default function NetWorthCertificatePage() {
 
   const handleSaveDraft = async () => {
       if (!user) {
-          enhancedToast({ variant: "destructive", title: 'Authentication Error'});
+          showEnhancedToast({ variant: "destructive", title: 'Authentication Error'});
           return;
       }
       setIsSubmitting(true);
@@ -416,7 +416,7 @@ export default function NetWorthCertificatePage() {
           }
       } catch (e) {
           console.error(e);
-          enhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
+          showEnhancedToast({ variant: "destructive", title: 'Save Failed', description: 'Could not save the draft.'});
       } finally {
           setIsSubmitting(false);
       }
@@ -571,7 +571,7 @@ export default function NetWorthCertificatePage() {
                                         });
                                       }}
                                       onFailure={() => {
-                                        enhancedToast({ variant: "destructive", title: "Payment Failed",
+                                        showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                                           description: "Payment was not completed. Please try again."
                                         });
                                       }}

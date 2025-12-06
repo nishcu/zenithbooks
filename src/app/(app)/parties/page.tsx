@@ -53,7 +53,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
@@ -113,7 +113,7 @@ export default function PartiesPage() {
         await deleteDoc(partyDocRef);
         toast({ title: "Party Deleted", description: `${party.name} has been removed.`})
     } catch (e) {
-        enhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the party."})
+        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not delete the party."})
     }
   }
   
@@ -124,7 +124,7 @@ export default function PartiesPage() {
           toast({ title: "Account Code Assigned", description: `Assigned code ${newCode} to ${party.name}.`});
       } catch (error) {
           console.error(error);
-          enhancedToast({ variant: "destructive", title: "Assignment Failed", description: (error as Error).message });
+          showEnhancedToast({ variant: "destructive", title: "Assignment Failed", description: (error as Error).message });
       }
   }
   
@@ -186,7 +186,7 @@ export default function PartiesPage() {
   
   const handleImport = async () => {
     if (!importFile || !user) {
-        enhancedToast({ variant: "destructive", title: "No file selected", description: "Please upload a file to import."});
+        showEnhancedToast({ variant: "destructive", title: "No file selected", description: "Please upload a file to import."});
         return;
     }
     
@@ -231,7 +231,7 @@ export default function PartiesPage() {
             setIsImportDialogOpen(false);
             setImportFile(null);
         } catch (error) {
-            enhancedToast({ variant: "destructive", title: "Import Failed", description: "There was an error writing to the database." });
+            showEnhancedToast({ variant: "destructive", title: "Import Failed", description: "There was an error writing to the database." });
         }
     };
     reader.readAsArrayBuffer(importFile);

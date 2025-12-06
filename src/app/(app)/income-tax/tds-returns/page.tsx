@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { FileDown, Library } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { tdsSections } from "@/lib/tds-rates";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { useRef } from "react";
@@ -108,7 +108,7 @@ export default function TdsReturns() {
 
   const generateReport = async () => {
     if (!user) {
-      enhancedToast({ variant: "destructive", title: "Authentication Required",
+      showEnhancedToast({ variant: "destructive", title: "Authentication Required",
         description: "Please log in to generate reports."
       });
       return;
@@ -239,7 +239,7 @@ export default function TdsReturns() {
 
     } catch (error) {
       console.error("Error generating report:", error);
-      enhancedToast({ variant: "destructive", title: "Report Generation Failed",
+      showEnhancedToast({ variant: "destructive", title: "Report Generation Failed",
         description: "An error occurred while generating the report. Please try again."
       });
     }

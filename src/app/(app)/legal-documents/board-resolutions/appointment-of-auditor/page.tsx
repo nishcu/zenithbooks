@@ -11,7 +11,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -175,7 +175,7 @@ export default function AppointmentOfAuditorPage() {
                             });
                           }}
                           onFailure={() => {
-                            enhancedToast({ variant: "destructive", title: "Payment Failed",
+                            showEnhancedToast({ variant: "destructive", title: "Payment Failed",
                               description: "Payment was not completed. Please try again."
                             });
                           }}

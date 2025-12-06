@@ -67,7 +67,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
@@ -218,7 +218,7 @@ export default function JournalVoucherPage() {
     const originalVoucher = allVouchers.find((v: JournalVoucher | null) => v && v.id === voucherId);
 
     if (!originalVoucher) {
-      enhancedToast({ variant: "destructive", title: "Error", description: "Original journal voucher not found." });
+      showEnhancedToast({ variant: "destructive", title: "Error", description: "Original journal voucher not found." });
       return;
     }
 
@@ -242,14 +242,14 @@ export default function JournalVoucherPage() {
       await addJournalVoucher(reversalVoucher as any);
       toast({ title: "Voucher Reversed", description: `A reversing entry for voucher #${voucherId} has been created.` });
     } catch (e: any) {
-      enhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
+      showEnhancedToast({ variant: "destructive", title: "Reversal Failed", description: e.message });
     }
   };
 
   const handleVoucherAction = (action: string, voucher: JournalVoucher) => {
     if (action === "Delete") {
       if (voucher.reverses) {
-        enhancedToast({ variant: "destructive", title: "Cannot Delete", description: "This is a reversal entry and cannot be deleted." });
+        showEnhancedToast({ variant: "destructive", title: "Cannot Delete", description: "This is a reversal entry and cannot be deleted." });
         return;
       }
       handleDeleteJournalVoucher(voucher.id);
@@ -257,7 +257,7 @@ export default function JournalVoucherPage() {
       setSelectedVoucher(voucher);
     } else if (action === "Edit") {
       if (voucher.reverses) {
-        enhancedToast({ variant: "destructive", title: "Cannot Edit", description: "Reversal entries cannot be edited." });
+        showEnhancedToast({ variant: "destructive", title: "Cannot Edit", description: "Reversal entries cannot be edited." });
         return;
       }
       setEditingVoucher(voucher);
@@ -309,7 +309,7 @@ export default function JournalVoucherPage() {
 
   const handleSaveVoucher = async () => {
     if (!date) {
-      enhancedToast({ variant: "destructive", title: "Missing Details", description: "Please provide a date." });
+      showEnhancedToast({ variant: "destructive", title: "Missing Details", description: "Please provide a date." });
       return;
     }
 
@@ -317,7 +317,7 @@ export default function JournalVoucherPage() {
     const totalCredits = lines.reduce((sum: number, line: any) => sum + parseFloat(line.credit || "0"), 0);
 
     if (Math.abs(totalDebits - totalCredits) > 0.01 || totalDebits === 0) {
-      enhancedToast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
+      showEnhancedToast({ variant: "destructive", title: "Unbalanced Entry", description: "Debit and credit totals must match and be greater than zero." });
       return;
     }
 
@@ -355,7 +355,7 @@ export default function JournalVoucherPage() {
 
       handleDialogClose(false);
     } catch (e: any) {
-      enhancedToast({ variant: "destructive", title: "Save failed", description: e.message });
+      showEnhancedToast({ variant: "destructive", title: "Save failed", description: e.message });
     }
   };
 

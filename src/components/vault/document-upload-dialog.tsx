@@ -20,7 +20,7 @@ import { SearchableSelect, SelectOption } from "@/components/ui/searchable-selec
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCategory } from "@/lib/vault-constants";
 import { formatBytes } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";

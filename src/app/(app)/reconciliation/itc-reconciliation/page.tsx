@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { GitCompareArrows, Loader2, Wand2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { reconcileItcAction } from '../actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -53,11 +53,11 @@ export default function ItcReconciliationPage() {
                 setItcReconResult(result.reconciliationResults);
                 toast({ title: "ITC Reconciliation Complete" });
             } else {
-                enhancedToast({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.' });
+                showEnhancedToast({ variant: "destructive", title: 'Reconciliation Failed', description: 'Could not get ITC reconciliation results.' });
             }
         } catch (error: any) {
             console.error(error);
-            enhancedToast({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.' });
+            showEnhancedToast({ variant: "destructive", title: 'An Error Occurred', description: error.message || 'An unexpected error occurred during ITC reconciliation.' });
         } finally {
             setIsItcLoading(false);
         }

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { PlusCircle, ArrowRightLeft, FileArchive, LogIn, Users, Inbox } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -55,7 +55,7 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
   
   const handleAddNewClient = () => {
     if (!newClientName || !newClientGstin || !newClientEmail) {
-        enhancedToast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details."});
+        showEnhancedToast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details."});
         return;
     }
     const newClient = {

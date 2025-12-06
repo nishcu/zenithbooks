@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileText, Folder, HardDrive, Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { VAULT_CATEGORIES_LIST, VAULT_FILE_LIMITS, VAULT_STORAGE_PATHS, VaultCategory } from "@/lib/vault-constants";
 import { formatBytes } from "@/lib/utils";
 import { DocumentUploadDialog } from "@/components/vault/document-upload-dialog";
@@ -87,7 +87,7 @@ export default function VaultPage() {
       },
       (error) => {
         console.error("Error fetching documents:", error);
-        enhancedToast({ variant: "destructive", title: "Error",
+        showEnhancedToast({ variant: "destructive", title: "Error",
           description: "Failed to load documents. Please try again.",
         });
         setLoading(false);

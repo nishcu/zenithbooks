@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wand2, Upload, GitCompareArrows, Loader2, ArrowLeft, FileDown, FileSpreadsheet, FileJson } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import Link from "next/link";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
@@ -612,7 +612,7 @@ export default function Gstr9cPage() {
                 <Button variant="outline"><FileSpreadsheet className="mr-2"/> Export to Excel</Button>
                 <Button variant="outline" onClick={async () => {
                     if (!reportRef.current) {
-                        enhancedToast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
+                        showEnhancedToast({ variant: "destructive", title: "Error", description: "Could not find the report content to generate PDF." });
                         return;
                     }
                     toast({ title: "Generating PDF...", description: "Your GSTR-9C PDF is being generated." });

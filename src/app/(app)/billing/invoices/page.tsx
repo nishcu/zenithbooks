@@ -42,7 +42,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { enhancedToast } from "@/lib/error-handler";
+import { showEnhancedToast } from "@/lib/error-handler";
 import { format, addDays, isPast, subDays } from 'date-fns';
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { db, auth } from "@/lib/firebase";
@@ -101,7 +101,7 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
             toast({ title: "E-Waybill Generated", description: "The E-Waybill JSON has been downloaded successfully." });
             onOpenChange(false);
         } catch (error: any) {
-            enhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill." });
+            showEnhancedToast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the E-Waybill." });
         }
     }
 
@@ -207,7 +207,7 @@ export default function InvoicesPage() {
         const originalVoucher = journalVouchers.find(v => v.id === invoiceId);
 
         if (!originalVoucher) {
-            enhancedToast({ variant: "destructive", title: "Error", description: "Original invoice transaction not found." });
+            showEnhancedToast({ variant: "destructive", title: "Error", description: "Original invoice transaction not found." });
             return false;
         }
 
@@ -233,7 +233,7 @@ export default function InvoicesPage() {
             toast({ title: "Invoice Cancelled", description: `Invoice has been successfully cancelled.` });
             return true;
         } catch (e: any) {
-            enhancedToast({ variant: "destructive", title: "Cancellation Failed", description: e.message });
+            showEnhancedToast({ variant: "destructive", title: "Cancellation Failed", description: e.message });
             return false;
         }
     };
@@ -265,7 +265,7 @@ export default function InvoicesPage() {
                 }).toString();
                 router.push(`/billing/invoices/new?${queryParams}`);
             } else {
-                 enhancedToast({ variant: "destructive", title: 'Edit Failed', description: `Could not cancel the original invoice.` });
+                 showEnhancedToast({ variant: "destructive", title: 'Edit Failed', description: `Could not cancel the original invoice.` });
             }
         } else if (action === 'Remind') {
             const customer: any = customers.find(c => c.id === invoice.raw.customerId);
@@ -275,7 +275,7 @@ export default function InvoicesPage() {
                 );
                 window.open(`https://wa.me/${customer.phone}?text=${message}`, '_blank');
             } else {
-                 enhancedToast({ variant: "destructive", title: "Cannot Send Reminder", description: "Customer phone number is not available." });
+                 showEnhancedToast({ variant: "destructive", title: "Cannot Send Reminder", description: "Customer phone number is not available." });
             }
         }
         else if (action === 'Ewaybill') {
