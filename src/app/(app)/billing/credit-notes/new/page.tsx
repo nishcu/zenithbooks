@@ -163,7 +163,7 @@ toast({
         });
         console.log({ title: "Credit Note Saved", description: `Journal entry for ${creditNoteId} has been created.`  });
     } catch (e: any) {
-toast({
+        toast({
   variant: "destructive",
   title: "Failed to save journal entry",
   description: e.message,

@@ -1019,7 +1019,7 @@ toast({
                     
                     // Style column headers (bold)
                     data.headers.forEach((header, colIndex) => {
-                        const headerCell = XLSX.utils.encode_cell({ r: headerRowCount, c: colIndex );
+                        const headerCell = XLSX.utils.encode_cell({ r: headerRowCount, c: colIndex });
                         if (worksheet[headerCell]) {
                             if (!worksheet[headerCell].s) worksheet[headerCell].s = {};
                             worksheet[headerCell].s.font = { bold: true };

@@ -298,7 +298,7 @@ export default function BulkInvoicePage() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array', raw: false );
+          const workbook = XLSX.read(data, { type: 'array', raw: false });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as any[][];

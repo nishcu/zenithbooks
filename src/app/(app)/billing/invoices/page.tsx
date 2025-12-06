@@ -88,7 +88,7 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
 
             // Download JSON file
             const jsonStr = JSON.stringify(ewaybillData, null, 2);
-            const blob = new Blob([jsonStr], { type: "application/json" );
+            const blob = new Blob([jsonStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;

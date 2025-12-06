@@ -191,7 +191,7 @@ toast({
           targetUserId: selectedUser.id,
           updates: editFormData,
         }),
-      );
+      });
 
       if (response.ok) {
         // Update local state
