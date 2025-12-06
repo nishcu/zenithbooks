@@ -70,14 +70,7 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       const latestVersion = document.versions?.[document.currentVersion];
       if (!latestVersion?.fileUrl) {
         console.error("Document URL not found for:", document.fileName);
-        // Use queueMicrotask to defer toast to next microtask
-        queueMicrotask(() => {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Document URL not found.",
-          });
-        });
+        alert("Error: Document URL not found. Please try again.");
         return;
       }
 
@@ -124,14 +117,8 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       }, 100);
 
       console.log("Download completed for:", document.fileName);
+      console.log(`Download started for: ${document.fileName}`);
 
-      // Use queueMicrotask to defer toast to next microtask
-      queueMicrotask(() => {
-        toast({
-          title: "Download Started",
-          description: `Downloading ${document.fileName}`,
-        });
-      });
     } catch (error: any) {
       console.error("Download error:", error);
 
@@ -142,28 +129,15 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
         errorMessage = `Download failed: ${error.message}`;
       }
 
-      // Use queueMicrotask to defer error toast to next microtask
-      queueMicrotask(() => {
-        toast({
-          variant: "destructive",
-          title: "Download Failed",
-          description: errorMessage,
-        });
-      });
+      alert(`Download Error: ${errorMessage}`);
     }
   };
 
   const handleView = (document: Document) => {
     const latestVersion = document.versions?.[document.currentVersion];
     if (!latestVersion?.fileUrl) {
-      // Use queueMicrotask to defer toast to next microtask
-      queueMicrotask(() => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Document URL not found.",
-        });
-      });
+      console.error("Document URL not found for:", document.fileName);
+      alert("Error: Document URL not found. Please try again.");
       return;
     }
 
@@ -172,14 +146,8 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
 
   const handleDelete = async (document: Document) => {
     if (!user) {
-      // Use queueMicrotask to defer toast to next microtask
-      queueMicrotask(() => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "User not authenticated.",
-        });
-      });
+      console.error("User not authenticated");
+      alert("Error: User not authenticated. Please log in again.");
       return;
     }
 
@@ -226,26 +194,15 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
       }
 
       // Defer success toast to next tick to avoid React context issues
-      setTimeout(() => {
-        toast({
-          title: "Document Deleted",
-          description: `"${document.fileName}" has been deleted successfully.`,
-        });
-      }, 0);
+      console.log(`Document deleted successfully: ${document.fileName}`);
+      alert(`Success: "${document.fileName}" has been deleted successfully.`);
 
       if (onRefresh) {
         onRefresh();
       }
     } catch (error) {
       console.error("Error deleting document:", error);
-      // Use queueMicrotask to defer error toast to next microtask
-      queueMicrotask(() => {
-        toast({
-          variant: "destructive",
-          title: "Delete Failed",
-          description: "Failed to delete document. Please try again.",
-        });
-      });
+      alert("Error: Failed to delete document. Please try again.");
     }
   };
 

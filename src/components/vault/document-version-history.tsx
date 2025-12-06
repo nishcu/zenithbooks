@@ -95,14 +95,7 @@ export function DocumentVersionHistory({
       }, 100);
 
       console.log("Version download completed:", versionNumber);
-
-      // Defer toast to next tick to avoid React context issues
-      setTimeout(() => {
-        toast({
-          title: "Download Started",
-          description: `Version ${versionNumber} download has started.`,
-        });
-      }, 0);
+      console.log(`Version ${versionNumber} download has started.`);
     } catch (error: any) {
       console.error("Version download error:", error);
 
@@ -113,14 +106,7 @@ export function DocumentVersionHistory({
         errorMessage = `Download failed: ${error.message}`;
       }
 
-      // Defer error toast to next tick to avoid React context issues
-      setTimeout(() => {
-        toast({
-          variant: "destructive",
-          title: "Download Failed",
-          description: errorMessage,
-        });
-      }, 0);
+      alert(`Download Error: ${errorMessage}`);
     }
   };
 
