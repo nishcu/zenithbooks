@@ -30,7 +30,6 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
-import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 type User = {
   id: string;
@@ -63,15 +62,12 @@ export default function AdminUsers() {
   });
   const { toast } = useToast();
 
-  // Check if user is super admin
-  const isSuperAdmin = user?.uid === SUPER_ADMIN_UID;
-
-  // Fetch users on component mount
+  // Fetch users on component mount (let API handle auth)
   useEffect(() => {
-    if (isSuperAdmin) {
+    if (user) {
       fetchUsers();
     }
-  }, [isSuperAdmin]);
+  }, [user]);
 
   // Filter users based on type and search term
   useEffect(() => {
@@ -95,13 +91,38 @@ export default function AdminUsers() {
   }, [users, filterType, searchTerm]);
 
   const fetchUsers = async () => {
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to access admin features.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log('Fetching users with user ID:', user.uid);
+
       const response = await fetch('/api/admin/users', {
         headers: {
-          'x-user-id': user?.uid || '',
+          'x-user-id': user.uid,
         },
       });
+
+      console.log('API Response status:', response.status);
+
+      if (response.status === 403) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You don't have super admin privileges to access this feature.",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
