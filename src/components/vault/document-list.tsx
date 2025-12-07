@@ -133,15 +133,37 @@ export function DocumentList({ documents, onRefresh }: DocumentListProps) {
     }
   };
 
-  const handleView = (document: Document) => {
-    const latestVersion = document.versions?.[document.currentVersion];
-    if (!latestVersion?.fileUrl) {
-      console.error("Document URL not found for:", document.fileName);
-      alert("Error: Document URL not found. Please try again.");
-      return;
-    }
+  const handleView = async (document: Document) => {
+    try {
+      const latestVersion = document.versions?.[document.currentVersion];
+      if (!latestVersion?.fileUrl) {
+        console.error("Document URL not found for:", document.fileName);
+        alert("Error: Document URL not found. Please try again.");
+        return;
+      }
 
-    window.open(latestVersion.fileUrl, '_blank');
+      console.log("Starting view for:", document.fileName);
+
+      // Use server-side proxy for proper viewing (especially for PDFs)
+      const viewUrl = `/api/vault/view?fileUrl=${encodeURIComponent(latestVersion.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent(latestVersion.fileType || "application/pdf")}`;
+
+      // Open in new tab/window for viewing
+      window.open(viewUrl, '_blank');
+
+      console.log("View initiated for:", document.fileName);
+
+    } catch (error: any) {
+      console.error("View error", error);
+
+      let errorMessage = "Failed to view document. Please try again.";
+      if (error.name === 'AbortError') {
+        errorMessage = "View timed out. Please try again.";
+      } else if (error.message) {
+        errorMessage = `View failed: ${error.message}`;
+      }
+
+      alert(`View Error: ${errorMessage}`);
+    }
   };
 
   const handleDelete = async (document: Document) => {

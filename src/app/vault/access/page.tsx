@@ -203,8 +203,13 @@ export default function VaultAccessPage() {
         }),
       });
 
-      // Open view
-      window.open(document.fileUrl, "_blank");
+      // Use server-side proxy for proper viewing (especially for PDFs)
+      const viewUrl = `/api/vault/view?fileUrl=${encodeURIComponent(document.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent("application/pdf")}`;
+
+      // Open in new tab/window for viewing
+      window.open(viewUrl, "_blank");
+
+      console.log("View initiated for:", document.fileName);
     } catch (error) {
       console.error("Error viewing:", error);
       toast({
