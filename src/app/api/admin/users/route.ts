@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { superAdminUid } from "@/lib/constants";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 // Get super admin UID from environment or fallback to constant
-const superAdminUid = process.env.superAdminUid || superAdminUid;
+const superAdminUid = process.env.SUPER_ADMIN_UID || SUPER_ADMIN_UID;
 
 // Ensure this route is included in the build
 export const runtime = 'nodejs';
