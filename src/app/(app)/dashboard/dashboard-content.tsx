@@ -281,46 +281,48 @@ function DashboardContent() {
 
   // Default Business Dashboard
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 lg:space-y-12">
       <MarketingCarousel />
 
-      {/* Core Features Section */}
-      <Card className="border-2 border-primary/20 shadow-lg">
-        <CardHeader>
+      {/* Core Features Section - Enhanced for Desktop */}
+      <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-background to-muted/20">
+        <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
+              <CardTitle className="text-3xl lg:text-4xl flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-7 w-7 lg:h-8 lg:w-8 text-primary" />
+                </div>
                 Core Features
               </CardTitle>
-              <CardDescription className="mt-2">
+              <CardDescription className="mt-3 text-base lg:text-lg">
                 Powerful tools to streamline your accounting workflow
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <CardContent className="px-6 lg:px-8">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
             {coreFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
                 <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                        <Icon className="h-6 w-6 text-white" />
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/40 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10">
+                    <CardHeader className="pb-4 lg:pb-6">
+                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                        <Icon className="h-7 w-7 lg:h-8 lg:w-8 text-white group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base group-hover:text-primary transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-base lg:text-lg group-hover:text-primary transition-colors leading-tight">
                           {feature.title}
                         </CardTitle>
-                        <Badge variant="secondary" className="text-xs shrink-0">
+                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20">
                           {feature.badge}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <CardDescription className="text-sm line-clamp-2">
+                    <CardContent className="pt-0 px-6 lg:px-8">
+                      <CardDescription className="text-sm lg:text-base line-clamp-3 leading-relaxed">
                         {feature.description}
                       </CardDescription>
                     </CardContent>
@@ -332,27 +334,28 @@ function DashboardContent() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-8 lg:grid-cols-3 items-start">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Link href="/accounting/ledgers">
-              <StatCard 
+      <div className="grid gap-8 lg:gap-12 xl:grid-cols-4 items-start">
+        <div className="xl:col-span-3 space-y-8 lg:space-y-12">
+          {/* Enhanced Stats Cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <Link href="/accounting/ledgers" className="transform hover:scale-105 transition-transform">
+              <StatCard
                 title="Receivables"
                 value={formatCurrency(totalReceivables)}
                 icon={IndianRupee}
                 loading={journalLoading || customersLoading}
               />
             </Link>
-            <Link href="/accounting/ledgers">
-              <StatCard 
+            <Link href="/accounting/ledgers" className="transform hover:scale-105 transition-transform">
+              <StatCard
                 title="Payables"
                 value={formatCurrency(totalPayables)}
                 icon={CreditCard}
                 loading={journalLoading || vendorsLoading}
               />
             </Link>
-            <Link href="/accounting/ledgers?account=2110">
-              <StatCard 
+            <Link href="/accounting/ledgers?account=2110" className="transform hover:scale-105 transition-transform">
+              <StatCard
                 title="GST Payable"
                 value={formatCurrency(gstPayable)}
                 icon={IndianRupee}
@@ -360,33 +363,54 @@ function DashboardContent() {
               />
             </Link>
           </div>
-          <FinancialSummaryChart />
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>A summary of your most recent sales invoices.</CardDescription>
-              <div className="relative pt-4">
-                <Search className="absolute left-2.5 top-6 h-4 w-4 text-muted-foreground" />
+
+          {/* Enhanced Financial Chart */}
+          <div className="bg-gradient-to-br from-card to-muted/20 rounded-xl p-6 lg:p-8 shadow-lg">
+            <FinancialSummaryChart />
+          </div>
+
+          {/* Enhanced Recent Activity */}
+          <Card className="shadow-xl border-2 border-muted/20 bg-gradient-to-br from-card to-muted/10">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl lg:text-2xl flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                </div>
+                Recent Activity
+              </CardTitle>
+              <CardDescription className="text-base">
+                A summary of your most recent sales invoices.
+              </CardDescription>
+              <div className="relative pt-6">
+                <Search className="absolute left-3 top-9 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search recent invoices..."
-                  className="pl-8 w-full md:w-1/2"
+                  className="pl-10 w-full lg:w-1/2 h-12 text-base border-2 focus:border-primary/50"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-6 lg:px-8">
               <RecentActivity invoices={filteredInvoices} loading={journalLoading} />
             </CardContent>
           </Card>
         </div>
-        <div className="space-y-8 lg:col-span-1">
+
+        {/* Enhanced Sidebar */}
+        <div className="xl:col-span-1 space-y-8 lg:space-y-12">
           {(displayRole === 'business' || displayRole === 'professional') && (
-            <VaultStatistics />
+            <div className="transform hover:scale-105 transition-transform">
+              <VaultStatistics />
+            </div>
           )}
-          <ShortcutGuide />
-          <ComplianceCalendar />
+          <div className="transform hover:scale-105 transition-transform">
+            <ShortcutGuide />
+          </div>
+          <div className="transform hover:scale-105 transition-transform">
+            <ComplianceCalendar />
+          </div>
         </div>
       </div>
 

@@ -92,6 +92,17 @@ const allMenuItems = [
     ]
   },
   {
+    label: "Document Vault",
+    icon: FileKey,
+    roles: ['business', 'professional'],
+    subItems: [
+      { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
+      { href: "/vault/sharing", label: "Share Codes", icon: Share2, roles: ['business', 'professional'] },
+      { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/vault/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
+    ],
+  },
+  {
     label: "GST Compliance",
     icon: FileText,
     roles: ['business', 'professional'],
@@ -186,17 +197,6 @@ const allMenuItems = [
     ],
   },
   { href: "/import-export", label: "Import & Export", icon: Download, roles: ['business', 'professional'] },
-  {
-    label: "Document Vault",
-    icon: FileKey,
-    roles: ['business', 'professional'],
-    subItems: [
-      { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
-      { href: "/vault/sharing", label: "Share Codes", icon: Share2, roles: ['business', 'professional'] },
-      { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
-      { href: "/vault/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
-    ],
-  },
   {
     label: "Resources",
     icon: Info,

@@ -81,12 +81,12 @@ export function Header() {
         </div>
 
         {/* Right Side Actions */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 md:gap-2">
           {/* Help & Support */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hidden md:flex">
-                <HelpCircle className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="hidden sm:flex">
+                <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="sr-only">Help & Support</span>
               </Button>
             </DropdownMenuTrigger>
@@ -111,21 +111,27 @@ export function Header() {
           </DropdownMenu>
 
           {/* Notifications */}
-          <NotificationsDropdown />
+          <div className="flex items-center">
+            <NotificationsDropdown />
+          </div>
 
           {/* Settings Quick Access */}
-          <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+          <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
             <Link href="/settings">
-              <Settings className="h-5 w-5" />
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="sr-only">Settings</span>
             </Link>
           </Button>
 
           {/* Theme Toggle */}
-          <ThemeToggle />
+          <div className="flex items-center">
+            <ThemeToggle />
+          </div>
 
           {/* User Nav */}
-          <UserNav />
+          <div className="flex items-center">
+            <UserNav />
+          </div>
         </div>
       </div>
 
