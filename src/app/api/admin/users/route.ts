@@ -56,11 +56,6 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const userId = request.headers.get('x-user-id');
     if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
@@ -91,11 +86,6 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const userId = request.headers.get('x-user-id');
     if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
