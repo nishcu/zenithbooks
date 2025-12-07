@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SUPER_ADMIN_UID } from "@/lib/constants";
+import { superAdminUid } from "@/lib/constants";
+
+// Get super admin UID from environment or fallback to constant
+const superAdminUid = process.env.superAdminUid || superAdminUid;
 
 // Ensure this route is included in the build
 export const runtime = 'nodejs';
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
     // For now, we'll check the user ID from the request
     // In a real implementation, you'd verify the JWT token
     const userId = request.headers.get('x-user-id');
-    if (!userId || userId !== SUPER_ADMIN_UID) {
+    if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
     }
 
@@ -59,7 +62,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const userId = request.headers.get('x-user-id');
-    if (!userId || userId !== SUPER_ADMIN_UID) {
+    if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
     }
 
@@ -94,7 +97,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = request.headers.get('x-user-id');
-    if (!userId || userId !== SUPER_ADMIN_UID) {
+    if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
     }
 
@@ -105,7 +108,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Prevent deleting super admin
-    if (targetUserId === SUPER_ADMIN_UID) {
+    if (targetUserId === superAdminUid) {
       return NextResponse.json({ error: "Cannot delete super admin account" }, { status: 403 });
     }
 

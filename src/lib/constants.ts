@@ -10,8 +10,8 @@ export const USER_ROLES = {
   SUPER_ADMIN: 'super_admin',
 } as const;
 
-// Super Admin UID
-export const SUPER_ADMIN_UID = '9soE3VaoHzUcytSTtA9SaFS7cC82';
+// Super Admin UID - Can be set via environment variable
+export const SUPER_ADMIN_UID = process.env.SUPER_ADMIN_UID || '9soE3VaoHzUcytSTtA9SaFS7cC82';
 
 // Application Version (like Tally: 0.9, 1.8, 7.2, 8.1, etc.)
 export const ZENITH_BOOKS_VERSION = "0.9";
