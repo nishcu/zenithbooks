@@ -132,6 +132,20 @@ interface Form16Data {
     totalTdsDeducted: number;
     relief89: number;
   };
+  // Part A (TDS Certificate) - Optional
+  includePartA: boolean;
+  partA: {
+    certificateNumber: string;
+    lastUpdatedOn: string;
+    validFrom: string;
+    validTill: string;
+    quarterlyTDS: {
+      q1: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+      q2: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+      q3: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+      q4: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+    };
+  };
 }
 
 export default function Form16() {
@@ -205,7 +219,20 @@ export default function Form16() {
       totalTdsDeducted: 0,
       relief89: 0
     },
-    taxRegime: "NEW"
+    taxRegime: "NEW",
+    includePartA: false,
+    partA: {
+      certificateNumber: "",
+      lastUpdatedOn: "",
+      validFrom: "",
+      validTill: "",
+      quarterlyTDS: {
+        q1: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+        q2: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+        q3: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+        q4: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" }
+      }
+    }
   });
 
   const [computationResult, setComputationResult] = useState<Form16Computation | null>(null);
@@ -516,6 +543,8 @@ export default function Form16() {
           signatoryName: form16Data.signatoryName,
           signatoryDesignation: form16Data.signatoryDesignation,
           signatoryPlace: form16Data.signatoryPlace,
+          includePartA: form16Data.includePartA,
+          partAData: form16Data.includePartA ? form16Data.partA : undefined,
           overrideData: {
             salaryStructure: form16Data.salaryStructure,
             exemptions: form16Data.exemptions,
@@ -1515,9 +1544,493 @@ export default function Form16() {
 
                 <Separator />
 
+                {/* Part A (TDS Certificate) - Optional */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="includePartA"
+                      checked={form16Data.includePartA}
+                      onCheckedChange={(checked) => {
+                        const isEnabled = checked === true;
+                        // Auto-populate dates from financial year when enabling Part A
+                        const fyStart = form16Data.financialYear ? `01/04/${form16Data.financialYear.split('-')[0]}` : "";
+                        const fyEnd = form16Data.financialYear ? `31/03/${form16Data.financialYear.split('-')[1]}` : "";
+                        const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format for date input
+                        const fyStartDate = form16Data.financialYear ? `${form16Data.financialYear.split('-')[0]}-04-01` : "";
+                        const fyEndDate = form16Data.financialYear ? `${form16Data.financialYear.split('-')[1]}-03-31` : "";
+                        
+                        setForm16Data(prev => ({
+                          ...prev,
+                          includePartA: isEnabled,
+                          partA: isEnabled ? {
+                            certificateNumber: prev.partA.certificateNumber || `CERT-${prev.employeeId || 'EMP'}-${prev.financialYear}`,
+                            lastUpdatedOn: prev.partA.lastUpdatedOn || todayStr,
+                            validFrom: prev.partA.validFrom || fyStartDate,
+                            validTill: prev.partA.validTill || fyEndDate,
+                            quarterlyTDS: prev.partA.quarterlyTDS || {
+                              q1: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q2: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q3: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q4: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" }
+                            }
+                          } : {
+                            certificateNumber: "",
+                            lastUpdatedOn: "",
+                            validFrom: "",
+                            validTill: "",
+                            quarterlyTDS: {
+                              q1: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q2: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q3: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" },
+                              q4: { amount: 0, section: "192", dateOfDeduction: "", dateOfDeposit: "", challanCIN: "" }
+                            }
+                          }
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="includePartA" className="font-semibold cursor-pointer">
+                      Include Part A (TDS Certificate)
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Check this to include Part A with quarterly TDS details. If unchecked, Part A will be blank.
+                  </p>
+
+                  {form16Data.includePartA && (
+                    <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+                      <h4 className="font-semibold">Part A - TDS Certificate Details</h4>
+                      
+                      {/* Certificate Details */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Certificate Number</Label>
+                          <Input
+                            value={form16Data.partA.certificateNumber}
+                            onChange={(e) => setForm16Data(prev => ({
+                              ...prev,
+                              partA: { ...prev.partA, certificateNumber: e.target.value }
+                            }))}
+                            placeholder="CERT-XXX-YYYY"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Last Updated On</Label>
+                          <Input
+                            type="date"
+                            value={form16Data.partA.lastUpdatedOn}
+                            onChange={(e) => setForm16Data(prev => ({
+                              ...prev,
+                              partA: { ...prev.partA, lastUpdatedOn: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valid From</Label>
+                          <Input
+                            type="date"
+                            value={form16Data.partA.validFrom}
+                            onChange={(e) => setForm16Data(prev => ({
+                              ...prev,
+                              partA: { ...prev.partA, validFrom: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valid Till</Label>
+                          <Input
+                            type="date"
+                            value={form16Data.partA.validTill}
+                            onChange={(e) => setForm16Data(prev => ({
+                              ...prev,
+                              partA: { ...prev.partA, validTill: e.target.value }
+                            }))}
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Quarterly TDS Breakdown */}
+                      <div className="space-y-4">
+                        <h5 className="font-semibold">Quarterly TDS Breakdown</h5>
+                        
+                        {/* Q1 */}
+                        <div className="border rounded p-3 space-y-3">
+                          <Label className="font-semibold">Q1 (April - June)</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Amount (₹)</Label>
+                              <Input
+                                type="number"
+                                value={form16Data.partA.quarterlyTDS.q1.amount}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q1: { ...prev.partA.quarterlyTDS.q1, amount: Number(e.target.value) }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Section</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q1.section}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q1: { ...prev.partA.quarterlyTDS.q1, section: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="192"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deduction</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q1.dateOfDeduction}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q1: { ...prev.partA.quarterlyTDS.q1, dateOfDeduction: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deposit</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q1.dateOfDeposit}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q1: { ...prev.partA.quarterlyTDS.q1, dateOfDeposit: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                              <Label className="text-xs">Challan CIN</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q1.challanCIN}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q1: { ...prev.partA.quarterlyTDS.q1, challanCIN: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="Challan Identification Number"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Q2 */}
+                        <div className="border rounded p-3 space-y-3">
+                          <Label className="font-semibold">Q2 (July - September)</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Amount (₹)</Label>
+                              <Input
+                                type="number"
+                                value={form16Data.partA.quarterlyTDS.q2.amount}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q2: { ...prev.partA.quarterlyTDS.q2, amount: Number(e.target.value) }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Section</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q2.section}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q2: { ...prev.partA.quarterlyTDS.q2, section: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="192"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deduction</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q2.dateOfDeduction}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q2: { ...prev.partA.quarterlyTDS.q2, dateOfDeduction: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deposit</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q2.dateOfDeposit}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q2: { ...prev.partA.quarterlyTDS.q2, dateOfDeposit: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                              <Label className="text-xs">Challan CIN</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q2.challanCIN}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q2: { ...prev.partA.quarterlyTDS.q2, challanCIN: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="Challan Identification Number"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Q3 */}
+                        <div className="border rounded p-3 space-y-3">
+                          <Label className="font-semibold">Q3 (October - December)</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Amount (₹)</Label>
+                              <Input
+                                type="number"
+                                value={form16Data.partA.quarterlyTDS.q3.amount}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q3: { ...prev.partA.quarterlyTDS.q3, amount: Number(e.target.value) }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Section</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q3.section}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q3: { ...prev.partA.quarterlyTDS.q3, section: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="192"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deduction</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q3.dateOfDeduction}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q3: { ...prev.partA.quarterlyTDS.q3, dateOfDeduction: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deposit</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q3.dateOfDeposit}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q3: { ...prev.partA.quarterlyTDS.q3, dateOfDeposit: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                              <Label className="text-xs">Challan CIN</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q3.challanCIN}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q3: { ...prev.partA.quarterlyTDS.q3, challanCIN: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="Challan Identification Number"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Q4 */}
+                        <div className="border rounded p-3 space-y-3">
+                          <Label className="font-semibold">Q4 (January - March)</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Amount (₹)</Label>
+                              <Input
+                                type="number"
+                                value={form16Data.partA.quarterlyTDS.q4.amount}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q4: { ...prev.partA.quarterlyTDS.q4, amount: Number(e.target.value) }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Section</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q4.section}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q4: { ...prev.partA.quarterlyTDS.q4, section: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="192"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deduction</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q4.dateOfDeduction}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q4: { ...prev.partA.quarterlyTDS.q4, dateOfDeduction: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs">Date of Deposit</Label>
+                              <Input
+                                type="date"
+                                value={form16Data.partA.quarterlyTDS.q4.dateOfDeposit}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q4: { ...prev.partA.quarterlyTDS.q4, dateOfDeposit: e.target.value }
+                                    }
+                                  }
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                              <Label className="text-xs">Challan CIN</Label>
+                              <Input
+                                value={form16Data.partA.quarterlyTDS.q4.challanCIN}
+                                onChange={(e) => setForm16Data(prev => ({
+                                  ...prev,
+                                  partA: {
+                                    ...prev.partA,
+                                    quarterlyTDS: {
+                                      ...prev.partA.quarterlyTDS,
+                                      q4: { ...prev.partA.quarterlyTDS.q4, challanCIN: e.target.value }
+                                    }
+                                  }
+                                }))}
+                                placeholder="Challan Identification Number"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
                 {/* TDS Details */}
                 <div className="space-y-4">
-                  <h4 className="font-semibold">TDS Details</h4>
+                  <h4 className="font-semibold">TDS Details (For Part B)</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Total TDS Deducted</Label>

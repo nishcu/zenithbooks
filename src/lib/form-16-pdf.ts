@@ -97,12 +97,12 @@ export class Form16PDFGenerator {
       });
     }
 
-    // Page 1: Part A - TDS Certificate
-    this.generatePartA(pdf, form16Doc);
+      // Page 1: Part A - TDS Certificate (always generated, may have blank values)
+      this.generatePartA(pdf, form16Doc);
 
-    // Page 2: Part B - Salary Details and Tax Computation
-    pdf.addPage();
-    this.generatePartB(pdf, form16Doc);
+      // Page 2: Part B - Salary Details and Tax Computation
+      pdf.addPage();
+      this.generatePartB(pdf, form16Doc);
 
     // Convert to appropriate format based on environment
     // In Node.js (server-side), use arraybuffer and convert to Buffer

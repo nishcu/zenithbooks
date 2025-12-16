@@ -33,8 +33,40 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body: Form16Request & { signatoryName?: string; signatoryDesignation?: string; signatoryPlace?: string; taxRegime?: 'OLD' | 'NEW' } = await request.json();
-    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace, employerName, employerTan, employerPan, employerAddress, taxRegime: overrideTaxRegime } = body;
+    const body: Form16Request & { 
+      signatoryName?: string; 
+      signatoryDesignation?: string; 
+      signatoryPlace?: string; 
+      taxRegime?: 'OLD' | 'NEW';
+      includePartA?: boolean;
+      partAData?: {
+        certificateNumber: string;
+        lastUpdatedOn: string;
+        validFrom: string;
+        validTill: string;
+        quarterlyTDS: {
+          q1: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+          q2: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+          q3: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+          q4: { amount: number; section: string; dateOfDeduction: string; dateOfDeposit: string; challanCIN: string };
+        };
+      };
+    } = await request.json();
+    const { 
+      employeeId, 
+      financialYear, 
+      overrideData, 
+      signatoryName, 
+      signatoryDesignation, 
+      signatoryPlace, 
+      employerName, 
+      employerTan, 
+      employerPan, 
+      employerAddress, 
+      taxRegime: overrideTaxRegime,
+      includePartA = false,
+      partAData
+    } = body;
 
     if (!employeeId || !financialYear) {
       return NextResponse.json(
@@ -344,6 +376,110 @@ export async function POST(request: NextRequest) {
     const finalSignatoryDesignation = signatoryDesignation || 'Authorized Signatory';
     const finalSignatoryPlace = signatoryPlace || employerData?.address?.split(',')[0] || '';
 
+    // Helper function to convert date string (YYYY-MM-DD) to DD/MM/YYYY format
+    const convertDateFormat = (dateStr: string): string => {
+      if (!dateStr) return '';
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      } catch {
+        return dateStr; // Return as-is if already in correct format or invalid
+      }
+    };
+
+    // Build Part A data - use provided data if includePartA is true, otherwise use blank values
+    let finalPartAData;
+    if (includePartA && partAData) {
+      // Use provided Part A data, converting dates to DD/MM/YYYY format
+      const quarterlyBreakup = partAData.quarterlyTDS ? {
+        q1: {
+          amount: partAData.quarterlyTDS.q1.amount || 0,
+          section: partAData.quarterlyTDS.q1.section || '192',
+          dateOfDeduction: convertDateFormat(partAData.quarterlyTDS.q1.dateOfDeduction),
+          dateOfDeposit: convertDateFormat(partAData.quarterlyTDS.q1.dateOfDeposit),
+          challanCIN: partAData.quarterlyTDS.q1.challanCIN || ''
+        },
+        q2: {
+          amount: partAData.quarterlyTDS.q2.amount || 0,
+          section: partAData.quarterlyTDS.q2.section || '192',
+          dateOfDeduction: convertDateFormat(partAData.quarterlyTDS.q2.dateOfDeduction),
+          dateOfDeposit: convertDateFormat(partAData.quarterlyTDS.q2.dateOfDeposit),
+          challanCIN: partAData.quarterlyTDS.q2.challanCIN || ''
+        },
+        q3: {
+          amount: partAData.quarterlyTDS.q3.amount || 0,
+          section: partAData.quarterlyTDS.q3.section || '192',
+          dateOfDeduction: convertDateFormat(partAData.quarterlyTDS.q3.dateOfDeduction),
+          dateOfDeposit: convertDateFormat(partAData.quarterlyTDS.q3.dateOfDeposit),
+          challanCIN: partAData.quarterlyTDS.q3.challanCIN || ''
+        },
+        q4: {
+          amount: partAData.quarterlyTDS.q4.amount || 0,
+          section: partAData.quarterlyTDS.q4.section || '192',
+          dateOfDeduction: convertDateFormat(partAData.quarterlyTDS.q4.dateOfDeduction),
+          dateOfDeposit: convertDateFormat(partAData.quarterlyTDS.q4.dateOfDeposit),
+          challanCIN: partAData.quarterlyTDS.q4.challanCIN || ''
+        }
+      } : {
+        q1: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+        q2: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+        q3: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+        q4: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
+      };
+
+      // Calculate total TDS from quarterly breakdown
+      const totalTdsFromPartA = quarterlyBreakup.q1.amount + quarterlyBreakup.q2.amount + 
+                                 quarterlyBreakup.q3.amount + quarterlyBreakup.q4.amount;
+
+      finalPartAData = {
+        certificateNumber: partAData.certificateNumber || '',
+        lastUpdatedOn: convertDateFormat(partAData.lastUpdatedOn) || today,
+        validFrom: convertDateFormat(partAData.validFrom) || fyStart,
+        validTill: convertDateFormat(partAData.validTill) || fyEnd,
+        employeeName: employee.name,
+        employeePan: employee.pan,
+        employeeAddress: employee.address || '',
+        employeeDesignation: employee.designation,
+        employeeAadhaar: employee.aadhaar,
+        periodFrom: safePeriodFrom,
+        periodTo: safePeriodTo,
+        totalTdsDeducted: totalTdsFromPartA || 0,
+        tdsDetails: {
+          ...tdsData,
+          quarterlyBreakup
+        }
+      };
+    } else {
+      // Part A not included - use blank/empty values
+      finalPartAData = {
+        certificateNumber: '',
+        lastUpdatedOn: '',
+        validFrom: '',
+        validTill: '',
+        employeeName: employee.name,
+        employeePan: employee.pan,
+        employeeAddress: employee.address || '',
+        employeeDesignation: employee.designation,
+        employeeAadhaar: employee.aadhaar,
+        periodFrom: '',
+        periodTo: '',
+        totalTdsDeducted: 0,
+        tdsDetails: {
+          ...tdsData,
+          quarterlyBreakup: {
+            q1: { amount: 0, section: '', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+            q2: { amount: 0, section: '', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+            q3: { amount: 0, section: '', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+            q4: { amount: 0, section: '', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
+          }
+        }
+      };
+    }
+
     const form16Document: Omit<Form16Document, 'id'> = {
       employeeId,
       financialYear,
@@ -352,29 +488,7 @@ export async function POST(request: NextRequest) {
       employerTan: employerTan || employerData?.tan || '',
       employerPan: employerPan || employerData?.pan || '',
       employerAddress: employerAddress || employerData?.address || '',
-      partA: {
-        certificateNumber: `CERT-${employeeId}-${financialYear}`,
-        lastUpdatedOn: today,
-        validFrom: fyStart,
-        validTill: fyEnd,
-        employeeName: employee.name,
-        employeePan: employee.pan,
-        employeeAddress: employee.address || '', // Employee address
-        employeeDesignation: employee.designation,
-        employeeAadhaar: employee.aadhaar,
-        periodFrom: safePeriodFrom,
-        periodTo: safePeriodTo,
-        totalTdsDeducted: tdsData.totalTdsDeducted,
-        tdsDetails: {
-          ...tdsData,
-          quarterlyBreakup: tdsData.quarterlyBreakup || {
-            q1: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
-            q2: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
-            q3: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
-            q4: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
-          }
-        }
-      },
+      partA: finalPartAData,
       partB: computation,
       chapterVIADeductions: chapterVIAData,
       signatory: {
@@ -457,3 +571,4 @@ async function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
