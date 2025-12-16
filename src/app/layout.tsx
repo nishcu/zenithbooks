@@ -70,6 +70,15 @@ export default function RootLayout({
                   }
                   return false;
                 };
+                
+                // Also suppress unhandled promise rejections
+                window.addEventListener('unhandledrejection', function(event) {
+                  const errorMsg = event.reason?.message || event.reason?.toString() || '';
+                  if (errorMsg.includes("Cannot assign to read only property 'params'")) {
+                    event.preventDefault(); // Suppress the error
+                    return;
+                  }
+                });
               })();
             `,
           }}
