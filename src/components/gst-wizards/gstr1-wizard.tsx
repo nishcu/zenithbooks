@@ -1,0 +1,1553 @@
+
+
+"use client";
+
+import { useState, useContext, useMemo, useEffect, useRef } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, collection, query, where } from "firebase/firestore";
+import { useDocumentData, useCollection } from "react-firebase-hooks/firestore";
+import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFoot,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, ArrowRight, PlusCircle, Trash2, FileDown, FileJson } from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import { ShareButtons } from "@/components/documents/share-buttons";
+import { format } from "date-fns";
+import html2pdf from "html2pdf.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { AccountingContext } from "@/context/accounting-context";
+
+
+const states = [
+    "01-Jammu & Kashmir", "02-Himachal Pradesh", "03-Punjab", "04-Chandigarh", "05-Uttarakhand", "06-Haryana", "07-Delhi",
+    "08-Rajasthan", "09-Uttar Pradesh", "10-Bihar", "11-Sikkim", "12-Arunachal Pradesh", "13-Nagaland", "14-Manipur",
+    "15-Mizoram", "16-Tripura", "17-Meghalaya", "18-Assam", "19-West Bengal", "20-Jharkhand", "21-Odisha",
+    "22-Chhattisgarh", "23-Madhya Pradesh", "24-Gujarat", "25-Daman & Diu", "26-Dadra & Nagar Haveli",
+    "27-Maharashtra", "29-Karnataka", "30-Goa", "31-Lakshadweep", "32-Kerala", "33-Tamil Nadu", "34-Puducherry",
+    "35-Andaman & Nicobar Islands", "36-Telangana", "37-Andhra Pradesh", "97-Other Territory"
+];
+
+const exportTypes = ["WPAY", "WOPAY"];
+
+type Customer = {
+  id: string;
+  name: string;
+  gstin?: string;
+};
+
+export default function Gstr1Wizard() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  // All hooks must be called before any early returns
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const { journalVouchers } = useContext(AccountingContext)!;
+  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  const [customersSnapshot] = useCollection(customersQuery);
+  const customers: Customer[] = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer)) || [], [customersSnapshot]);
+
+  // Process all invoices and categorize them
+  // Also process cancelled invoices (CANCEL-*) as credit notes
+  const { b2bInvoicesFromJournal, b2cLargeInvoicesFromJournal, b2cOtherFromJournal, cancelledInvoicesFromJournal } = useMemo(() => {
+    const b2b: any[] = [];
+    const b2cLarge: any[] = [];
+    const b2cOther: any[] = [];
+    const cancelled: any[] = [];
+
+    // Process regular invoices (exclude cancelled ones)
+    journalVouchers
+      .filter(v => v && v.id && v.id.startsWith("INV-") && !v.reverses)
+      .forEach(v => {
+        // Try to find customer by customerId first, then by account code in journal lines
+        let customer = customers.find(c => v.customerId === c.id);
+        
+        // If not found by customerId, try to find by account code in journal lines
+        if (!customer && v.lines && v.lines.length > 0) {
+          const customerAccountLine = v.lines.find(l => l.debit && parseFloat(l.debit) > 0);
+          if (customerAccountLine) {
+            // Try to find customer by accountCode or Firebase ID
+            customer = customers.find(c => c.accountCode === customerAccountLine.account || c.id === customerAccountLine.account);
+          }
+        }
+
+        const taxableValue = v.lines.find(l => l.account === '4010')?.credit || '0';
+        const taxAmount = v.lines.find(l => l.account === '2110')?.credit || '0';
+        const invoiceValue = v.amount || parseFloat(taxableValue) + parseFloat(taxAmount);
+
+        const invoiceData = {
+          invoiceNumber: v.id.replace("INV-", ""),
+          invoiceDate: v.date,
+          invoiceValue: invoiceValue,
+          taxableValue: parseFloat(taxableValue),
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
+          igst: parseFloat(taxAmount),
+          cgst: 0,
+          sgst: 0,
+          cess: 0,
+          pos: customer?.state || "", // Place of Supply - default to customer state
+        };
+
+        // Categorize invoices
+        if (customer?.gstin) {
+          // B2B: Customer has GSTIN
+          b2b.push({
+            ...invoiceData,
+            gstin: customer.gstin,
+          });
+        } else {
+          // B2C: Customer doesn't have GSTIN
+          if (invoiceValue > 250000) {
+            // B2C Large: Invoice value > ₹2.5 lakh
+            b2cLarge.push(invoiceData);
+          } else {
+            // B2C Other: Invoice value <= ₹2.5 lakh (consolidated)
+            b2cOther.push(invoiceData);
+          }
+        }
+      });
+
+    // Process cancelled invoices (CANCEL-*) - treat them as credit notes
+    journalVouchers
+      .filter(v => v && v.id && v.id.startsWith("CANCEL-") && v.reverses && v.reverses.startsWith("INV-"))
+      .forEach(cancelVoucher => {
+        // Find the original invoice
+        const originalInvoice = journalVouchers.find(v => v.id === cancelVoucher.reverses);
+        if (!originalInvoice) return;
+
+        // Try to find customer
+        let customer = customers.find(c => c.id === originalInvoice.customerId);
+        if (!customer && originalInvoice.lines && originalInvoice.lines.length > 0) {
+          const customerAccountLine = originalInvoice.lines.find(l => l.debit && parseFloat(l.debit) > 0);
+          if (customerAccountLine) {
+            customer = customers.find(c => c.accountCode === customerAccountLine.account || c.id === customerAccountLine.account);
+          }
+        }
+
+        const taxableValue = cancelVoucher.lines.find(l => l.account === '4010')?.debit || '0';
+        const taxAmount = cancelVoucher.lines.find(l => l.account === '2110')?.debit || '0';
+        const invoiceValue = cancelVoucher.amount || parseFloat(taxableValue) + parseFloat(taxAmount);
+
+        const creditNoteData = {
+          noteNumber: cancelVoucher.id.replace("CANCEL-", ""),
+          noteDate: cancelVoucher.date,
+          originalInvoiceNumber: originalInvoice.id.replace("INV-", ""),
+          originalInvoiceDate: originalInvoice.date,
+          invoiceValue: invoiceValue,
+          taxableValue: parseFloat(taxableValue),
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
+          igst: parseFloat(taxAmount),
+          cgst: 0,
+          sgst: 0,
+          cess: 0,
+          reason: "Cancellation of Invoice",
+          gstin: customer?.gstin || "",
+        };
+
+        cancelled.push(creditNoteData);
+      });
+
+    return {
+      b2bInvoicesFromJournal: b2b,
+      b2cLargeInvoicesFromJournal: b2cLarge,
+      b2cOtherFromJournal: b2cOther,
+      cancelledInvoicesFromJournal: cancelled,
+    };
+  }, [journalVouchers, customers]);
+
+  const [b2bInvoices, setB2bInvoices] = useState<any[]>([]);
+  const [b2cLargeInvoices, setB2cLargeInvoices] = useState<any[]>([]);
+  const [exportInvoices, setExportInvoices] = useState<any[]>([]);
+  const [b2cOther, setB2cOther] = useState<any[]>([]);
+  const [nilRated, setNilRated] = useState<any[]>([]);
+  const [documentsIssued, setDocumentsIssued] = useState<any[]>([]);
+  const [advancesReceived, setAdvancesReceived] = useState<any[]>([]);
+  const [advancesAdjusted, setAdvancesAdjusted] = useState<any[]>([]);
+
+  // State for credit notes (including cancelled invoices)
+  const [creditNotes, setCreditNotes] = useState<any[]>([]);
+
+  useEffect(() => {
+    setB2bInvoices(b2bInvoicesFromJournal as any[]);
+  }, [b2bInvoicesFromJournal]);
+
+  useEffect(() => {
+    setB2cLargeInvoices(b2cLargeInvoicesFromJournal as any[]);
+  }, [b2cLargeInvoicesFromJournal]);
+
+  // Combine regular credit notes (CN-*) and cancelled invoices (CANCEL-*)
+  useEffect(() => {
+    // Get regular credit notes
+    const regularCreditNotes = journalVouchers
+      .filter(v => v && v.id && v.id.startsWith("CN-") && !v.reverses)
+      .map(v => {
+        const customer = customers.find(c => c.id === v.customerId);
+        const taxableValue = v.lines.find(l => l.account === '4010')?.debit || '0';
+        const taxAmount = v.lines.find(l => l.account === '2110')?.debit || '0';
+        return {
+          noteNumber: v.id.replace("CN-", ""),
+          noteDate: v.date,
+          originalInvoiceNumber: v.narration.split("against Invoice #")[1]?.trim() || "",
+          originalInvoiceDate: "",
+          invoiceValue: v.amount || parseFloat(taxableValue) + parseFloat(taxAmount),
+          taxableValue: parseFloat(taxableValue),
+          taxRate: parseFloat(taxableValue) > 0 ? (parseFloat(taxAmount) / parseFloat(taxableValue)) * 100 : 18,
+          igst: parseFloat(taxAmount),
+          cgst: 0,
+          sgst: 0,
+          cess: 0,
+          reason: "Credit Note",
+          gstin: customer?.gstin || "",
+        };
+      });
+
+    // Combine with cancelled invoices
+    setCreditNotes([...regularCreditNotes, ...cancelledInvoicesFromJournal]);
+  }, [journalVouchers, customers, cancelledInvoicesFromJournal]);
+
+  // Aggregate B2C Other invoices by Place of Supply
+  useEffect(() => {
+    const aggregated = b2cOtherFromJournal.reduce((acc, invoice) => {
+      const pos = invoice.pos || "Unknown";
+      const existing = acc.find(item => item.pos === pos && item.taxRate === invoice.taxRate);
+      
+      if (existing) {
+        existing.taxableValue += invoice.taxableValue;
+        existing.igst += invoice.igst;
+        existing.cgst += invoice.cgst;
+        existing.sgst += invoice.sgst;
+        existing.cess += invoice.cess;
+      } else {
+        acc.push({
+          pos: pos,
+          taxableValue: invoice.taxableValue,
+          taxRate: invoice.taxRate,
+          igst: invoice.igst,
+          cgst: invoice.cgst,
+          sgst: invoice.sgst,
+          cess: invoice.cess,
+        });
+      }
+      return acc;
+    }, [] as any[]);
+    
+    setB2cOther(aggregated);
+  }, [b2cOtherFromJournal]);
+
+  // Early return AFTER all hooks are called
+  if (user && isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">GSTR-1 Filing</h1>
+        <UpgradeRequiredAlert
+          featureName="GSTR-1 Filing"
+          description="File GSTR-1 returns and access GST compliance tools with a Business or Professional plan."
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
+  const handleInvoiceChange = (index: number, field: keyof typeof b2bInvoices[0], value: string | number) => {
+    const newInvoices = [...b2bInvoices];
+    (newInvoices[index] as any)[field] = value;
+    setB2bInvoices(newInvoices);
+  };
+  
+  const handleAddInvoice = () => {
+    setB2bInvoices([
+        ...b2bInvoices,
+        {
+            gstin: "",
+            invoiceNumber: "",
+            invoiceDate: "",
+            invoiceValue: 0,
+            taxableValue: 0,
+            taxRate: 18,
+            igst: 0,
+            cgst: 0,
+            sgst: 0,
+            cess: 0,
+        }
+    ]);
+  }
+  
+  const handleRemoveInvoice = (index: number) => {
+    const newInvoices = [...b2bInvoices];
+    newInvoices.splice(index, 1);
+    setB2bInvoices(newInvoices);
+  }
+  
+  const handleB2cLargeChange = (index: number, field: string, value: string | number) => {
+    const newInvoices = [...b2cLargeInvoices];
+    (newInvoices[index] as any)[field] = value;
+    setB2cLargeInvoices(newInvoices);
+  };
+  const handleAddB2cLarge = () => {
+    setB2cLargeInvoices([...b2cLargeInvoices, { pos: "", invoiceNumber: "", invoiceDate: "", invoiceValue: 0, taxableValue: 0, taxRate: 18, igst: 0, cess: 0 }]);
+  }
+  const handleRemoveB2cLarge = (index: number) => {
+    const newInvoices = [...b2cLargeInvoices];
+    newInvoices.splice(index, 1);
+    setB2cLargeInvoices(newInvoices);
+  }
+
+  const handleExportChange = (index: number, field: string, value: string | number) => {
+    const newInvoices = [...exportInvoices];
+    (newInvoices[index] as any)[field] = value;
+    setExportInvoices(newInvoices);
+  };
+  const handleAddExport = () => {
+    setExportInvoices([...exportInvoices, { exportType: "WPAY", invoiceNumber: "", invoiceDate: "", invoiceValue: 0, portCode: "", shippingBillNumber: "", shippingBillDate: "", taxableValue: 0, taxRate: 18, igst: 0, cess: 0 }]);
+  }
+  const handleRemoveExport = (index: number) => {
+    const newInvoices = [...exportInvoices];
+    newInvoices.splice(index, 1);
+    setExportInvoices(newInvoices);
+  }
+
+  const handleB2cOtherChange = (index: number, field: string, value: string | number) => {
+    const newRows = [...b2cOther];
+    (newRows[index] as any)[field] = value;
+    setB2cOther(newRows);
+  };
+  const handleAddB2cOther = () => {
+    setB2cOther([...b2cOther, { pos: "", taxableValue: 0, taxRate: 18, igst: 0, cgst: 0, sgst: 0, cess: 0 }]);
+  }
+  const handleRemoveB2cOther = (index: number) => {
+    const newRows = [...b2cOther];
+    newRows.splice(index, 1);
+    setB2cOther(newRows);
+  }
+
+  const handleNilRatedChange = (index: number, field: string, value: string | number) => {
+    const newRows = [...nilRated];
+    (newRows[index] as any)[field] = value;
+    setNilRated(newRows);
+  };
+
+  const handleDocumentsIssuedChange = (index: number, field: keyof typeof documentsIssued[0], value: string | number) => {
+    const newRows = [...documentsIssued];
+    (newRows[index] as any)[field] = value;
+    setDocumentsIssued(newRows);
+  };
+
+  const handleAddDocumentsIssued = () => {
+    setDocumentsIssued([...documentsIssued, { type: "", from: "", to: "", total: 0, cancelled: 0 }]);
+  };
+
+  const handleRemoveDocumentsIssued = (index: number) => {
+    const newRows = [...documentsIssued];
+    newRows.splice(index, 1);
+    setDocumentsIssued(newRows);
+  };
+
+  const handleAdvanceChange = (index: number, type: 'received' | 'adjusted', field: string, value: any) => {
+    if (type === 'received') {
+        const newAdvances = [...advancesReceived];
+        (newAdvances[index] as any)[field] = value;
+        setAdvancesReceived(newAdvances);
+    } else {
+        const newAdjusted = [...advancesAdjusted];
+        (newAdjusted[index] as any)[field] = value;
+        setAdvancesAdjusted(newAdjusted);
+    }
+  };
+  
+  const addAdvanceRow = (type: 'received' | 'adjusted') => {
+      if (type === 'received') {
+          setAdvancesReceived([...advancesReceived, { pos: "", taxRate: 18, grossAdvance: 0, igst: 0, cgst: 0, sgst: 0, cess: 0 }]);
+      } else {
+          setAdvancesAdjusted([...advancesAdjusted, { pos: "", taxRate: 18, grossAdvanceAdjusted: 0, igst: 0, cgst: 0, sgst: 0, cess: 0 }]);
+      }
+  };
+
+  const removeAdvanceRow = (index: number, type: 'received' | 'adjusted') => {
+      if (type === 'received') {
+          const newAdvances = [...advancesReceived];
+          newAdvances.splice(index, 1);
+          setAdvancesReceived(newAdvances);
+      } else {
+          const newAdjusted = [...advancesAdjusted];
+          newAdjusted.splice(index, 1);
+          setAdvancesAdjusted(newAdjusted);
+      }
+  };
+
+
+  const handleNext = () => {
+    toast({
+      title: `Step ${step} Saved!`,
+      description: `Moving to the next step.`,
+    });
+    setStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setStep(prev => prev - 1);
+  };
+
+  const handleGenerateAction = async (type: 'JSON' | 'PDF') => {
+    try {
+      if (type === 'JSON') {
+        // Generate GSTR-1 JSON structure
+        const gstr1Data = {
+          gstin: "", // Should be fetched from user/company settings
+          ret_period: format(new Date(), "MM-YYYY"), // Current month-year
+          b2b: b2bInvoices.map(inv => ({
+            ctin: inv.gstin,
+            inv: [{
+              inum: inv.invoiceNumber,
+              idt: inv.invoiceDate,
+              val: inv.invoiceValue,
+              pos: inv.pos || "",
+              rchrg: "N",
+              inv_typ: "R",
+              itms: [{
+                num: 1,
+                hsn_sc: "",
+                qty: 0,
+                uom: "",
+                rt: inv.taxRate,
+                txval: inv.taxableValue,
+                iamt: inv.igst,
+                camt: inv.cgst,
+                samt: inv.sgst,
+                csamt: inv.cess
+              }]
+            }]
+          })),
+          b2cl: b2cLargeInvoices.map(inv => ({
+            pos: inv.pos,
+            typ: "OE",
+            etin: "",
+            rt: inv.taxRate,
+            ad_amt: inv.taxableValue,
+            iamt: inv.igst,
+            csamt: inv.cess
+          })),
+          b2cs: b2cOther.map(row => ({
+            typ: "OE",
+            pos: row.pos,
+            rt: row.taxRate,
+            txval: row.taxableValue,
+            iamt: row.igst,
+            camt: row.cgst,
+            samt: row.sgst,
+            csamt: row.cess
+          })),
+          cdnr: creditNotes.map(cn => ({
+            ctin: cn.gstin,
+            nt: [{
+              nt_num: cn.noteNumber,
+              nt_dt: cn.noteDate,
+              orig_inum: cn.originalInvoiceNumber,
+              orig_idt: cn.originalInvoiceDate,
+              p_gst: "N",
+              rsn: cn.reason,
+              val: cn.invoiceValue,
+              itms: [{
+                num: 1,
+                hsn_sc: "",
+                qty: 0,
+                uom: "",
+                rt: cn.taxRate,
+                txval: cn.taxableValue,
+                iamt: cn.igst,
+                camt: cn.cgst,
+                samt: cn.sgst,
+                csamt: cn.cess
+              }]
+            }]
+          }))
+        };
+
+        // Download JSON file
+        const jsonStr = JSON.stringify(gstr1Data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `GSTR-1-${format(new Date(), "yyyy-MM-dd")}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "JSON Generated",
+          description: "Your GSTR-1 JSON file has been downloaded successfully.",
+        });
+      } else if (type === 'PDF') {
+        // Generate PDF from report content
+        if (!reportRef.current) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not find the report content to generate PDF.",
+          });
+          return;
+        }
+
+        toast({
+          title: "Generating PDF...",
+          description: "Your GSTR-1 PDF is being generated.",
+        });
+
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `GSTR-1-${format(new Date(), "yyyy-MM-dd")}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        await html2pdf().set(opt).from(reportRef.current).save();
+
+        toast({
+          title: "PDF Generated",
+          description: "Your GSTR-1 PDF has been downloaded successfully.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "An error occurred while generating the file.",
+      });
+    }
+  };
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step 1: B2B Invoices (Table 4)</CardTitle>
+              <CardDescription>
+                Review supplies made to registered persons (B2B).
+                Data is auto-populated from your sales. Review and adjust.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recipient GSTIN</TableHead>
+                    <TableHead>Invoice No.</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead className="text-right">Taxable Value</TableHead>
+                    <TableHead className="text-right">Rate (%)</TableHead>
+                    <TableHead className="text-right">IGST</TableHead>
+                    <TableHead className="text-right">CGST</TableHead>
+                    <TableHead className="text-right">SGST</TableHead>
+                    <TableHead className="text-right">Cess</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2bInvoices.map((invoice, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Input value={invoice.gstin} onChange={(e) => handleInvoiceChange(index, 'gstin', e.target.value)} /></TableCell>
+                      <TableCell><Input value={invoice.invoiceNumber} onChange={(e) => handleInvoiceChange(index, 'invoiceNumber', e.target.value)} /></TableCell>
+                      <TableCell><Input type="date" value={invoice.invoiceDate} onChange={(e) => handleInvoiceChange(index, 'invoiceDate', e.target.value)} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.invoiceValue} onChange={(e) => handleInvoiceChange(index, 'invoiceValue', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.taxableValue} onChange={(e) => handleInvoiceChange(index, 'taxableValue', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.taxRate} onChange={(e) => handleInvoiceChange(index, 'taxRate', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.igst} onChange={(e) => handleInvoiceChange(index, 'igst', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.cgst} onChange={(e) => handleInvoiceChange(index, 'cgst', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.sgst} onChange={(e) => handleInvoiceChange(index, 'sgst', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell><Input type="number" className="text-right" value={invoice.cess} onChange={(e) => handleInvoiceChange(index, 'cess', parseFloat(e.target.value))} /></TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveInvoice(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Button variant="outline" size="sm" className="mt-4" onClick={handleAddInvoice}>
+                <PlusCircle className="mr-2 h-4 w-4"/> Add Invoice
+              </Button>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+                <Button onClick={handleNext}>
+                    Save & Continue
+                    <ArrowRight className="ml-2" />
+                </Button>
+            </CardFooter>
+          </Card>
+        );
+      case 2:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step 2: B2C (Large) Invoices (Table 5)</CardTitle>
+              <CardDescription>
+                Inter-state supplies to unregistered persons where invoice value is more than ₹2.5 lakh.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Place Of Supply</TableHead>
+                    <TableHead>Invoice No.</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead className="text-right">Taxable Value</TableHead>
+                    <TableHead className="text-right">Rate (%)</TableHead>
+                    <TableHead className="text-right">IGST</TableHead>
+                    <TableHead className="text-right">Cess</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2cLargeInvoices.map((invoice, index) => (
+                    <TableRow key={index}>
+                        <TableCell>
+                            <Select value={invoice.pos} onValueChange={(value) => handleB2cLargeChange(index, 'pos', value)}>
+                                <SelectTrigger><SelectValue placeholder="Select State"/></SelectTrigger>
+                                <SelectContent>{states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </TableCell>
+                        <TableCell><Input value={invoice.invoiceNumber} onChange={(e) => handleB2cLargeChange(index, 'invoiceNumber', e.target.value)} /></TableCell>
+                        <TableCell><Input type="date" value={invoice.invoiceDate} onChange={(e) => handleB2cLargeChange(index, 'invoiceDate', e.target.value)} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.invoiceValue} onChange={(e) => handleB2cLargeChange(index, 'invoiceValue', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.taxableValue} onChange={(e) => handleB2cLargeChange(index, 'taxableValue', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.taxRate} onChange={(e) => handleB2cLargeChange(index, 'taxRate', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.igst} onChange={(e) => handleB2cLargeChange(index, 'igst', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.cess} onChange={(e) => handleB2cLargeChange(index, 'cess', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveB2cLarge(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+               <Button variant="outline" size="sm" className="mt-4" onClick={handleAddB2cLarge}>
+                <PlusCircle className="mr-2 h-4 w-4"/> Add Invoice
+              </Button>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>
+                  <ArrowLeft className="mr-2" /> Back
+              </Button>
+              <Button onClick={handleNext}>
+                  Save & Continue
+                  <ArrowRight className="ml-2" />
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      case 3:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step 3: Export Invoices (Table 6)</CardTitle>
+              <CardDescription>
+                Details of zero-rated supplies (exports) and deemed exports.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Export Type</TableHead>
+                    <TableHead>Invoice No.</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead>Port Code</TableHead>
+                    <TableHead>Shipping Bill No.</TableHead>
+                    <TableHead>Shipping Bill Date</TableHead>
+                    <TableHead className="text-right">Taxable Value</TableHead>
+                    <TableHead className="text-right">Rate (%)</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {exportInvoices.map((invoice, index) => (
+                    <TableRow key={index}>
+                        <TableCell>
+                            <Select value={invoice.exportType} onValueChange={(value) => handleExportChange(index, 'exportType', value)}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>{exportTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </TableCell>
+                        <TableCell><Input value={invoice.invoiceNumber} onChange={(e) => handleExportChange(index, 'invoiceNumber', e.target.value)} /></TableCell>
+                        <TableCell><Input type="date" value={invoice.invoiceDate} onChange={(e) => handleExportChange(index, 'invoiceDate', e.target.value)} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.invoiceValue} onChange={(e) => handleExportChange(index, 'invoiceValue', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input value={invoice.portCode} onChange={(e) => handleExportChange(index, 'portCode', e.target.value)} /></TableCell>
+                        <TableCell><Input value={invoice.shippingBillNumber} onChange={(e) => handleExportChange(index, 'shippingBillNumber', e.target.value)} /></TableCell>
+                        <TableCell><Input type="date" value={invoice.shippingBillDate} onChange={(e) => handleExportChange(index, 'shippingBillDate', e.target.value)} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.taxableValue} onChange={(e) => handleExportChange(index, 'taxableValue', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={invoice.taxRate} onChange={(e) => handleExportChange(index, 'taxRate', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveExport(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+               <Button variant="outline" size="sm" className="mt-4" onClick={handleAddExport}>
+                <PlusCircle className="mr-2 h-4 w-4"/> Add Export Invoice
+              </Button>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>
+                  <ArrowLeft className="mr-2" /> Back
+              </Button>
+              <Button onClick={handleNext}>
+                  Save & Continue
+                  <ArrowRight className="ml-2" />
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+    case 4:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step 4: B2C (Others) (Table 7)</CardTitle>
+              <CardDescription>
+                Consolidated details of B2C supplies (intra-state and inter-state up to ₹2.5 lakh).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Place Of Supply</TableHead>
+                    <TableHead className="text-right">Taxable Value</TableHead>
+                    <TableHead className="text-right">Rate (%)</TableHead>
+                    <TableHead className="text-right">IGST</TableHead>
+                    <TableHead className="text-right">CGST</TableHead>
+                    <TableHead className="text-right">SGST</TableHead>
+                    <TableHead className="text-right">Cess</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2cOther.map((row, index) => (
+                    <TableRow key={index}>
+                        <TableCell>
+                            <Select value={row.pos} onValueChange={(value) => handleB2cOtherChange(index, 'pos', value)}>
+                                <SelectTrigger><SelectValue placeholder="Select State"/></SelectTrigger>
+                                <SelectContent>{states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.taxableValue} onChange={(e) => handleB2cOtherChange(index, 'taxableValue', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.taxRate} onChange={(e) => handleB2cOtherChange(index, 'taxRate', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.igst} onChange={(e) => handleB2cOtherChange(index, 'igst', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.cgst} onChange={(e) => handleB2cOtherChange(index, 'cgst', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.sgst} onChange={(e) => handleB2cOtherChange(index, 'sgst', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell><Input type="number" className="text-right" value={row.cess} onChange={(e) => handleB2cOtherChange(index, 'cess', parseFloat(e.target.value))} /></TableCell>
+                        <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveB2cOther(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+               <Button variant="outline" size="sm" className="mt-4" onClick={handleAddB2cOther}>
+                <PlusCircle className="mr-2 h-4 w-4"/> Add Summary Row
+              </Button>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>
+                  <ArrowLeft className="mr-2" /> Back
+              </Button>
+              <Button onClick={handleNext}>
+                  Save & Continue
+                  <ArrowRight className="ml-2" />
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+    case 5:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 5: Nil Rated, Exempted, and Non-GST Supplies (Table 8)</CardTitle>
+                    <CardDescription>
+                        Consolidated details of supplies that are nil rated, exempted, or not covered under GST.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-1/2">Description</TableHead>
+                                <TableHead className="text-right">Nil Rated Supplies</TableHead>
+                                <TableHead className="text-right">Exempted Supplies</TableHead>
+                                <TableHead className="text-right">Non-GST Supplies</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {nilRated.map((row, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">{row.description}</TableCell>
+                                    <TableCell>
+                                        <Input type="number" className="text-right" value={row.nilRated} onChange={(e) => handleNilRatedChange(index, 'nilRated', parseFloat(e.target.value))} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="number" className="text-right" value={row.exempted} onChange={(e) => handleNilRatedChange(index, 'exempted', parseFloat(e.target.value))} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="number" className="text-right" value={row.nonGst} onChange={(e) => handleNilRatedChange(index, 'nonGst', parseFloat(e.target.value))} />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+    case 6:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 6: Amendments to Outward Supplies (Table 9)</CardTitle>
+                    <CardDescription>
+                        Report amendments to details of taxable outward supplies furnished in returns for earlier tax periods. Select the original month to see invoices to amend.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="b2ba">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="b2ba">B2B (9A)</TabsTrigger>
+                            <TabsTrigger value="b2cla">B2C (Large) (9A)</TabsTrigger>
+                            <TabsTrigger value="cdra">Credit/Debit Notes (9C)</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="b2ba" className="pt-4">
+                           <div className="p-4 border rounded-lg space-y-4">
+                                <h3 className="font-medium">Amend B2B Invoice</h3>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <div><Label>Original Month</Label><Input type="month" defaultValue="2024-04" /></div>
+                                    <div><Label>Original Invoice No.</Label><Input placeholder="INV-OLD-001"/></div>
+                                    <div><Label>Original Invoice Date</Label><Input type="date"/></div>
+                                </div>
+                                 <div className="grid md:grid-cols-3 gap-4 pt-4">
+                                    <div><Label>Revised Invoice No.</Label><Input placeholder="INV-OLD-001-R1"/></div>
+                                    <div><Label>Revised Invoice Date</Label><Input type="date"/></div>
+                                    <div><Label>Revised Value</Label><Input type="number" placeholder="0.00"/></div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button size="sm">Add B2B Amendment</Button>
+                                </div>
+                           </div>
+                        </TabsContent>
+                         <TabsContent value="b2cla" className="pt-4">
+                           <div className="p-4 border rounded-lg space-y-4">
+                                <h3 className="font-medium">Amend B2C (Large) Invoice</h3>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <div><Label>Original Month</Label><Input type="month" defaultValue="2024-04" /></div>
+                                    <div><Label>Original Invoice No.</Label><Input placeholder="INV-BCL-OLD-01"/></div>
+                                    <div><Label>Original Place of Supply</Label><Select><SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger><SelectContent>{states.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button size="sm" variant="secondary">Fetch Details to Amend</Button>
+                                </div>
+                           </div>
+                        </TabsContent>
+                         <TabsContent value="cdra" className="pt-4">
+                           <div className="p-4 border rounded-lg space-y-4">
+                                <h3 className="font-medium">Amend Credit/Debit Note (Registered)</h3>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <div><Label>Original Month</Label><Input type="month" defaultValue="2024-04" /></div>
+                                    <div><Label>Original Note No.</Label><Input placeholder="CN-OLD-01"/></div>
+                                    <div><Label>Original Note Date</Label><Input type="date"/></div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button size="sm">Add Note Amendment</Button>
+                                </div>
+                           </div>
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+      case 7:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 7: Amendments to B2C (Others) (Table 10)</CardTitle>
+                    <CardDescription>
+                        Report amendments to taxable outward supplies to unregistered persons from earlier tax periods.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <div className="p-4 border rounded-lg space-y-4">
+                        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <Label>Original Month</Label>
+                                <Input type="month" defaultValue="2024-04" />
+                            </div>
+                            <div>
+                                <Label>Place of Supply</Label>
+                                <Select><SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger><SelectContent>{states.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+                            </div>
+                             <div>
+                                <Label>Tax Rate (%)</Label>
+                                <Input type="number" placeholder="18"/>
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                             <div>
+                                <Label>Revised Taxable Value</Label>
+                                <Input type="number" placeholder="0.00"/>
+                            </div>
+                            <div>
+                                <Label>Revised IGST</Label>
+                                <Input type="number" placeholder="0.00"/>
+                            </div>
+                            <div>
+                                <Label>Revised CGST</Label>
+                                <Input type="number" placeholder="0.00"/>
+                            </div>
+                            <div>
+                                <Label>Revised SGST</Label>
+                                <Input type="number" placeholder="0.00"/>
+                            </div>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                           <Button size="sm">Add B2C Amendment</Button>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+      case 8:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 8: Advances Received/Adjusted (Table 11)</CardTitle>
+                    <CardDescription>
+                        Consolidated statement of advances received, advances adjusted, and amendments.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold mb-2">Part I: Advances Received</h3>
+                        <Table>
+                            <TableHeader><TableRow>
+                                <TableHead>Place of Supply</TableHead>
+                                <TableHead>Tax Rate</TableHead>
+                                <TableHead className="text-right">Gross Advance Received</TableHead>
+                                <TableHead className="text-right">IGST</TableHead>
+                                <TableHead className="text-right">CGST</TableHead>
+                                <TableHead className="text-right">SGST</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow></TableHeader>
+                            <TableBody>
+                                {advancesReceived.map((row, index) => (
+                                <TableRow key={index}>
+                                    <TableCell><Select value={row.pos} onValueChange={v => handleAdvanceChange(index, 'received', 'pos', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{states.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></TableCell>
+                                    <TableCell><Input type="number" value={row.taxRate} onChange={e => handleAdvanceChange(index, 'received', 'taxRate', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.grossAdvance} onChange={e => handleAdvanceChange(index, 'received', 'grossAdvance', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.igst} onChange={e => handleAdvanceChange(index, 'received', 'igst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.cgst} onChange={e => handleAdvanceChange(index, 'received', 'cgst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.sgst} onChange={e => handleAdvanceChange(index, 'received', 'sgst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => removeAdvanceRow(index, 'received')}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                         <Button variant="outline" size="sm" className="mt-4" onClick={() => addAdvanceRow('received')}><PlusCircle className="mr-2"/>Add Advance Received</Button>
+                    </div>
+                     <div>
+                        <h3 className="text-lg font-semibold mb-2">Part II: Advances Adjusted</h3>
+                         <Table>
+                            <TableHeader><TableRow>
+                                <TableHead>Place of Supply</TableHead>
+                                <TableHead>Tax Rate</TableHead>
+                                <TableHead className="text-right">Gross Advance Adjusted</TableHead>
+                                <TableHead className="text-right">IGST</TableHead>
+                                <TableHead className="text-right">CGST</TableHead>
+                                <TableHead className="text-right">SGST</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow></TableHeader>
+                            <TableBody>
+                                {advancesAdjusted.map((row, index) => (
+                                <TableRow key={index}>
+                                    <TableCell><Select value={row.pos} onValueChange={v => handleAdvanceChange(index, 'adjusted', 'pos', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{states.map(s=><SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></TableCell>
+                                    <TableCell><Input type="number" value={row.taxRate} onChange={e => handleAdvanceChange(index, 'adjusted', 'taxRate', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.grossAdvanceAdjusted} onChange={e => handleAdvanceChange(index, 'adjusted', 'grossAdvanceAdjusted', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.igst} onChange={e => handleAdvanceChange(index, 'adjusted', 'igst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.cgst} onChange={e => handleAdvanceChange(index, 'adjusted', 'cgst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell><Input type="number" className="text-right" value={row.sgst} onChange={e => handleAdvanceChange(index, 'adjusted', 'sgst', parseFloat(e.target.value))}/></TableCell>
+                                    <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => removeAdvanceRow(index, 'adjusted')}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                         <Button variant="outline" size="sm" className="mt-4" onClick={() => addAdvanceRow('adjusted')}><PlusCircle className="mr-2"/>Add Advance Adjusted</Button>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+      case 9:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 9: HSN-wise Summary of Outward Supplies (Table 12)</CardTitle>
+                    <CardDescription>
+                        A summary of supplies reported in this return, categorized by HSN/SAC code.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="default">
+                        <AlertTitle>Auto-Generated Summary</AlertTitle>
+                        <AlertDescription>
+                            This table would be automatically populated based on the items you've sold in your invoices.
+                        </AlertDescription>
+                    </Alert>
+                    <Table className="mt-4">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>HSN</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>UQC</TableHead>
+                                <TableHead className="text-right">Total Quantity</TableHead>
+                                <TableHead className="text-right">Total Value</TableHead>
+                                <TableHead className="text-right">Taxable Value</TableHead>
+                                <TableHead className="text-right">IGST</TableHead>
+                                <TableHead className="text-right">CGST</TableHead>
+                                <TableHead className="text-right">SGST</TableHead>
+                                <TableHead className="text-right">Cess</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                           
+                        </TableBody>
+                    </Table>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+      case 10:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 10: Documents Issued (Table 13)</CardTitle>
+                    <CardDescription>
+                        Summary of documents issued during the tax period.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="default">
+                        <AlertTitle>Auto-Generated Summary</AlertTitle>
+                        <AlertDescription>
+                            This table is automatically populated based on the documents you've created in GSTEase (invoices, credit notes, etc.). Review the summary below.
+                        </AlertDescription>
+                    </Alert>
+                    <Table className="mt-4">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Document Type</TableHead>
+                                <TableHead>Sr. No. From</TableHead>
+                                <TableHead>Sr. No. To</TableHead>
+                                <TableHead className="text-right">Total Number</TableHead>
+                                <TableHead className="text-right">Cancelled</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {documentsIssued.map((doc, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>
+                                         <Input value={doc.type} onChange={(e) => handleDocumentsIssuedChange(index, 'type', e.target.value)} />
+                                    </TableCell>
+                                     <TableCell>
+                                         <Input value={doc.from} onChange={(e) => handleDocumentsIssuedChange(index, 'from', e.target.value)} />
+                                    </TableCell>
+                                    <TableCell>
+                                         <Input value={doc.to} onChange={(e) => handleDocumentsIssuedChange(index, 'to', e.target.value)} />
+                                    </TableCell>
+                                    <TableCell>
+                                         <Input type="number" className="text-right" value={doc.total} onChange={(e) => handleDocumentsIssuedChange(index, 'total', parseInt(e.target.value))} />
+                                    </TableCell>
+                                    <TableCell>
+                                         <Input type="number" className="text-right" value={doc.cancelled} onChange={(e) => handleDocumentsIssuedChange(index, 'cancelled', parseInt(e.target.value))} />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveDocumentsIssued(index)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddDocumentsIssued}>
+                        <PlusCircle className="mr-2 h-4 w-4"/> Add Document Series
+                    </Button>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <Button onClick={handleNext}>
+                        Save & Continue
+                        <ArrowRight className="ml-2" />
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+      default:
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Wizard Complete</CardTitle>
+                    <CardDescription>You have finished preparing your GSTR-1 return.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="mb-4">You have completed all the data entry steps for your GSTR-1 return. The next step is to generate the files for uploading to the GST portal and for your records.</p>
+                    <Alert>
+                        <AlertTitle>Final Check</AlertTitle>
+                        <AlertDescription>
+                            Please ensure all data is accurate before generating the final files. You can go back to any step to review or make changes.
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+                <CardFooter className="flex justify-between items-center">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="mr-2" /> Back
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={() => handleGenerateAction('JSON')}>
+                           <FileJson className="mr-2" />
+                           Generate GSTR-1 JSON
+                        </Button>
+                         <Button variant="outline" onClick={() => handleGenerateAction('PDF')}>
+                           <FileDown className="mr-2" />
+                           Download GSTR-1 PDF
+                        </Button>
+                    </div>
+                </CardFooter>
+            </Card>
+        );
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+       <div className="flex items-center justify-between flex-wrap gap-4">
+        <Link href="/gst-filings" passHref>
+          <Button variant="outline">
+            <ArrowLeft className="mr-2" />
+            Back to GST Filings
+          </Button>
+        </Link>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold">GSTR-1 Filing Wizard</h1>
+          <p className="text-muted-foreground">Period: May 2024</p>
+        </div>
+        <ShareButtons
+          contentRef={reportRef}
+          fileName={`GSTR-1-${format(new Date(), 'yyyy-MM-dd')}`}
+          whatsappMessage="Check out my GSTR-1 return from ZenithBooks"
+          emailSubject="GSTR-1 Return"
+          emailBody="Please find attached the GSTR-1 return."
+          shareTitle="GSTR-1 Return"
+        />
+      </div>
+
+      {/* Report Summary View for PDF Generation - Positioned off-screen but accessible for PDF */}
+      <div ref={reportRef} className="absolute left-[-9999px] w-[210mm] bg-white" style={{ position: 'absolute', left: '-9999px', width: '210mm' }}>
+        <div className="p-8 bg-white text-black space-y-8">
+          <div className="text-center border-b-2 border-gray-800 pb-4 mb-8">
+            <h1 className="text-2xl font-bold">GSTR-1 Return</h1>
+            <p className="text-sm">Period: {format(new Date(), "MMMM yyyy")}</p>
+            <p className="text-xs mt-2">Generated on: {format(new Date(), "dd MMM yyyy, hh:mm a")}</p>
+          </div>
+
+          {/* Table 4: B2B Invoices */}
+          {b2bInvoices.length > 0 && (
+            <div className="break-inside-avoid">
+              <h2 className="text-lg font-bold mb-4">Table 4: B2B Invoices</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">GSTIN</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Invoice No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Rate (%)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">CGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">SGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2bInvoices.map((inv, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{inv.gstin || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceNumber}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceDate}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.invoiceValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.taxRate}%</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.igst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.cgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.sgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.cess.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell colSpan={3} className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.taxableValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2"></TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.igst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.cgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.sgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2bInvoices.reduce((s, i) => s + i.cess, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Table 5: B2C Large Invoices */}
+          {b2cLargeInvoices.length > 0 && (
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Table 5: B2C Large Invoices</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Place of Supply</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Invoice No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Rate (%)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2cLargeInvoices.map((inv, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{inv.pos || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceNumber}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceDate}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.invoiceValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.taxRate}%</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.igst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.cess.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell colSpan={3} className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cLargeInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cLargeInvoices.reduce((s, i) => s + i.taxableValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2"></TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cLargeInvoices.reduce((s, i) => s + i.igst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cLargeInvoices.reduce((s, i) => s + i.cess, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Table 6: Export Invoices */}
+          {exportInvoices.length > 0 && (
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Table 6: Export Invoices</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Export Type</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Invoice No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Port Code</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Shipping Bill No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Shipping Bill Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {exportInvoices.map((inv, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{inv.exportType}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceNumber}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.invoiceDate}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.invoiceValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.portCode || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.shippingBillNumber || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{inv.shippingBillDate || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{inv.taxableValue.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell colSpan={3} className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{exportInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                    <TableCell colSpan={3} className="border border-gray-300 p-2"></TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{exportInvoices.reduce((s, i) => s + i.taxableValue, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Table 7: B2C Other */}
+          {b2cOther.length > 0 && (
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Table 7: B2C Other (Consolidated)</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">Place of Supply</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Rate (%)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">CGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">SGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {b2cOther.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{row.pos || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.taxRate}%</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.igst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.cgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.sgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{row.cess.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cOther.reduce((s, r) => s + r.taxableValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2"></TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cOther.reduce((s, r) => s + r.igst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cOther.reduce((s, r) => s + r.cgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cOther.reduce((s, r) => s + r.sgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{b2cOther.reduce((s, r) => s + r.cess, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Table 9: Credit/Debit Notes */}
+          {creditNotes.length > 0 && (
+            <div className="break-inside-avoid mt-8">
+              <h2 className="text-lg font-bold mb-4">Table 9: Credit/Debit Notes Registered</h2>
+              <Table className="text-xs border border-gray-300">
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="border border-gray-300 p-2">GSTIN</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Note No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Note Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Original Invoice No.</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Original Invoice Date</TableHead>
+                    <TableHead className="border border-gray-300 p-2">Reason</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Taxable Value</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Rate (%)</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">IGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">CGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">SGST</TableHead>
+                    <TableHead className="border border-gray-300 p-2 text-right">Cess</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {creditNotes.map((cn, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="border border-gray-300 p-2">{cn.gstin || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{cn.noteNumber}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{cn.noteDate}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{cn.originalInvoiceNumber || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{cn.originalInvoiceDate || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2">{cn.reason || "-"}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.invoiceValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.taxableValue.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.taxRate}%</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.igst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.cgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.sgst.toFixed(2)}</TableCell>
+                      <TableCell className="border border-gray-300 p-2 text-right">{cn.cess.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="bg-gray-100 font-bold">
+                    <TableCell colSpan={6} className="border border-gray-300 p-2 text-right">Total</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.invoiceValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.taxableValue, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2"></TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.igst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.cgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.sgst, 0).toFixed(2)}</TableCell>
+                    <TableCell className="border border-gray-300 p-2 text-right">{creditNotes.reduce((s, cn) => s + cn.cess, 0).toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+
+          {/* Summary Totals */}
+          <div className="break-inside-avoid mt-8 border-t-2 border-gray-800 pt-4">
+            <h2 className="text-lg font-bold mb-4">Summary</h2>
+            <Table className="text-xs border border-gray-300">
+              <TableBody>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total B2B Invoice Value</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">{b2bInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total B2C Large Invoice Value</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">{b2cLargeInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total Export Invoice Value</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">{exportInvoices.reduce((s, i) => s + i.invoiceValue, 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total B2C Other Taxable Value</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono">{b2cOther.reduce((s, r) => s + r.taxableValue, 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total IGST</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono font-bold">
+                    {(b2bInvoices.reduce((s, i) => s + i.igst, 0) + b2cLargeInvoices.reduce((s, i) => s + i.igst, 0) + b2cOther.reduce((s, r) => s + r.igst, 0) + creditNotes.reduce((s, cn) => s + cn.igst, 0)).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total CGST</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono font-bold">
+                    {(b2bInvoices.reduce((s, i) => s + i.cgst, 0) + b2cOther.reduce((s, r) => s + r.cgst, 0) + creditNotes.reduce((s, cn) => s + cn.cgst, 0)).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total SGST</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono font-bold">
+                    {(b2bInvoices.reduce((s, i) => s + i.sgst, 0) + b2cOther.reduce((s, r) => s + r.sgst, 0) + creditNotes.reduce((s, cn) => s + cn.sgst, 0)).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="border border-gray-300 p-2 font-bold">Total Cess</TableCell>
+                  <TableCell className="border border-gray-300 p-2 text-right font-mono font-bold">
+                    {(b2bInvoices.reduce((s, i) => s + i.cess, 0) + b2cLargeInvoices.reduce((s, i) => s + i.cess, 0) + b2cOther.reduce((s, r) => s + r.cess, 0) + creditNotes.reduce((s, cn) => s + cn.cess, 0)).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+
+      {/* Wizard Steps - Visible in UI */}
+      <div>
+        {renderStep()}
+      </div>
+    </div>
+  );
+}
+
+    

@@ -1,0 +1,19 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/vault/:path*",
+      "destination": "/api/vault/:path*"
+    }
+  ]
+}
+

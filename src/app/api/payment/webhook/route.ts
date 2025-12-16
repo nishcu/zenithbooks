@@ -1,0 +1,114 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { createHmac } from 'crypto';
+
+/**
+ * Cashfree Webhook Handler
+ * 
+ * This endpoint receives payment status updates from Cashfree
+ * Cashfree will POST to this URL when payment status changes
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    console.log('Cashfree webhook received:', {
+      orderId: body.order?.order_id,
+      paymentId: body.payment?.payment_id,
+      status: body.payment?.payment_status,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Extract order and payment information
+    const orderId = body.order?.order_id || body.order_id;
+    const paymentId = body.payment?.payment_id || body.payment_id;
+    const paymentStatus = body.payment?.payment_status || body.payment_status;
+    const orderStatus = body.order?.order_status || body.order_status;
+    const amount = body.order?.order_amount || body.order_amount;
+    
+    // Extract user information from order tags
+    const userId = body.order?.order_tags?.userId || body.order_tags?.userId;
+    const planId = body.order?.order_tags?.planId || body.order_tags?.planId;
+
+    // Verify webhook signature if provided
+    const signature = request.headers.get('x-cashfree-signature');
+    if (signature) {
+      const secretKey = process.env.CASHFREE_SECRET_KEY;
+      if (secretKey) {
+        const payload = JSON.stringify(body);
+        const expectedSignature = createHmac('sha256', secretKey)
+          .update(payload)
+          .digest('hex');
+        
+        if (signature !== expectedSignature) {
+          console.error('Webhook signature verification failed');
+          return NextResponse.json(
+            { error: 'Invalid signature' },
+            { status: 401 }
+          );
+        }
+      }
+    }
+
+    // Update user subscription if payment is successful
+    if (paymentStatus === 'SUCCESS' || orderStatus === 'PAID') {
+      if (userId) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          await updateDoc(userRef, {
+            subscriptionStatus: 'active',
+            subscriptionPlan: planId || null,
+            lastPaymentDate: serverTimestamp(),
+            cashfreePaymentId: paymentId,
+            cashfreeOrderId: orderId,
+            paymentAmount: amount,
+            paymentStatus: paymentStatus || orderStatus || 'SUCCESS',
+            webhookReceivedAt: serverTimestamp(),
+          });
+          
+          console.log('User subscription updated via webhook:', {
+            userId,
+            planId,
+            orderId,
+            paymentId,
+          });
+        } catch (firestoreError) {
+          console.error('Firestore update error in webhook:', firestoreError);
+          // Don't fail the webhook - Cashfree expects 200 response
+        }
+      }
+    }
+
+    // Always return 200 to acknowledge receipt
+    // Cashfree will retry if we return an error
+    return NextResponse.json({
+      success: true,
+      message: 'Webhook received',
+      orderId,
+      paymentId,
+      status: paymentStatus || orderStatus,
+    });
+
+  } catch (error: any) {
+    console.error('Error processing webhook:', error);
+    
+    // Still return 200 to prevent Cashfree from retrying
+    // Log the error for investigation
+    return NextResponse.json({
+      success: false,
+      error: 'Webhook processing failed',
+      message: error?.message || 'Unknown error',
+    }, { status: 200 }); // Return 200 even on error to prevent retries
+  }
+}
+
+// Handle GET requests (for testing/verification)
+export async function GET() {
+  return NextResponse.json({
+    message: 'Cashfree webhook endpoint is active',
+    method: 'POST',
+    timestamp: new Date().toISOString(),
+  });
+}
+

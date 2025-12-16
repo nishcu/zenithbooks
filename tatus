@@ -1,0 +1,110 @@
+[1mdiff --git a/src/app/(app)/admin/certification-requests/page.tsx b/src/app/(app)/admin/certification-requests/page.tsx[m
+[1mindex 4a808dd..7b4d407 100644[m
+[1m--- a/src/app/(app)/admin/certification-requests/page.tsx[m
+[1m+++ b/src/app/(app)/admin/certification-requests/page.tsx[m
+[36m@@ -26,6 +26,10 @@[m [mimport { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,[m
+ import { Label } from "@/components/ui/label";[m
+ import { useToast } from "@/hooks/use-toast";[m
+ import { format } from "date-fns";[m
+[32m+[m[32mimport { useCollection } from "react-firebase-hooks/firestore";[m
+[32m+[m[32mimport { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";[m
+[32m+[m[32mimport { db } from "@/lib/firebase";[m
+[32m+[m[32mimport { useAuth } from "@/contexts/AuthContext";[m
+ [m
+ type Request = {[m
+   id: string;[m
+[36m@@ -34,17 +38,21 @@[m [mtype Request = {[m
+   requestedBy: string;[m
+   date: Date;[m
+   status: 'Pending' | 'Certified' | 'Rejected';[m
+[32m+[m[32m  userId?: string;[m
+[32m+[m[32m  certificateData?: any;[m
+ };[m
+ [m
+[31m-const initialRequests: Request[] = [[m
+[31m-    { id: 'CR-001', type: 'Net Worth Certificate', client: 'Innovate LLC', requestedBy: 'Rohan Sharma', date: new Date(2024, 7, 14), status: 'Pending' },[m
+[31m-    { id: 'CR-002', type: 'Turnover Certificate', client: 'Quantum Services', requestedBy: 'Priya Mehta', date: new Date(2024, 7, 12), status: 'Certified' },[m
+[31m-    { id: 'CR-003', type: 'Form 15CB', client: 'Synergy Corp', requestedBy: 'Anjali Singh', date: new Date(2024, 7, 11), status: 'Certified' },[m
+[31m-    { id: 'CR-004', type: 'Capital Contribution', client: 'Innovate LLC', requestedBy: 'Rohan Sharma', date: new Date(2024, 7, 10), status: 'Rejected' },[m
+[31m-];[m
+[31m-[m
+ export default function AdminCertificationRequests() {[m
+[31m-  const [requests, setRequests] = useState<Request[]>(initialRequests);[m
+[32m+[m[32m  const { user } = useAuth();[m
+[32m+[m[32m  const [requestsCollection, loading] = useCollection([m
+[32m+[m[32m    user ? query(collection(db, "certificationRequests"), where("status", "in", ["Pending", "Certified", "Rejected"])) : null[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  const requests: Request[] = requestsCollection?.docs.map(doc => ({[m
+[32m+[m[32m    id: doc.id,[m
+[32m+[m[32m    ...doc.data(),[m
+[32m+[m[32m    date: doc.data().createdAt?.toDate() || new Date(),[m
+[32m+[m[32m  })) as Request[];[m
+   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);[m
+   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);[m
+   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);[m
+[36m@@ -71,21 +79,50 @@[m [mexport default function AdminCertificationRequests() {[m
+   };[m
+ [m
+   const handleApprove = async () => {[m
+[31m-    if (!selectedRequest) return;[m
+[32m+[m[32m    if (!selectedRequest || !user) return;[m
+     setIsLoading('approve');[m
+[31m-    await new Promise(resolve => setTimeout(resolve, 800));[m
+[31m-    setRequests(requests.map(r => [m
+[31m-      r.id === selectedRequest.id [m
+[31m-        ? { ...r, status: 'Certified' as Request['status'] }[m
+[31m-        : r[m
+[31m-    ));[m
+[31m-    toast({[m
+[31m-      title: "Request Approved",[m
+[31m-      description: `Certification request ${selectedRequest.id} has been approved and marked as certified.`,[m
+[31m-    });[m
+[31m-    setIsApproveDialogOpen(false);[m
+[31m-    setSelectedRequest(null);[m
+[31m-    setIsLoading(null);[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      // Update the certification request status to 'Certified'[m
+[32m+[m[32m      await updateDoc(doc(db, "certificationRequests", selectedRequest.id), {[m
+[32m+[m[32m        status: 'Certified',[m
+[32m+[m[32m        approvedAt: serverTimestamp(),[m
+[32m+[m[32m        approvedBy: user.uid,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m      // Save the certified document to user's userDocuments collection[m
+[32m+[m[32m      const certifiedDocData = {[m
+[32m+[m[32m        userId: selectedRequest.userId,[m
+[32m+[m[32m        documentName: `${selectedRequest.type} - ${selectedRequest.client}`,[m
+[32m+[m[32m        documentType: selectedRequest.type,[m
+[32m+[m[32m        status: 'Certified',[m
+[32m+[m[32m        certificateData: selectedRequest.certificateData,[m
+[32m+[m[32m        createdAt: serverTimestamp(),[m
+[32m+[m[32m        approvedAt: serverTimestamp(),[m
+[32m+[m[32m        approvedBy: user.uid,[m
+[32m+[m[32m        isCertified: true,[m
+[32m+[m[32m        downloadUrl: null, // Will be set when PDF is generated[m
+[32m+[m[32m      };[m
+[32m+[m
+[32m+[m[32m      await addDoc(collection(db, "userDocuments"), certifiedDocData);[m
+[32m+[m
+[32m+[m[32m      toast({[m
+[32m+[m[32m        title: "Request Approved",[m
+[32m+[m[32m        description: `Certification request has been approved. The certified document is now available in the client's "My Documents" section.`,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m      setIsApproveDialogOpen(false);[m
+[32m+[m[32m      setSelectedRequest(null);[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error("Error approving certification request:", error);[m
+[32m+[m[32m      toast({[m
+[32m+[m[32m        variant: "destructive",[m
+[32m+[m[32m        title: "Approval Failed",[m
+[32m+[m[32m        description: "Failed to approve the certification request. Please try again.",[m
+[32m+[m[32m      });[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setIsLoading(null);[m
+[32m+[m[32m    }[m
+   };[m
+ [m
+   const handleReject = async () => {[m

@@ -1,0 +1,12 @@
+# Settings to manage and configure a Firebase App Hosting backend.
+# https://firebase.google.com/docs/app-hosting/configure
+
+# Updated timestamp to force a fresh deployment environment
+id: studio-6259025457-56a27-1725989201
+runConfig:
+  # Increase this value if you'd like to automatically spin up
+  # more instances in response to increased traffic.
+  maxInstances: 1
+  environmentVariables:
+    GEMINI_API_KEY:
+      secret: GEMINI_API_KEY
