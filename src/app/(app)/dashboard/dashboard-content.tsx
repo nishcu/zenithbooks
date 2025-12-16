@@ -232,8 +232,8 @@ function DashboardContent() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <CardContent className="px-4 sm:px-6">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                         {coreFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
@@ -285,8 +285,8 @@ function DashboardContent() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <CardContent className="px-4 sm:px-6">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
@@ -338,8 +338,8 @@ function DashboardContent() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <CardContent className="px-4 sm:px-6">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
@@ -426,7 +426,7 @@ function DashboardContent() {
               const Icon = feature.icon;
               return (
                 <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/40 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10">
+                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
                     <CardHeader className="pb-4 lg:pb-6">
                       <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
                         <Icon className="h-7 w-7 lg:h-8 lg:w-8 text-white group-hover:scale-110 transition-transform" />
@@ -444,6 +444,11 @@ function DashboardContent() {
                       <CardDescription className="text-sm lg:text-base line-clamp-3 leading-relaxed">
                         {feature.description}
                       </CardDescription>
+                      {/* Arrow icon on hover */}
+                      <div className="mt-3 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-xs font-medium">Open</span>
+                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
@@ -488,7 +493,7 @@ function DashboardContent() {
               const Icon = feature.icon;
               return (
                 <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/40 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10">
+                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
                     <CardHeader className="pb-4 lg:pb-6">
                       <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
                         <Icon className="h-7 w-7 lg:h-8 lg:w-8 text-white group-hover:scale-110 transition-transform" />
@@ -506,6 +511,11 @@ function DashboardContent() {
                       <CardDescription className="text-sm lg:text-base line-clamp-3 leading-relaxed">
                         {feature.description}
                       </CardDescription>
+                      {/* Arrow icon on hover */}
+                      <div className="mt-3 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-xs font-medium">Open</span>
+                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
