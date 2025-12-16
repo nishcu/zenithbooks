@@ -247,7 +247,7 @@ function DashboardContent() {
 
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
-          <div className="space-y-8">
+          <div className="space-y-8 w-full max-w-full overflow-x-hidden min-w-0">
                <ClientList onSwitchWorkspace={setActiveClient} activeClientId={activeClient?.id || null} />
                 
                {activeClient && (
