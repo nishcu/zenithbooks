@@ -50,13 +50,15 @@ export class Form16PDFGenerator {
         const jspdfModule = require('jspdf');
         jsPDF = jspdfModule.jsPDF || jspdfModule.default?.jsPDF || jspdfModule.default;
         
-        // jspdf-autotable exports as default function or as module
+        // jspdf-autotable exports object with autoTable property
         const autoTableModule = require('jspdf-autotable');
-        autoTable = autoTableModule.default || autoTableModule;
+        // Try autoTable property first, then default, then the module itself
+        autoTable = autoTableModule.autoTable || autoTableModule.default || autoTableModule;
         
-        // If still not found, try to get from module.exports
-        if (typeof autoTable !== 'function' && autoTableModule && typeof autoTableModule === 'function') {
-          autoTable = autoTableModule;
+        // Verify it's a function
+        if (typeof autoTable !== 'function') {
+          console.error('autoTable module structure:', Object.keys(autoTableModule));
+          throw new Error(`autoTable is not a function. Module exports: ${Object.keys(autoTableModule).join(', ')}`);
         }
       } else {
         // Browser: use ES6 imports
