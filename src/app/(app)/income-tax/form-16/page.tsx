@@ -2824,6 +2824,7 @@ export default function Form16() {
                 </div>
                 </div>
 
+              {/* Display results for bulk-generate (has summary) */}
               {bulkResults && bulkResults.summary && (
                 <div className="space-y-4">
                   <Separator />
@@ -2846,6 +2847,52 @@ export default function Form16() {
                           <strong>{error.employeeId}:</strong> {error.errors?.join(', ') || error.error || 'Unknown error'}
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Display results for bulk-upload (has errors array directly) */}
+              {bulkResults && !bulkResults.summary && bulkResults.processed !== undefined && (
+                <div className="space-y-4">
+                  <Separator />
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span>Successful: {bulkResults.successful || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      <span>Failed: {bulkResults.failed || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Processed: {bulkResults.processed || 0}</span>
+                    </div>
+                  </div>
+
+                  {bulkResults.errors && Array.isArray(bulkResults.errors) && bulkResults.errors.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      <h5 className="font-medium text-red-600">Error Details:</h5>
+                      <div className="border border-red-200 rounded-lg p-4 bg-red-50 max-h-96 overflow-y-auto">
+                        {bulkResults.errors.map((error: any, index: number) => (
+                          <div key={index} className="text-sm text-red-700 mb-3 pb-3 border-b border-red-200 last:border-b-0 last:pb-0 last:mb-0">
+                            <div className="font-semibold mb-1">
+                              Row {error.row || index + 1}: {error.employeeName || 'Unknown Employee'}
+                            </div>
+                            <div className="pl-4">
+                              {Array.isArray(error.errors) ? (
+                                <ul className="list-disc list-inside space-y-1">
+                                  {error.errors.map((err: string, errIndex: number) => (
+                                    <li key={errIndex}>{err}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span>{error.error || 'Unknown error'}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
