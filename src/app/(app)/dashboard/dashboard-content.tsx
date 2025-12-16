@@ -285,7 +285,7 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
                         {coreFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
