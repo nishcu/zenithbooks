@@ -453,8 +453,20 @@ function DashboardContent() {
         </CardContent>
       </Card>
 
-      {/* Quick Access Features Section */}
-      <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-background to-muted/20">
+      {/* Separator with decorative element */}
+      <div className="relative my-8 lg:my-12">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border/40"></div>
+        </div>
+        <div className="relative flex justify-center">
+          <div className="bg-background px-4">
+            <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access Features Section - Enhanced with visual distinction */}
+      <Card className="border-2 border-primary/15 shadow-xl bg-gradient-to-br from-background via-muted/5 to-background">
         <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
             <div>
