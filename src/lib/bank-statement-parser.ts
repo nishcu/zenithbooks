@@ -516,17 +516,20 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     
     // More aggressive parsing - try to extract ANY line with date and amount
     // Don't skip lines unless they're clearly headers/footers
+    
+    // Parse ALL lines and try to extract transactions
+    for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
-      // Skip header rows, summary rows, etc.
-      const lineLower = line.toLowerCase();
-      if (lineLower.includes('opening balance') || 
-          lineLower.includes('closing balance') ||
-          lineLower.includes('statement period') ||
-          lineLower.includes('account number') ||
-          (lineLower.includes('total') && lineLower.includes('page')) ||
-          lineLower.match(/^page\s+\d+/i) ||
-          lineLower.match(/^statement\s+of\s+account/i)) {
+      // Skip ONLY obvious header/footer rows
+      const lineLower = line.toLowerCase().trim();
+      if (lineLower === '' ||
+          lineLower === 'date' ||
+          lineLower === 'description' ||
+          (lineLower.includes('page') && lineLower.match(/^\s*page\s+\d+\s*$/i)) ||
+          (lineLower.includes('opening balance') && lineLower.match(/opening\s+balance.*$/i)) ||
+          (lineLower.includes('closing balance') && lineLower.match(/closing\s+balance.*$/i)) ||
+          lineLower.match(/^statement\s+of\s+account\s*$/i)) {
         continue;
       }
       
