@@ -380,10 +380,17 @@ export async function POST(request: NextRequest) {
     const savedDocument: Form16Document = { id: docRef.id, ...form16Document };
 
     // Generate PDF
-    const pdfBlob = await Form16PDFGenerator.generateForm16PDF(savedDocument);
+    const pdfData = await Form16PDFGenerator.generateForm16PDF(savedDocument);
 
-    // Convert blob to base64 for response
-    const pdfBase64 = await blobToBase64(pdfBlob);
+    // Convert to base64 for response
+    // In server-side, pdfData is a Buffer, convert directly to base64
+    let pdfBase64: string;
+    if (Buffer.isBuffer(pdfData)) {
+      pdfBase64 = pdfData.toString('base64');
+    } else {
+      // If it's a Blob (shouldn't happen in server, but handle it)
+      pdfBase64 = await blobToBase64(pdfData as Blob);
+    }
 
     const response: Form16Response = {
       success: true,

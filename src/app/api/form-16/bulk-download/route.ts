@@ -204,11 +204,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Generate PDF
-        const pdfBlob = await Form16PDFGenerator.generateForm16PDF(form16Doc);
+        const pdfData = await Form16PDFGenerator.generateForm16PDF(form16Doc);
         
         // Add to ZIP with employee name in filename
         const fileName = `Form16_${employee.name.replace(/[^a-zA-Z0-9]/g, '_')}_${employee.pan}_${financialYear}.pdf`;
-        zip.file(fileName, await pdfBlob.arrayBuffer());
+        
+        // Handle both Buffer (server-side) and Blob (browser)
+        let arrayBuffer: ArrayBuffer;
+        if (Buffer.isBuffer(pdfData)) {
+          arrayBuffer = pdfData.buffer.slice(pdfData.byteOffset, pdfData.byteOffset + pdfData.byteLength);
+        } else {
+          arrayBuffer = await (pdfData as Blob).arrayBuffer();
+        }
+        zip.file(fileName, arrayBuffer);
         
         processed++;
       } catch (error: any) {

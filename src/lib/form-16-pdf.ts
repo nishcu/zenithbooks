@@ -31,7 +31,7 @@ export class Form16PDFGenerator {
   static async generateForm16PDF(
     form16Doc: Form16Document,
     password?: string
-  ): Promise<Blob> {
+  ): Promise<Blob | Buffer> {
     // Dynamic import for server-side compatibility
     // This ensures jsPDF and jspdf-autotable are properly loaded
     let jsPDF: any;
@@ -73,10 +73,22 @@ export class Form16PDFGenerator {
     pdf.addPage();
     this.generatePartB(pdf, form16Doc);
 
-    // Convert to blob
-    const pdfBlob = pdf.output('blob');
-
-    return pdfBlob;
+    // Convert to appropriate format based on environment
+    // In Node.js (server-side), use arraybuffer and convert to Buffer
+    // In browser, use blob
+    if (typeof window === 'undefined') {
+      // Server-side: use arraybuffer
+      const arrayBuffer = pdf.output('arraybuffer');
+      // Convert to Buffer for Node.js compatibility
+      const Buffer = (await import('buffer')).Buffer;
+      const buffer = Buffer.from(arrayBuffer);
+      // Return as Blob-like object for compatibility
+      return buffer as any;
+    } else {
+      // Browser: use blob
+      const pdfBlob = pdf.output('blob');
+      return pdfBlob;
+    }
   }
 
   /**
