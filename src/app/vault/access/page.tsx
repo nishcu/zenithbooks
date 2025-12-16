@@ -147,8 +147,8 @@ export default function VaultAccessPage() {
 
   const handleDownload = async (document: SharedDocument) => {
     try {
-      // Log the access
-      await fetch("/api/vault/log-access", {
+      // Log the access (don't wait for it to complete)
+      fetch("/api/vault/log-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -156,25 +156,21 @@ export default function VaultAccessPage() {
           documentId: document.id,
           action: "download",
         }),
-      });
+      }).catch(err => console.error("Failed to log access:", err));
 
-      // Properly download the file
-      const response = await fetch(document.fileUrl);
-      if (!response.ok) {
-        throw new Error("Failed to fetch file");
-      }
+      // Use server-side proxy for download to handle CORS and authentication
+      const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(document.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent("application/pdf")}`;
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Create a temporary link and trigger download
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       link.download = document.fileName;
+      link.target = "_blank"; // Open in new tab as fallback
       document.body.appendChild(link);
       link.click();
       
       // Cleanup
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
       
       toast({
         title: "Download Started",
