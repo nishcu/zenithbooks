@@ -1,693 +1,487 @@
 /**
  * Bank Statement Parser
- * Supports PDF, CSV, and Excel file formats
+ * Converts bank statements (CSV/Excel) into structured transaction data
+ * for bulk journal template generation
  */
 
-import * as XLSX from 'xlsx';
+// @ts-ignore - papaparse types not available, but works at runtime
+import Papa from 'papaparse';
 
-export interface ParsedTransaction {
-  date: string;
+export interface BankTransaction {
+  date: string; // DD/MM/YYYY format
   description: string;
-  withdrawal: number | null;
-  deposit: number | null;
-  balance?: number | null;
-  reference?: string;
-  type?: 'debit' | 'credit';
+  debit: number; // Amount debited from bank (withdrawal/outgoing)
+  credit: number; // Amount credited to bank (deposit/incoming)
+  balance: number;
+  reference?: string; // Cheque No, UTR, Transaction ID, etc.
+  rowIndex: number; // Original row number in the statement for error tracking
 }
 
-export interface SkippedRow {
-  rowNumber: number;
-  reason: string;
-  raw?: string;
+export interface BankStatementParseResult {
+  transactions: BankTransaction[];
+  errors: ParseError[];
+  format: 'csv' | 'excel';
+  detectedFormat?: string; // Bank name if detected
 }
 
-export interface ParseResult {
-  transactions: ParsedTransaction[];
-  accountNumber?: string;
-  accountName?: string;
-  statementPeriod?: { from: string; to: string };
-  openingBalance?: number;
-  closingBalance?: number;
-  rawRowCount?: number;
-  skippedRowCount?: number;
-  warnings?: string[];
-  skippedRows?: SkippedRow[];
-}
-
-function parseAmount(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-
-  let stringValue = String(value).trim();
-  if (!stringValue) return null;
-
-  const hasParentheses =
-    stringValue.includes('(') && stringValue.includes(')');
-
-  // Remove currency symbols, spaces (including non-breaking) and alpha chars
-  stringValue = stringValue
-    .replace(/\s+/g, '')
-    .replace(/[^\d.,\-]/g, '');
-
-  if (!stringValue) return null;
-
-  stringValue = stringValue.replace(/,/g, '');
-
-  if (hasParentheses && !stringValue.startsWith('-')) {
-    stringValue = `-${stringValue}`;
-  }
-
-  const parsed = Number.parseFloat(stringValue);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function normalizeAmount(value: number | null): number | null {
-  if (value === null) return null;
-  const absValue = Math.abs(value);
-  return absValue > 0 ? absValue : null;
+export interface ParseError {
+  row: number;
+  message: string;
+  data?: any;
 }
 
 /**
- * Parse CSV file
+ * Common bank statement column aliases
+ * Different banks use different column names for the same data
  */
-export function parseCSV(file: File): Promise<ParseResult> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        if (lines.length < 2) {
-          reject(new Error('CSV file is empty or invalid'));
-          return;
-        }
-
-        // Try to detect header row
-        let dateIndex = -1;
-        let descIndex = -1;
-        let debitIndex = -1;
-        let creditIndex = -1;
-        let withdrawalIndex = -1;
-        let depositIndex = -1;
-        let balanceIndex = -1;
-        let amountIndex = -1;
-        let typeIndex = -1;
-        let referenceIndex = -1;
-
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-        const normalizedHeaders = headers.map(h => h.replace(/\s+/g, ''));
-        
-        headers.forEach((header, index) => {
-          const normalized = normalizedHeaders[index];
-          if (header.includes('date')) dateIndex = index;
-          if (header.includes('description') || header.includes('particulars') || header.includes('narration') || header.includes('details')) descIndex = index;
-          if (/\b(dr|debit|withdrawal)\b/.test(header)) {
-            debitIndex = index;
-            withdrawalIndex = index;
-          }
-          if (/\b(cr|credit|deposit)\b/.test(header)) {
-            creditIndex = index;
-            depositIndex = index;
-          }
-          if ((header.includes('amount') || header.includes('amt')) && !header.includes('balance') && amountIndex === -1) {
-            amountIndex = index;
-          }
-          if (header.includes('balance')) balanceIndex = index;
-          if (
-            typeIndex === -1 &&
-            (
-              header.includes('dr/cr') ||
-              header.includes('cr/dr') ||
-              normalized === 'drcr' ||
-              normalized === 'crdr' ||
-              header.includes('txn type') ||
-              header.includes('transaction type') ||
-              header.includes('debit/credit')
-            )
-          ) {
-            typeIndex = index;
-          }
-          if (
-            referenceIndex === -1 &&
-            (
-              header.includes('reference') ||
-              header.includes('utr') ||
-              header.includes('cheque') ||
-              header.includes('instrument') ||
-              header.includes('transaction id') ||
-              normalized === 'refno' ||
-              normalized === 'ref' ||
-              normalized === 'utrno'
-            )
-          ) {
-            referenceIndex = index;
-          }
-        });
-
-        // If no headers found, assume standard format: Date, Description, Withdrawal, Deposit
-        if (dateIndex === -1) dateIndex = 0;
-        if (descIndex === -1) descIndex = 1;
-        if (withdrawalIndex === -1 && debitIndex === -1) withdrawalIndex = 2;
-        if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
-
-        const transactions: ParsedTransaction[] = [];
-        const skippedRows: SkippedRow[] = [];
-        const hasHeaderRow = headers.some(h => h.includes('date') || h.includes('description'));
-        const startIndex = hasHeaderRow ? 1 : 0;
-        let rawRowCount = 0;
-        let skippedRowCount = 0;
-        let lastKnownDate: string | null = null;
-
-        for (let i = startIndex; i < lines.length; i++) {
-          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-          const getValue = (idx: number) => (idx >= 0 && idx < values.length ? values[idx] : '');
-          
-          if (values.length < 2) continue;
-          const hasContent = values.some(value => value && value.trim() !== '');
-          if (!hasContent) continue;
-
-          const displayRowNumber = i + 1;
-          const rawSnapshot = values.join(' | ');
-          rawRowCount++;
-
-          const rawReference = referenceIndex >= 0 ? getValue(referenceIndex) : '';
-          const referenceText = (rawReference || '').toString().trim();
-          const baseDescription = (getValue(descIndex) || '').trim();
-
-          if (!referenceText && !baseDescription) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing description or reference',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-
-          const dateStr = getValue(dateIndex);
-          const description = baseDescription;
-          const referenceValue = rawReference || '';
-          const withdrawalStr = getValue(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
-          const depositStr = getValue(depositIndex >= 0 ? depositIndex : creditIndex);
-          const balanceStr = getValue(balanceIndex);
-          const amountStr = getValue(amountIndex);
-          const typeIndicator = getValue(typeIndex);
-
-          const parsedDate = parseDate(dateStr);
-          const effectiveDate = parsedDate ?? lastKnownDate;
-          if (!effectiveDate) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing or invalid date',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-          if (parsedDate) {
-            lastKnownDate = parsedDate;
-          }
-
-          const reference = referenceText;
-          const finalDescription = description || reference || `Statement row ${rawRowCount}`;
-
-          const withdrawalRaw = parseAmount(withdrawalStr);
-          const depositRaw = parseAmount(depositStr);
-          const balance = parseAmount(balanceStr);
-          const amountValue = parseAmount(amountStr);
-          const derivedType = determineTypeFromIndicator(typeIndicator);
-
-          let withdrawal = normalizeAmount(withdrawalRaw);
-          let deposit = normalizeAmount(depositRaw);
-
-          if ((withdrawal === null && deposit === null) && amountValue !== null && amountValue !== 0) {
-            if (derivedType === 'credit') {
-              deposit = Math.abs(amountValue);
-            } else if (derivedType === 'debit') {
-              withdrawal = Math.abs(amountValue);
-            } else if (amountValue > 0) {
-              deposit = amountValue;
-            } else if (amountValue < 0) {
-              withdrawal = Math.abs(amountValue);
-            }
-          }
-
-          if (withdrawal === null && deposit === null) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing debit/credit amount',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-
-          transactions.push({
-            date: effectiveDate,
-            description: finalDescription,
-            withdrawal: withdrawal && withdrawal > 0 ? withdrawal : null,
-            deposit: deposit && deposit > 0 ? deposit : null,
-            balance: balance || null,
-            type: deposit && deposit > 0 ? 'credit' : 'debit',
-            reference: reference || undefined,
-          });
-        }
-
-        const warnings: string[] = [];
-        if (skippedRowCount > 0) {
-          warnings.push(`${skippedRowCount} row${skippedRowCount === 1 ? '' : 's'} skipped due to missing dates or amounts.`);
-        }
-
-        resolve({ transactions, rawRowCount, skippedRowCount, warnings, skippedRows });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-}
+const COLUMN_ALIASES = {
+  date: ['Date', 'Transaction Date', 'Value Date', 'Posting Date', 'date', 'DATE', 'Transaction_Date', 'Value_Date'],
+  description: ['Description', 'Particulars', 'Narration', 'Remarks', 'Transaction Details', 'Narration/Description', 'description', 'DESCRIPTION', 'Particulars/Narration', 'Transaction_Details'],
+  debit: ['Debit', 'Withdrawal', 'Withdraw', 'Dr', 'DR', 'Debit Amount', 'Withdrawal Amount', 'debit', 'DEBIT', 'Debit_Amount'],
+  credit: ['Credit', 'Deposit', 'Dep', 'Cr', 'CR', 'Credit Amount', 'Deposit Amount', 'credit', 'CREDIT', 'Credit_Amount'],
+  balance: ['Balance', 'Closing Balance', 'Running Balance', 'Available Balance', 'balance', 'BALANCE', 'Closing_Balance', 'Running_Balance'],
+  reference: ['Reference', 'Cheque No', 'Cheque Number', 'Chq No', 'Chq Number', 'UTR', 'Transaction ID', 'Ref No', 'Reference No', 'reference', 'REFERENCE', 'Cheque_No', 'Transaction_ID', 'UTR_No']
+};
 
 /**
- * Parse Excel file
+ * Find column index by checking multiple possible names
  */
-export function parseExcel(file: File): Promise<ParseResult> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array', raw: false });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as any[][];
-
-        if (json.length < 2) {
-          reject(new Error('Excel file is empty or invalid'));
-          return;
-        }
-
-        // Detect header row - always use row 0 (A1) for headers, start data from row 1 (A2)
-        const headerRow = json[0]?.map((h: any) => String(h || '').toLowerCase()) || [];
-        
-        let dateIndex = -1;
-        let descIndex = -1;
-        let debitIndex = -1;
-        let creditIndex = -1;
-        let withdrawalIndex = -1;
-        let depositIndex = -1;
-        let balanceIndex = -1;
-        let amountIndex = -1;
-        let typeIndex = -1;
-        let referenceIndex = -1;
-
-        headerRow.forEach((header, index) => {
-          const h = String(header || '').toLowerCase();
-          const normalized = h.replace(/\s+/g, '');
-          if (h.includes('date')) dateIndex = index;
-          if (h.includes('description') || h.includes('particulars') || h.includes('narration') || h.includes('details')) descIndex = index;
-          if (/\b(dr|debit|withdrawal)\b/.test(h)) {
-            debitIndex = index;
-            withdrawalIndex = index;
-          }
-          if (/\b(cr|credit|deposit)\b/.test(h)) {
-            creditIndex = index;
-            depositIndex = index;
-          }
-          if ((h.includes('amount') || h.includes('amt')) && !h.includes('balance') && amountIndex === -1) {
-            amountIndex = index;
-          }
-          if (h.includes('balance')) balanceIndex = index;
-          if (
-            typeIndex === -1 &&
-            (
-              h.includes('dr/cr') ||
-              h.includes('cr/dr') ||
-              normalized === 'drcr' ||
-              normalized === 'crdr' ||
-              h.includes('txn type') ||
-              h.includes('transaction type') ||
-              h.includes('debit/credit')
-            )
-          ) {
-            typeIndex = index;
-          }
-          if (
-            referenceIndex === -1 &&
-            (
-              h.includes('reference') ||
-              h.includes('utr') ||
-              h.includes('cheque') ||
-              h.includes('instrument') ||
-              h.includes('transaction id') ||
-              normalized === 'refno' ||
-              normalized === 'ref' ||
-              normalized === 'utrno'
-            )
-          ) {
-            referenceIndex = index;
-          }
-        });
-
-        // Default indices if not found
-        if (dateIndex === -1) dateIndex = 0;
-        if (descIndex === -1) descIndex = 1;
-        if (withdrawalIndex === -1 && debitIndex === -1) withdrawalIndex = 2;
-        if (depositIndex === -1 && creditIndex === -1) depositIndex = 3;
-
-        const transactions: ParsedTransaction[] = [];
-        const skippedRows: SkippedRow[] = [];
-        const hasHeaderRow = headerRow.some(h => h.includes('date') || h.includes('description') || h.includes('particulars'));
-        // Always start from row 1 (A2) - skip row 0 (A1) which is assumed to be header
-        const startIndex = 1;
-        let rawRowCount = 0;
-        let skippedRowCount = 0;
-        let lastKnownDate: string | null = null;
-
-        for (let i = startIndex; i < json.length; i++) {
-          const row = json[i];
-          if (!row || row.length < 2) continue;
-
-          const getCell = (idx: number) =>
-            idx >= 0 && idx < row.length ? row[idx] : '';
-
-          const hasContent = row.some(cell => {
-            if (cell === null || cell === undefined) return false;
-            return String(cell).trim() !== '';
-          });
-          if (!hasContent) continue;
-
-          const displayRowNumber = i + 1;
-          const rawSnapshot = row.map(cell => String(cell ?? '')).join(' | ');
-          rawRowCount++;
-
-          const referenceValue = referenceIndex >= 0 ? String(getCell(referenceIndex) || '') : '';
-          const descriptionRaw = String(getCell(descIndex) || '').trim();
-
-          if (!referenceValue.trim() && !descriptionRaw) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing description or reference',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-
-          const dateStr = String(getCell(dateIndex) || '');
-          const withdrawalStr = getCell(withdrawalIndex >= 0 ? withdrawalIndex : debitIndex);
-          const depositStr = getCell(depositIndex >= 0 ? depositIndex : creditIndex);
-          const balanceStr = getCell(balanceIndex);
-          const amountStr = getCell(amountIndex);
-          const typeIndicator = getCell(typeIndex);
-
-          const parsedDate = parseDate(dateStr);
-          const effectiveDate = parsedDate ?? lastKnownDate;
-          if (!effectiveDate) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing or invalid date',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-          if (parsedDate) {
-            lastKnownDate = parsedDate;
-          }
-
-          const reference = referenceValue.trim();
-          const finalDescription = descriptionRaw || reference || `Statement row ${rawRowCount}`;
-
-          const withdrawalRaw = parseAmount(withdrawalStr);
-          const depositRaw = parseAmount(depositStr);
-          const balance = parseAmount(balanceStr);
-          const amountValue = parseAmount(amountStr);
-          const derivedType = determineTypeFromIndicator(typeIndicator);
-
-          let withdrawal = normalizeAmount(withdrawalRaw);
-          let deposit = normalizeAmount(depositRaw);
-
-          if ((withdrawal === null && deposit === null) && amountValue !== null && amountValue !== 0) {
-            if (derivedType === 'credit') {
-              deposit = Math.abs(amountValue);
-            } else if (derivedType === 'debit') {
-              withdrawal = Math.abs(amountValue);
-            } else if (amountValue > 0) {
-              deposit = amountValue;
-            } else if (amountValue < 0) {
-              withdrawal = Math.abs(amountValue);
-            }
-          }
-
-          if (withdrawal === null && deposit === null) {
-            skippedRowCount++;
-            skippedRows.push({
-              rowNumber: displayRowNumber,
-              reason: 'Missing debit/credit amount',
-              raw: rawSnapshot,
-            });
-            continue;
-          }
-
-          transactions.push({
-            date: effectiveDate,
-            description: finalDescription,
-            withdrawal: withdrawal && withdrawal > 0 ? withdrawal : null,
-            deposit: deposit && deposit > 0 ? deposit : null,
-            balance: balance || null,
-            type: deposit && deposit > 0 ? 'credit' : 'debit',
-            reference: reference || undefined,
-          });
-        }
-
-        const warnings: string[] = [];
-        if (skippedRowCount > 0) {
-          warnings.push(`${skippedRowCount} row${skippedRowCount === 1 ? '' : 's'} skipped due to missing dates or amounts.`);
-        }
-
-        resolve({ transactions, rawRowCount, skippedRowCount, warnings, skippedRows });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-/**
- * Parse PDF file
- * Note: PDF parsing requires pdfjs-dist library. For now, we provide a helpful error message.
- * Users can convert PDF to CSV/Excel or use a backend API for PDF processing.
- * 
- * To enable PDF parsing, install: npm install pdfjs-dist
- * Then uncomment and use the pdf.js implementation below.
- */
-export function parsePDF(file: File): Promise<ParseResult> {
-  return new Promise((resolve, reject) => {
-    // For now, show a helpful message
-    // PDF parsing can be enabled by installing pdfjs-dist and implementing the parser
-    reject(new Error(
-      'PDF parsing is currently not available in the browser. ' +
-      'Please convert your PDF bank statement to CSV or Excel format. ' +
-      'Most banks allow you to download statements in CSV/Excel format. ' +
-      'Alternatively, you can use online PDF to Excel converters. ' +
-      'We recommend using CSV or Excel format for best results.'
-    ));
-    
-    /* 
-    // Uncomment this when pdfjs-dist is installed:
-    try {
-      // Dynamic import of pdf.js to avoid SSR issues
-      const pdfjsLib = await import('pdfjs-dist');
-      
-      // Set worker source
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-      
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      
-      // Extract text and parse transactions...
-      // (Implementation would go here)
-      
-    } catch (error: any) {
-      reject(new Error(`PDF parsing failed: ${error.message}`));
-    }
-    */
-  });
-}
-
-/**
- * Parse date string in various formats
- */
-function parseDate(dateStr: string): string | null {
-  if (!dateStr) return null;
-  const trimmed = dateStr.trim();
-  if (!trimmed) return null;
-
-  const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-  const normalizeMonth = (value: string): number | null => {
-    const monthIndex = MONTH_NAMES.findIndex(m => value.toLowerCase().startsWith(m));
-    return monthIndex === -1 ? null : monthIndex + 1;
-  };
-  const normalizeYear = (value: string): string => {
-    if (value.length === 2) {
-      const num = Number(value);
-      const century = num > 50 ? '19' : '20';
-      return `${century}${value}`;
-    }
-    return value.padStart(4, '0');
-  };
-  const buildISODate = (year: string, month: number, day: string) => {
-    const monthString = String(month).padStart(2, '0');
-    const dayString = day.padStart(2, '0');
-    return `${normalizeYear(year)}-${monthString}-${dayString}`;
-  };
-
-  // Try parsing as Excel date number
-  const excelCandidate = Number(trimmed);
-  if (!Number.isNaN(excelCandidate) && /^\d+(\.\d+)?$/.test(trimmed)) {
-    if (excelCandidate > 25569) { // Excel epoch starts at 1900-01-01
-      const date = new Date((excelCandidate - 25569) * 86400 * 1000);
-      if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
-      }
-    }
-  }
-
-  const textualPatterns: Array<{ regex: RegExp; handler: (match: RegExpMatchArray) => string | null }> = [
-    {
-      // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
-      regex: /(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{2,4})/,
-      handler: ([, day, month, year]) => `${normalizeYear(year)}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-    },
-    {
-      // YYYY-MM-DD or YYYY/MM/DD
-      regex: /(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/,
-      handler: ([, year, month, day]) => `${normalizeYear(year)}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-    },
-    {
-      // DD MMM YYYY (space)
-      regex: /(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{2,4})/,
-      handler: ([, day, monthText, year]) => {
-        const month = normalizeMonth(monthText);
-        return month ? buildISODate(year, month, day) : null;
-      }
-    },
-    {
-      // DD-MMM-YYYY or DD.MMM.YYYY
-      regex: /(\d{1,2})[-\.](\w{3,})[-\.](\d{2,4})/,
-      handler: ([, day, monthText, year]) => {
-        const month = normalizeMonth(monthText);
-        return month ? buildISODate(year, month, day) : null;
-      }
-    },
-    {
-      // MMM-DD-YYYY or MMM DD YYYY
-      regex: /([A-Za-z]{3,})[-\s\.](\d{1,2})[-\s\.](\d{2,4})/,
-      handler: ([, monthText, day, year]) => {
-        const month = normalizeMonth(monthText);
-        return month ? buildISODate(year, month, day) : null;
-      }
-    },
-    {
-      // YYYY-MMM-DD
-      regex: /(\d{2,4})[-\/\.]([A-Za-z]{3,})[-\/\.](\d{1,2})/,
-      handler: ([, year, monthText, day]) => {
-        const month = normalizeMonth(monthText);
-        return month ? buildISODate(year, month, day) : null;
-      }
-    }
-  ];
-
-  for (const pattern of textualPatterns) {
-    const match = trimmed.match(pattern.regex);
-    if (match) {
-      const result = pattern.handler(match);
-      if (result) return result;
-    }
-  }
-
-  // Try direct Date parsing
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime())) {
-    return parsed.toISOString().split('T')[0];
-  }
-
-  return null;
-}
-
-function determineTypeFromIndicator(value?: unknown): 'credit' | 'debit' | null {
-  const normalized = typeof value === 'string'
-    ? value.toLowerCase().trim()
-    : typeof value === 'number'
-      ? String(value).toLowerCase().trim()
-      : '';
-
-  if (!normalized) return null;
-
-  const alphanumeric = normalized.replace(/[^a-z]/g, '');
-  const creditKeywords = ['cr', 'credit', 'c', 'receipt', 'deposit', 'inward', 'received'];
-  const debitKeywords = ['dr', 'debit', 'd', 'payment', 'withdrawal', 'wdl', 'outward', 'paid'];
-
-  if (creditKeywords.some(keyword => alphanumeric === keyword || normalized.includes(keyword))) {
-    return 'credit';
-  }
-
-  if (debitKeywords.some(keyword => alphanumeric === keyword || normalized.includes(keyword))) {
-    return 'debit';
-  }
-
-  return null;
-}
-
-/**
- * Auto-detect transaction type and suggest account
- */
-export function categorizeTransaction(description: string): {
-  type: 'receipt' | 'payment' | 'unknown';
-  suggestedAccount?: string;
-  category?: string;
-} {
-  const desc = description.toLowerCase();
+function findColumnIndex(row: any, aliases: string[]): number {
+  const keys = Object.keys(row);
   
-  // Receipt patterns
-  const receiptPatterns = [
-    { pattern: /salary|income|revenue|sale|invoice|payment received|credit|deposit|refund/i, account: '4010', category: 'Revenue' },
-    { pattern: /loan|advance received|borrowed/i, account: '1610', category: 'Loan' },
-    { pattern: /investment|dividend|interest received/i, account: '1410', category: 'Investment' },
-  ];
-
-  // Payment patterns
-  const paymentPatterns = [
-    { pattern: /rent|lease|accommodation/i, account: '5010', category: 'Rent' },
-    { pattern: /salary|wages|payroll|employee/i, account: '5020', category: 'Salaries' },
-    { pattern: /electricity|power|utility/i, account: '5030', category: 'Utilities' },
-    { pattern: /phone|telecom|mobile/i, account: '5030', category: 'Utilities' },
-    { pattern: /internet|broadband/i, account: '5030', category: 'Utilities' },
-    { pattern: /purchase|buy|vendor|supplier|bill/i, account: '5050', category: 'Purchases' },
-    { pattern: /tax|gst|tds|income tax/i, account: '2110', category: 'Tax' },
-    { pattern: /loan repayment|emi|installment/i, account: '1610', category: 'Loan' },
-    { pattern: /insurance|premium/i, account: '5040', category: 'Insurance' },
-    { pattern: /maintenance|repair|service/i, account: '5060', category: 'Maintenance' },
-  ];
-
-  for (const receipt of receiptPatterns) {
-    if (receipt.pattern.test(desc)) {
-      return { type: 'receipt', suggestedAccount: receipt.account, category: receipt.category };
+  for (const alias of aliases) {
+    // Exact match (case-insensitive)
+    const exactMatch = keys.find(key => key.toLowerCase() === alias.toLowerCase());
+    if (exactMatch !== undefined) {
+      return keys.indexOf(exactMatch);
+    }
+    
+    // Partial match (contains)
+    const partialMatch = keys.find(key => key.toLowerCase().includes(alias.toLowerCase()) || alias.toLowerCase().includes(key.toLowerCase()));
+    if (partialMatch !== undefined) {
+      return keys.indexOf(partialMatch);
     }
   }
-
-  for (const payment of paymentPatterns) {
-    if (payment.pattern.test(desc)) {
-      return { type: 'payment', suggestedAccount: payment.account, category: payment.category };
-    }
-  }
-
-  return { type: 'unknown' };
+  
+  return -1;
 }
 
+/**
+ * Get column value from row using aliases
+ */
+function getColumnValue(row: any, aliases: string[]): string | number | null {
+  const keys = Object.keys(row);
+  
+  for (const alias of aliases) {
+    const key = keys.find(k => k.toLowerCase() === alias.toLowerCase() || 
+                                k.toLowerCase().includes(alias.toLowerCase()) ||
+                                alias.toLowerCase().includes(k.toLowerCase()));
+    if (key && row[key] !== undefined && row[key] !== null && row[key] !== '') {
+      return row[key];
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Normalize date to DD/MM/YYYY format
+ * Handles various date formats: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.
+ */
+function normalizeDate(dateValue: any): string {
+  if (!dateValue) return '';
+  
+  const dateStr = String(dateValue).trim();
+  
+  // If already in DD/MM/YYYY format, return as is
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // Try to parse various formats
+  const formats = [
+    /^(\d{4})-(\d{2})-(\d{2})$/, // YYYY-MM-DD
+    /^(\d{2})\/(\d{2})\/(\d{4})$/, // MM/DD/YYYY or DD/MM/YYYY
+    /^(\d{2})-(\d{2})-(\d{4})$/, // DD-MM-YYYY or MM-DD-YYYY
+  ];
+  
+  for (const format of formats) {
+    const match = dateStr.match(format);
+    if (match) {
+      const [, part1, part2, year] = match;
+      // For YYYY-MM-DD, convert to DD/MM/YYYY
+      if (format.source.includes('\\d{4}') && format.source.startsWith('^')) {
+        return `${part2}/${part1}/${year}`;
+      }
+      // For MM/DD/YYYY, check if day > 12 (likely DD/MM/YYYY)
+      const num1 = parseInt(part1);
+      const num2 = parseInt(part2);
+      if (num1 > 12) {
+        // First part is day
+        return `${part1}/${part2}/${year}`;
+      } else if (num2 > 12) {
+        // Second part is day
+        return `${part2}/${part1}/${year}`;
+      } else {
+        // Ambiguous - assume DD/MM/YYYY (Indian format)
+        return `${part1}/${part2}/${year}`;
+      }
+    }
+  }
+  
+  // Try JavaScript Date parsing as fallback
+  try {
+    const date = new Date(dateValue);
+    if (!isNaN(date.getTime())) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  return dateStr; // Return as-is if can't parse
+}
+
+/**
+ * Normalize amount - remove currency symbols, commas, and convert to number
+ */
+function normalizeAmount(value: any): number {
+  if (value === null || value === undefined || value === '') return 0;
+  
+  // Convert to string and clean
+  let cleaned = String(value).trim();
+  
+  // Remove currency symbols (₹, $, etc.)
+  cleaned = cleaned.replace(/[₹$€£]/g, '');
+  
+  // Remove commas and spaces
+  cleaned = cleaned.replace(/,/g, '').replace(/\s/g, '');
+  
+  // Parse as float
+  const num = parseFloat(cleaned);
+  
+  return isNaN(num) ? 0 : Math.abs(num); // Always return positive, preserve sign in debit/credit
+}
+
+/**
+ * Normalize description - clean extra spaces and special characters
+ */
+function normalizeDescription(value: any): string {
+  if (!value) return '';
+  
+  let desc = String(value).trim();
+  // Remove extra whitespace
+  desc = desc.replace(/\s+/g, ' ');
+  // Remove special control characters but keep basic punctuation
+  desc = desc.replace(/[\x00-\x1F\x7F]/g, '');
+  
+  return desc;
+}
+
+/**
+ * Parse a single row from bank statement
+ */
+function parseTransactionRow(row: any, rowIndex: number): { transaction: BankTransaction | null; error: ParseError | null } {
+  try {
+    // Get date
+    const dateValue = getColumnValue(row, COLUMN_ALIASES.date);
+    const date = normalizeDate(dateValue);
+    
+    if (!date) {
+      return {
+        transaction: null,
+        error: {
+          row: rowIndex + 1,
+          message: 'Date column not found or empty',
+          data: row
+        }
+      };
+    }
+    
+    // Get description
+    const descriptionValue = getColumnValue(row, COLUMN_ALIASES.description);
+    const description = normalizeDescription(descriptionValue) || 'Bank Transaction';
+    
+    // Get debit and credit amounts
+    const debitValue = getColumnValue(row, COLUMN_ALIASES.debit);
+    const creditValue = getColumnValue(row, COLUMN_ALIASES.credit);
+    
+    const debit = debitValue ? normalizeAmount(debitValue) : 0;
+    const credit = creditValue ? normalizeAmount(creditValue) : 0;
+    
+    // Both debit and credit cannot be present for a single transaction
+    // If both are present, prioritize the non-zero value
+    let finalDebit = 0;
+    let finalCredit = 0;
+    
+    if (debit > 0 && credit > 0) {
+      // Both present - this might be a split transaction or error
+      // Prioritize the larger value or check if one is clearly the withdrawal/deposit
+      if (debit >= credit) {
+        finalDebit = debit;
+        finalCredit = 0;
+      } else {
+        finalDebit = 0;
+        finalCredit = credit;
+      }
+    } else if (debit > 0) {
+      finalDebit = debit;
+      finalCredit = 0;
+    } else if (credit > 0) {
+      finalDebit = 0;
+      finalCredit = credit;
+    } else {
+      // No amount found - skip this row
+      return {
+        transaction: null,
+        error: {
+          row: rowIndex + 1,
+          message: 'No debit or credit amount found',
+          data: row
+        }
+      };
+    }
+    
+    // Get balance (optional)
+    const balanceValue = getColumnValue(row, COLUMN_ALIASES.balance);
+    const balance = balanceValue ? normalizeAmount(balanceValue) : 0;
+    
+    // Get reference (optional)
+    const referenceValue = getColumnValue(row, COLUMN_ALIASES.reference);
+    const reference = referenceValue ? String(referenceValue).trim() : undefined;
+    
+    const transaction: BankTransaction = {
+      date,
+      description,
+      debit: finalDebit,
+      credit: finalCredit,
+      balance,
+      reference,
+      rowIndex: rowIndex + 1
+    };
+    
+    return { transaction, error: null };
+    
+  } catch (error: any) {
+    return {
+      transaction: null,
+      error: {
+        row: rowIndex + 1,
+        message: `Error parsing row: ${error.message || 'Unknown error'}`,
+        data: row
+      }
+    };
+  }
+}
+
+/**
+ * Parse CSV data using PapaParse for robust CSV handling
+ */
+export function parseBankStatementCSV(csvText: string): BankStatementParseResult {
+  const errors: ParseError[] = [];
+  const transactions: BankTransaction[] = [];
+  
+  try {
+    // Use PapaParse for robust CSV handling
+    // This handles quoted fields, commas in fields, etc.
+    const parseResult = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false, // Keep as strings for consistent processing
+      transformHeader: (header: string) => header.trim(), // Trim header whitespace
+      transform: (value: string) => value?.trim() || '' // Trim cell values
+    });
+    
+    if (parseResult.errors && parseResult.errors.length > 0) {
+      // Log parsing errors but continue processing
+      parseResult.errors.forEach((err: any) => {
+        if (err.row !== undefined) {
+          errors.push({
+            row: err.row + 2, // +2 because row is 0-indexed and we have header
+            message: `CSV parsing error: ${err.message || 'Unknown error'}`,
+          });
+        }
+      });
+    }
+    
+    const jsonData = parseResult.data as any[];
+    
+    if (!jsonData || jsonData.length === 0) {
+      return {
+        transactions: [],
+        errors: [{ row: 0, message: 'CSV file appears to be empty or has no data rows' }],
+        format: 'csv'
+      };
+    }
+    
+    // Process each row
+    for (let i = 0; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      
+      // Skip if row is empty (all values are null/undefined/empty string)
+      const hasData = Object.values(row).some(value => 
+        value !== null && value !== undefined && String(value).trim() !== ''
+      );
+      
+      if (!hasData) {
+        continue;
+      }
+      
+      const result = parseTransactionRow(row, i);
+      if (result.error) {
+        errors.push(result.error);
+      } else if (result.transaction) {
+        transactions.push(result.transaction);
+      }
+    }
+    
+  } catch (error: any) {
+    errors.push({
+      row: 0,
+      message: `CSV parsing error: ${error.message || 'Unknown error'}`,
+    });
+  }
+  
+  return {
+    transactions,
+    errors,
+    format: 'csv'
+  };
+}
+
+/**
+ * Basic CSV parser fallback (if PapaParse is not available)
+ * This is a simple implementation that may not handle all edge cases
+ */
+function parseBankStatementCSVBasic(csvText: string): BankStatementParseResult {
+  const errors: ParseError[] = [];
+  const transactions: BankTransaction[] = [];
+  
+  try {
+    const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    if (lines.length < 2) {
+      return {
+        transactions: [],
+        errors: [{ row: 0, message: 'CSV file must have at least a header row and one data row' }],
+        format: 'csv'
+      };
+    }
+    
+    // Parse header
+    const headerLine = lines[0];
+    const headers = headerLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    
+    // Parse data rows
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      
+      // Create row object
+      const row: any = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+      
+      // Skip if all values are empty
+      if (values.every(v => !v || v === '')) {
+        continue;
+      }
+      
+      const result = parseTransactionRow(row, i);
+      if (result.error) {
+        errors.push(result.error);
+      } else if (result.transaction) {
+        transactions.push(result.transaction);
+      }
+    }
+    
+  } catch (error: any) {
+    errors.push({
+      row: 0,
+      message: `CSV parsing error: ${error.message || 'Unknown error'}`,
+    });
+  }
+  
+  return {
+    transactions,
+    errors,
+    format: 'csv'
+  };
+}
+
+/**
+ * Parse Excel/JSON data (from XLSX.utils.sheet_to_json)
+ */
+export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResult {
+  const errors: ParseError[] = [];
+  const transactions: BankTransaction[] = [];
+  
+  if (!jsonData || jsonData.length === 0) {
+    return {
+      transactions: [],
+      errors: [{ row: 0, message: 'Excel file appears to be empty or has no data rows' }],
+      format: 'excel'
+    };
+  }
+  
+  for (let i = 0; i < jsonData.length; i++) {
+    const row = jsonData[i];
+    
+    // Skip if row is empty (all values are null/undefined/empty string)
+    const hasData = Object.values(row).some(value => 
+      value !== null && value !== undefined && String(value).trim() !== ''
+    );
+    
+    if (!hasData) {
+      continue;
+    }
+    
+    const result = parseTransactionRow(row, i);
+    if (result.error) {
+      errors.push(result.error);
+    } else if (result.transaction) {
+      transactions.push(result.transaction);
+    }
+  }
+  
+  return {
+    transactions,
+    errors,
+    format: 'excel'
+  };
+}
+
+/**
+ * Main parser function - determines format and parses accordingly
+ */
+export function parseBankStatement(
+  fileContent: ArrayBuffer | string,
+  fileName: string
+): BankStatementParseResult {
+  const fileExtension = fileName.split('.').pop()?.toLowerCase();
+  
+  if (fileExtension === 'csv') {
+    const csvText = typeof fileContent === 'string' 
+      ? fileContent 
+      : new TextDecoder().decode(fileContent);
+    return parseBankStatementCSV(csvText);
+  } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    // This should be called with pre-parsed JSON data from XLSX
+    // The actual Excel parsing should happen in the API route
+    return {
+      transactions: [],
+      errors: [{ row: 0, message: 'Excel parsing should be done via parseBankStatementExcel with pre-parsed JSON data' }],
+      format: 'excel'
+    };
+  } else {
+    return {
+      transactions: [],
+      errors: [{ row: 0, message: `Unsupported file format: ${fileExtension}. Please upload CSV or Excel file.` }],
+      format: 'csv' // Default
+    };
+  }
+}
