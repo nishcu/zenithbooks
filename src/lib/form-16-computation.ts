@@ -370,7 +370,11 @@ export class Form16ComputationEngine {
     const taxAfterSurcharge = taxOnIncome + surcharge;
     const rebate87A = this.calculateRebate87A(income, taxAfterSurcharge);
     const taxAfterRebate = Math.max(0, taxAfterSurcharge - rebate87A);
-    const healthEducationCess = taxAfterRebate * this.taxRegimeConfig.cess;
+    
+    // Get regime-specific cess rate (4% for both regimes)
+    const regimeConfig = regime === 'OLD' ? this.taxRegimeConfig.oldRegime : this.taxRegimeConfig.newRegime;
+    const cessRate = regimeConfig.cess || 0.04; // Default to 4% if not defined
+    const healthEducationCess = Math.round(taxAfterRebate * cessRate);
     const totalTaxLiability = taxAfterRebate + healthEducationCess;
 
     return {

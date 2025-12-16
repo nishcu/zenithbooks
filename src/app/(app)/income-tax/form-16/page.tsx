@@ -1612,7 +1612,7 @@ export default function Form16() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Add: Health & Education Cess @4%:</span>
-                          <span className="font-mono">₹{computationResult.healthEducationCess.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">₹{(computationResult.healthEducationCess || 0).toLocaleString('en-IN')}</span>
                         </div>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">

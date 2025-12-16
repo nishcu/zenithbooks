@@ -601,12 +601,12 @@ export class Form16PDFGenerator {
     yPos += 8;
 
     const taxData = [
-      ['(a) Tax on Total Income', partB.taxOnIncome.toLocaleString('en-IN')],
-      ['(b) Surcharge (if applicable)', partB.surcharge.toLocaleString('en-IN')],
-      ['(c) Health and Education Cess @ 4%', partB.healthEducationCess.toLocaleString('en-IN')],
-      ['Total Tax Liability (a+b+c)', partB.totalTaxLiability.toLocaleString('en-IN')],
-      ['(d) Rebate under section 87A', partB.rebate87A.toLocaleString('en-IN')],
-      ['Tax after Rebate u/s 87A', partB.taxAfterRebate.toLocaleString('en-IN')]
+      ['(a) Tax on Total Income', (partB.taxOnIncome || 0).toLocaleString('en-IN')],
+      ['(b) Surcharge (if applicable)', (partB.surcharge || 0).toLocaleString('en-IN')],
+      ['(c) Health and Education Cess @ 4%', (partB.healthEducationCess || 0).toLocaleString('en-IN')],
+      ['Total Tax Liability (a+b+c)', (partB.totalTaxLiability || 0).toLocaleString('en-IN')],
+      ['(d) Rebate under section 87A', (partB.rebate87A || 0).toLocaleString('en-IN')],
+      ['Tax after Rebate u/s 87A', (partB.taxAfterRebate || 0).toLocaleString('en-IN')]
     ];
 
     // Call autoTable directly (already validated during initialization)
