@@ -244,12 +244,11 @@ export default function Form16() {
     setValidationErrors([]);
     setIsLoading(true);
     try {
-      const idToken = await user!.getIdToken();
       const response = await fetch('/api/form-16/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
+          'x-user-id': user!.uid
         },
         body: JSON.stringify({
           employeeId: form16Data.employeeId,
@@ -305,12 +304,11 @@ export default function Form16() {
 
     setIsLoading(true);
     try {
-      const idToken = await user!.getIdToken();
       const response = await fetch('/api/form-16/bulk-generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
+          'x-user-id': user!.uid
         },
         body: JSON.stringify({
           employeeIds: selectedEmployees.map(emp => emp.id),
