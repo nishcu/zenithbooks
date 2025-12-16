@@ -1155,8 +1155,12 @@ export default function Form16() {
                       <Label>Employer TAN</Label>
                       <Input
                         value={form16Data.employerTan}
-                        onChange={(e) => setForm16Data(prev => ({ ...prev, employerTan: e.target.value }))}
-                        placeholder="Enter TAN"
+                        onChange={(e) => {
+                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          setForm16Data(prev => ({ ...prev, employerTan: value }));
+                        }}
+                        placeholder="BLDPS7631C (4 letters, 5 digits, 1 letter)"
+                        maxLength={10}
                       />
                     </div>
                     <div className="space-y-2">
