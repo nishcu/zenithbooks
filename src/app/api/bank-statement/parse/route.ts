@@ -3,6 +3,10 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { parseBankStatementCSV, parseBankStatementExcel, type BankTransaction, type BankStatementParseResult } from '@/lib/bank-statement-parser';
 
+// Route configuration
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/bank-statement/parse
  * 

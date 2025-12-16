@@ -6,6 +6,10 @@ import {
 } from '@/lib/journal-template-generator';
 import type { BankTransaction } from '@/lib/bank-statement-parser';
 
+// Route configuration
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/bank-statement/generate-template
  * 
