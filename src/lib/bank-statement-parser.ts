@@ -510,32 +510,12 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       };
     }
     
-    // Split text into lines
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    // Split text into lines - also try splitting by multiple spaces or tabs
+    const rawLines = text.split(/\n|\r\n/);
+    const lines = rawLines.map(line => line.trim()).filter(line => line.length > 3); // Minimum 3 chars
     
-    // Try to find transaction patterns in the text
-    // Common patterns:
-    // - Date Description Amount
-    // - DD/MM/YYYY Description DR/CR Amount
-    // - Date | Description | Debit | Credit | Balance
-    
-    // Look for table-like structures or transaction lines
-    let transactionStartIndex = -1;
-    
-    // Find header row or transaction start
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].toLowerCase();
-      if (line.includes('date') && (line.includes('description') || line.includes('particulars') || line.includes('narration'))) {
-        transactionStartIndex = i + 1;
-        break;
-      }
-    }
-    
-    // If no header found, start from beginning (PDFs vary)
-    const startIndex = transactionStartIndex > 0 ? transactionStartIndex : 0;
-    
-    // Parse lines as transactions
-    for (let i = startIndex; i < lines.length; i++) {
+    // More aggressive parsing - try to extract ANY line with date and amount
+    // Don't skip lines unless they're clearly headers/footers
       const line = lines[i];
       
       // Skip header rows, summary rows, etc.
@@ -557,13 +537,30 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
         
         const dateStr = dateMatch[0].replace(/-/g, '/');
         
-        // Extract amounts - more flexible pattern
-        // Match numbers with commas, decimals, currency symbols
-        const amountPattern = /(?:₹|Rs\.?|INR\s*|)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d{2})?)/gi;
+        // Extract amounts - very flexible pattern
+        // Match ANY number that could be an amount (with or without currency)
+        const amountPattern = /(?:₹|Rs\.?|INR\s*|)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d{2})?|\d+\.\d{2}|\d+)/gi;
         const amountMatches: string[] = [];
         let match;
         while ((match = amountPattern.exec(line)) !== null) {
-          amountMatches.push(match[0]);
+          const amount = match[0].replace(/[₹Rs.,INR\s]/g, '');
+          const numValue = parseFloat(amount);
+          // Only consider amounts >= 1 (skip small numbers that are likely not transactions)
+          if (!isNaN(numValue) && numValue >= 1) {
+            amountMatches.push(match[0]);
+          }
+        }
+        
+        // If no amounts found, try simpler pattern - just look for large numbers
+        if (amountMatches.length === 0) {
+          const simpleNumberPattern = /\b(\d{3,}(?:\.\d{2})?)\b/g;
+          let simpleMatch;
+          while ((simpleMatch = simpleNumberPattern.exec(line)) !== null) {
+            const numValue = parseFloat(simpleMatch[1].replace(/,/g, ''));
+            if (numValue >= 100) { // Only amounts >= 100
+              amountMatches.push(simpleMatch[1]);
+            }
+          }
         }
         
         if (!amountMatches || amountMatches.length === 0) continue;

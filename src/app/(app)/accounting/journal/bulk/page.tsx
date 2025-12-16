@@ -987,10 +987,18 @@ export default function BulkJournalEntryPage() {
             setBankTransactions(data.transactions || []);
             setBankStatementErrors(data.errors || []);
 
-            toast({
-                title: "Bank Statement Parsed",
-                description: `Successfully parsed ${data.validTransactions} transactions. ${data.errorCount} errors found.`,
-            });
+            if (data.validTransactions === 0 && data.errorCount > 0) {
+                toast({
+                    variant: "destructive",
+                    title: "No Transactions Found",
+                    description: data.errors?.[0]?.message || "Could not extract transactions from PDF. Please convert to CSV or Excel format and try again.",
+                });
+            } else {
+                toast({
+                    title: "Bank Statement Parsed",
+                    description: `Successfully parsed ${data.validTransactions} transactions. ${data.errorCount} errors found.`,
+                });
+            }
         } catch (error: any) {
             console.error('Bank statement parse error:', error);
             toast({
