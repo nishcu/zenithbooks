@@ -96,8 +96,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Bank statement parse error:', error);
+    console.error('Error stack:', error.stack);
+    
     // Suppress params-related errors (Next.js 15 issue, doesn't affect functionality)
-    const errorMessage = error.message || 'Unknown error';
+    const errorMessage = error.message || String(error) || 'Unknown error';
+    
     if (errorMessage.includes('params') && errorMessage.includes('read only')) {
       console.warn('Ignoring params error (Next.js 15 known issue)');
       // Return empty result instead of error for params issues
@@ -109,13 +112,37 @@ export async function POST(request: NextRequest) {
         totalRows: 0,
         validTransactions: 0,
         errorCount: 1,
-        fileName: fileName
+        fileName: fileName || 'unknown'
       }, { status: 200 });
     }
+    
+    // Handle specific PDF parsing errors
+    if (errorMessage.includes('worker') || errorMessage.includes('pdf-parse') || errorMessage.includes('PDFParse')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'PDF parsing failed. Please convert your bank statement to CSV or Excel format and try again.',
+          transactions: [],
+          errors: [{ row: 0, message: errorMessage }],
+          format: 'pdf',
+          totalRows: 0,
+          validTransactions: 0,
+          errorCount: 1
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: `Failed to parse bank statement: ${errorMessage}` 
+        error: `Failed to parse bank statement: ${errorMessage}. Please ensure the file format is correct and try again.`,
+        transactions: [],
+        errors: [{ row: 0, message: errorMessage }],
+        format: fileExtension || 'unknown',
+        totalRows: 0,
+        validTransactions: 0,
+        errorCount: 1
       },
       { status: 500 }
     );

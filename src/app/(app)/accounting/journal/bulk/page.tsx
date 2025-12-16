@@ -1011,6 +1011,85 @@ export default function BulkJournalEntryPage() {
         }
     };
 
+    const handleDownloadBankStatementTemplate = () => {
+        // Create sample bank statement template data
+        const templateData = [
+            {
+                Date: '2024-01-15',
+                Description: 'Salary Credit',
+                Debit: '',
+                Credit: '50000',
+                Balance: '150000'
+            },
+            {
+                Date: '2024-01-16',
+                Description: 'ATM Withdrawal',
+                Debit: '5000',
+                Credit: '',
+                Balance: '145000'
+            },
+            {
+                Date: '2024-01-17',
+                Description: 'UPI Payment - Grocery Store',
+                Debit: '2500',
+                Credit: '',
+                Balance: '142500'
+            },
+            {
+                Date: '2024-01-18',
+                Description: 'Interest Credit',
+                Debit: '',
+                Credit: '125.50',
+                Balance: '142625.50'
+            },
+            {
+                Date: '2024-01-19',
+                Description: 'Cheque Deposit',
+                Debit: '',
+                Credit: '10000',
+                Balance: '152625.50'
+            }
+        ];
+
+        // Create workbook with sample data
+        const ws = XLSX.utils.json_to_sheet(templateData);
+        
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 12 }, // Date
+            { wch: 30 }, // Description
+            { wch: 15 }, // Debit
+            { wch: 15 }, // Credit
+            { wch: 15 }  // Balance
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Bank Statement");
+
+        // Add instructions sheet
+        const instructions = [
+            { Column: "Date", Description: "Transaction date in YYYY-MM-DD format (e.g., 2024-01-15)" },
+            { Column: "Description", Description: "Transaction description or narration" },
+            { Column: "Debit", Description: "Amount debited/withdrawn (leave empty if credit transaction)" },
+            { Column: "Credit", Description: "Amount credited/deposited (leave empty if debit transaction)" },
+            { Column: "Balance", Description: "Account balance after transaction (optional, used for validation)" }
+        ];
+        const wsInstructions = XLSX.utils.json_to_sheet(instructions);
+        wsInstructions['!cols'] = [
+            { wch: 15 }, // Column
+            { wch: 80 }  // Description
+        ];
+        XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
+
+        // Download the file
+        XLSX.writeFile(wb, "bank-statement-template.xlsx");
+        
+        toast({
+            title: "Template Downloaded",
+            description: "Bank statement template downloaded. Fill in your bank statement data and upload.",
+        });
+    };
+
     const handleDownloadJournalTemplate = async () => {
         if (!selectedBankAccount) {
             toast({
