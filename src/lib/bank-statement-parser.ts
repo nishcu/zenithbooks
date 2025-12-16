@@ -494,36 +494,45 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     }
     
     // Dynamic import to avoid server-side issues
-    // pdf-parse uses CommonJS, so we need to handle it differently
-    let pdfParse: any;
-    try {
-      // Try ES6 import first
-      const pdfParseModule = await import('pdf-parse');
-      pdfParse = pdfParseModule.default || pdfParseModule;
-    } catch (e) {
-      // Fallback to require for CommonJS
-      pdfParse = require('pdf-parse');
-    }
-    
-    const pdfBuffer = Buffer.from(arrayBuffer);
-    
-    // pdf-parse exports the function directly (not as default in CommonJS)
-    // In ES6 imports, it might be default or the module itself
+    // pdf-parse is a CommonJS module that exports a function directly
+    // In ES6 import, it comes as default, but we need to handle both cases
     let parseFunction: any;
-    if (typeof pdfParse === 'function') {
-      parseFunction = pdfParse;
-    } else if (typeof pdfParse.default === 'function') {
-      parseFunction = pdfParse.default;
-    } else {
-      // Last resort: try to find any function in the module
-      const func = Object.values(pdfParse).find((v: any) => typeof v === 'function');
-      if (func) {
-        parseFunction = func;
+    
+    try {
+      // Use require for CommonJS modules (more reliable in Node.js)
+      const pdfParse = require('pdf-parse');
+      // pdf-parse exports the function directly when using require
+      if (typeof pdfParse === 'function') {
+        parseFunction = pdfParse;
+      } else if (pdfParse.default && typeof pdfParse.default === 'function') {
+        parseFunction = pdfParse.default;
       } else {
-        throw new Error(`pdf-parse module structure unexpected. Type: ${typeof pdfParse}, Keys: ${Object.keys(pdfParse || {}).join(', ')}`);
+        throw new Error(`pdf-parse require() returned non-function. Type: ${typeof pdfParse}`);
+      }
+    } catch (requireError) {
+      // Fallback to ES6 import if require fails
+      try {
+        const pdfParseModule = await import('pdf-parse');
+        // ES6 import might have it as default or as the module itself
+        if (typeof pdfParseModule === 'function') {
+          parseFunction = pdfParseModule;
+        } else if (pdfParseModule.default && typeof pdfParseModule.default === 'function') {
+          parseFunction = pdfParseModule.default;
+        } else {
+          // Try to find the function in the module
+          const func = Object.values(pdfParseModule).find((v: any) => typeof v === 'function' && v.length > 0);
+          if (func) {
+            parseFunction = func;
+          } else {
+            throw new Error(`pdf-parse import() structure unexpected. Keys: ${Object.keys(pdfParseModule).join(', ')}`);
+          }
+        }
+      } catch (importError) {
+        throw new Error(`Failed to load pdf-parse: ${requireError instanceof Error ? requireError.message : 'require failed'} AND ${importError instanceof Error ? importError.message : 'import failed'}`);
       }
     }
     
+    const pdfBuffer = Buffer.from(arrayBuffer);
     const data = await parseFunction(pdfBuffer);
     const text = data.text;
     
