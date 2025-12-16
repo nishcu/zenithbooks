@@ -78,9 +78,11 @@ export async function POST(request: NextRequest) {
       const isFlatFormat = overrideSalary.basic !== undefined && !overrideSalary.monthly;
       
       if (isFlatFormat) {
-        // Convert flat format to monthly/annual (assuming monthly values, annual = monthly * 12)
-        const monthlyValue = (val: number) => val || 0;
-        const annualValue = (val: number) => (val || 0) * 12;
+        // Convert flat format to monthly/annual
+        // Frontend sends annual values, so use them directly for annual
+        // Calculate monthly by dividing by 12 (or use annual/12 for monthly)
+        const annualValue = (val: number) => val || 0;
+        const monthlyValue = (val: number) => (val || 0) / 12;
         
         salaryData = {
           employeeId,
