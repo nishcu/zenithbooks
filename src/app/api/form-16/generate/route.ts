@@ -71,40 +71,80 @@ export async function POST(request: NextRequest) {
       salaryData = { id: salaryStructure.id, ...salaryStructure.data() } as SalaryStructure;
     } else {
       // Create default salary structure
-      // Merge override data if provided
+      // Handle override data - frontend sends flat structure, we need monthly/annual
       const overrideSalary = overrideData?.salaryStructure || {};
-      salaryData = {
-        employeeId,
-        financialYear,
-        monthly: {
-          basic: overrideSalary.basic || overrideSalary.monthly?.basic || 0,
-          hra: overrideSalary.hra || overrideSalary.monthly?.hra || 0,
-          da: overrideSalary.da || overrideSalary.monthly?.da || 0,
-          specialAllowance: overrideSalary.specialAllowance || overrideSalary.monthly?.specialAllowance || 0,
-          lta: overrideSalary.lta || overrideSalary.monthly?.lta || 0,
-          bonus: overrideSalary.bonus || overrideSalary.monthly?.bonus || 0,
-          incentives: overrideSalary.incentives || overrideSalary.monthly?.incentives || 0,
-          arrears: overrideSalary.arrears || overrideSalary.monthly?.arrears || 0,
-          perquisites: overrideSalary.perquisites || overrideSalary.monthly?.perquisites || 0,
-          employerPf: overrideSalary.employerPf || overrideSalary.monthly?.employerPf || 0,
-          ...overrideSalary.monthly
-        },
-        annual: {
-          basic: overrideSalary.basic || overrideSalary.annual?.basic || 0,
-          hra: overrideSalary.hra || overrideSalary.annual?.hra || 0,
-          da: overrideSalary.da || overrideSalary.annual?.da || 0,
-          specialAllowance: overrideSalary.specialAllowance || overrideSalary.annual?.specialAllowance || 0,
-          lta: overrideSalary.lta || overrideSalary.annual?.lta || 0,
-          bonus: overrideSalary.bonus || overrideSalary.annual?.bonus || 0,
-          incentives: overrideSalary.incentives || overrideSalary.annual?.incentives || 0,
-          arrears: overrideSalary.arrears || overrideSalary.annual?.arrears || 0,
-          perquisites: overrideSalary.perquisites || overrideSalary.annual?.perquisites || 0,
-          employerPf: overrideSalary.employerPf || overrideSalary.annual?.employerPf || 0,
-          ...overrideSalary.annual
-        },
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
-      };
+      
+      // Check if override is already in monthly/annual format or flat format
+      const isFlatFormat = overrideSalary.basic !== undefined && !overrideSalary.monthly;
+      
+      if (isFlatFormat) {
+        // Convert flat format to monthly/annual (assuming monthly values, annual = monthly * 12)
+        const monthlyValue = (val: number) => val || 0;
+        const annualValue = (val: number) => (val || 0) * 12;
+        
+        salaryData = {
+          employeeId,
+          financialYear,
+          monthly: {
+            basic: monthlyValue(overrideSalary.basic as number),
+            hra: monthlyValue(overrideSalary.hra as number),
+            da: monthlyValue(overrideSalary.da as number),
+            specialAllowance: monthlyValue(overrideSalary.specialAllowance as number),
+            lta: monthlyValue(overrideSalary.lta as number),
+            bonus: monthlyValue(overrideSalary.bonus as number),
+            incentives: monthlyValue(overrideSalary.incentives as number),
+            arrears: monthlyValue(overrideSalary.arrears as number),
+            perquisites: monthlyValue(overrideSalary.perquisites as number),
+            employerPf: monthlyValue(overrideSalary.employerPf as number)
+          },
+          annual: {
+            basic: annualValue(overrideSalary.basic as number),
+            hra: annualValue(overrideSalary.hra as number),
+            da: annualValue(overrideSalary.da as number),
+            specialAllowance: annualValue(overrideSalary.specialAllowance as number),
+            lta: annualValue(overrideSalary.lta as number),
+            bonus: annualValue(overrideSalary.bonus as number),
+            incentives: annualValue(overrideSalary.incentives as number),
+            arrears: annualValue(overrideSalary.arrears as number),
+            perquisites: annualValue(overrideSalary.perquisites as number),
+            employerPf: annualValue(overrideSalary.employerPf as number)
+          },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        };
+      } else {
+        // Already in monthly/annual format
+        salaryData = {
+          employeeId,
+          financialYear,
+          monthly: {
+            basic: overrideSalary.monthly?.basic || 0,
+            hra: overrideSalary.monthly?.hra || 0,
+            da: overrideSalary.monthly?.da || 0,
+            specialAllowance: overrideSalary.monthly?.specialAllowance || 0,
+            lta: overrideSalary.monthly?.lta || 0,
+            bonus: overrideSalary.monthly?.bonus || 0,
+            incentives: overrideSalary.monthly?.incentives || 0,
+            arrears: overrideSalary.monthly?.arrears || 0,
+            perquisites: overrideSalary.monthly?.perquisites || 0,
+            employerPf: overrideSalary.monthly?.employerPf || 0
+          },
+          annual: {
+            basic: overrideSalary.annual?.basic || 0,
+            hra: overrideSalary.annual?.hra || 0,
+            da: overrideSalary.annual?.da || 0,
+            specialAllowance: overrideSalary.annual?.specialAllowance || 0,
+            lta: overrideSalary.annual?.lta || 0,
+            bonus: overrideSalary.annual?.bonus || 0,
+            incentives: overrideSalary.annual?.incentives || 0,
+            arrears: overrideSalary.annual?.arrears || 0,
+            perquisites: overrideSalary.annual?.perquisites || 0,
+            employerPf: overrideSalary.annual?.employerPf || 0
+          },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        };
+      }
     }
 
     // Fetch or create default exemptions
