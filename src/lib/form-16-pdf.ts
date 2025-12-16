@@ -133,6 +133,10 @@ export class Form16PDFGenerator {
    * As per Section 192 of Income Tax Act, 1961
    */
   private static generatePartA(pdf: jsPDF, form16Doc: Form16Document): void {
+    // Defensive check: ensure partA exists and is an object
+    if (!form16Doc || !form16Doc.partA || typeof form16Doc.partA !== 'object') {
+      throw new Error(`Form16Document is missing required partA data. partA: ${JSON.stringify(form16Doc?.partA)}`);
+    }
     const { partA } = form16Doc;
 
     // Header - Exact text as per official Form 16

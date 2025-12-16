@@ -103,12 +103,28 @@ export async function POST(request: NextRequest) {
         }
 
         const employeeData = employeeDoc.data();
+        
+        if (!employeeData) {
+          console.error(`Employee document exists but has no data: ${employeeId}`);
+          errors.push(`Employee ${employeeId}: Invalid employee data`);
+          failed++;
+          continue;
+        }
+        
         const employee = { id: employeeDoc.id, ...employeeData } as any;
 
         // Verify access
-        if (!employeeData || employee.employerId !== userId) {
-          console.error(`Employee access denied: ${employeeId}, employerId: ${employee.employerId}, userId: ${userId}`);
+        if (employee.employerId !== userId) {
+          console.error(`Employee access denied: ${employeeId}, employerId: ${employee.employerId || 'undefined'}, userId: ${userId}`);
           errors.push(`Employee ${employeeId}: Access denied`);
+          failed++;
+          continue;
+        }
+        
+        // Ensure employee has required fields
+        if (!employee.name || !employee.pan) {
+          console.error(`Employee missing required fields: ${employeeId}, name: ${employee.name || 'missing'}, pan: ${employee.pan || 'missing'}`);
+          errors.push(`Employee ${employeeId}: Missing required fields (name or PAN)`);
           failed++;
           continue;
         }
@@ -346,6 +362,22 @@ export async function POST(request: NextRequest) {
             status: 'generated',
             accessLogs: []
           };
+          
+          // Final validation before PDF generation
+          if (!form16Doc.partA || !form16Doc.partA.employeeName) {
+            console.error(`form16Doc.partA validation failed for employee ${employeeId} (new document)`, form16Doc.partA);
+            errors.push(`Employee ${employeeId}: Invalid Form 16 Part A data`);
+            failed++;
+            continue;
+          }
+        }
+
+        // Final check before PDF generation - ensure partA exists
+        if (!form16Doc || !form16Doc.partA) {
+          console.error(`form16Doc or partA is missing for employee ${employeeId}`, { hasForm16Doc: !!form16Doc, hasPartA: !!form16Doc?.partA });
+          errors.push(`Employee ${employeeId}: Form 16 document is incomplete`);
+          failed++;
+          continue;
         }
 
         // Generate PDF
