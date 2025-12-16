@@ -92,22 +92,23 @@ export async function POST(request: NextRequest) {
     // Process each employee
     for (const employeeId of employeeIds) {
       try {
-        // Fetch employee data - use query like bulk-generate does
-        const employeeQuery = query(
-          collection(db, 'employees'),
-          where('id', '==', employeeId),
-          where('employerId', '==', userId)
-        );
-        const employeeSnapshot = await getDocs(employeeQuery);
-
-        if (employeeSnapshot.empty) {
-          errors.push(`Employee ${employeeId}: Not found or access denied`);
+        // Fetch employee data - employeeId is the Firestore document ID
+        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        
+        if (!employeeDoc.exists()) {
+          errors.push(`Employee ${employeeId}: Not found`);
           failed++;
           continue;
         }
 
-        const employeeDoc = employeeSnapshot.docs[0];
         const employee = { id: employeeDoc.id, ...employeeDoc.data() } as any;
+
+        // Verify access
+        if (employee.employerId !== userId) {
+          errors.push(`Employee ${employeeId}: Access denied`);
+          failed++;
+          continue;
+        }
 
         // Check if Form 16 document already exists
         const form16Query = query(
