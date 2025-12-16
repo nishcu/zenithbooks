@@ -80,10 +80,11 @@ export class Form16PDFGenerator {
       // Server-side: use arraybuffer
       const arrayBuffer = pdf.output('arraybuffer');
       // Convert to Buffer for Node.js compatibility
-      const Buffer = (await import('buffer')).Buffer;
+      // Buffer is available globally in Node.js
+      const { Buffer } = await import('buffer');
       const buffer = Buffer.from(arrayBuffer);
-      // Return as Blob-like object for compatibility
-      return buffer as any;
+      // Return Buffer for server-side
+      return buffer;
     } else {
       // Browser: use blob
       const pdfBlob = pdf.output('blob');
