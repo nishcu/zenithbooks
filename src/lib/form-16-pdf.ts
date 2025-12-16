@@ -1,26 +1,9 @@
 import jsPDF from 'jspdf';
 import { Form16Document, Form16Computation } from './form-16-models';
 
-// Import and initialize jspdf-autotable
-// For server-side (Node.js), we need to use require or dynamic import
-let autoTableInitialized = false;
-
-// Initialize autoTable for server-side
-if (typeof window === 'undefined') {
-  try {
-    // Use dynamic require for server-side
-    const autoTable = require('jspdf-autotable');
-    // The plugin should auto-initialize, but we ensure it's available
-    if (autoTable && !autoTableInitialized) {
-      autoTableInitialized = true;
-    }
-  } catch (e) {
-    console.warn('Could not load jspdf-autotable:', e);
-  }
-} else {
-  // Client-side: use side-effect import
-  require('jspdf-autotable');
-}
+// Import jspdf-autotable - use side-effect import which should work in both client and server
+// In Next.js, this should work for API routes as well
+import 'jspdf-autotable';
 
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
