@@ -71,37 +71,39 @@ export async function POST(request: NextRequest) {
       salaryData = { id: salaryStructure.id, ...salaryStructure.data() } as SalaryStructure;
     } else {
       // Create default salary structure
-      const defaultSalary = Form16ComputationEngine.getDefaultValues(financialYear);
+      // Merge override data if provided
+      const overrideSalary = overrideData?.salaryStructure || {};
       salaryData = {
         employeeId,
         financialYear,
         monthly: {
-          basic: 0,
-          hra: 0,
-          da: 0,
-          specialAllowance: 0,
-          lta: 0,
-          bonus: 0,
-          incentives: 0,
-          arrears: 0,
-          perquisites: 0,
-          employerPf: 0
+          basic: overrideSalary.basic || overrideSalary.monthly?.basic || 0,
+          hra: overrideSalary.hra || overrideSalary.monthly?.hra || 0,
+          da: overrideSalary.da || overrideSalary.monthly?.da || 0,
+          specialAllowance: overrideSalary.specialAllowance || overrideSalary.monthly?.specialAllowance || 0,
+          lta: overrideSalary.lta || overrideSalary.monthly?.lta || 0,
+          bonus: overrideSalary.bonus || overrideSalary.monthly?.bonus || 0,
+          incentives: overrideSalary.incentives || overrideSalary.monthly?.incentives || 0,
+          arrears: overrideSalary.arrears || overrideSalary.monthly?.arrears || 0,
+          perquisites: overrideSalary.perquisites || overrideSalary.monthly?.perquisites || 0,
+          employerPf: overrideSalary.employerPf || overrideSalary.monthly?.employerPf || 0,
+          ...overrideSalary.monthly
         },
         annual: {
-          basic: 0,
-          hra: 0,
-          da: 0,
-          specialAllowance: 0,
-          lta: 0,
-          bonus: 0,
-          incentives: 0,
-          arrears: 0,
-          perquisites: 0,
-          employerPf: 0
+          basic: overrideSalary.basic || overrideSalary.annual?.basic || 0,
+          hra: overrideSalary.hra || overrideSalary.annual?.hra || 0,
+          da: overrideSalary.da || overrideSalary.annual?.da || 0,
+          specialAllowance: overrideSalary.specialAllowance || overrideSalary.annual?.specialAllowance || 0,
+          lta: overrideSalary.lta || overrideSalary.annual?.lta || 0,
+          bonus: overrideSalary.bonus || overrideSalary.annual?.bonus || 0,
+          incentives: overrideSalary.incentives || overrideSalary.annual?.incentives || 0,
+          arrears: overrideSalary.arrears || overrideSalary.annual?.arrears || 0,
+          perquisites: overrideSalary.perquisites || overrideSalary.annual?.perquisites || 0,
+          employerPf: overrideSalary.employerPf || overrideSalary.annual?.employerPf || 0,
+          ...overrideSalary.annual
         },
         createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.salaryStructure
+        updatedAt: Timestamp.now()
       };
     }
 
@@ -246,7 +248,25 @@ export async function POST(request: NextRequest) {
     // Calculate period dates based on DOJ and financial year
     const fyStartDate = new Date(`${financialYear.split('-')[0]}-04-01`);
     const fyEndDate = new Date(`${financialYear.split('-')[1]}-03-31`);
-    const dojDate = employee.doj instanceof Date ? employee.doj : new Date(employee.doj);
+    
+    // Handle DOJ - could be Date, Timestamp, or string
+    let dojDate: Date;
+    if (employee.doj instanceof Date) {
+      dojDate = employee.doj;
+    } else if (employee.doj && typeof employee.doj === 'object' && 'toDate' in employee.doj) {
+      // Firestore Timestamp
+      dojDate = (employee.doj as any).toDate();
+    } else if (employee.doj) {
+      dojDate = new Date(employee.doj);
+    } else {
+      // Default to FY start if DOJ not available
+      dojDate = fyStartDate;
+    }
+    
+    // Validate DOJ date
+    if (isNaN(dojDate.getTime())) {
+      dojDate = fyStartDate; // Fallback to FY start
+    }
     
     // Period of employment: from DOJ or FY start (whichever is later) to FY end or current date (whichever is earlier)
     const periodFrom = dojDate > fyStartDate ? dojDate : fyStartDate;
@@ -338,8 +358,26 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Form 16 generation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Log detailed error for debugging
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      error: error
+    });
+    
     return NextResponse.json(
-      { success: false, errors: ['Internal server error'] },
+      { 
+        success: false, 
+        errors: [`Internal server error: ${errorMessage}`],
+        // Include error details in development
+        ...(process.env.NODE_ENV === 'development' && { 
+          details: errorStack,
+          error: error instanceof Error ? error.toString() : String(error)
+        })
+      },
       { status: 500 }
     );
   }
