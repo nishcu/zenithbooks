@@ -2996,6 +2996,17 @@ export default function Form16() {
                   Download All PDFs (ZIP)
                 </Button>
               )}
+              {bulkResults && !bulkResults.summary && bulkResults.documents && bulkResults.documents.length > 0 && (
+                <Button
+                  onClick={downloadBulkUploadPDFs}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDFs (ZIP)
+                </Button>
+              )}
             </CardFooter>
         </Card>
       </div>
