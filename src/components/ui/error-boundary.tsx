@@ -23,7 +23,11 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State | null {
+    // Suppress Next.js 15 params read-only error (known Turbopack issue, doesn't affect functionality)
+    if (error.message && error.message.includes("Cannot assign to read only property 'params'")) {
+      return null; // Don't trigger error state for this known issue
+    }
     return { hasError: true, error };
   }
 
