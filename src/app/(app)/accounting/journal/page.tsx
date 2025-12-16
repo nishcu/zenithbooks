@@ -69,7 +69,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
-import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator"; from "@/lib/narration-generator";
+import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator"
 
 export default function JournalVoucherPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
