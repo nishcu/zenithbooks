@@ -108,7 +108,7 @@ export default function Form16() {
   // Single Form 16 state
   const [form16Data, setForm16Data] = useState<Form16Data>({
     employeeId: "",
-    financialYear: "2023-24",
+    financialYear: "2025-26",
     employerName: userData?.companyName || "",
     employerTan: userData?.tan || "",
     employerPan: userData?.pan || "",
@@ -154,7 +154,7 @@ export default function Form16() {
 
   // Bulk generation state
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [bulkFinancialYear, setBulkFinancialYear] = useState("2023-24");
+  const [bulkFinancialYear, setBulkFinancialYear] = useState("2025-26");
   const [bulkEmployerName, setBulkEmployerName] = useState(userData?.companyName || "");
   const [bulkEmployerTan, setBulkEmployerTan] = useState(userData?.tan || "");
   const [bulkEmployerPan, setBulkEmployerPan] = useState(userData?.pan || "");
@@ -453,9 +453,9 @@ export default function Form16() {
                         <SelectValue placeholder="Select an employee" />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees.map(employee => (
+                        {employees.filter(emp => emp.status === "Active").map(employee => (
                           <SelectItem key={employee.id} value={employee.id}>
-                            {employee.name} - {employee.pan}
+                            {employee.name} - {employee.pan} ({employee.designation})
                           </SelectItem>
                         ))}
                       </SelectContent>

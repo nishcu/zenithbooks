@@ -189,7 +189,7 @@ export class Form16PDFGenerator {
    * Generate Part B - Salary Details and Tax Computation
    */
   private static generatePartB(pdf: jsPDF, form16Doc: Form16Document): void {
-    const { partB } = form16Doc;
+    const { partB, partA } = form16Doc;
 
     // Header
     pdf.setFontSize(this.FONT_SIZE.TITLE);
@@ -206,27 +206,57 @@ export class Form16PDFGenerator {
 
     let yPos = 80;
 
-    // Certificate Details
-    pdf.setFontSize(this.FONT_SIZE.SMALL);
-    pdf.setTextColor(0, 0, 0);
+    // Employer Details Section
+    pdf.setFontSize(this.FONT_SIZE.NORMAL);
+    pdf.setTextColor(...this.COLORS.PRIMARY);
+    pdf.text('DETAILS OF THE EMPLOYER:', 20, yPos);
+    yPos += 10;
 
-    const detailsData = [
-      ['Certificate No.', ''],
-      ['Name and address of the Employer', form16Doc.employerName],
-      ['Name and designation of the employee', `${form16Doc.partA.employeeName}, ${form16Doc.partA.employeeDesignation}`],
-      ['PAN of the employee', form16Doc.partA.employeePan],
-      ['Assessment Year', form16Doc.assessmentYear],
-      ['Period with the employer', `01/04/${form16Doc.financialYear.split('-')[0]} to 31/03/${form16Doc.financialYear.split('-')[1]}`]
+    const employerData = [
+      ['1. Name of the Employer', form16Doc.employerName],
+      ['2. Address of the Employer', ''],
+      ['3. TAN of the Employer', form16Doc.employerTan],
+      ['4. PAN of the Employer', form16Doc.employerPan || ''],
+      ['5. Assessment Year', form16Doc.assessmentYear]
     ];
 
     pdf.autoTable({
       startY: yPos,
       head: [],
-      body: detailsData,
+      body: employerData,
       theme: 'plain',
       styles: { fontSize: this.FONT_SIZE.SMALL },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 70 },
+        0: { fontStyle: 'bold', cellWidth: 60 },
+        1: { cellWidth: 100 }
+      }
+    });
+
+    yPos = (pdf as any).lastAutoTable.finalY + 15;
+
+    // Employee Details Section
+    pdf.setFontSize(this.FONT_SIZE.NORMAL);
+    pdf.setTextColor(...this.COLORS.PRIMARY);
+    pdf.text('DETAILS OF THE EMPLOYEE:', 20, yPos);
+    yPos += 10;
+
+    const employeeData = [
+      ['1. Name of the Employee', partA.employeeName],
+      ['2. Address of the Employee', ''],
+      ['3. PAN of the Employee', partA.employeePan],
+      ['4. Aadhaar Number (if available)', ''],
+      ['5. Designation', partA.employeeDesignation],
+      ['6. Period of Employment', `01/04/${form16Doc.financialYear.split('-')[0]} to 31/03/${form16Doc.financialYear.split('-')[1]}`]
+    ];
+
+    pdf.autoTable({
+      startY: yPos,
+      head: [],
+      body: employeeData,
+      theme: 'plain',
+      styles: { fontSize: this.FONT_SIZE.SMALL },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 60 },
         1: { cellWidth: 100 }
       }
     });
@@ -236,26 +266,28 @@ export class Form16PDFGenerator {
     // Salary Details Table
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('1. Gross Salary', 20, yPos);
+    pdf.text('7. DETAILS OF SALARY PAID:', 20, yPos);
     yPos += 10;
 
     const salaryData = [
-      ['Basic Salary', partB.grossSalary.toLocaleString('en-IN')],
-      ['House Rent Allowance (HRA)', '0'],
+      ['Basic Salary', '0'],
       ['Dearness Allowance (DA)', '0'],
-      ['Special Allowance', '0'],
+      ['House Rent Allowance (HRA)', '0'],
       ['Leave Travel Allowance (LTA)', '0'],
+      ['Special Allowance', '0'],
       ['Bonus', '0'],
-      ['Incentives', '0'],
-      ['Arrears', '0'],
-      ['Perquisites', '0'],
-      ['Employer PF Contribution', '0'],
+      ['Incentives/Commission', '0'],
+      ['Arrears of Salary', '0'],
+      ['Perquisites (Value of perquisites)', '0'],
+      ['Employer\'s Contribution to PF', '0'],
+      ['Gratuity', '0'],
+      ['Other Exempt Allowances', '0'],
       ['Gross Salary (Total)', partB.grossSalary.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
       startY: yPos,
-      head: [['Particulars', 'Amount (₹)']],
+      head: [['Salary Components', 'Amount (₹)']],
       body: salaryData,
       theme: 'grid',
       styles: { fontSize: this.FONT_SIZE.SMALL },
@@ -271,20 +303,23 @@ export class Form16PDFGenerator {
     // Exemptions
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('2. Exemptions under Section 10', 20, yPos);
+    pdf.text('8. DEDUCTIONS UNDER SECTION 10:', 20, yPos);
     yPos += 10;
 
     const exemptionsData = [
-      ['HRA Exemption', '0'],
-      ['LTA Exemption', '0'],
+      ['House Rent Allowance (HRA)', '0'],
+      ['Leave Travel Allowance (LTA)', '0'],
       ['Children Education Allowance', '0'],
       ['Hostel Allowance', '0'],
-      ['Total Exemptions', partB.exemptionsSection10.toLocaleString('en-IN')]
+      ['Transport Allowance', '0'],
+      ['Medical Allowance', '0'],
+      ['Other Exemptions', '0'],
+      ['Total Exemptions u/s 10', partB.exemptionsSection10.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
       startY: yPos,
-      head: [['Exemptions', 'Amount (₹)']],
+      head: [['Exemptions u/s 10', 'Amount (₹)']],
       body: exemptionsData,
       theme: 'grid',
       styles: { fontSize: this.FONT_SIZE.SMALL },
@@ -300,25 +335,25 @@ export class Form16PDFGenerator {
     // Net Salary
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`3. Net Salary (1 - 2) = ₹${partB.netSalary.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`9. INCOME UNDER THE HEAD "SALARIES" (7 - 8) = ₹${partB.netSalary.toLocaleString('en-IN')}`, 20, yPos);
     yPos += 15;
 
     // Deductions Section 16
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('4. Deductions under Section 16', 20, yPos);
+    pdf.text('10. DEDUCTIONS UNDER SECTION 16:', 20, yPos);
     yPos += 10;
 
     const section16Data = [
       ['Standard Deduction u/s 16(ia)', partB.deductionsSection16.toLocaleString('en-IN')],
-      ['Professional Tax', '0'],
-      ['Entertainment Allowance', '0'],
+      ['Entertainment Allowance u/s 16(ii)', '0'],
+      ['Professional Tax u/s 16(iii)', '0'],
       ['Total Deductions u/s 16', partB.deductionsSection16.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
       startY: yPos,
-      head: [['Deductions', 'Amount (₹)']],
+      head: [['Deductions u/s 16', 'Amount (₹)']],
       body: section16Data,
       theme: 'grid',
       styles: { fontSize: this.FONT_SIZE.SMALL },
@@ -334,25 +369,27 @@ export class Form16PDFGenerator {
     // Income from Salary
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`5. Income from Salary (3 - 4) = ₹${partB.incomeFromSalary.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`11. NET SALARY (9 - 10) = ₹${partB.incomeFromSalary.toLocaleString('en-IN')}`, 20, yPos);
     yPos += 15;
 
     // Other Income
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('6. Any other income reported by the employee', 20, yPos);
+    pdf.text('12. ANY OTHER INCOME REPORTED BY THE EMPLOYEE:', 20, yPos);
     yPos += 10;
 
     const otherIncomeData = [
-      ['Savings Interest', '0'],
-      ['FD Interest', '0'],
-      ['Other Income', '0'],
+      ['Interest from Savings Bank Account', '0'],
+      ['Interest from Fixed Deposits', '0'],
+      ['Interest from other sources', '0'],
+      ['Income from house property', '0'],
+      ['Any other income', '0'],
       ['Total Other Income', partB.otherIncome.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
       startY: yPos,
-      head: [['Income', 'Amount (₹)']],
+      head: [['Other Income', 'Amount (₹)']],
       body: otherIncomeData,
       theme: 'grid',
       styles: { fontSize: this.FONT_SIZE.SMALL },
@@ -368,27 +405,35 @@ export class Form16PDFGenerator {
     // Gross Total Income
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`7. Gross Total Income (5 + 6) = ₹${partB.grossTotalIncome.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`13. GROSS TOTAL INCOME (11 + 12) = ₹${partB.grossTotalIncome.toLocaleString('en-IN')}`, 20, yPos);
     yPos += 15;
 
     // Chapter VI-A Deductions
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('8. Deductions under Chapter VI-A', 20, yPos);
+    pdf.text('14. DEDUCTIONS UNDER CHAPTER VI-A:', 20, yPos);
     yPos += 10;
 
     const chapterVIAData = [
-      ['Section 80C', '0'],
-      ['Section 80CCD(1B)', '0'],
-      ['Section 80D', '0'],
-      ['Section 80TTA', '0'],
-      ['Section 80G', '0'],
+      ['Section 80C (Life Insurance, PPF, etc.)', '0'],
+      ['Section 80CCC (Pension Fund)', '0'],
+      ['Section 80CCD(1) (Employees Provident Fund)', '0'],
+      ['Section 80CCD(1B) (Additional NPS contribution)', '0'],
+      ['Section 80D (Medical Insurance)', '0'],
+      ['Section 80DD (Medical treatment of dependent)', '0'],
+      ['Section 80DDB (Medical treatment)', '0'],
+      ['Section 80E (Education Loan Interest)', '0'],
+      ['Section 80EE/80EEA (Home Loan Interest)', '0'],
+      ['Section 80G (Donations)', '0'],
+      ['Section 80TTA (Savings Account Interest)', '0'],
+      ['Section 80TTB (Senior Citizen Savings)', '0'],
+      ['Other Deductions', '0'],
       ['Total Deductions u/s VI-A', partB.deductionsChapterVIA.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
       startY: yPos,
-      head: [['Deductions', 'Amount (₹)']],
+      head: [['Deductions u/s VI-A', 'Amount (₹)']],
       body: chapterVIAData,
       theme: 'grid',
       styles: { fontSize: this.FONT_SIZE.SMALL },
@@ -404,21 +449,22 @@ export class Form16PDFGenerator {
     // Total Taxable Income
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`9. Total Taxable Income (7 - 8) = ₹${partB.totalTaxableIncome.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`15. TOTAL TAXABLE INCOME (13 - 14) = ₹${partB.totalTaxableIncome.toLocaleString('en-IN')}`, 20, yPos);
     yPos += 15;
 
     // Tax Computation
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('10. Tax Computation', 20, yPos);
+    pdf.text('16. COMPUTATION OF TAX:', 20, yPos);
     yPos += 10;
 
     const taxData = [
       ['Tax on Total Income', partB.taxOnIncome.toLocaleString('en-IN')],
-      ['Rebate u/s 87A', partB.rebate87A.toLocaleString('en-IN')],
-      ['Tax after Rebate', partB.taxAfterRebate.toLocaleString('en-IN')],
+      ['Surcharge (if applicable)', '0'],
       ['Health & Education Cess @4%', partB.healthEducationCess.toLocaleString('en-IN')],
-      ['Total Tax Liability', partB.totalTaxLiability.toLocaleString('en-IN')]
+      ['Total Tax Liability', partB.totalTaxLiability.toLocaleString('en-IN')],
+      ['Rebate u/s 87A', partB.rebate87A.toLocaleString('en-IN')],
+      ['Tax after Rebate u/s 87A', partB.taxAfterRebate.toLocaleString('en-IN')]
     ];
 
     pdf.autoTable({
@@ -436,16 +482,41 @@ export class Form16PDFGenerator {
 
     yPos = (pdf as any).lastAutoTable.finalY + 15;
 
-    // TDS and Relief
+    // TDS Details
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('11. Relief under Section 89', 20, yPos);
+    pdf.text('17. DETAILS OF TAX DEDUCTED AND DEPOSITED:', 20, yPos);
+    yPos += 10;
+
+    const tdsData = [
+      ['Total Tax Deducted', partB.tdsDeducted.toLocaleString('en-IN')],
+      ['Tax Deposited in respect of Tax Deducted', partB.tdsDeducted.toLocaleString('en-IN')]
+    ];
+
+    pdf.autoTable({
+      startY: yPos,
+      head: [['TDS Details', 'Amount (₹)']],
+      body: tdsData,
+      theme: 'grid',
+      styles: { fontSize: this.FONT_SIZE.SMALL },
+      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255 },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { cellWidth: 50, halign: 'right' }
+      }
+    });
+
+    yPos = (pdf as any).lastAutoTable.finalY + 15;
+
+    // Relief and Final Computation
+    pdf.setFontSize(this.FONT_SIZE.NORMAL);
+    pdf.setTextColor(...this.COLORS.PRIMARY);
+    pdf.text('18. RELIEF UNDER SECTION 89:', 20, yPos);
     yPos += 10;
 
     const reliefData = [
       ['Relief u/s 89', partB.relief89.toLocaleString('en-IN')],
-      ['TDS Deducted', partB.tdsDeducted.toLocaleString('en-IN')],
-      ['Tax Payable/(Refund)', partB.taxPayable >= 0 ? partB.taxPayable.toLocaleString('en-IN') : `(${Math.abs(partB.taxPayable).toLocaleString('en-IN')})`]
+      ['Net Tax Payable/(Refund)', partB.taxPayable >= 0 ? partB.taxPayable.toLocaleString('en-IN') : `(${Math.abs(partB.taxPayable).toLocaleString('en-IN')})`]
     ];
 
     pdf.autoTable({
