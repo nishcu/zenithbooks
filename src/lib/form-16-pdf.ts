@@ -94,7 +94,7 @@ export class Form16PDFGenerator {
     // Set password protection if provided
     if (password) {
       pdf.setProperties({
-        title: `Form 16 - ${form16Doc.partA.employeeName || 'Employee'}`,
+        title: `Form 16 - ${form16Doc.partA?.employeeName || 'Employee'}`,
         subject: `Form 16 for FY ${form16Doc.financialYear}`,
         author: 'ZenithBooks',
         keywords: 'Form 16, TDS, Income Tax',
@@ -226,8 +226,8 @@ export class Form16PDFGenerator {
       ['Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
         const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
-        const periodFrom = partA.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
-        const periodTo = partA.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
+        const periodFrom = partA?.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
+        const periodTo = partA?.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
         return `${periodFrom} to ${periodTo}`;
       })()]
     ];
@@ -309,10 +309,10 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const signatoryData = [
-      ['Name', form16Doc.signatory.name],
-      ['Designation', form16Doc.signatory.designation],
-      ['Place', form16Doc.signatory.place],
-      ['Date', form16Doc.signatory.date]
+      ['Name', form16Doc.signatory?.name || 'N/A'],
+      ['Designation', form16Doc.signatory?.designation || 'N/A'],
+      ['Place', form16Doc.signatory?.place || 'N/A'],
+      ['Date', form16Doc.signatory?.date || 'N/A']
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -413,8 +413,8 @@ export class Form16PDFGenerator {
       ['6. Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
         const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
-        const periodFrom = partA.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
-        const periodTo = partA.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
+        const periodFrom = partA?.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
+        const periodTo = partA?.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
         return `${periodFrom} to ${periodTo}`;
       })()]
     ];
@@ -719,10 +719,10 @@ export class Form16PDFGenerator {
     finalYPos += 10;
 
     const signatoryData = [
-      ['Name', form16Doc.signatory.name],
-      ['Designation', form16Doc.signatory.designation],
-      ['Place', form16Doc.signatory.place],
-      ['Date', form16Doc.signatory.date]
+      ['Name', form16Doc.signatory?.name || 'N/A'],
+      ['Designation', form16Doc.signatory?.designation || 'N/A'],
+      ['Place', form16Doc.signatory?.place || 'N/A'],
+      ['Date', form16Doc.signatory?.date || 'N/A']
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -744,9 +744,9 @@ export class Form16PDFGenerator {
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.text('Signature: _________________________', 20, finalYPos);
     finalYPos += 10;
-    pdf.text(`(${form16Doc.signatory.name})`, 20, finalYPos);
+    pdf.text(`(${form16Doc.signatory?.name || 'N/A'})`, 20, finalYPos);
     finalYPos += 5;
-    pdf.text(form16Doc.signatory.designation, 20, finalYPos);
+    pdf.text(form16Doc.signatory?.designation || 'N/A', 20, finalYPos);
 
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);
