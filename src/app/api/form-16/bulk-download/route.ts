@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import { Form16Document } from '@/lib/form-16-models';
 import JSZip from 'jszip';
+import { Buffer } from 'buffer';
 
 interface BulkDownloadRequest {
   employeeIds: string[];
