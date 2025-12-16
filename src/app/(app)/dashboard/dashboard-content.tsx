@@ -290,22 +290,22 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
-                                <CardHeader className="pb-3">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer">
+                                <CardHeader className="pb-3 px-4 pt-4">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
                                   <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-base group-hover:text-primary transition-colors">
+                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
                                       {feature.title}
                                     </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
                                       {feature.badge}
                                     </Badge>
                                   </div>
                                 </CardHeader>
-                                <CardContent className="pt-0">
-                                  <CardDescription className="text-sm line-clamp-2">
+                                <CardContent className="pt-0 px-4 pb-4">
+                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
                                     {feature.description}
                                   </CardDescription>
                                   {/* Arrow icon on hover */}
@@ -343,22 +343,22 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
-                                <CardHeader className="pb-3">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer">
+                                <CardHeader className="pb-3 px-4 pt-4">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
                                   <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-base group-hover:text-primary transition-colors">
+                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
                                       {feature.title}
                                     </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
                                       {feature.badge}
                                     </Badge>
                                   </div>
                                 </CardHeader>
-                                <CardContent className="pt-0">
-                                  <CardDescription className="text-sm line-clamp-2">
+                                <CardContent className="pt-0 px-4 pb-4">
+                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
                                     {feature.description}
                                   </CardDescription>
                                   {/* Arrow icon on hover */}
@@ -396,22 +396,22 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
-                                <CardHeader className="pb-3">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer">
+                                <CardHeader className="pb-3 px-4 pt-4">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
                                   <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-base group-hover:text-primary transition-colors">
+                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
                                       {feature.title}
                                     </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
                                       {feature.badge}
                                     </Badge>
                                   </div>
                                 </CardHeader>
-                                <CardContent className="pt-0">
-                                  <CardDescription className="text-sm line-clamp-2">
+                                <CardContent className="pt-0 px-4 pb-4">
+                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
                                     {feature.description}
                                   </CardDescription>
                                   {/* Arrow icon on hover */}

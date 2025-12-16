@@ -34,7 +34,7 @@ export const MarketingCarousel = memo(function MarketingCarousel() {
         {carouselImages.map((item) => (
           <CarouselItem key={item.id}>
             <Card className="overflow-hidden">
-              <CardContent className="relative flex h-32 sm:h-48 md:h-64 lg:aspect-[2.4/1] lg:h-auto items-center justify-center p-0">
+              <CardContent className="relative flex h-32 sm:h-40 md:h-48 lg:h-56 items-center justify-center p-0">
                 <Image
                   src={item.imageUrl}
                   alt={item.description}
