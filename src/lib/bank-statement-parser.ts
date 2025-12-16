@@ -503,6 +503,18 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       const pdfParseModule = require('pdf-parse');
       const { PDFParse } = pdfParseModule;
       
+      // Configure worker for Node.js (prevents dynamic worker loading errors)
+      // In Node.js, we can set worker to empty string or null to disable worker
+      if (typeof PDFParse.setWorker === 'function') {
+        try {
+          // Set worker to empty string for Node.js - uses built-in worker
+          PDFParse.setWorker('');
+        } catch (workerError: any) {
+          // Ignore worker setup errors - not critical in Node.js
+          console.warn('Worker setup warning (non-critical):', workerError.message);
+        }
+      }
+      
       // In Node.js, PDFParse automatically detects environment and doesn't need worker setup
       // Create instance with data buffer
       const pdfParser = new PDFParse({ data: pdfBuffer });
@@ -514,7 +526,7 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       // If error mentions worker, it's trying to set up browser worker in Node.js
       // This shouldn't happen, but if it does, provide helpful error
       const errorMsg = error.message || String(error);
-      if (errorMsg.includes('worker') || errorMsg.includes('Cannot find module')) {
+      if (errorMsg.includes('worker') || errorMsg.includes('Cannot find module') || errorMsg.includes('expression is too dynamic')) {
         throw new Error(`PDF parsing failed: Worker setup error. PDF format may not be supported, or file may be corrupted. Please try converting to CSV or Excel format.`);
       }
       throw new Error(`Failed to parse PDF: ${errorMsg}. PDF format may not be supported.`);
