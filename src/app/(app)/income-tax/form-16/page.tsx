@@ -495,7 +495,7 @@ export default function Form16() {
           </p>
         </div>
       </div>
-
+      
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="single">
@@ -511,11 +511,11 @@ export default function Form16() {
         <TabsContent value="single" className="space-y-6">
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Form */}
-            <Card>
-              <CardHeader>
+        <Card>
+            <CardHeader>
                 <CardTitle>Employee & Salary Details</CardTitle>
                 <CardDescription>Enter comprehensive details for Form 16 generation</CardDescription>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="space-y-6">
                 {/* Validation Errors */}
                 {validationErrors.length > 0 && (
@@ -690,7 +690,7 @@ export default function Form16() {
                 <div className="space-y-4">
                   <h4 className="font-semibold">Chapter VI-A Deductions</h4>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                 <div className="space-y-2">
                       <Label>Section 80C</Label>
                       <Input
                         type="number"
@@ -700,8 +700,8 @@ export default function Form16() {
                           deductions80: { ...prev.deductions80, section80C: Number(e.target.value) }
                         }))}
                       />
-                    </div>
-                    <div className="space-y-2">
+                </div>
+                 <div className="space-y-2">
                       <Label>Section 80CCD(1B)</Label>
                       <Input
                         type="number"
@@ -711,8 +711,8 @@ export default function Form16() {
                           deductions80: { ...prev.deductions80, section80CCD1B: Number(e.target.value) }
                         }))}
                       />
-                    </div>
-                    <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                       <Label>Section 80D</Label>
                       <Input
                         type="number"
@@ -722,8 +722,8 @@ export default function Form16() {
                           deductions80: { ...prev.deductions80, section80D: Number(e.target.value) }
                         }))}
                       />
-                    </div>
-                    <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                       <Label>Section 80TTA</Label>
                       <Input
                         type="number"
@@ -753,8 +753,8 @@ export default function Form16() {
                           tdsDetails: { ...prev.tdsDetails, totalTdsDeducted: Number(e.target.value) }
                         }))}
                       />
-                    </div>
-                    <div className="space-y-2">
+                </div>
+                 <div className="space-y-2">
                       <Label>Relief u/s 89</Label>
                       <Input
                         type="number"
@@ -767,7 +767,7 @@ export default function Form16() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
+            </CardContent>
               <CardFooter>
                 <Button
                   onClick={generateSingleForm16}
@@ -778,7 +778,7 @@ export default function Form16() {
                   {isLoading ? "Generating..." : "Generate Form 16"}
                 </Button>
               </CardFooter>
-            </Card>
+        </Card>
 
             {/* Preview */}
             <Card>
@@ -886,13 +886,13 @@ export default function Form16() {
           <div className="grid gap-6">
             {/* Bulk Upload Card */}
             <Card>
-              <CardHeader>
+            <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5" />
                   Bulk Upload from Excel/CSV
                 </CardTitle>
                 <CardDescription>Upload employee data in Excel or CSV format to generate Form 16 for multiple employees</CardDescription>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="space-y-6">
                 {/* Template Download */}
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
@@ -949,7 +949,7 @@ export default function Form16() {
                 <div className="space-y-4">
                   <Label>Upload Employee Data File</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                    <div className="text-center">
+                <div className="text-center">
                       <FileText className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="mt-4">
                         <label htmlFor="file-upload" className="cursor-pointer">
@@ -971,7 +971,6 @@ export default function Form16() {
                       </div>
                     </div>
                   </div>
-
                   {uploadedFile && (
                     <div className="flex items-center gap-2 text-sm text-green-600">
                       <CheckCircle className="h-4 w-4" />
@@ -1133,7 +1132,7 @@ export default function Form16() {
                     placeholder="Enter employer name"
                   />
                 </div>
-
+                
               <Separator />
 
               {/* Employee Selection */}
@@ -1187,7 +1186,7 @@ export default function Form16() {
                     </TableBody>
                   </Table>
                 </div>
-              </div>
+                </div>
 
               {bulkResults && (
                 <div className="space-y-4">
@@ -1201,7 +1200,7 @@ export default function Form16() {
                       <XCircle className="h-5 w-5 text-red-600" />
                       <span>Failed: {bulkResults.summary.failed}</span>
                     </div>
-                  </div>
+                </div>
 
                   {bulkResults.summary.errors.length > 0 && (
                     <div className="space-y-2">
@@ -1224,9 +1223,10 @@ export default function Form16() {
               >
                 <Users className="mr-2 h-4 w-4" />
                 {isLoading ? "Generating..." : `Generate Form 16 for ${employees.filter(e => e.selected).length} Employees`}
-              </Button>
+                </Button>
             </CardFooter>
-          </Card>
+        </Card>
+      </div>
         </TabsContent>
       </Tabs>
     </div>
