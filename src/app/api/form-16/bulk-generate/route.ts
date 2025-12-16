@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
-import {
-  Form16ComputationEngine,
-  Form16PDFGenerator
-} from '@/lib/form-16-computation';
+import { Form16ComputationEngine } from '@/lib/form-16-computation';
+import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import {
   EmployeeMaster,
   SalaryStructure,

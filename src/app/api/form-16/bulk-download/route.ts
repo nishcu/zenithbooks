@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { Form16PDFGenerator } from '@/lib/form-16-computation';
+import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import { Form16Document } from '@/lib/form-16-models';
 import JSZip from 'jszip';
 
