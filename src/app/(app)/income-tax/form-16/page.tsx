@@ -50,7 +50,11 @@ interface Employee {
   name: string;
   pan: string;
   designation: string;
+  aadhar?: string;
+  address?: string;
   selected?: boolean;
+  status?: string;
+  taxRegime?: string;
 }
 
 interface Form16Data {
@@ -58,7 +62,13 @@ interface Form16Data {
   financialYear: string;
   employerName: string;
   employerTan: string;
-  employerPan?: string;
+  employerPan: string;
+  employerAddress: string;
+  employerCompanyName: string;
+  employeeName: string;
+  employeePan: string;
+  employeeAadhar: string;
+  employeeAddress: string;
   salaryStructure: {
     basic: number;
     hra: number;
@@ -114,6 +124,12 @@ export default function Form16() {
     employerName: userData?.companyName || "",
     employerTan: userData?.tan || "",
     employerPan: userData?.pan || "",
+    employerAddress: userData?.address || "",
+    employerCompanyName: userData?.companyName || "",
+    employeeName: "",
+    employeePan: "",
+    employeeAadhar: "",
+    employeeAddress: "",
     salaryStructure: {
       basic: 0,
       hra: 0,
@@ -160,6 +176,8 @@ export default function Form16() {
   const [bulkEmployerName, setBulkEmployerName] = useState(userData?.companyName || "");
   const [bulkEmployerTan, setBulkEmployerTan] = useState(userData?.tan || "");
   const [bulkEmployerPan, setBulkEmployerPan] = useState(userData?.pan || "");
+  const [bulkEmployerAddress, setBulkEmployerAddress] = useState(userData?.address || "");
+  const [bulkEmployerCompanyName, setBulkEmployerCompanyName] = useState(userData?.companyName || "");
   const [bulkResults, setBulkResults] = useState<any>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -172,11 +190,46 @@ export default function Form16() {
       errors.push("Please select an employee");
     }
 
-    // PAN format validation
+    // Employee details validation
+    if (!data.employeeName.trim()) {
+      errors.push("Employee name is required");
+    }
+    if (!data.employeeAddress.trim()) {
+      errors.push("Employee address is required");
+    }
+
+    // PAN format validation (AAAAA0000A)
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    const selectedEmployee = employees.find(e => e.id === data.employeeId);
-    if (selectedEmployee && !panRegex.test(selectedEmployee.pan)) {
-      errors.push("Invalid PAN format for selected employee");
+    if (!panRegex.test(data.employeePan)) {
+      errors.push("Employee PAN must be in format AAAAA0000A");
+    }
+
+    // Aadhar format validation (12 digits)
+    const aadharRegex = /^\d{12}$/;
+    if (data.employeeAadhar && !aadharRegex.test(data.employeeAadhar)) {
+      errors.push("Aadhar number must be 12 digits");
+    }
+
+    // Employer details validation
+    if (!data.employerName.trim()) {
+      errors.push("Employer name is required");
+    }
+    if (!data.employerCompanyName.trim()) {
+      errors.push("Company name is required");
+    }
+    if (!data.employerAddress.trim()) {
+      errors.push("Employer address is required");
+    }
+
+    // Employer PAN validation
+    if (!panRegex.test(data.employerPan)) {
+      errors.push("Employer PAN must be in format AAAAA0000A");
+    }
+
+    // TAN format validation (AAAAA0000A)
+    const tanRegex = /^[A-Z]{4}[0-9]{5}[A-Z]{1}$/;
+    if (!tanRegex.test(data.employerTan)) {
+      errors.push("Employer TAN must be in format AAAAA0000A");
     }
 
     // Deduction limits
@@ -560,6 +613,10 @@ export default function Form16() {
                         setForm16Data(prev => ({
                           ...prev,
                           employeeId: value,
+                          employeeName: employee?.name || "",
+                          employeePan: employee?.pan || "",
+                          employeeAadhar: employee?.aadhar || "",
+                          employeeAddress: employee?.address || "",
                           employerName: employee ? prev.employerName : prev.employerName
                         }));
                       }}
@@ -575,6 +632,98 @@ export default function Form16() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Employee Details */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Employee Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Employee Name</Label>
+                      <Input
+                        value={form16Data.employeeName}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeName: e.target.value }))}
+                        placeholder="Enter employee name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employee PAN</Label>
+                      <Input
+                        value={form16Data.employeePan}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeePan: e.target.value }))}
+                        placeholder="AAAAA0000A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Aadhar Number</Label>
+                      <Input
+                        value={form16Data.employeeAadhar}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeAadhar: e.target.value }))}
+                        placeholder="1234 5678 9012"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employee Address</Label>
+                      <Textarea
+                        value={form16Data.employeeAddress}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeAddress: e.target.value }))}
+                        placeholder="Enter complete employee address"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Employer Details */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Employer Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Company Name</Label>
+                      <Input
+                        value={form16Data.employerCompanyName}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employerCompanyName: e.target.value }))}
+                        placeholder="Enter company name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer PAN</Label>
+                      <Input
+                        value={form16Data.employerPan}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employerPan: e.target.value }))}
+                        placeholder="AAAAA0000A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer TAN</Label>
+                      <Input
+                        value={form16Data.employerTan}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employerTan: e.target.value }))}
+                        placeholder="Enter TAN"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer Name (Display)</Label>
+                      <Input
+                        value={form16Data.employerName}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employerName: e.target.value }))}
+                        placeholder="Enter employer name for display"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employer Address</Label>
+                    <Textarea
+                      value={form16Data.employerAddress}
+                      onChange={(e) => setForm16Data(prev => ({ ...prev, employerAddress: e.target.value }))}
+                      placeholder="Enter complete employer address"
+                      rows={3}
+                    />
                   </div>
                 </div>
 
@@ -788,38 +937,204 @@ export default function Form16() {
               </CardHeader>
               <CardContent>
                 {computationResult ? (
-                  <div ref={printRef} className="space-y-4">
+                  <div ref={printRef} className="space-y-4 text-sm">
                     <div className="text-center border-b pb-4">
                       <h3 className="text-lg font-bold">FORM NO. 16 - PART B</h3>
-                      <p className="text-sm text-muted-foreground">Tax Computation Details</p>
+                      <p className="text-sm text-muted-foreground">Annexure - Details of Salary Paid and Tax Deducted</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Gross Salary:</span>
+                    {/* Salary Structure Breakdown */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">1. Gross Salary Received</h4>
+                      <div className="grid grid-cols-2 gap-4 pl-4">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>Basic Salary:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.basic.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>HRA:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.hra.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>DA:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.da.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Special Allowance:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.specialAllowance.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>LTA:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.lta.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Bonus:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.bonus.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Incentives:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.incentives.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Employer PF:</span>
+                            <span className="font-mono">₹{form16Data.salaryStructure.employerPf.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>Total Gross Salary:</span>
                         <span className="font-mono">₹{computationResult.grossSalary.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Exemptions (Section 10):</span>
+                    </div>
+
+                    <Separator />
+
+                    {/* Exemptions under Section 10 */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">2. Exemptions under Section 10</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>HRA Exemption:</span>
+                          <span className="font-mono">₹{form16Data.exemptions.hraExempt.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>LTA Exemption:</span>
+                          <span className="font-mono">₹{form16Data.exemptions.ltaExempt.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Children Education Allowance:</span>
+                          <span className="font-mono">₹{form16Data.exemptions.childrenEduAllowance.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Hostel Allowance:</span>
+                          <span className="font-mono">₹{form16Data.exemptions.hostelAllowance.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>Total Exemptions (Section 10):</span>
                         <span className="font-mono">₹{computationResult.exemptionsSection10.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between font-semibold">
+                    </div>
+
+                    <Separator />
+
+                    {/* Income from Salary */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">3. Income from Salary</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between">
+                          <span>Gross Salary:</span>
+                          <span className="font-mono">₹{computationResult.grossSalary.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Less: Exemptions u/s 10:</span>
+                          <span className="font-mono">₹{computationResult.exemptionsSection10.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-bold text-base border-t pt-2">
                         <span>Income from Salary:</span>
                         <span className="font-mono">₹{computationResult.incomeFromSalary.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Other Income:</span>
+                    </div>
+
+                    <Separator />
+
+                    {/* Other Income */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">4. Income from Other Sources</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Savings Account Interest:</span>
+                          <span className="font-mono">₹{form16Data.otherIncome.savingsInterest.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>FD/RD Interest:</span>
+                          <span className="font-mono">₹{form16Data.otherIncome.fdInterest.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Other Income:</span>
+                          <span className="font-mono">₹{form16Data.otherIncome.otherIncome.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>Total Other Income:</span>
                         <span className="font-mono">₹{computationResult.otherIncome.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between font-semibold">
+                    </div>
+
+                    <Separator />
+
+                    {/* Gross Total Income */}
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-base">5. Gross Total Income</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between">
+                          <span>Income from Salary:</span>
+                          <span className="font-mono">₹{computationResult.incomeFromSalary.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Add: Income from Other Sources:</span>
+                          <span className="font-mono">₹{computationResult.otherIncome.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-bold text-base border-t pt-2">
                         <span>Gross Total Income:</span>
                         <span className="font-mono">₹{computationResult.grossTotalIncome.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Deductions (Chapter VI-A):</span>
+                    </div>
+
+                    <Separator />
+
+                    {/* Deductions under Chapter VI-A */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">6. Deductions under Chapter VI-A</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80C:</span>
+                          <span className="font-mono">₹{form16Data.deductions80.section80C.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80CCD(1B):</span>
+                          <span className="font-mono">₹{form16Data.deductions80.section80CCD1B.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80D:</span>
+                          <span className="font-mono">₹{form16Data.deductions80.section80D.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80TTA:</span>
+                          <span className="font-mono">₹{form16Data.deductions80.section80TTA.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80G:</span>
+                          <span className="font-mono">₹{form16Data.deductions80.section80G.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>Total Chapter VI-A Deductions:</span>
                         <span className="font-mono">₹{computationResult.deductionsChapterVIA.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-lg">
+                    </div>
+
+                    <Separator />
+
+                    {/* Total Taxable Income */}
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-base">7. Total Taxable Income</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between">
+                          <span>Gross Total Income:</span>
+                          <span className="font-mono">₹{computationResult.grossTotalIncome.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Less: Chapter VI-A Deductions:</span>
+                          <span className="font-mono">₹{computationResult.deductionsChapterVIA.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg border-t pt-2 bg-gray-50 p-2 rounded">
                         <span>Total Taxable Income:</span>
                         <span className="font-mono">₹{computationResult.totalTaxableIncome.toLocaleString('en-IN')}</span>
                       </div>
@@ -827,31 +1142,64 @@ export default function Form16() {
 
                     <Separator />
 
-                    <div className="space-y-2">
-                      <h4 className="font-semibold">Tax Computation</h4>
-                      <div className="flex justify-between">
-                        <span>Tax on Income:</span>
-                        <span className="font-mono">₹{computationResult.taxOnIncome.toLocaleString('en-IN')}</span>
+                    {/* Tax Computation */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">8. Tax Computation (Tax Regime: {computationResult.taxRegime})</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Tax on Total Income:</span>
+                          <span className="font-mono">₹{computationResult.taxOnIncome.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Less: Rebate u/s 87A:</span>
+                          <span className="font-mono">₹{computationResult.rebate87A.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Add: Health & Education Cess @4%:</span>
+                          <span className="font-mono">₹{computationResult.healthEducationCess.toLocaleString('en-IN')}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Rebate u/s 87A:</span>
-                        <span className="font-mono">₹{computationResult.rebate87A.toLocaleString('en-IN')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Health & Education Cess @4%:</span>
-                        <span className="font-mono">₹{computationResult.healthEducationCess.toLocaleString('en-IN')}</span>
-                      </div>
-                      <div className="flex justify-between font-bold">
+                      <div className="flex justify-between font-semibold border-t pt-2">
                         <span>Total Tax Liability:</span>
                         <span className="font-mono">₹{computationResult.totalTaxLiability.toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>TDS Deducted:</span>
-                        <span className="font-mono">₹{computationResult.tdsDeducted.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <Separator />
+
+                    {/* TDS Details */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-base">9. TDS Details</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Total TDS Deducted:</span>
+                          <span className="font-mono">₹{form16Data.tdsDetails.totalTdsDeducted.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Relief u/s 89:</span>
+                          <span className="font-mono">₹{form16Data.tdsDetails.relief89.toLocaleString('en-IN')}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Relief u/s 89:</span>
-                        <span className="font-mono">₹{computationResult.relief89.toLocaleString('en-IN')}</span>
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>Net TDS Credit:</span>
+                        <span className="font-mono">₹{(form16Data.tdsDetails.totalTdsDeducted - form16Data.tdsDetails.relief89).toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Final Tax Position */}
+                    <div className="space-y-2 bg-blue-50 p-3 rounded-lg">
+                      <h4 className="font-semibold text-base">10. Final Tax Position</h4>
+                      <div className="space-y-1 pl-4">
+                        <div className="flex justify-between">
+                          <span>Total Tax Liability:</span>
+                          <span className="font-mono">₹{computationResult.totalTaxLiability.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>TDS Credit:</span>
+                          <span className="font-mono">₹{(form16Data.tdsDetails.totalTdsDeducted - form16Data.tdsDetails.relief89).toLocaleString('en-IN')}</span>
+                        </div>
                       </div>
                       <div className="flex justify-between font-bold text-lg border-t pt-2">
                         <span>Tax Payable/(Refund):</span>
@@ -910,39 +1258,68 @@ export default function Form16() {
                 </div>
 
                 {/* Employer Details */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Financial Year</Label>
-                    <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2025-26">2025-26</SelectItem>
-                        <SelectItem value="2024-25">2024-25</SelectItem>
-                        <SelectItem value="2023-24">2023-24</SelectItem>
-                        <SelectItem value="2022-23">2022-23</SelectItem>
-                        <SelectItem value="2021-22">2021-22</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Employer Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Financial Year</Label>
+                      <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2025-26">2025-26</SelectItem>
+                          <SelectItem value="2024-25">2024-25</SelectItem>
+                          <SelectItem value="2023-24">2023-24</SelectItem>
+                          <SelectItem value="2022-23">2022-23</SelectItem>
+                          <SelectItem value="2021-22">2021-22</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Company Name</Label>
+                      <Input
+                        value={bulkEmployerCompanyName}
+                        onChange={(e) => setBulkEmployerCompanyName(e.target.value)}
+                        placeholder="Enter company name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer PAN</Label>
+                      <Input
+                        value={bulkEmployerPan}
+                        onChange={(e) => setBulkEmployerPan(e.target.value)}
+                        placeholder="AAAAA0000A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer TAN</Label>
+                      <Input
+                        value={bulkEmployerTan}
+                        onChange={(e) => setBulkEmployerTan(e.target.value)}
+                        placeholder="Enter TAN"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Employer TAN</Label>
-                    <Input
-                      value={bulkEmployerTan}
-                      onChange={(e) => setBulkEmployerTan(e.target.value)}
-                      placeholder="Enter TAN"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Employer Name (Display)</Label>
+                      <Input
+                        value={bulkEmployerName}
+                        onChange={(e) => setBulkEmployerName(e.target.value)}
+                        placeholder="Enter employer name for display"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer Address</Label>
+                      <Textarea
+                        value={bulkEmployerAddress}
+                        onChange={(e) => setBulkEmployerAddress(e.target.value)}
+                        placeholder="Enter complete employer address"
+                        rows={2}
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Employer Name</Label>
-                  <Input
-                    value={bulkEmployerName}
-                    onChange={(e) => setBulkEmployerName(e.target.value)}
-                    placeholder="Enter employer name"
-                  />
                 </div>
 
                 {/* File Upload */}
@@ -1002,39 +1379,68 @@ export default function Form16() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Employer Details */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Financial Year</Label>
-                    <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2025-26">2025-26</SelectItem>
-                        <SelectItem value="2024-25">2024-25</SelectItem>
-                        <SelectItem value="2023-24">2023-24</SelectItem>
-                        <SelectItem value="2022-23">2022-23</SelectItem>
-                        <SelectItem value="2021-22">2021-22</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Employer Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Financial Year</Label>
+                      <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2025-26">2025-26</SelectItem>
+                          <SelectItem value="2024-25">2024-25</SelectItem>
+                          <SelectItem value="2023-24">2023-24</SelectItem>
+                          <SelectItem value="2022-23">2022-23</SelectItem>
+                          <SelectItem value="2021-22">2021-22</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Company Name</Label>
+                      <Input
+                        value={bulkEmployerCompanyName}
+                        onChange={(e) => setBulkEmployerCompanyName(e.target.value)}
+                        placeholder="Enter company name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer PAN</Label>
+                      <Input
+                        value={bulkEmployerPan}
+                        onChange={(e) => setBulkEmployerPan(e.target.value)}
+                        placeholder="AAAAA0000A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer TAN</Label>
+                      <Input
+                        value={bulkEmployerTan}
+                        onChange={(e) => setBulkEmployerTan(e.target.value)}
+                        placeholder="Enter TAN"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Employer TAN</Label>
-                    <Input
-                      value={bulkEmployerTan}
-                      onChange={(e) => setBulkEmployerTan(e.target.value)}
-                      placeholder="Enter TAN"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Employer Name (Display)</Label>
+                      <Input
+                        value={bulkEmployerName}
+                        onChange={(e) => setBulkEmployerName(e.target.value)}
+                        placeholder="Enter employer name for display"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer Address</Label>
+                      <Textarea
+                        value={bulkEmployerAddress}
+                        onChange={(e) => setBulkEmployerAddress(e.target.value)}
+                        placeholder="Enter complete employer address"
+                        rows={2}
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Employer Name</Label>
-                  <Input
-                    value={bulkEmployerName}
-                    onChange={(e) => setBulkEmployerName(e.target.value)}
-                    placeholder="Enter employer name"
-                  />
                 </div>
 
                 <Separator />

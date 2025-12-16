@@ -22,6 +22,7 @@ interface BulkUploadEmployeeData {
   name: string;
   pan: string;
   aadhaar?: string;
+  address?: string;
   designation: string;
   doj: string;
   employmentType?: 'permanent' | 'contract' | 'probation';
