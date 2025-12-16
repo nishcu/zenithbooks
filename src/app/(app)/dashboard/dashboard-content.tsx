@@ -337,13 +337,13 @@ function DashboardContent() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
                                 <CardHeader className="pb-3 px-4 pt-4">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
@@ -390,13 +390,13 @@ function DashboardContent() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="px-4 sm:px-6">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
+                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
                                 <CardHeader className="pb-3 px-4 pt-4">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
@@ -472,13 +472,13 @@ function DashboardContent() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6">
+        <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
             {coreFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
                 <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
+                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
                     <CardHeader className="pb-3 px-4 pt-4">
                       <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
                         <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
@@ -539,13 +539,13 @@ function DashboardContent() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6">
+        <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
             {quickAccessFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
                 <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
+                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
                     <CardHeader className="pb-3 px-4 pt-4">
                       <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
                         <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />

@@ -466,7 +466,7 @@ function MainLayout({
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex flex-1 flex-col gap-4 p-3 sm:p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6" role="main" aria-label="Main content">
+          <main className="flex flex-1 flex-col gap-4 p-3 sm:p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6 w-full max-w-full overflow-x-hidden" role="main" aria-label="Main content">
             <Suspense fallback={<Loader2 className="animate-spin" aria-label="Loading content" />}>
               {children}
             </Suspense>
