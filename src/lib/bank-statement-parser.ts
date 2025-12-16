@@ -252,11 +252,102 @@ function isDataRow(row: any): boolean {
 }
 
 /**
+ * Check if a value matches common date patterns (more robust detection)
+ */
+function looksLikeDate(value: any): boolean {
+  if (!value) return false;
+  
+  const dateStr = String(value).trim();
+  
+  // Common date patterns
+  const datePatterns = [
+    /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY or MM/DD/YYYY
+    /^\d{2}-\d{2}-\d{4}$/, // DD-MM-YYYY or MM-DD-YYYY
+    /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+    /^\d{2}\.\d{2}\.\d{4}$/, // DD.MM.YYYY
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/, // D/M/YYYY or M/D/YYYY
+    /^\d{1,2}-\d{1,2}-\d{4}$/, // D-M-YYYY or M-D-YYYY
+  ];
+  
+  // Check if matches any date pattern
+  if (datePatterns.some(pattern => pattern.test(dateStr))) {
+    return true;
+  }
+  
+  // Try JavaScript Date parsing (handles more formats)
+  try {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      // Additional validation: check if the parsed date makes sense
+      // (not year 1900 or far future dates that might be misparsed numbers)
+      const year = date.getFullYear();
+      if (year >= 2000 && year <= 2100) {
+        return true;
+      }
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  return false;
+}
+
+/**
+ * Detect date column index by scanning multiple rows and finding columns with date patterns
+ * This helps identify date columns even when headers are missing or unclear
+ */
+function detectDateColumn(jsonData: any[], startRow: number = 0, maxRowsToScan: number = 50): number | null {
+  if (!jsonData || jsonData.length === 0) return null;
+  
+  const rowsToScan = Math.min(jsonData.length, startRow + maxRowsToScan);
+  const columnDateCounts: { [key: string]: number } = {};
+  
+  // Scan rows to find which column contains dates most consistently
+  for (let i = startRow; i < rowsToScan; i++) {
+    const row = jsonData[i];
+    if (!row) continue;
+    
+    const keys = Object.keys(row);
+    for (const key of keys) {
+      const value = row[key];
+      if (looksLikeDate(value)) {
+        columnDateCounts[key] = (columnDateCounts[key] || 0) + 1;
+      }
+    }
+  }
+  
+  // Find the column with the most date matches
+  let maxCount = 0;
+  let dateColumn: string | null = null;
+  
+  for (const [column, count] of Object.entries(columnDateCounts)) {
+    // Consider it a date column if it has dates in at least 30% of scanned rows
+    const threshold = Math.max(3, Math.floor((rowsToScan - startRow) * 0.3));
+    if (count >= threshold && count > maxCount) {
+      maxCount = count;
+      dateColumn = column;
+    }
+  }
+  
+  // If we found a date column, return its index
+  if (dateColumn && jsonData.length > 0) {
+    const keys = Object.keys(jsonData[0]);
+    const index = keys.indexOf(dateColumn);
+    return index >= 0 ? index : null;
+  }
+  
+  return null;
+}
+
+/**
  * Find the first row index that contains actual transaction data (not headers)
+ * Enhanced to scan more rows (up to 50) and use pattern-based date detection
  */
 function findFirstDataRow(jsonData: any[]): number {
+  const MAX_ROWS_TO_SCAN = 50; // Increased from 10 to 50
+  
   // Start checking from the beginning, but skip obvious header rows
-  for (let i = 0; i < Math.min(jsonData.length, 10); i++) {
+  for (let i = 0; i < Math.min(jsonData.length, MAX_ROWS_TO_SCAN); i++) {
     const row = jsonData[i];
     
     // Skip completely empty rows
@@ -273,13 +364,50 @@ function findFirstDataRow(jsonData: any[]): number {
       continue;
     }
     
-    // If it looks like actual data, return this index
-    if (isDataRow(row)) {
-      return i;
+    // Enhanced: Use pattern-based date detection to verify this is a data row
+    // Check if any column in this row contains a date-like value
+    const hasDateLikeValue = Object.values(row).some(value => looksLikeDate(value));
+    
+    // If it looks like actual data (has date or matches data row criteria), return this index
+    if (isDataRow(row) || hasDateLikeValue) {
+      // Additional validation: check if next few rows also look like data
+      // This helps avoid false positives (e.g., a single date in a header row)
+      let consecutiveDataRows = 0;
+      for (let j = i; j < Math.min(i + 3, jsonData.length); j++) {
+        const nextRow = jsonData[j];
+        if (nextRow && (isDataRow(nextRow) || Object.values(nextRow).some(v => looksLikeDate(v)))) {
+          consecutiveDataRows++;
+        }
+      }
+      
+      // If at least 2 out of next 3 rows look like data, this is likely the start
+      if (consecutiveDataRows >= 2 || hasDateLikeValue) {
+        return i;
+      }
     }
   }
   
-  // If we couldn't find a clear data row in first 10 rows, start from 0
+  // If we couldn't find a clear data row, try using date column detection
+  // This helps when headers are missing but data follows a pattern
+  const detectedDateColumn = detectDateColumn(jsonData, 0, MAX_ROWS_TO_SCAN);
+  if (detectedDateColumn !== null) {
+    // Find the first row that has a date in the detected date column
+    for (let i = 0; i < Math.min(jsonData.length, MAX_ROWS_TO_SCAN); i++) {
+      const row = jsonData[i];
+      if (!row) continue;
+      
+      const keys = Object.keys(row);
+      if (keys.length > detectedDateColumn) {
+        const dateColumnKey = keys[detectedDateColumn];
+        const dateValue = row[dateColumnKey];
+        if (looksLikeDate(dateValue) && !isHeaderRow(row)) {
+          return i;
+        }
+      }
+    }
+  }
+  
+  // Fallback: If we still couldn't find a clear data row, start from 0
   return 0;
 }
 
@@ -422,19 +550,8 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
     // Find where actual transaction data starts (skip header rows if CSV doesn't have proper headers)
     // For CSV with header: true, PapaParse treats first row as header, so data starts at index 0
     // But we still need to check if the "data" actually starts later
-    let startIndex = 0;
-    
-    // Check first few rows to find where real data starts
-    for (let i = 0; i < Math.min(jsonData.length, 5); i++) {
-      const row = jsonData[i];
-      const hasData = Object.values(row).some(value => 
-        value !== null && value !== undefined && String(value).trim() !== ''
-      );
-      if (hasData && isDataRow(row) && !isHeaderRow(row)) {
-        startIndex = i;
-        break;
-      }
-    }
+    // Use the enhanced findFirstDataRow function for consistent behavior with Excel parsing
+    const startIndex = findFirstDataRow(jsonData);
     
     // Process rows starting from the first data row
     for (let i = startIndex; i < jsonData.length; i++) {
