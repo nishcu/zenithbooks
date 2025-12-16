@@ -705,6 +705,73 @@ export default function Form16() {
     }
   };
 
+  const downloadBulkUploadPDFs = async () => {
+    // For bulk upload, use the documents from the upload result
+    if (!bulkResults || !bulkResults.documents || bulkResults.documents.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Documents Available",
+        description: "No Form 16 documents were generated from the upload"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Extract employee IDs from the uploaded documents
+      const employeeIds = bulkResults.documents.map((doc: any) => doc.employeeId);
+      
+      const response = await fetch('/api/form-16/bulk-download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user!.uid
+        },
+        body: JSON.stringify({
+          employeeIds: employeeIds,
+          financialYear: bulkFinancialYear,
+          employerName: bulkEmployerName,
+          employerTan: bulkEmployerTan,
+          employerPan: bulkEmployerPan,
+          signatoryName: bulkSignatoryName,
+          signatoryDesignation: bulkSignatoryDesignation,
+          signatoryPlace: bulkSignatoryPlace
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download bulk PDFs');
+      }
+
+      // Get the ZIP file as blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Form16_BulkUpload_${bulkFinancialYear}_${bulkResults.documents.length}_employees.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: `Downloading ${bulkResults.documents.length} Form 16 PDFs as ZIP file`
+      });
+    } catch (error) {
+      console.error('Error downloading bulk upload PDFs:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Failed to download bulk PDFs"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBulkUpload = async () => {
     if (!uploadedFile) {
       toast({
@@ -2582,15 +2649,26 @@ export default function Form16() {
                   )}
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
                 <Button
                   onClick={handleBulkUpload}
                   disabled={isUploading || !uploadedFile}
-                  className="w-full"
+                  className="flex-1"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {isUploading ? "Processing..." : `Upload & Generate Form 16`}
                 </Button>
+                {bulkResults && !bulkResults.summary && bulkResults.documents && bulkResults.documents.length > 0 && (
+                  <Button
+                    onClick={downloadBulkUploadPDFs}
+                    disabled={isUploading || isLoading}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDFs (ZIP)
+                  </Button>
+                )}
               </CardFooter>
             </Card>
 
