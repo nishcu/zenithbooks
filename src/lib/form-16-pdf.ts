@@ -34,7 +34,23 @@ export class Form16PDFGenerator {
     form16Doc: Form16Document,
     password?: string
   ): Promise<Blob> {
+    // Ensure jspdf-autotable is loaded before creating PDF instance
+    // This is especially important for server-side rendering
+    if (typeof window === 'undefined') {
+      // Server-side: explicitly require the plugin
+      try {
+        require('jspdf-autotable');
+      } catch (e) {
+        console.error('Failed to load jspdf-autotable:', e);
+      }
+    }
+    
     const pdf = new jsPDF();
+    
+    // Verify autoTable is available
+    if (typeof (pdf as any).autoTable !== 'function') {
+      throw new Error('jspdf-autotable plugin is not properly initialized. autoTable method is not available on jsPDF instance.');
+    }
 
     // Set password protection if provided
     if (password) {
