@@ -96,15 +96,18 @@ export async function POST(request: NextRequest) {
         const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
         
         if (!employeeDoc.exists()) {
+          console.error(`Employee document not found: ${employeeId}`);
           errors.push(`Employee ${employeeId}: Not found`);
           failed++;
           continue;
         }
 
-        const employee = { id: employeeDoc.id, ...employeeDoc.data() } as any;
+        const employeeData = employeeDoc.data();
+        const employee = { id: employeeDoc.id, ...employeeData } as any;
 
         // Verify access
-        if (employee.employerId !== userId) {
+        if (!employeeData || employee.employerId !== userId) {
+          console.error(`Employee access denied: ${employeeId}, employerId: ${employee.employerId}, userId: ${userId}`);
           errors.push(`Employee ${employeeId}: Access denied`);
           failed++;
           continue;
@@ -121,9 +124,68 @@ export async function POST(request: NextRequest) {
         let form16Doc: Form16Document;
 
         if (!existingDocs.empty) {
-          // Use existing document
+          // Use existing document, but ensure partA is properly initialized
           const existingDoc = existingDocs.docs[0];
-          form16Doc = { id: existingDoc.id, ...existingDoc.data() } as Form16Document;
+          const existingData = existingDoc.data();
+          
+          // Ensure partA exists and is properly structured (handle old documents without partA)
+          if (!existingData.partA || typeof existingData.partA !== 'object' || !existingData.partA.employeeName) {
+            // If partA doesn't exist or is incomplete (old documents), create it with employee data
+            const fyStart = `01/04/${financialYear.split('-')[0]}`;
+            const fyEnd = `31/03/${financialYear.split('-')[1]}`;
+            
+            // Handle DOJ date for period calculation
+            let dojDate: Date;
+            if (employee.doj instanceof Date) {
+              dojDate = employee.doj;
+            } else if (employee.doj && typeof employee.doj === 'object' && 'toDate' in employee.doj) {
+              dojDate = (employee.doj as any).toDate();
+            } else if (employee.doj) {
+              dojDate = new Date(employee.doj);
+            } else {
+              dojDate = new Date(`${financialYear.split('-')[0]}-04-01`);
+            }
+            
+            if (isNaN(dojDate.getTime())) {
+              dojDate = new Date(`${financialYear.split('-')[0]}-04-01`);
+            }
+            
+            const fyStartDate = new Date(`${financialYear.split('-')[0]}-04-01`);
+            const periodFrom = dojDate > fyStartDate ? dojDate : fyStartDate;
+            const periodTo = new Date() < new Date(`${financialYear.split('-')[1]}-03-31`) ? new Date() : new Date(`${financialYear.split('-')[1]}-03-31`);
+            
+            const formatDate = (date: Date) => {
+              const day = String(date.getDate()).padStart(2, '0');
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              return `${day}/${month}/${year}`;
+            };
+            
+            existingData.partA = {
+              certificateNumber: existingData.partA?.certificateNumber || '',
+              lastUpdatedOn: existingData.partA?.lastUpdatedOn || '',
+              validFrom: existingData.partA?.validFrom || '',
+              validTill: existingData.partA?.validTill || '',
+              employeeName: employee.name,
+              employeePan: employee.pan,
+              employeeAddress: employee.address || '',
+              employeeDesignation: employee.designation || 'Employee',
+              employeeAadhaar: employee.aadhaar || '',
+              periodFrom: formatDate(periodFrom),
+              periodTo: formatDate(periodTo),
+              totalTdsDeducted: existingData.partB?.tdsDetails?.totalTdsDeducted || existingData.partB?.totalTdsDeducted || 0,
+              tdsDetails: existingData.partB?.tdsDetails || existingData.tdsDetails || {
+                quarterlyBreakup: {
+                  q1: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+                  q2: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+                  q3: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
+                  q4: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
+                }
+              }
+            };
+          }
+          
+          form16Doc = { id: existingDoc.id, ...existingData } as Form16Document;
         } else {
           // Generate Form 16 using full computation logic (like bulk-generate does)
           // Fetch or create data structures
@@ -287,21 +349,28 @@ export async function POST(request: NextRequest) {
         }
 
         // Generate PDF
-        const pdfData = await Form16PDFGenerator.generateForm16PDF(form16Doc);
-        
-        // Add to ZIP with employee name in filename
-        const fileName = `Form16_${employee.name.replace(/[^a-zA-Z0-9]/g, '_')}_${employee.pan}_${financialYear}.pdf`;
-        
-        // Handle both Buffer (server-side) and Blob (browser)
-        let arrayBuffer: ArrayBuffer;
-        if (Buffer.isBuffer(pdfData)) {
-          arrayBuffer = pdfData.buffer.slice(pdfData.byteOffset, pdfData.byteOffset + pdfData.byteLength);
-        } else {
-          arrayBuffer = await (pdfData as Blob).arrayBuffer();
+        try {
+          const pdfData = await Form16PDFGenerator.generateForm16PDF(form16Doc);
+          
+          // Add to ZIP with employee name in filename
+          const fileName = `Form16_${employee.name.replace(/[^a-zA-Z0-9]/g, '_')}_${employee.pan}_${financialYear}.pdf`;
+          
+          // Handle both Buffer (server-side) and Blob (browser)
+          let arrayBuffer: ArrayBuffer;
+          if (Buffer.isBuffer(pdfData)) {
+            arrayBuffer = pdfData.buffer.slice(pdfData.byteOffset, pdfData.byteOffset + pdfData.byteLength);
+          } else {
+            arrayBuffer = await (pdfData as Blob).arrayBuffer();
+          }
+          zip.file(fileName, arrayBuffer);
+          
+          processed++;
+        } catch (pdfError) {
+          console.error(`Error generating PDF for employee ${employeeId}:`, pdfError);
+          errors.push(`Employee ${employeeId}: PDF generation failed - ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
+          failed++;
+          continue;
         }
-        zip.file(fileName, arrayBuffer);
-        
-        processed++;
       } catch (error: any) {
         console.error(`Error processing employee ${employeeId}:`, error);
         errors.push(`Employee ${employeeId}: ${error.message || 'Processing error'}`);

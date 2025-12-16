@@ -86,10 +86,15 @@ export class Form16PDFGenerator {
     // Store autoTable function for use in helper methods
     (pdf as any)._autoTable = autoTable;
 
+    // Ensure partA exists before using it
+    if (!form16Doc.partA) {
+      throw new Error('Form16Document is missing required partA data. Please regenerate the Form 16.');
+    }
+
     // Set password protection if provided
     if (password) {
       pdf.setProperties({
-        title: `Form 16 - ${form16Doc.partA.employeeName}`,
+        title: `Form 16 - ${form16Doc.partA.employeeName || 'Employee'}`,
         subject: `Form 16 for FY ${form16Doc.financialYear}`,
         author: 'ZenithBooks',
         keywords: 'Form 16, TDS, Income Tax',
@@ -396,11 +401,11 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employeeData = [
-      ['1. Name of the Employee', partA.employeeName],
+      ['1. Name of the Employee', partA.employeeName || ''],
       ['2. Address of the Employee', partA.employeeAddress || ''],
-      ['3. PAN of the Employee', partA.employeePan],
+      ['3. PAN of the Employee', partA.employeePan || ''],
       ['4. Aadhaar Number (if available)', partA.employeeAadhaar || ''],
-      ['5. Designation', partA.employeeDesignation],
+      ['5. Designation', partA.employeeDesignation || 'Employee'],
       ['6. Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
         const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
