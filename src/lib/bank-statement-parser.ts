@@ -30,6 +30,34 @@ export interface ParseError {
   data?: any;
 }
 
+// Compatibility types for bank-reconciliation page
+export interface ParsedTransaction {
+  date: string;
+  description: string;
+  withdrawal: number | null;
+  deposit: number | null;
+}
+
+export interface SkippedRow {
+  rowNumber: number;
+  reason: string;
+  raw?: string;
+}
+
+export interface ParsedResult {
+  transactions: ParsedTransaction[];
+  rawRowCount?: number;
+  skippedRowCount?: number;
+  warnings?: string[];
+  skippedRows?: SkippedRow[];
+}
+
+// Transaction categorization result
+export interface TransactionCategory {
+  suggestedAccount?: string;
+  category?: string;
+}
+
 /**
  * Common bank statement column aliases
  * Different banks use different column names for the same data
