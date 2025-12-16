@@ -155,6 +155,11 @@ export async function POST(request: NextRequest) {
       const rowNumber = i + 2; // Excel rows start from 1, plus header
       const empData = employeeData[i];
 
+      // Skip empty rows (no name and no pan)
+      if (!empData.name && !empData.pan) {
+        continue;
+      }
+
       try {
         // Validate required fields
         if (!empData.name || !empData.pan) {
