@@ -14,6 +14,22 @@ const nextConfig: NextConfig = {
     // Ensure proper client component handling
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
   },
+  webpack: (config, { isServer }) => {
+    // Ensure jsPDF and jspdf-autotable work in server-side
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+      };
+      // Don't externalize these packages - bundle them
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals = config.externals.filter(
+          (external) => external !== 'jspdf' && external !== 'jspdf-autotable'
+        );
+      }
+    }
+    return config;
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'inline',
