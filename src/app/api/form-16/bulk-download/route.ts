@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { Form16PDFGenerator } from '@/lib/form-16-pdf';
-import { Form16Document } from '@/lib/form-16-models';
+import { Form16ComputationEngine } from '@/lib/form-16-computation';
+import { 
+  Form16Document, 
+  EmployeeMaster, 
+  SalaryStructure, 
+  ExemptionsSection10, 
+  Section16Deductions, 
+  ChapterVIA_Deductions, 
+  OtherIncome, 
+  TDSDetails 
+} from '@/lib/form-16-models';
 import JSZip from 'jszip';
 import { Buffer } from 'buffer';
 
@@ -82,23 +92,22 @@ export async function POST(request: NextRequest) {
     // Process each employee
     for (const employeeId of employeeIds) {
       try {
-        // Fetch employee data
-        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
-        
-        if (!employeeDoc.exists()) {
-          errors.push(`Employee ${employeeId}: Not found`);
+        // Fetch employee data - use query like bulk-generate does
+        const employeeQuery = query(
+          collection(db, 'employees'),
+          where('id', '==', employeeId),
+          where('employerId', '==', userId)
+        );
+        const employeeSnapshot = await getDocs(employeeQuery);
+
+        if (employeeSnapshot.empty) {
+          errors.push(`Employee ${employeeId}: Not found or access denied`);
           failed++;
           continue;
         }
 
+        const employeeDoc = employeeSnapshot.docs[0];
         const employee = { id: employeeDoc.id, ...employeeDoc.data() } as any;
-
-        // Verify access
-        if (employee.employerId !== userId) {
-          errors.push(`Employee ${employeeId}: Access denied`);
-          failed++;
-          continue;
-        }
 
         // Check if Form 16 document already exists
         const form16Query = query(
@@ -115,39 +124,79 @@ export async function POST(request: NextRequest) {
           const existingDoc = existingDocs.docs[0];
           form16Doc = { id: existingDoc.id, ...existingDoc.data() } as Form16Document;
         } else {
-          // Create new document (simplified - you may want to use the full generation logic)
-          // For now, we'll generate a basic document
-          const dojDate = employee.doj instanceof Date ? employee.doj : new Date(employee.doj);
-          const periodFrom = dojDate > fyStartDate ? dojDate : fyStartDate;
-          const periodTo = new Date() < fyEndDate ? new Date() : fyEndDate;
-          const periodFromStr = formatDate(periodFrom);
-          const periodToStr = formatDate(periodTo);
+          // Generate Form 16 using full computation logic (like bulk-generate does)
+          // Fetch or create data structures
+          const salaryDoc = await getDoc(doc(db, 'salaryStructures', `${employeeId}_${financialYear}`));
+          const salaryData: SalaryStructure = salaryDoc.exists() 
+            ? { id: salaryDoc.id, ...salaryDoc.data() } as SalaryStructure
+            : {
+                employeeId,
+                financialYear,
+                monthly: { basic: 0, hra: 0, da: 0, specialAllowance: 0, lta: 0, bonus: 0, incentives: 0, arrears: 0, perquisites: 0, employerPf: 0 },
+                annual: { basic: 0, hra: 0, da: 0, specialAllowance: 0, lta: 0, bonus: 0, incentives: 0, arrears: 0, perquisites: 0, employerPf: 0 },
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
 
-          // This is a simplified version - in production, you should use the full generation logic
-          // from the generate route
-          form16Doc = {
-            id: '',
-            employeeId,
-            financialYear,
-            assessmentYear: `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`,
-            employerName: employerName,
-            employerTan: employerTan,
-            employerPan: employerPan || '',
-            employerAddress: employerData?.address || '',
-            partA: {
-              certificateNumber: `CERT-${employeeId}-${financialYear}`,
-              lastUpdatedOn: today,
-              validFrom: fyStart,
-              validTill: fyEnd,
-              employeeName: employee.name,
-              employeePan: employee.pan,
-              employeeAddress: employee.address || '',
-              employeeDesignation: employee.designation || 'Employee',
-              employeeAadhaar: employee.aadhaar,
-              periodFrom: periodFromStr,
-              periodTo: periodToStr,
-              totalTdsDeducted: 0,
-              tdsDetails: {
+          const exemptionsDoc = await getDoc(doc(db, 'exemptionsSection10', `${employeeId}_${financialYear}`));
+          const exemptionsData: ExemptionsSection10 = exemptionsDoc.exists()
+            ? { id: exemptionsDoc.id, ...exemptionsDoc.data() } as ExemptionsSection10
+            : {
+                employeeId,
+                financialYear,
+                hraExempt: 0,
+                ltaExempt: 0,
+                childrenEduAllowance: 0,
+                hostelAllowance: 0,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
+
+          const section16Doc = await getDoc(doc(db, 'section16Deductions', `${employeeId}_${financialYear}`));
+          const section16Data: Section16Deductions = section16Doc.exists()
+            ? { id: section16Doc.id, ...section16Doc.data() } as Section16Deductions
+            : {
+                employeeId,
+                financialYear,
+                standardDeduction: 50000,
+                professionalTax: 0,
+                entertainmentAllowance: 0,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
+
+          const chapterVIADoc = await getDoc(doc(db, 'chapterVIA_Deductions', `${employeeId}_${financialYear}`));
+          const chapterVIAData: ChapterVIA_Deductions = chapterVIADoc.exists()
+            ? { id: chapterVIADoc.id, ...chapterVIADoc.data() } as ChapterVIA_Deductions
+            : {
+                employeeId,
+                financialYear,
+                section80C: 0,
+                section80CCD1B: 0,
+                section80D: 0,
+                section80TTA: 0,
+                section80G: 0,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
+
+          const otherIncomeDoc = await getDoc(doc(db, 'otherIncome', `${employeeId}_${financialYear}`));
+          const otherIncomeData: OtherIncome = otherIncomeDoc.exists()
+            ? { id: otherIncomeDoc.id, ...otherIncomeDoc.data() } as OtherIncome
+            : {
+                employeeId,
+                financialYear,
+                savingsInterest: 0,
+                fdInterest: 0,
+                otherIncome: 0,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
+
+          const tdsDoc = await getDoc(doc(db, 'tdsDetails', `${employeeId}_${financialYear}`));
+          const tdsData: TDSDetails = tdsDoc.exists()
+            ? { id: tdsDoc.id, ...tdsDoc.data() } as TDSDetails
+            : {
                 employeeId,
                 financialYear,
                 totalTdsDeducted: 0,
@@ -158,38 +207,70 @@ export async function POST(request: NextRequest) {
                   q3: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
                   q4: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
                 },
-                createdAt: new Date() as any,
-                updatedAt: new Date() as any
-              }
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+              };
+
+          // Compute Form 16
+          const computation = Form16ComputationEngine.calculateForm16PartB(
+            employee as EmployeeMaster,
+            salaryData,
+            exemptionsData,
+            section16Data,
+            chapterVIAData,
+            otherIncomeData,
+            tdsData
+          );
+
+          // Handle DOJ date
+          let dojDate: Date;
+          if (employee.doj instanceof Date) {
+            dojDate = employee.doj;
+          } else if (employee.doj && typeof employee.doj === 'object' && 'toDate' in employee.doj) {
+            dojDate = (employee.doj as any).toDate();
+          } else if (employee.doj) {
+            dojDate = new Date(employee.doj);
+          } else {
+            dojDate = fyStartDate;
+          }
+          
+          if (isNaN(dojDate.getTime())) {
+            dojDate = fyStartDate;
+          }
+          
+          const periodFrom = dojDate > fyStartDate ? dojDate : fyStartDate;
+          const periodTo = new Date() < fyEndDate ? new Date() : fyEndDate;
+          const periodFromStr = formatDate(periodFrom);
+          const periodToStr = formatDate(periodTo);
+          const safePeriodFrom = periodFromStr || fyStart;
+          const safePeriodTo = periodToStr || fyEnd;
+
+          // Create Form 16 document
+          form16Doc = {
+            id: '',
+            employeeId,
+            financialYear,
+            assessmentYear: `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`,
+            employerName: employerName,
+            employerTan: employerTan,
+            employerPan: employerPan || '',
+            employerAddress: employerData?.address || '',
+            partA: {
+              certificateNumber: '',
+              lastUpdatedOn: '',
+              validFrom: '',
+              validTill: '',
+              employeeName: employee.name,
+              employeePan: employee.pan,
+              employeeAddress: employee.address || '',
+              employeeDesignation: employee.designation || 'Employee',
+              employeeAadhaar: employee.aadhaar,
+              periodFrom: safePeriodFrom,
+              periodTo: safePeriodTo,
+              totalTdsDeducted: tdsData.totalTdsDeducted,
+              tdsDetails: tdsData
             },
-            partB: {
-              employeeId,
-              financialYear,
-              salarySection17_1: 0,
-              perquisitesSection17_2: 0,
-              profitsSection17_3: 0,
-              grossSalary: 0,
-              exemptionsSection10: 0,
-              netSalary: 0,
-              deductionsSection16: 0,
-              incomeFromSalary: 0,
-              otherIncome: 0,
-              grossTotalIncome: 0,
-              deductionsChapterVIA: 0,
-              totalTaxableIncome: 0,
-              taxOnIncome: 0,
-              surcharge: 0,
-              healthEducationCess: 0,
-              totalTaxLiability: 0,
-              rebate87A: 0,
-              taxAfterRebate: 0,
-              tdsDeducted: 0,
-              taxDeposited: 0,
-              relief89: 0,
-              taxPayable: 0,
-              taxRegime: employee.taxRegime || 'NEW',
-              computedAt: new Date() as any
-            },
+            partB: computation,
             signatory: {
               name: finalSignatoryName,
               designation: finalSignatoryDesignation,
@@ -197,7 +278,7 @@ export async function POST(request: NextRequest) {
               date: today
             },
             generatedBy: userId,
-            generatedAt: new Date() as any,
+            generatedAt: Timestamp.now(),
             version: 1,
             status: 'generated',
             accessLogs: []
