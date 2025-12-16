@@ -197,6 +197,9 @@ export default function Form16() {
   const [bulkResults, setBulkResults] = useState<any>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [bulkSignatoryName, setBulkSignatoryName] = useState(userData?.name || userData?.companyName || "");
+  const [bulkSignatoryDesignation, setBulkSignatoryDesignation] = useState(userData?.designation || "Authorized Signatory");
+  const [bulkSignatoryPlace, setBulkSignatoryPlace] = useState(userData?.address?.split(',')[0] || "");
 
   // Add Employee Dialog State
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
@@ -543,7 +546,10 @@ export default function Form16() {
           financialYear: bulkFinancialYear,
           employerName: bulkEmployerName,
           employerTan: bulkEmployerTan,
-          employerPan: bulkEmployerPan
+          employerPan: bulkEmployerPan,
+          signatoryName: bulkSignatoryName,
+          signatoryDesignation: bulkSignatoryDesignation,
+          signatoryPlace: bulkSignatoryPlace
         })
       });
 
@@ -568,6 +574,70 @@ export default function Form16() {
         variant: "destructive",
         title: "Error",
         description: "Failed to generate bulk Form 16"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const downloadBulkPDFs = async () => {
+    const selectedEmployees = employees.filter(emp => emp.selected);
+    if (selectedEmployees.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Employees Selected",
+        description: "Please select at least one employee"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/form-16/bulk-download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user!.uid
+        },
+        body: JSON.stringify({
+          employeeIds: selectedEmployees.map(emp => emp.id),
+          financialYear: bulkFinancialYear,
+          employerName: bulkEmployerName,
+          employerTan: bulkEmployerTan,
+          employerPan: bulkEmployerPan,
+          signatoryName: bulkSignatoryName,
+          signatoryDesignation: bulkSignatoryDesignation,
+          signatoryPlace: bulkSignatoryPlace
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download bulk PDFs');
+      }
+
+      // Get the ZIP file as blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Form16_Bulk_${bulkFinancialYear}_${selectedEmployees.length}_employees.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: `Downloading ${selectedEmployees.length} Form 16 PDFs as ZIP file`
+      });
+    } catch (error) {
+      console.error('Error downloading bulk PDFs:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Failed to download bulk PDFs"
       });
     } finally {
       setIsLoading(false);
@@ -1703,6 +1773,44 @@ export default function Form16() {
                   </div>
                 </div>
 
+                <Separator />
+
+                {/* Signatory Details */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Signatory Details</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Details of the person authorized to sign the Form 16 certificates
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Signatory Name *</Label>
+                      <Input
+                        value={bulkSignatoryName}
+                        onChange={(e) => setBulkSignatoryName(e.target.value)}
+                        placeholder="Name of authorized signatory"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Signatory Designation *</Label>
+                      <Input
+                        value={bulkSignatoryDesignation}
+                        onChange={(e) => setBulkSignatoryDesignation(e.target.value)}
+                        placeholder="Designation of signatory"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Place *</Label>
+                      <Input
+                        value={bulkSignatoryPlace}
+                        onChange={(e) => setBulkSignatoryPlace(e.target.value)}
+                        placeholder="Place of signing"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
                 {/* File Upload */}
                 <div className="space-y-4">
                   <Label>Upload Employee Data File</Label>
@@ -2002,15 +2110,26 @@ export default function Form16() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex gap-2">
               <Button
                 onClick={generateBulkForm16}
                 disabled={isLoading || employees.filter(e => e.selected).length === 0}
-                className="w-full"
+                className="flex-1"
               >
                 <Users className="mr-2 h-4 w-4" />
                 {isLoading ? "Generating..." : `Generate Form 16 for ${employees.filter(e => e.selected).length} Employees`}
+              </Button>
+              {bulkResults && bulkResults.summary && bulkResults.summary.successful > 0 && (
+                <Button
+                  onClick={downloadBulkPDFs}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download All PDFs (ZIP)
                 </Button>
+              )}
             </CardFooter>
         </Card>
       </div>

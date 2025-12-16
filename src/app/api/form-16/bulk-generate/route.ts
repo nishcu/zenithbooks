@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
 import {
   Form16ComputationEngine,
   Form16PDFGenerator
@@ -22,6 +22,9 @@ interface BulkForm16Request {
   employerName: string;
   employerTan: string;
   employerPan?: string;
+  signatoryName?: string;
+  signatoryDesignation?: string;
+  signatoryPlace?: string;
 }
 
 interface BulkForm16Response {
@@ -55,7 +58,16 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: BulkForm16Request = await request.json();
-    const { employeeIds, financialYear, employerName, employerTan, employerPan } = body;
+    const { employeeIds, financialYear, employerName, employerTan, employerPan, signatoryName, signatoryDesignation, signatoryPlace } = body;
+
+    // Get employer data for defaults
+    const employerDoc = await getDoc(doc(db, 'users', userId));
+    const employerData = employerDoc.data();
+
+    // Signatory details
+    const finalSignatoryName = signatoryName || employerData?.name || employerData?.companyName || 'Authorized Signatory';
+    const finalSignatoryDesignation = signatoryDesignation || 'Authorized Signatory';
+    const finalSignatoryPlace = signatoryPlace || employerData?.address?.split(',')[0] || '';
 
     if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
       return NextResponse.json(
@@ -258,7 +270,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate bulk PDFs
+    // Generate bulk PDFs (for potential download)
     const pdfs = await Form16PDFGenerator.generateBulkForm16PDFs(documents);
 
     const response: BulkForm16Response = {
