@@ -162,10 +162,10 @@ export class Form16PDFGenerator {
     pdf.setTextColor(0, 0, 0);
 
     const certificateData = [
-      ['Certificate No.', partA.certificateNumber || ''],
-      ['Last updated on', partA.lastUpdatedOn || ''],
-      ['Valid From', partA.validFrom || ''],
-      ['Valid Till', partA.validTill || '']
+      ['Certificate No.', partA?.certificateNumber || ''],
+      ['Last updated on', partA?.lastUpdatedOn || ''],
+      ['Valid From', partA?.validFrom || ''],
+      ['Valid Till', partA?.validTill || '']
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -190,8 +190,8 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employerData = [
-      ['Name of the Deductor', form16Doc.employerName],
-      ['TAN of the Deductor', form16Doc.employerTan],
+      ['Name of the Deductor', form16Doc.employerName || 'N/A'],
+      ['TAN of the Deductor', form16Doc.employerTan || 'N/A'],
       ['Address of the Deductor', form16Doc.employerAddress || ''],
       ['PAN of the Deductor', form16Doc.employerPan || '']
     ];
@@ -254,7 +254,7 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     // Quarterly TDS Details Table
-    const quarterlyTDS = partA.tdsDetails?.quarterlyBreakup || {
+    const quarterlyTDS = partA?.tdsDetails?.quarterlyBreakup || {
       q1: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
       q2: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
       q3: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' },
@@ -275,7 +275,7 @@ export class Form16PDFGenerator {
        formatAmount(quarterlyTDS.q3.amount), formatValue(quarterlyTDS.q3.challanCIN)],
       ['Q4', formatValue(quarterlyTDS.q4.section), formatValue(quarterlyTDS.q4.dateOfDeduction), formatValue(quarterlyTDS.q4.dateOfDeposit), 
        formatAmount(quarterlyTDS.q4.amount), formatValue(quarterlyTDS.q4.challanCIN)],
-      ['Total', '', '', '', formatAmount(partA.totalTdsDeducted || 0), '']
+      ['Total', '', '', '', formatAmount(partA?.totalTdsDeducted || 0), '']
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -405,11 +405,11 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employeeData = [
-      ['1. Name of the Employee', partA.employeeName || ''],
-      ['2. Address of the Employee', partA.employeeAddress || ''],
-      ['3. PAN of the Employee', partA.employeePan || ''],
-      ['4. Aadhaar Number (if available)', partA.employeeAadhaar || ''],
-      ['5. Designation', partA.employeeDesignation || 'Employee'],
+      ['1. Name of the Employee', partA?.employeeName || 'N/A'],
+      ['2. Address of the Employee', partA?.employeeAddress || ''],
+      ['3. PAN of the Employee', partA?.employeePan || 'N/A'],
+      ['4. Aadhaar Number (if available)', partA?.employeeAadhaar || ''],
+      ['5. Designation', partA?.employeeDesignation || 'Employee'],
       ['6. Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
         const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;

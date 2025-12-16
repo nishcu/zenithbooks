@@ -380,6 +380,30 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Validate employee data before PDF generation
+        if (!employee?.name || !employee?.pan) {
+          console.error(`Invalid employee data for ${employeeId}:`, { 
+            name: employee?.name || 'MISSING', 
+            pan: employee?.pan || 'MISSING',
+            employee: employee 
+          });
+          errors.push(`Employee ${employeeId}: Missing required data (name or PAN)`);
+          failed++;
+          continue;
+        }
+
+        // Validate partA critical fields
+        if (!form16Doc.partA.employeeName || !form16Doc.partA.employeePan) {
+          console.error(`Invalid partA data for employee ${employeeId}:`, {
+            employeeName: form16Doc.partA.employeeName || 'MISSING',
+            employeePan: form16Doc.partA.employeePan || 'MISSING',
+            partA: form16Doc.partA
+          });
+          errors.push(`Employee ${employeeId}: Form 16 Part A missing required fields`);
+          failed++;
+          continue;
+        }
+
         // Generate PDF
         try {
           const pdfData = await Form16PDFGenerator.generateForm16PDF(form16Doc);
@@ -399,9 +423,11 @@ export async function POST(request: NextRequest) {
           processed++;
         } catch (pdfError) {
           console.error(`Error generating PDF for employee ${employeeId}:`, pdfError);
-          errors.push(`Employee ${employeeId}: PDF generation failed - ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
+          console.error(`Employee data:`, { name: employee?.name, pan: employee?.pan, employeeId });
+          console.error(`Form16Doc partA:`, form16Doc?.partA);
+          errors.push(`Employee ${employeeId}: PDF generation failed - ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}. Skipping this employee.`);
           failed++;
-          continue;
+          continue; // Skip this employee and continue with others
         }
       } catch (error: any) {
         console.error(`Error processing employee ${employeeId}:`, error);
