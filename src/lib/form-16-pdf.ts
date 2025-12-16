@@ -25,6 +25,13 @@ export class Form16PDFGenerator {
   };
 
   /**
+   * Helper method to get autoTable function from pdf instance
+   */
+  private static getAutoTable(pdf: any): any {
+    return (pdf as any)._autoTable;
+  }
+
+  /**
    * Generate Form 16 PDF with Part A and Part B
    * As per Rule 31(1)(a) of Income Tax Rules, 1962
    */
@@ -141,22 +148,21 @@ export class Form16PDFGenerator {
     ];
 
     // Use autoTable function directly (not as method)
-    const autoTable = (pdf as any)._autoTable;
-    if (autoTable) {
-      autoTable(pdf, {
-        startY: yPos,
-        head: [],
-        body: certificateData,
-        theme: 'plain',
-        styles: { fontSize: this.FONT_SIZE.SMALL },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 50 },
-          1: { cellWidth: 100 }
-        }
-      });
-    } else {
+    const autoTable = this.getAutoTable(pdf);
+    if (!autoTable) {
       throw new Error('autoTable function not available on PDF instance');
     }
+    autoTable(pdf, {
+      startY: yPos,
+      head: [],
+      body: certificateData,
+      theme: 'plain',
+      styles: { fontSize: this.FONT_SIZE.SMALL },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50 },
+        1: { cellWidth: 100 }
+      }
+    });
 
     yPos = (pdf as any).lastAutoTable.finalY + 15;
 
@@ -173,7 +179,7 @@ export class Form16PDFGenerator {
       ['PAN of the Deductor', form16Doc.employerPan || '']
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [],
       body: employerData,
@@ -202,7 +208,7 @@ export class Form16PDFGenerator {
       ['Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [],
       body: employeeData,
@@ -243,7 +249,7 @@ export class Form16PDFGenerator {
       ['Total', '', '', '', partA.totalTdsDeducted.toLocaleString('en-IN'), '']
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [tdsTableData[0]],
       body: tdsTableData.slice(1),
@@ -279,7 +285,7 @@ export class Form16PDFGenerator {
       ['Date', form16Doc.signatory.date]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [],
       body: signatoryData,
@@ -346,7 +352,7 @@ export class Form16PDFGenerator {
       ['5. Assessment Year', form16Doc.assessmentYear]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [],
       body: employerData,
@@ -375,7 +381,7 @@ export class Form16PDFGenerator {
       ['6. Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [],
       body: employeeData,
@@ -402,7 +408,7 @@ export class Form16PDFGenerator {
       ['Gross Salary (Total of a+b+c)', partB.grossSalary.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Salary Components', 'Amount (₹)']],
       body: salaryData,
@@ -433,7 +439,7 @@ export class Form16PDFGenerator {
       ['Total Exemptions u/s 10', partB.exemptionsSection10.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Exemptions u/s 10', 'Amount (₹)']],
       body: exemptionsData,
@@ -467,7 +473,7 @@ export class Form16PDFGenerator {
       ['Total Deductions u/s 16', partB.deductionsSection16.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Deductions u/s 16', 'Amount (₹)']],
       body: section16Data,
@@ -500,7 +506,7 @@ export class Form16PDFGenerator {
       ['Total Other Income', partB.otherIncome.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Other Income', 'Amount (₹)']],
       body: otherIncomeData,
@@ -548,7 +554,7 @@ export class Form16PDFGenerator {
       ['Total Deductions u/s VI-A', partB.deductionsChapterVIA.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Deductions u/s VI-A', 'Amount (₹)']],
       body: chapterVIAData,
@@ -584,7 +590,7 @@ export class Form16PDFGenerator {
       ['Tax after Rebate u/s 87A', partB.taxAfterRebate.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Tax Computation', 'Amount (₹)']],
       body: taxData,
@@ -610,7 +616,7 @@ export class Form16PDFGenerator {
       ['(b) Tax Deposited in respect of Tax Deducted', partB.taxDeposited.toLocaleString('en-IN')]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['TDS Details', 'Amount (₹)']],
       body: tdsData,
@@ -636,7 +642,7 @@ export class Form16PDFGenerator {
       ['(b) Net Tax Payable/(Refund)', partB.taxPayable >= 0 ? partB.taxPayable.toLocaleString('en-IN') : `(${Math.abs(partB.taxPayable).toLocaleString('en-IN')})`]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: yPos,
       head: [['Final Computation', 'Amount (₹)']],
       body: reliefData,
@@ -668,7 +674,7 @@ export class Form16PDFGenerator {
       ['Date', form16Doc.signatory.date]
     ];
 
-    (pdf as any).autoTable({
+    this.getAutoTable(pdf)(pdf, {
       startY: finalYPos,
       head: [],
       body: signatoryData,
