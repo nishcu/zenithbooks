@@ -499,26 +499,25 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     
     let text: string;
     try {
-      // pdf-parse exports PDFParse class, not a function
+      // pdf-parse exports PDFParse class
       const pdfParseModule = require('pdf-parse');
+      const { PDFParse } = pdfParseModule;
       
-      // Create instance and get text
-      const pdfParser = new pdfParseModule.PDFParse({ data: pdfBuffer });
+      // In Node.js, PDFParse automatically detects environment and doesn't need worker setup
+      // Create instance with data buffer
+      const pdfParser = new PDFParse({ data: pdfBuffer });
+      
+      // Get text from PDF
       const result = await pdfParser.getText({});
       text = result.text || '';
     } catch (error: any) {
-      // Fallback: try if it exports a function directly (older versions)
-      try {
-        const pdfParse = require('pdf-parse');
-        if (typeof pdfParse === 'function') {
-          const data = await pdfParse(pdfBuffer);
-          text = data.text || '';
-        } else {
-          throw new Error(`pdf-parse structure unexpected: ${error.message}`);
-        }
-      } catch (fallbackError: any) {
-        throw new Error(`Failed to parse PDF: ${error.message || fallbackError.message || 'Unknown error'}`);
+      // If error mentions worker, it's trying to set up browser worker in Node.js
+      // This shouldn't happen, but if it does, provide helpful error
+      const errorMsg = error.message || String(error);
+      if (errorMsg.includes('worker') || errorMsg.includes('Cannot find module')) {
+        throw new Error(`PDF parsing failed: Worker setup error. PDF format may not be supported, or file may be corrupted. Please try converting to CSV or Excel format.`);
       }
+      throw new Error(`Failed to parse PDF: ${errorMsg}. PDF format may not be supported.`);
     }
     
     if (!text || text.trim().length === 0) {
