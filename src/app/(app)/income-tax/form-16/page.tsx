@@ -35,7 +35,9 @@ import {
   Settings,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -159,6 +161,8 @@ export default function Form16() {
   const [bulkEmployerTan, setBulkEmployerTan] = useState(userData?.tan || "");
   const [bulkEmployerPan, setBulkEmployerPan] = useState(userData?.pan || "");
   const [bulkResults, setBulkResults] = useState<any>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Validation function
   const validateForm16Data = (data: Form16Data): string[] => {
@@ -343,6 +347,117 @@ export default function Form16() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!uploadedFile) {
+      toast({
+        variant: "destructive",
+        title: "No File Selected",
+        description: "Please select an Excel or CSV file to upload"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('financialYear', bulkFinancialYear);
+      formData.append('employerName', bulkEmployerName);
+      formData.append('employerTan', bulkEmployerTan);
+      formData.append('employerPan', bulkEmployerPan);
+
+      const response = await fetch('/api/form-16/bulk-upload', {
+        method: 'POST',
+        headers: {
+          'x-user-id': user!.uid
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setBulkResults(result.data);
+        toast({
+          title: "Bulk Upload Complete",
+          description: `Processed ${result.data.processed} employees, ${result.data.successful} successful, ${result.data.failed} failed`
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Bulk Upload Failed",
+          description: result.errors?.join(', ') || "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error('Error in bulk upload:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload and process file"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const downloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/form-16/sample-template');
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'form16_bulk_upload_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Template Downloaded",
+        description: "Sample template has been downloaded successfully"
+      });
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Failed to download template"
+      });
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          variant: "destructive",
+          title: "Invalid File Type",
+          description: "Please select an Excel (.xlsx/.xls) or CSV (.csv) file"
+        });
+        return;
+      }
+
+      setUploadedFile(file);
+      toast({
+        title: "File Selected",
+        description: `${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+      });
     }
   };
 
@@ -768,45 +883,256 @@ export default function Form16() {
         </TabsContent>
 
         <TabsContent value="bulk" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bulk Form 16 Generation</CardTitle>
-              <CardDescription>Select employees and generate Form 16 for multiple employees at once</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Employer Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Financial Year</Label>
-                  <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2023-24">2023-24</SelectItem>
-                      <SelectItem value="2024-25">2024-25</SelectItem>
-                      <SelectItem value="2025-26">2025-26</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <div className="grid gap-6">
+            {/* Bulk Upload Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Bulk Upload from Excel/CSV
+                </CardTitle>
+                <CardDescription>Upload employee data in Excel or CSV format to generate Form 16 for multiple employees</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Template Download */}
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+                  <div className="flex items-center gap-3">
+                    <FileSpreadsheet className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium">Download Sample Template</h4>
+                      <p className="text-sm text-muted-foreground">Excel template with sample data and field descriptions</p>
+                    </div>
+                  </div>
+                  <Button onClick={downloadTemplate} variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Template
+                  </Button>
                 </div>
+
+                {/* Employer Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Financial Year</Label>
+                    <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2025-26">2025-26</SelectItem>
+                        <SelectItem value="2024-25">2024-25</SelectItem>
+                        <SelectItem value="2023-24">2023-24</SelectItem>
+                        <SelectItem value="2022-23">2022-23</SelectItem>
+                        <SelectItem value="2021-22">2021-22</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employer TAN</Label>
+                    <Input
+                      value={bulkEmployerTan}
+                      onChange={(e) => setBulkEmployerTan(e.target.value)}
+                      placeholder="Enter TAN"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label>Employer TAN</Label>
+                  <Label>Employer Name</Label>
                   <Input
-                    value={bulkEmployerTan}
-                    onChange={(e) => setBulkEmployerTan(e.target.value)}
-                    placeholder="Enter TAN"
+                    value={bulkEmployerName}
+                    onChange={(e) => setBulkEmployerName(e.target.value)}
+                    placeholder="Enter employer name"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Employer Name</Label>
-                <Input
-                  value={bulkEmployerName}
-                  onChange={(e) => setBulkEmployerName(e.target.value)}
-                  placeholder="Enter employer name"
-                />
-              </div>
+                {/* File Upload */}
+                <div className="space-y-4">
+                  <Label>Upload Employee Data File</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="text-center">
+                      <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="mt-4">
+                        <label htmlFor="file-upload" className="cursor-pointer">
+                          <span className="mt-2 block text-sm font-medium text-gray-900">
+                            {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
+                          </span>
+                          <span className="mt-1 block text-xs text-gray-500">
+                            Excel (.xlsx/.xls) or CSV (.csv) files only
+                          </span>
+                        </label>
+                        <input
+                          id="file-upload"
+                          name="file-upload"
+                          type="file"
+                          className="sr-only"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {uploadedFile && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      File selected: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  onClick={handleBulkUpload}
+                  disabled={isUploading || !uploadedFile}
+                  className="w-full"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {isUploading ? "Processing..." : `Upload & Generate Form 16`}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Manual Selection Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Manual Employee Selection
+                </CardTitle>
+                <CardDescription>Select individual employees from your employee list</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Employer Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Financial Year</Label>
+                    <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2025-26">2025-26</SelectItem>
+                        <SelectItem value="2024-25">2024-25</SelectItem>
+                        <SelectItem value="2023-24">2023-24</SelectItem>
+                        <SelectItem value="2022-23">2022-23</SelectItem>
+                        <SelectItem value="2021-22">2021-22</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employer TAN</Label>
+                    <Input
+                      value={bulkEmployerTan}
+                      onChange={(e) => setBulkEmployerTan(e.target.value)}
+                      placeholder="Enter TAN"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Employer Name</Label>
+                  <Input
+                    value={bulkEmployerName}
+                    onChange={(e) => setBulkEmployerName(e.target.value)}
+                    placeholder="Enter employer name"
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Employee Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">Select Employees</h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEmployees(prev => prev.map(emp => ({ ...emp, selected: true })))}
+                    >
+                      Select All
+                    </Button>
+                  </div>
+
+                  <div className="border rounded-lg max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={employees.every(emp => emp.selected)}
+                              onCheckedChange={(checked) =>
+                                setEmployees(prev => prev.map(emp => ({ ...emp, selected: !!checked })))
+                              }
+                            />
+                          </TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>PAN</TableHead>
+                          <TableHead>Designation</TableHead>
+                          <TableHead>Tax Regime</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {employees.filter(emp => emp.status === "Active").map(employee => (
+                          <TableRow key={employee.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={employee.selected || false}
+                                onCheckedChange={(checked) =>
+                                  setEmployees(prev => prev.map(emp =>
+                                    emp.id === employee.id ? { ...emp, selected: !!checked } : emp
+                                  ))
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">{employee.name}</TableCell>
+                            <TableCell className="font-mono">{employee.pan}</TableCell>
+                            <TableCell>{employee.designation}</TableCell>
+                            <TableCell>
+                              <Badge variant={employee.taxRegime === "NEW" ? "default" : "secondary"}>
+                                {employee.taxRegime}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                {/* Employer Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Financial Year</Label>
+                    <Select value={bulkFinancialYear} onValueChange={setBulkFinancialYear}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2025-26">2025-26</SelectItem>
+                        <SelectItem value="2024-25">2024-25</SelectItem>
+                        <SelectItem value="2023-24">2023-24</SelectItem>
+                        <SelectItem value="2022-23">2022-23</SelectItem>
+                        <SelectItem value="2021-22">2021-22</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employer TAN</Label>
+                    <Input
+                      value={bulkEmployerTan}
+                      onChange={(e) => setBulkEmployerTan(e.target.value)}
+                      placeholder="Enter TAN"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Employer Name</Label>
+                  <Input
+                    value={bulkEmployerName}
+                    onChange={(e) => setBulkEmployerName(e.target.value)}
+                    placeholder="Enter employer name"
+                  />
+                </div>
 
               <Separator />
 
