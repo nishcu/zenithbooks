@@ -32,15 +32,24 @@ export class Form16PDFGenerator {
     form16Doc: Form16Document,
     password?: string
   ): Promise<Blob | Buffer> {
-    // Dynamic import for server-side compatibility
-    // This ensures jsPDF and jspdf-autotable are properly loaded
+    // Use require-style imports for Next.js compatibility (fixes ESM/CJS issues)
     let jsPDF: any;
+    let autoTable: any;
+    
     try {
-      jsPDF = (await import('jspdf')).default;
-      // Import autotable plugin
-      await import('jspdf-autotable');
+      // For server-side, use require to avoid ESM/CJS binding issues
+      if (typeof window === 'undefined') {
+        // Server-side: use require (more reliable for Next.js)
+        jsPDF = require('jspdf').jsPDF;
+        autoTable = require('jspdf-autotable');
+      } else {
+        // Browser: use ES6 imports
+        const jspdfModule = await import('jspdf');
+        jsPDF = jspdfModule.jsPDF;
+        autoTable = (await import('jspdf-autotable')).default;
+      }
     } catch (error) {
-      console.error('Failed to import jsPDF:', error);
+      console.error('Failed to import jsPDF/autoTable:', error);
       throw new Error(`Failed to load jsPDF library: ${error instanceof Error ? error.message : 'Unknown error'}. Please ensure jspdf and jspdf-autotable are properly installed.`);
     }
     
@@ -48,12 +57,14 @@ export class Form16PDFGenerator {
       throw new Error('jsPDF is not properly installed or could not be loaded.');
     }
     
+    if (!autoTable) {
+      throw new Error('jspdf-autotable is not properly installed or could not be loaded.');
+    }
+    
     const pdf = new jsPDF();
     
-    // Verify autoTable is available
-    if (typeof (pdf as any).autoTable !== 'function') {
-      throw new Error('jspdf-autotable plugin is not properly initialized. autoTable method is not available on jsPDF instance. Please ensure jspdf-autotable is installed: npm install jspdf-autotable');
-    }
+    // Store autoTable function for use in helper methods
+    (pdf as any)._autoTable = autoTable;
 
     // Set password protection if provided
     if (password) {
@@ -129,17 +140,23 @@ export class Form16PDFGenerator {
       ['Valid Till', partA.validTill || `31/03/${form16Doc.financialYear.split('-')[1]}`]
     ];
 
-    (pdf as any).autoTable({
-      startY: yPos,
-      head: [],
-      body: certificateData,
-      theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50 },
-        1: { cellWidth: 100 }
-      }
-    });
+    // Use autoTable function directly (not as method)
+    const autoTable = (pdf as any)._autoTable;
+    if (autoTable) {
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: certificateData,
+        theme: 'plain',
+        styles: { fontSize: this.FONT_SIZE.SMALL },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 100 }
+        }
+      });
+    } else {
+      throw new Error('autoTable function not available on PDF instance');
+    }
 
     yPos = (pdf as any).lastAutoTable.finalY + 15;
 
@@ -295,7 +312,7 @@ export class Form16PDFGenerator {
    * Details of salary paid and any other income and tax deducted
    * As per Rule 31(1)(a) of Income Tax Rules, 1962
    */
-  private static generatePartB(pdf: jsPDF, form16Doc: Form16Document): void {
+  private static generatePartB(pdf: any, form16Doc: Form16Document): void {
     const { partB, partA } = form16Doc;
 
     // Header - Exact text as per official Form 16
