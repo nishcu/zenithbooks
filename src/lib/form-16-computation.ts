@@ -158,14 +158,16 @@ export class Form16ComputationEngine {
    */
   private static calculateGrossSalary(salary: SalaryStructure): number {
     // Section 17(1) - Salary as per provisions of section 17(1)
+    // Use annual values for Form 16 (always annual, not monthly)
+    // Priority: section17_1 > annual > monthly * 12
     const section17_1 = (
-      (salary.section17_1?.basic || salary.monthly.basic || 0) +
-      (salary.section17_1?.hra || salary.monthly.hra || 0) +
-      (salary.section17_1?.da || salary.monthly.da || 0) +
-      (salary.section17_1?.specialAllowance || salary.monthly.specialAllowance || 0) +
-      (salary.section17_1?.lta || salary.monthly.lta || 0) +
-      (salary.section17_1?.bonus || salary.monthly.bonus || 0) +
-      (salary.section17_1?.incentives || salary.monthly.incentives || 0) +
+      (salary.section17_1?.basic || salary.annual?.basic || (salary.monthly.basic || 0) * 12) +
+      (salary.section17_1?.hra || salary.annual?.hra || (salary.monthly.hra || 0) * 12) +
+      (salary.section17_1?.da || salary.annual?.da || (salary.monthly.da || 0) * 12) +
+      (salary.section17_1?.specialAllowance || salary.annual?.specialAllowance || (salary.monthly.specialAllowance || 0) * 12) +
+      (salary.section17_1?.lta || salary.annual?.lta || (salary.monthly.lta || 0) * 12) +
+      (salary.section17_1?.bonus || salary.annual?.bonus || (salary.monthly.bonus || 0) * 12) +
+      (salary.section17_1?.incentives || salary.annual?.incentives || (salary.monthly.incentives || 0) * 12) +
       (salary.section17_1?.commission || 0) +
       (salary.section17_1?.overtime || 0) +
       (salary.section17_1?.otherAllowances || 0)
@@ -173,7 +175,7 @@ export class Form16ComputationEngine {
     
     // Section 17(2) - Value of perquisites under section 17(2)
     const section17_2 = (
-      (salary.section17_2?.perquisites || salary.monthly.perquisites || 0) +
+      (salary.section17_2?.perquisites || salary.annual?.perquisites || (salary.monthly.perquisites || 0) * 12) +
       (salary.section17_2?.rentFreeAccommodation || 0) +
       (salary.section17_2?.carFacility || 0) +
       (salary.section17_2?.driverFacility || 0) +
@@ -193,13 +195,13 @@ export class Form16ComputationEngine {
     
     // Employer Contributions
     const employerContributions = (
-      (salary.employerContributions?.employerPf || salary.monthly.employerPf || 0) +
+      (salary.employerContributions?.employerPf || salary.annual?.employerPf || (salary.monthly.employerPf || 0) * 12) +
       (salary.employerContributions?.employerNps || 0) +
       (salary.employerContributions?.employerSuperannuation || 0)
     );
     
     // Arrears
-    const arrears = salary.arrears || salary.monthly.arrears || 0;
+    const arrears = salary.arrears || salary.annual?.arrears || (salary.monthly.arrears || 0) * 12;
     
     // Total Gross Salary = Section 17(1) + Section 17(2) + Section 17(3) + Employer Contributions + Arrears
     return section17_1 + section17_2 + section17_3 + employerContributions + arrears;
@@ -300,14 +302,16 @@ export class Form16ComputationEngine {
    * Calculate Section 17(1) - Salary as per provisions of section 17(1)
    */
   private static calculateSection17_1(salary: SalaryStructure): number {
+    // Use annual values for Form 16 (always annual, not monthly)
+    // Priority: section17_1 > annual > monthly * 12
     return (
-      (salary.section17_1?.basic || salary.monthly.basic || 0) +
-      (salary.section17_1?.hra || salary.monthly.hra || 0) +
-      (salary.section17_1?.da || salary.monthly.da || 0) +
-      (salary.section17_1?.specialAllowance || salary.monthly.specialAllowance || 0) +
-      (salary.section17_1?.lta || salary.monthly.lta || 0) +
-      (salary.section17_1?.bonus || salary.monthly.bonus || 0) +
-      (salary.section17_1?.incentives || salary.monthly.incentives || 0) +
+      (salary.section17_1?.basic || salary.annual?.basic || (salary.monthly.basic || 0) * 12) +
+      (salary.section17_1?.hra || salary.annual?.hra || (salary.monthly.hra || 0) * 12) +
+      (salary.section17_1?.da || salary.annual?.da || (salary.monthly.da || 0) * 12) +
+      (salary.section17_1?.specialAllowance || salary.annual?.specialAllowance || (salary.monthly.specialAllowance || 0) * 12) +
+      (salary.section17_1?.lta || salary.annual?.lta || (salary.monthly.lta || 0) * 12) +
+      (salary.section17_1?.bonus || salary.annual?.bonus || (salary.monthly.bonus || 0) * 12) +
+      (salary.section17_1?.incentives || salary.annual?.incentives || (salary.monthly.incentives || 0) * 12) +
       (salary.section17_1?.commission || 0) +
       (salary.section17_1?.overtime || 0) +
       (salary.section17_1?.otherAllowances || 0)
@@ -318,8 +322,10 @@ export class Form16ComputationEngine {
    * Calculate Section 17(2) - Value of perquisites under section 17(2)
    */
   private static calculateSection17_2(salary: SalaryStructure): number {
+    // Use annual values for Form 16 (always annual, not monthly)
+    // Priority: section17_2 > annual > monthly * 12
     return (
-      (salary.section17_2?.perquisites || salary.monthly.perquisites || 0) +
+      (salary.section17_2?.perquisites || salary.annual?.perquisites || (salary.monthly.perquisites || 0) * 12) +
       (salary.section17_2?.rentFreeAccommodation || 0) +
       (salary.section17_2?.carFacility || 0) +
       (salary.section17_2?.driverFacility || 0) +
