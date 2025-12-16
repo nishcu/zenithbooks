@@ -513,3 +513,120 @@ export function parseBankStatement(
     };
   }
 }
+
+/**
+ * Compatibility function: Convert BankTransaction to ParsedTransaction format
+ */
+function convertToParsedTransaction(txn: BankTransaction): ParsedTransaction {
+  return {
+    date: txn.date,
+    description: txn.description,
+    withdrawal: txn.debit > 0 ? txn.debit : null,
+    deposit: txn.credit > 0 ? txn.credit : null,
+  };
+}
+
+/**
+ * Compatibility function: Convert ParseError to SkippedRow
+ */
+function convertToSkippedRow(error: ParseError, rowData?: any): SkippedRow {
+  return {
+    rowNumber: error.row,
+    reason: error.message,
+    raw: rowData ? JSON.stringify(rowData) : undefined,
+  };
+}
+
+/**
+ * Compatibility function: Parse CSV file (for bank-reconciliation page)
+ * Takes a File object and returns ParsedResult
+ */
+export async function parseCSV(file: File): Promise<ParsedResult> {
+  const text = await file.text();
+  const result = parseBankStatementCSV(text);
+  
+  const transactions = result.transactions.map(convertToParsedTransaction);
+  const skippedRows = result.errors.map(err => convertToSkippedRow(err));
+  
+  return {
+    transactions,
+    rawRowCount: result.transactions.length + result.errors.length,
+    skippedRowCount: result.errors.length,
+    warnings: result.errors.length > 0 ? result.errors.map(e => `Row ${e.row}: ${e.message}`) : [],
+    skippedRows: skippedRows.length > 0 ? skippedRows : undefined,
+  };
+}
+
+/**
+ * Compatibility function: Parse Excel file (for bank-reconciliation page)
+ * Takes a File object and returns ParsedResult
+ */
+export async function parseExcel(file: File): Promise<ParsedResult> {
+  // Dynamic import to avoid server-side issues
+  const XLSX = await import('xlsx');
+  
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+    defval: '',
+    raw: false
+  });
+  
+  const result = parseBankStatementExcel(jsonData);
+  
+  const transactions = result.transactions.map(convertToParsedTransaction);
+  const skippedRows = result.errors.map(err => convertToSkippedRow(err));
+  
+  return {
+    transactions,
+    rawRowCount: result.transactions.length + result.errors.length,
+    skippedRowCount: result.errors.length,
+    warnings: result.errors.length > 0 ? result.errors.map(e => `Row ${e.row}: ${e.message}`) : [],
+    skippedRows: skippedRows.length > 0 ? skippedRows : undefined,
+  };
+}
+
+/**
+ * Compatibility function: Parse PDF file (for bank-reconciliation page)
+ * PDF parsing is not implemented - throws error
+ */
+export async function parsePDF(file: File): Promise<ParsedResult> {
+  throw new Error('PDF parsing is not yet implemented. Please convert your PDF to CSV or Excel format.');
+}
+
+/**
+ * Compatibility function: Categorize transaction based on description
+ * Returns suggested account code based on transaction description patterns
+ */
+export function categorizeTransaction(description: string): TransactionCategory {
+  const desc = description.toLowerCase();
+  
+  // Basic categorization patterns
+  if (desc.includes('salary') || desc.includes('wages')) {
+    return { suggestedAccount: '6010', category: 'Salary' }; // Salaries and Wages - Indirect
+  }
+  if (desc.includes('rent')) {
+    return { suggestedAccount: '6020', category: 'Rent' }; // Rent Expense
+  }
+  if (desc.includes('electricity') || desc.includes('power') || desc.includes('utility')) {
+    return { suggestedAccount: '6140', category: 'Utilities' }; // Electricity & Water
+  }
+  if (desc.includes('interest') && (desc.includes('received') || desc.includes('credit'))) {
+    return { suggestedAccount: '4510', category: 'Interest Income' }; // Interest Income
+  }
+  if (desc.includes('sales') || desc.includes('revenue')) {
+    return { suggestedAccount: '4010', category: 'Sales' }; // Sales Revenue
+  }
+  if (desc.includes('purchase') || desc.includes('bought')) {
+    return { suggestedAccount: '5050', category: 'Purchases' }; // Purchases
+  }
+  if (desc.includes('bank charges') || desc.includes('bank fee')) {
+    return { suggestedAccount: '6070', category: 'Bank Charges' }; // Bank Charges
+  }
+  
+  // Default suggestions based on common patterns
+  return { suggestedAccount: undefined, category: 'Other' };
+}
