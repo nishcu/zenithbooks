@@ -210,6 +210,80 @@ function normalizeDescription(value: any): string {
 }
 
 /**
+ * Check if a row looks like a header row (contains header keywords but no actual transaction data)
+ */
+function isHeaderRow(row: any): boolean {
+  const values = Object.values(row).map(v => String(v || '').toLowerCase());
+  const allValues = values.join(' ');
+  
+  // Common header keywords
+  const headerKeywords = [
+    'date', 'description', 'debit', 'credit', 'balance', 'particulars',
+    'narration', 'transaction', 'amount', 'deposit', 'withdrawal',
+    'balance brought forward', 'total', 'statement', 'account'
+  ];
+  
+  // Check if row contains multiple header keywords but no numbers that look like amounts
+  const headerCount = headerKeywords.filter(keyword => allValues.includes(keyword)).length;
+  const hasAmount = values.some(v => {
+    const cleaned = v.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+    const num = parseFloat(cleaned);
+    return !isNaN(num) && num > 100; // Amounts typically > 100
+  });
+  
+  // If it has 2+ header keywords but no significant amounts, it's likely a header
+  return headerCount >= 2 && !hasAmount;
+}
+
+/**
+ * Check if a row looks like it contains actual transaction data
+ */
+function isDataRow(row: any): boolean {
+  const dateValue = getColumnValue(row, COLUMN_ALIASES.date);
+  const hasDate = dateValue && normalizeDate(dateValue);
+  
+  const debitValue = getColumnValue(row, COLUMN_ALIASES.debit);
+  const creditValue = getColumnValue(row, COLUMN_ALIASES.credit);
+  const hasAmount = (debitValue && normalizeAmount(debitValue) > 0) || 
+                    (creditValue && normalizeAmount(creditValue) > 0);
+  
+  // A data row should have either a valid date or a valid amount (or both)
+  return !!(hasDate || hasAmount);
+}
+
+/**
+ * Find the first row index that contains actual transaction data (not headers)
+ */
+function findFirstDataRow(jsonData: any[]): number {
+  // Start checking from the beginning, but skip obvious header rows
+  for (let i = 0; i < Math.min(jsonData.length, 10); i++) {
+    const row = jsonData[i];
+    
+    // Skip completely empty rows
+    const hasData = Object.values(row).some(value => 
+      value !== null && value !== undefined && String(value).trim() !== ''
+    );
+    
+    if (!hasData) {
+      continue;
+    }
+    
+    // If it's clearly a header row, skip it
+    if (isHeaderRow(row)) {
+      continue;
+    }
+    
+    // If it looks like actual data, return this index
+    if (isDataRow(row)) {
+      return i;
+    }
+  }
+  
+  // If we couldn't find a clear data row in first 10 rows, start from 0
+  return 0;
+}
+
+/**
  * Parse a single row from bank statement
  */
 function parseTransactionRow(row: any, rowIndex: number): { transaction: BankTransaction | null; error: ParseError | null } {
@@ -345,8 +419,25 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       };
     }
     
-    // Process each row
-    for (let i = 0; i < jsonData.length; i++) {
+    // Find where actual transaction data starts (skip header rows if CSV doesn't have proper headers)
+    // For CSV with header: true, PapaParse treats first row as header, so data starts at index 0
+    // But we still need to check if the "data" actually starts later
+    let startIndex = 0;
+    
+    // Check first few rows to find where real data starts
+    for (let i = 0; i < Math.min(jsonData.length, 5); i++) {
+      const row = jsonData[i];
+      const hasData = Object.values(row).some(value => 
+        value !== null && value !== undefined && String(value).trim() !== ''
+      );
+      if (hasData && isDataRow(row) && !isHeaderRow(row)) {
+        startIndex = i;
+        break;
+      }
+    }
+    
+    // Process rows starting from the first data row
+    for (let i = startIndex; i < jsonData.length; i++) {
       const row = jsonData[i];
       
       // Skip if row is empty (all values are null/undefined/empty string)
@@ -355,12 +446,20 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       );
       
       if (!hasData) {
-            continue;
-          }
+        continue;
+      }
+      
+      // Skip header-like rows that might appear later
+      if (isHeaderRow(row) && i > startIndex + 2) {
+        continue;
+      }
 
       const result = parseTransactionRow(row, i);
       if (result.error) {
-        errors.push(result.error);
+        // Only add error if it's not just a missing date (might be a summary row)
+        if (!result.error.message.includes('Date column not found')) {
+          errors.push(result.error);
+        }
       } else if (result.transaction) {
         transactions.push(result.transaction);
       }
@@ -750,7 +849,11 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
     };
   }
   
-  for (let i = 0; i < jsonData.length; i++) {
+  // Find where actual transaction data starts (skip header rows)
+  const startIndex = findFirstDataRow(jsonData);
+  
+  // Process rows starting from the first data row
+  for (let i = startIndex; i < jsonData.length; i++) {
     const row = jsonData[i];
     
     // Skip if row is empty (all values are null/undefined/empty string)
@@ -762,9 +865,17 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
       continue;
     }
     
+    // Skip header-like rows that might appear later (e.g., section headers)
+    if (isHeaderRow(row) && i > startIndex + 2) {
+      continue;
+    }
+
     const result = parseTransactionRow(row, i);
     if (result.error) {
-      errors.push(result.error);
+      // Only add error if it's not just a missing date (might be a summary row)
+      if (!result.error.message.includes('Date column not found')) {
+        errors.push(result.error);
+      }
     } else if (result.transaction) {
       transactions.push(result.transaction);
     }
