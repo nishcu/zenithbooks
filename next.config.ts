@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
           (external) => external !== 'jspdf' && external !== 'jspdf-autotable'
         );
       }
+      
+      // Handle pdf-parse worker files - mark them as external or ignore
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Prevent pdf-parse from trying to load worker files in Node.js
+        'pdfjs-dist/build/pdf.worker': false,
+      };
     }
     return config;
   },
