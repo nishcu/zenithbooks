@@ -47,13 +47,23 @@ export class Form16PDFGenerator {
       // For server-side, use require to avoid ESM/CJS binding issues
       if (typeof window === 'undefined') {
         // Server-side: use require (more reliable for Next.js)
-        jsPDF = require('jspdf').jsPDF;
-        autoTable = require('jspdf-autotable');
+        const jspdfModule = require('jspdf');
+        jsPDF = jspdfModule.jsPDF || jspdfModule.default?.jsPDF || jspdfModule.default;
+        
+        // jspdf-autotable exports as default function or as module
+        const autoTableModule = require('jspdf-autotable');
+        autoTable = autoTableModule.default || autoTableModule;
+        
+        // If still not found, try to get from module.exports
+        if (typeof autoTable !== 'function' && autoTableModule && typeof autoTableModule === 'function') {
+          autoTable = autoTableModule;
+        }
       } else {
         // Browser: use ES6 imports
         const jspdfModule = await import('jspdf');
-        jsPDF = jspdfModule.jsPDF;
-        autoTable = (await import('jspdf-autotable')).default;
+        jsPDF = jspdfModule.jsPDF || (jspdfModule.default as any)?.jsPDF || jspdfModule.default;
+        const autoTableModule = await import('jspdf-autotable');
+        autoTable = autoTableModule.default || autoTableModule;
       }
     } catch (error) {
       console.error('Failed to import jsPDF/autoTable:', error);
@@ -64,8 +74,9 @@ export class Form16PDFGenerator {
       throw new Error('jsPDF is not properly installed or could not be loaded.');
     }
     
-    if (!autoTable) {
-      throw new Error('jspdf-autotable is not properly installed or could not be loaded.');
+    if (typeof autoTable !== 'function') {
+      console.error('autoTable type:', typeof autoTable, autoTable);
+      throw new Error(`jspdf-autotable is not properly installed or loaded incorrectly. Expected function, got: ${typeof autoTable}`);
     }
     
     const pdf = new jsPDF();
