@@ -191,7 +191,11 @@ export class Form16PDFGenerator {
       ['PAN of the Deductor', form16Doc.employerPan || '']
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [],
       body: employerData,
@@ -220,7 +224,11 @@ export class Form16PDFGenerator {
       ['Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [],
       body: employeeData,
@@ -261,7 +269,11 @@ export class Form16PDFGenerator {
       ['Total', '', '', '', partA.totalTdsDeducted.toLocaleString('en-IN'), '']
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [tdsTableData[0]],
       body: tdsTableData.slice(1),
@@ -297,7 +309,11 @@ export class Form16PDFGenerator {
       ['Date', form16Doc.signatory.date]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [],
       body: signatoryData,
@@ -364,7 +380,11 @@ export class Form16PDFGenerator {
       ['5. Assessment Year', form16Doc.assessmentYear]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [],
       body: employerData,
@@ -393,7 +413,11 @@ export class Form16PDFGenerator {
       ['6. Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [],
       body: employeeData,
@@ -420,7 +444,11 @@ export class Form16PDFGenerator {
       ['Gross Salary (Total of a+b+c)', partB.grossSalary.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Salary Components', 'Amount (₹)']],
       body: salaryData,
@@ -451,7 +479,11 @@ export class Form16PDFGenerator {
       ['Total Exemptions u/s 10', partB.exemptionsSection10.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Exemptions u/s 10', 'Amount (₹)']],
       body: exemptionsData,
@@ -485,7 +517,11 @@ export class Form16PDFGenerator {
       ['Total Deductions u/s 16', partB.deductionsSection16.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Deductions u/s 16', 'Amount (₹)']],
       body: section16Data,
@@ -518,7 +554,11 @@ export class Form16PDFGenerator {
       ['Total Other Income', partB.otherIncome.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Other Income', 'Amount (₹)']],
       body: otherIncomeData,
@@ -566,7 +606,11 @@ export class Form16PDFGenerator {
       ['Total Deductions u/s VI-A', partB.deductionsChapterVIA.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Deductions u/s VI-A', 'Amount (₹)']],
       body: chapterVIAData,
@@ -602,7 +646,11 @@ export class Form16PDFGenerator {
       ['Tax after Rebate u/s 87A', partB.taxAfterRebate.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Tax Computation', 'Amount (₹)']],
       body: taxData,
@@ -628,7 +676,11 @@ export class Form16PDFGenerator {
       ['(b) Tax Deposited in respect of Tax Deducted', partB.taxDeposited.toLocaleString('en-IN')]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['TDS Details', 'Amount (₹)']],
       body: tdsData,
@@ -654,7 +706,11 @@ export class Form16PDFGenerator {
       ['(b) Net Tax Payable/(Refund)', partB.taxPayable >= 0 ? partB.taxPayable.toLocaleString('en-IN') : `(${Math.abs(partB.taxPayable).toLocaleString('en-IN')})`]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: yPos,
       head: [['Final Computation', 'Amount (₹)']],
       body: reliefData,
@@ -686,7 +742,11 @@ export class Form16PDFGenerator {
       ['Date', form16Doc.signatory.date]
     ];
 
-    this.getAutoTable(pdf)(pdf, {
+    const autoTableFn = this.getAutoTable(pdf);
+    if (typeof autoTableFn !== 'function') {
+      throw new Error(`autoTable is not a function, got: ${typeof autoTableFn}`);
+    }
+    autoTableFn(pdf, {
       startY: finalYPos,
       head: [],
       body: signatoryData,
