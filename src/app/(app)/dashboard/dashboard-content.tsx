@@ -160,6 +160,14 @@ function DashboardContent() {
       badge: "Game Changer"
     },
     {
+      title: "Bulk Form 16",
+      description: "Generate Form 16 certificates for multiple employees in one go",
+      icon: FileText,
+      href: "/income-tax/form-16",
+      color: "from-rose-500 to-red-600",
+      badge: "Compliance"
+    },
+    {
       title: "Rapid Invoice",
       description: "Quick invoice entry with minimal fields",
       icon: Zap,
