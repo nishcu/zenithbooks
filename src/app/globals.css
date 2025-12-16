@@ -3,6 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
+
+@layer base {
   :root {
     --background: 210 20% 98%;
     --foreground: 220 25% 15%;
