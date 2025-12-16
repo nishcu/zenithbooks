@@ -193,6 +193,58 @@ function DashboardContent() {
     },
   ];
 
+  // Quick Access Features
+  const quickAccessFeatures = [
+    {
+      title: "Billing Invoices",
+      description: "Manage all your sales invoices and billing",
+      icon: Receipt,
+      href: "/billing/invoices",
+      color: "from-emerald-500 to-teal-600",
+      badge: "Sales"
+    },
+    {
+      title: "Purchases",
+      description: "Track purchase bills and orders",
+      icon: ShoppingCart,
+      href: "/purchases",
+      color: "from-amber-500 to-orange-600",
+      badge: "Procurement"
+    },
+    {
+      title: "Accounting",
+      description: "Manage your books of accounts and ledgers",
+      icon: Calculator,
+      href: "/accounting",
+      color: "from-indigo-500 to-purple-600",
+      badge: "Finance"
+    },
+    {
+      title: "CA Certificates",
+      description: "Generate various CA attested certificates",
+      icon: Award,
+      href: "/ca-certificates",
+      color: "from-violet-500 to-purple-600",
+      badge: "Certification"
+    },
+    {
+      title: "Legal Documents",
+      description: "Access and generate legal documents",
+      icon: Scale,
+      href: "/legal-documents",
+      color: "from-slate-500 to-gray-600",
+      badge: "Legal"
+    },
+    {
+      title: "Find a Professional",
+      description: "Connect with accounting and tax professionals",
+      icon: ConciergeBell,
+      href: "/professional-services",
+      color: "from-blue-500 to-cyan-600",
+      badge: "Network"
+    },
+  ];
+
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
           <div className="space-y-8">
