@@ -493,35 +493,33 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       }
     }
     
-    // pdf-parse is a CommonJS module
+    // pdf-parse is a CommonJS module that exports PDFParse class
     // Use require() directly in Node.js environment (server-side)
     const pdfBuffer = Buffer.from(arrayBuffer);
     
-    let data: any;
+    let text: string;
     try {
-      // In Node.js, require() works directly for CommonJS modules
-      const pdfParse = require('pdf-parse');
+      // pdf-parse exports PDFParse class, not a function
+      const pdfParseModule = require('pdf-parse');
       
-      // pdf-parse exports a function directly
-      if (typeof pdfParse === 'function') {
-        data = await pdfParse(pdfBuffer);
-      } else if (pdfParse.default && typeof pdfParse.default === 'function') {
-        data = await pdfParse.default(pdfBuffer);
-      } else {
-        // Try dynamic import as fallback
-        const pdfParseModule = await import('pdf-parse');
-        const parseFn = pdfParseModule.default || pdfParseModule;
-        if (typeof parseFn === 'function') {
-          data = await parseFn(pdfBuffer);
-        } else {
-          throw new Error(`pdf-parse module structure unexpected. Type: ${typeof pdfParse}, Import type: ${typeof parseFn}`);
-        }
-      }
+      // Create instance and get text
+      const pdfParser = new pdfParseModule.PDFParse({ data: pdfBuffer });
+      const result = await pdfParser.getText({});
+      text = result.text || '';
     } catch (error: any) {
-      throw new Error(`Failed to parse PDF: ${error.message || 'Unknown error'}`);
+      // Fallback: try if it exports a function directly (older versions)
+      try {
+        const pdfParse = require('pdf-parse');
+        if (typeof pdfParse === 'function') {
+          const data = await pdfParse(pdfBuffer);
+          text = data.text || '';
+        } else {
+          throw new Error(`pdf-parse structure unexpected: ${error.message}`);
+        }
+      } catch (fallbackError: any) {
+        throw new Error(`Failed to parse PDF: ${error.message || fallbackError.message || 'Unknown error'}`);
+      }
     }
-    
-    const text = data.text;
     
     if (!text || text.trim().length === 0) {
       return {
