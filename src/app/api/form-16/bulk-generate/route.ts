@@ -89,25 +89,50 @@ export async function POST(request: NextRequest) {
     // Process each employee
     for (const employeeId of employeeIds) {
       try {
-        // Fetch employee data
-        const employeeQuery = query(
-          collection(db, 'employees'),
-          where('id', '==', employeeId),
-          where('employerId', '==', userId)
-        );
-        const employeeSnapshot = await getDocs(employeeQuery);
-
-        if (employeeSnapshot.empty) {
+        // Fetch employee data - employeeId is the Firestore document ID
+        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
+        
+        if (!employeeDoc.exists()) {
           errors.push({
             employeeId,
-            errors: ['Employee not found or access denied']
+            errors: ['Employee not found']
           });
           failed++;
           continue;
         }
 
-        const employeeDoc = employeeSnapshot.docs[0];
-        const employee = { id: employeeDoc.id, ...employeeDoc.data() } as EmployeeMaster;
+        const employeeData = employeeDoc.data();
+        
+        if (!employeeData) {
+          errors.push({
+            employeeId,
+            errors: ['Invalid employee data']
+          });
+          failed++;
+          continue;
+        }
+        
+        const employee = { id: employeeDoc.id, ...employeeData } as EmployeeMaster;
+        
+        // Verify access
+        if (employee.employerId !== userId) {
+          errors.push({
+            employeeId,
+            errors: ['Access denied']
+          });
+          failed++;
+          continue;
+        }
+        
+        // Ensure employee has required fields
+        if (!employee.name || !employee.pan) {
+          errors.push({
+            employeeId,
+            errors: ['Missing required fields (name or PAN)']
+          });
+          failed++;
+          continue;
+        }
 
         // Get default values for computation
         const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
