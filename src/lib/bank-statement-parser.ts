@@ -497,8 +497,23 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     const pdfParse = await import('pdf-parse');
     const pdfBuffer = Buffer.from(arrayBuffer);
     
-    // Use pdf-parse - it should work in Node.js
-    const parseFunction = pdfParse.default || pdfParse;
+    // Use pdf-parse - handle different export formats
+    let parseFunction: any;
+    if (typeof pdfParse.default === 'function') {
+      parseFunction = pdfParse.default;
+    } else if (typeof pdfParse === 'function') {
+      parseFunction = pdfParse;
+    } else if (pdfParse.default && typeof pdfParse.default === 'function') {
+      parseFunction = pdfParse.default;
+    } else {
+      // Try to find the parse function in the module
+      parseFunction = pdfParse.parse || pdfParse.pdfParse || Object.values(pdfParse).find((v: any) => typeof v === 'function');
+    }
+    
+    if (typeof parseFunction !== 'function') {
+      throw new Error(`pdf-parse module structure unexpected. Available keys: ${Object.keys(pdfParse).join(', ')}`);
+    }
+    
     const data = await parseFunction(pdfBuffer);
     const text = data.text;
     
