@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body: Form16Request & { signatoryName?: string; signatoryDesignation?: string; signatoryPlace?: string } = await request.json();
-    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace, employerName, employerTan, employerPan, employerAddress } = body;
+    const body: Form16Request & { signatoryName?: string; signatoryDesignation?: string; signatoryPlace?: string; taxRegime?: 'OLD' | 'NEW' } = await request.json();
+    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace, employerName, employerTan, employerPan, employerAddress, taxRegime: overrideTaxRegime } = body;
 
     if (!employeeId || !financialYear) {
       return NextResponse.json(
