@@ -24,7 +24,7 @@ export const MarketingCarousel = memo(function MarketingCarousel() {
 
   return (
     <Carousel 
-      className="w-full"
+      className="w-full hidden md:block"
       plugins={[plugin.current]}
       onMouseEnter={plugin.current.stop}
       onMouseLeave={plugin.current.reset}
