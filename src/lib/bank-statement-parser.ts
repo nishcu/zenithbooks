@@ -494,24 +494,34 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     }
     
     // Dynamic import to avoid server-side issues
-    const pdfParse = await import('pdf-parse');
-    const pdfBuffer = Buffer.from(arrayBuffer);
-    
-    // Use pdf-parse - handle different export formats
-    let parseFunction: any;
-    if (typeof pdfParse.default === 'function') {
-      parseFunction = pdfParse.default;
-    } else if (typeof pdfParse === 'function') {
-      parseFunction = pdfParse;
-    } else if (pdfParse.default && typeof pdfParse.default === 'function') {
-      parseFunction = pdfParse.default;
-    } else {
-      // Try to find the parse function in the module
-      parseFunction = pdfParse.parse || pdfParse.pdfParse || Object.values(pdfParse).find((v: any) => typeof v === 'function');
+    // pdf-parse uses CommonJS, so we need to handle it differently
+    let pdfParse: any;
+    try {
+      // Try ES6 import first
+      const pdfParseModule = await import('pdf-parse');
+      pdfParse = pdfParseModule.default || pdfParseModule;
+    } catch (e) {
+      // Fallback to require for CommonJS
+      pdfParse = require('pdf-parse');
     }
     
-    if (typeof parseFunction !== 'function') {
-      throw new Error(`pdf-parse module structure unexpected. Available keys: ${Object.keys(pdfParse).join(', ')}`);
+    const pdfBuffer = Buffer.from(arrayBuffer);
+    
+    // pdf-parse exports the function directly (not as default in CommonJS)
+    // In ES6 imports, it might be default or the module itself
+    let parseFunction: any;
+    if (typeof pdfParse === 'function') {
+      parseFunction = pdfParse;
+    } else if (typeof pdfParse.default === 'function') {
+      parseFunction = pdfParse.default;
+    } else {
+      // Last resort: try to find any function in the module
+      const func = Object.values(pdfParse).find((v: any) => typeof v === 'function');
+      if (func) {
+        parseFunction = func;
+      } else {
+        throw new Error(`pdf-parse module structure unexpected. Type: ${typeof pdfParse}, Keys: ${Object.keys(pdfParse || {}).join(', ')}`);
+      }
     }
     
     const data = await parseFunction(pdfBuffer);
