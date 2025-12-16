@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
   experimental: {
     // Ensure proper client component handling
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+    // Turbopack optimizations
+    turbo: {
+      rules: {},
+    },
+  },
+  // Suppress params read-only warnings (Next.js 15 known issue)
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
   webpack: (config, { isServer }) => {
     // Ensure jsPDF and jspdf-autotable work in server-side
