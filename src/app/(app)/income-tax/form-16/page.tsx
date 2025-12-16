@@ -277,10 +277,11 @@ export default function Form16() {
       errors.push("Employer PAN must be in format AAAAA0000A");
     }
 
-    // TAN format validation (AAAAA0000A)
+    // TAN format validation (4 letters + 5 digits + 1 letter, e.g., BLDPS7631C)
     const tanRegex = /^[A-Z]{4}[0-9]{5}[A-Z]{1}$/;
-    if (!tanRegex.test(data.employerTan)) {
-      errors.push("Employer TAN must be in format AAAAA0000A");
+    const tanUpper = data.employerTan.toUpperCase().trim();
+    if (!tanRegex.test(tanUpper)) {
+      errors.push("Employer TAN must be in format AAAA00000A (4 letters, 5 digits, 1 letter). Example: BLDPS7631C");
     }
 
     // Deduction limits
@@ -2013,8 +2014,12 @@ export default function Form16() {
                     <Label>Employer TAN</Label>
                     <Input
                       value={bulkEmployerTan}
-                      onChange={(e) => setBulkEmployerTan(e.target.value)}
-                      placeholder="Enter TAN"
+                      onChange={(e) => {
+                        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        setBulkEmployerTan(value);
+                      }}
+                      placeholder="BLDPS7631C (4 letters, 5 digits, 1 letter)"
+                      maxLength={10}
                     />
                   </div>
                 </div>
