@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Upload, 
     FileSpreadsheet, 
@@ -22,7 +23,8 @@ import {
     BookOpen,
     Info,
     FileText,
-    PlusCircle
+    PlusCircle,
+    Building2
 } from "lucide-react";
 import {
     Dialog,
@@ -45,6 +47,7 @@ import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { formatExcelFromJson } from "@/lib/export-utils";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
+import type { BankTransaction } from "@/lib/bank-statement-parser";
 
 interface BulkJournalEntry {
     date: string;
@@ -153,6 +156,14 @@ export default function BulkJournalEntryPage() {
     const [totalAccountsNeedingMatch, setTotalAccountsNeedingMatch] = useState(0);
     const [confirmedAccountsCount, setConfirmedAccountsCount] = useState(0);
 
+    // Bank Statement Converter state
+    const [bankStatementFile, setBankStatementFile] = useState<File | null>(null);
+    const [isParsingBankStatement, setIsParsingBankStatement] = useState(false);
+    const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
+    const [bankStatementErrors, setBankStatementErrors] = useState<any[]>([]);
+    const [selectedBankAccount, setSelectedBankAccount] = useState<string>("");
+    const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
+
     // Fetch customers and vendors for account validation
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
@@ -161,6 +172,37 @@ export default function BulkJournalEntryPage() {
     const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
     const [vendorsSnapshot] = useCollection(vendorsQuery);
     const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
+
+    // Fetch user accounts for bank account selection
+    const userAccountsQuery = user ? query(collection(db, 'user_accounts'), where("userId", "==", user.uid)) : null;
+    const [userAccountsSnapshot] = useCollection(userAccountsQuery);
+    const userAccounts = useMemo(() => 
+        userAccountsSnapshot?.docs.map((doc: any) => ({
+            id: doc.id,
+            code: doc.data().code,
+            name: doc.data().name,
+            type: doc.data().type,
+        })) || [], 
+        [userAccountsSnapshot]
+    );
+
+    // Combined accounts (system + user accounts)
+    const combinedAccounts = useMemo(() => [...allAccounts, ...userAccounts], [userAccounts]);
+
+    // Bank accounts for dropdown
+    const bankAccounts = useMemo(() => {
+        return combinedAccounts.filter(acc => acc.type === 'Bank').map(acc => ({
+            code: acc.code,
+            name: acc.name,
+        }));
+    }, [combinedAccounts]);
+
+    // Auto-select bank account if only one available
+    useEffect(() => {
+        if (bankAccounts.length === 1 && !selectedBankAccount) {
+            setSelectedBankAccount(bankAccounts[0].name);
+        }
+    }, [bankAccounts.length, selectedBankAccount]);
 
     // Get all valid account codes - MUST BE CALLED BEFORE EARLY RETURN
     const validAccountCodes = useMemo(() => {
@@ -917,6 +959,116 @@ export default function BulkJournalEntryPage() {
     const errorCount = parsedEntries.filter(e => e.status === 'error').length;
     const totalAmount = parsedEntries.filter(e => e.status === 'valid').reduce((sum, e) => sum + e.amount, 0);
 
+    // Bank Statement Converter handlers
+    const handleBankStatementUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = event.target.files?.[0];
+        if (!selectedFile) return;
+
+        setBankStatementFile(selectedFile);
+        setIsParsingBankStatement(true);
+        setBankTransactions([]);
+        setBankStatementErrors([]);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const response = await fetch('/api/bank-statement/parse', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Failed to parse bank statement');
+            }
+
+            setBankTransactions(data.transactions || []);
+            setBankStatementErrors(data.errors || []);
+
+            toast({
+                title: "Bank Statement Parsed",
+                description: `Successfully parsed ${data.validTransactions} transactions. ${data.errorCount} errors found.`,
+            });
+        } catch (error: any) {
+            console.error('Bank statement parse error:', error);
+            toast({
+                variant: "destructive",
+                title: "Parsing Failed",
+                description: error.message || "Failed to parse bank statement file.",
+            });
+        } finally {
+            setIsParsingBankStatement(false);
+        }
+    };
+
+    const handleDownloadJournalTemplate = async () => {
+        if (!selectedBankAccount) {
+            toast({
+                variant: "destructive",
+                title: "Bank Account Required",
+                description: "Please select a bank account before generating the template.",
+            });
+            return;
+        }
+
+        if (bankTransactions.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "No Transactions",
+                description: "Please upload and parse a bank statement first.",
+            });
+            return;
+        }
+
+        setIsGeneratingTemplate(true);
+
+        try {
+            const response = await fetch('/api/bank-statement/generate-template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    transactions: bankTransactions,
+                    bankAccountName: selectedBankAccount,
+                    fileName: `bank-statement-journal-${format(new Date(), 'yyyy-MM-dd')}`,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate template');
+            }
+
+            // Get the file blob and download it
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bank-statement-journal-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: "Template Downloaded",
+                description: "Journal template has been generated and downloaded. Fill in the counter accounts and upload via 'Upload Entries' tab.",
+            });
+        } catch (error: any) {
+            console.error('Template generation error:', error);
+            toast({
+                variant: "destructive",
+                title: "Generation Failed",
+                description: error.message || "Failed to generate journal template.",
+            });
+        } finally {
+            setIsGeneratingTemplate(false);
+        }
+    };
+
     return (
         <div className="space-y-8">
             <div>
@@ -929,6 +1081,7 @@ export default function BulkJournalEntryPage() {
             <Tabs defaultValue="upload" className="space-y-6">
                 <TabsList>
                     <TabsTrigger value="upload">Upload Entries</TabsTrigger>
+                    <TabsTrigger value="bank-statement">Bank Statement Converter</TabsTrigger>
                     <TabsTrigger value="rules">Accounting Rules Guide</TabsTrigger>
                     <TabsTrigger value="accounts">Account Codes Reference</TabsTrigger>
                 </TabsList>
@@ -1138,6 +1291,234 @@ export default function BulkJournalEntryPage() {
                                         </ScrollArea>
                                     </div>
                                 </>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="bank-statement" className="space-y-6">
+                    <Alert className="border-primary bg-primary/5">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <AlertTitle className="text-lg font-semibold">Convert Bank Statement to Journal Template</AlertTitle>
+                        <AlertDescription className="mt-2">
+                            <p className="mb-2">
+                                Upload your bank statement (CSV/Excel) and we'll generate a pre-filled bulk journal template. 
+                                Bank account side will be automatically filled - you just need to fill in the counter accounts.
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 mb-2 ml-4">
+                                <li>✅ <strong>Deposits</strong>: Bank DEBIT (pre-filled), Counter CREDIT (you fill)</li>
+                                <li>✅ <strong>Withdrawals</strong>: Bank CREDIT (pre-filled), Counter DEBIT (you fill)</li>
+                                <li>✅ Download the template, fill counter accounts, then upload via "Upload Entries" tab</li>
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <FileSpreadsheet className="h-5 w-5" />
+                                Bank Statement Converter
+                            </CardTitle>
+                            <CardDescription>
+                                Upload your bank statement file (CSV or Excel) to generate a pre-filled journal template.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {/* Step 1: Upload Bank Statement */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">1</div>
+                                    <Label className="text-base font-semibold">Upload Bank Statement</Label>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor="bank-statement-upload">Select Bank Statement File</Label>
+                                        <Input
+                                            id="bank-statement-upload"
+                                            type="file"
+                                            accept=".csv,.xlsx,.xls"
+                                            onChange={handleBankStatementUpload}
+                                            disabled={isParsingBankStatement}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Supported formats: CSV, Excel (.xlsx, .xls). The parser automatically detects columns for Date, Description, Debit, Credit, and Balance.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {isParsingBankStatement && (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                        <span className="ml-2">Parsing bank statement...</span>
+                                    </div>
+                                )}
+
+                                {bankStatementErrors.length > 0 && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Parsing Errors</AlertTitle>
+                                        <AlertDescription>
+                                            <ul className="list-disc list-inside mt-2">
+                                                {bankStatementErrors.slice(0, 5).map((error, idx) => (
+                                                    <li key={idx}>Row {error.row}: {error.message}</li>
+                                                ))}
+                                                {bankStatementErrors.length > 5 && (
+                                                    <li>...and {bankStatementErrors.length - 5} more errors</li>
+                                                )}
+                                            </ul>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+
+                            {/* Step 2: Preview Transactions */}
+                            {bankTransactions.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">2</div>
+                                        <Label className="text-base font-semibold">Preview Transactions</Label>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <Card>
+                                            <CardContent className="pt-6">
+                                                <div className="text-center">
+                                                    <p className="text-2xl font-bold">{bankTransactions.length}</p>
+                                                    <p className="text-sm text-muted-foreground">Total Transactions</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card>
+                                            <CardContent className="pt-6">
+                                                <div className="text-center">
+                                                    <p className="text-2xl font-bold text-green-600">
+                                                        {bankTransactions.filter(t => t.credit > 0).length}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">Deposits</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card>
+                                            <CardContent className="pt-6">
+                                                <div className="text-center">
+                                                    <p className="text-2xl font-bold text-red-600">
+                                                        {bankTransactions.filter(t => t.debit > 0).length}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">Withdrawals</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    <ScrollArea className="h-[300px] border rounded-md">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Description</TableHead>
+                                                    <TableHead className="text-right">Debit</TableHead>
+                                                    <TableHead className="text-right">Credit</TableHead>
+                                                    <TableHead>Reference</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {bankTransactions.slice(0, 20).map((txn, idx) => (
+                                                    <TableRow key={idx}>
+                                                        <TableCell>{txn.date}</TableCell>
+                                                        <TableCell className="max-w-[200px] truncate">{txn.description}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            {txn.debit > 0 ? `₹${txn.debit.toLocaleString('en-IN')}` : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {txn.credit > 0 ? `₹${txn.credit.toLocaleString('en-IN')}` : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {txn.reference || '-'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </ScrollArea>
+                                    {bankTransactions.length > 20 && (
+                                        <p className="text-sm text-muted-foreground text-center">
+                                            Showing first 20 transactions. All {bankTransactions.length} transactions will be included in the template.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Step 3: Select Bank Account */}
+                            {bankTransactions.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">3</div>
+                                        <Label className="text-base font-semibold">Select Bank Account</Label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bank-account-select">Bank Account</Label>
+                                        <Select value={selectedBankAccount} onValueChange={setSelectedBankAccount}>
+                                            <SelectTrigger id="bank-account-select">
+                                                <SelectValue placeholder="Select bank account from chart of accounts" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {bankAccounts.length > 0 ? (
+                                                    bankAccounts.map((acc) => (
+                                                        <SelectItem key={acc.code} value={acc.name}>
+                                                            {acc.name} ({acc.code})
+                                                        </SelectItem>
+                                                    ))
+                                                ) : (
+                                                    <SelectItem value="none" disabled>
+                                                        No bank accounts found. Please create one in Chart of Accounts.
+                                                    </SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Select the bank account that matches this statement. This will be pre-filled in the journal template.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 4: Generate Template */}
+                            {bankTransactions.length > 0 && selectedBankAccount && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">4</div>
+                                        <Label className="text-base font-semibold">Generate Journal Template</Label>
+                                    </div>
+                                    <Button
+                                        onClick={handleDownloadJournalTemplate}
+                                        disabled={isGeneratingTemplate}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {isGeneratingTemplate ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="mr-2 h-4 w-4" />
+                                                Download Journal Template
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Alert>
+                                        <Info className="h-4 w-4" />
+                                        <AlertTitle>Next Steps</AlertTitle>
+                                        <AlertDescription className="mt-2">
+                                            <ol className="list-decimal list-inside space-y-1">
+                                                <li>Download the generated Excel template</li>
+                                                <li>Fill in the blank counter accounts (DebitAccount for withdrawals, CreditAccount for deposits)</li>
+                                                <li>Go to "Upload Entries" tab and upload the filled template</li>
+                                                <li>Review and create journal entries</li>
+                                            </ol>
+                                        </AlertDescription>
+                                    </Alert>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
