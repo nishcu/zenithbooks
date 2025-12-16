@@ -539,8 +539,8 @@ function DashboardContent() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-6 lg:px-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6">
+        <CardContent className="px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6">
             {quickAccessFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
