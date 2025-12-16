@@ -214,7 +214,13 @@ export class Form16PDFGenerator {
       ['Address of the Recipient', partA.employeeAddress || ''],
       ['Aadhaar Number (if available)', partA.employeeAadhaar || ''],
       ['Designation', partA.employeeDesignation],
-      ['Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
+      ['Period of Employment', (() => {
+        const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
+        const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
+        const periodFrom = partA.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
+        const periodTo = partA.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
+        return `${periodFrom} to ${periodTo}`;
+      })()]
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -391,7 +397,13 @@ export class Form16PDFGenerator {
       ['3. PAN of the Employee', partA.employeePan],
       ['4. Aadhaar Number (if available)', partA.employeeAadhaar || ''],
       ['5. Designation', partA.employeeDesignation],
-      ['6. Period of Employment', `${partA.periodFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`} to ${partA.periodTo || `31/03/${form16Doc.financialYear.split('-')[1]}`}`]
+      ['6. Period of Employment', (() => {
+        const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
+        const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
+        const periodFrom = partA.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
+        const periodTo = partA.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
+        return `${periodFrom} to ${periodTo}`;
+      })()]
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -473,7 +485,7 @@ export class Form16PDFGenerator {
     // 9. INCOME UNDER THE HEAD "SALARIES" (7 - 8)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`9. INCOME UNDER THE HEAD "SALARIES" (7 - 8) = ₹${partB.netSalary.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`9. INCOME UNDER THE HEAD "SALARIES" (7 - 8) = ₹${(partB.netSalary || 0).toLocaleString('en-IN')}`, 20, yPos);
     yPos += 12;
 
     // 10. DEDUCTIONS UNDER SECTION 16
@@ -508,7 +520,7 @@ export class Form16PDFGenerator {
     // 11. NET SALARY (9 - 10)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`11. NET SALARY (9 - 10) = ₹${partB.incomeFromSalary.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`11. NET SALARY (9 - 10) = ₹${(partB.incomeFromSalary || 0).toLocaleString('en-IN')}`, 20, yPos);
     yPos += 12;
 
     // 12. ANY OTHER INCOME REPORTED BY THE EMPLOYEE
@@ -542,7 +554,7 @@ export class Form16PDFGenerator {
     // 13. GROSS TOTAL INCOME (11 + 12)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`13. GROSS TOTAL INCOME (11 + 12) = ₹${partB.grossTotalIncome.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`13. GROSS TOTAL INCOME (11 + 12) = ₹${(partB.grossTotalIncome || 0).toLocaleString('en-IN')}`, 20, yPos);
     yPos += 12;
 
     // 14. DEDUCTIONS UNDER CHAPTER VI-A
@@ -591,7 +603,7 @@ export class Form16PDFGenerator {
     // 15. TOTAL TAXABLE INCOME (13 - 14)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
     pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`15. TOTAL TAXABLE INCOME (13 - 14) = ₹${partB.totalTaxableIncome.toLocaleString('en-IN')}`, 20, yPos);
+    pdf.text(`15. TOTAL TAXABLE INCOME (13 - 14) = ₹${(partB.totalTaxableIncome || 0).toLocaleString('en-IN')}`, 20, yPos);
     yPos += 12;
 
     // 16. COMPUTATION OF TAX

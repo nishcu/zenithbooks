@@ -462,6 +462,10 @@ export interface ValidationRules {
 export interface Form16Request {
   employeeId: string;
   financialYear: string;
+  employerName?: string;
+  employerTan?: string;
+  employerPan?: string;
+  employerAddress?: string;
   overrideData?: {
     salaryStructure?: Partial<SalaryStructure>;
     exemptions?: Partial<ExemptionsSection10>;

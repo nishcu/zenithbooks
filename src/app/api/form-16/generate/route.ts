@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: Form16Request & { signatoryName?: string; signatoryDesignation?: string; signatoryPlace?: string } = await request.json();
-    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace } = body;
+    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace, employerName, employerTan, employerPan, employerAddress } = body;
 
     if (!employeeId || !financialYear) {
       return NextResponse.json(
@@ -314,6 +314,10 @@ export async function POST(request: NextRequest) {
     const periodTo = new Date() < fyEndDate ? new Date() : fyEndDate;
     
     const formatDate = (date: Date) => {
+      if (isNaN(date.getTime())) {
+        // Return empty string if invalid
+        return '';
+      }
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
@@ -325,6 +329,10 @@ export async function POST(request: NextRequest) {
     const periodFromStr = formatDate(periodFrom);
     const periodToStr = formatDate(periodTo);
     const today = formatDate(new Date());
+    
+    // Ensure dates are valid, use FY dates as fallback
+    const safePeriodFrom = periodFromStr || fyStart;
+    const safePeriodTo = periodToStr || fyEnd;
 
     // Get signatory details from request body or use defaults
     const finalSignatoryName = signatoryName || employerData?.name || employerData?.companyName || 'Authorized Signatory';
@@ -335,10 +343,10 @@ export async function POST(request: NextRequest) {
       employeeId,
       financialYear,
       assessmentYear,
-      employerName: employerData?.companyName || employerData?.name || 'Employer Name',
-      employerTan: employerData?.tan || '',
-      employerPan: employerData?.pan || '',
-      employerAddress: employerData?.address || '',
+      employerName: employerName || employerData?.companyName || employerData?.name || 'Employer Name',
+      employerTan: employerTan || employerData?.tan || '',
+      employerPan: employerPan || employerData?.pan || '',
+      employerAddress: employerAddress || employerData?.address || '',
       partA: {
         certificateNumber: `CERT-${employeeId}-${financialYear}`,
         lastUpdatedOn: today,
@@ -349,8 +357,8 @@ export async function POST(request: NextRequest) {
         employeeAddress: employee.address || '', // Employee address
         employeeDesignation: employee.designation,
         employeeAadhaar: employee.aadhaar,
-        periodFrom: periodFromStr,
-        periodTo: periodToStr,
+        periodFrom: safePeriodFrom,
+        periodTo: safePeriodTo,
         totalTdsDeducted: tdsData.totalTdsDeducted,
         tdsDetails: {
           ...tdsData,

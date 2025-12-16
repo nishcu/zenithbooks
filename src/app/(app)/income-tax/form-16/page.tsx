@@ -482,6 +482,10 @@ export default function Form16() {
         body: JSON.stringify({
           employeeId: form16Data.employeeId,
           financialYear: form16Data.financialYear,
+          employerName: form16Data.employerName || form16Data.employerCompanyName,
+          employerTan: form16Data.employerTan,
+          employerPan: form16Data.employerPan,
+          employerAddress: form16Data.employerAddress,
           signatoryName: form16Data.signatoryName,
           signatoryDesignation: form16Data.signatoryDesignation,
           signatoryPlace: form16Data.signatoryPlace,
