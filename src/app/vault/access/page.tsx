@@ -182,15 +182,16 @@ export default function VaultAccessPage() {
       const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(document.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent(fileType)}`;
       
       // Create a temporary link and trigger download
-      const link = document.createElement("a");
+      // Use window.document to avoid shadowing the parameter name 'document'
+      const link = window.document.createElement("a");
       link.href = downloadUrl;
       link.download = document.fileName;
       link.target = "_blank"; // Open in new tab as fallback
-      document.body.appendChild(link);
+      window.document.body.appendChild(link);
       link.click();
       
       // Cleanup
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
       
       toast({
         title: "Download Started",
