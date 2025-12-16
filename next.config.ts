@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
       rules: {},
     },
   },
+  // Suppress Next.js 15 params warnings in logs
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
   // Suppress params read-only warnings (Next.js 15 known issue)
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
