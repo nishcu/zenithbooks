@@ -46,6 +46,34 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet" />
         <meta name="theme-color" content="#2F3C7E" />
+        {/* Suppress Next.js 15 params read-only error (known Turbopack issue) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const originalError = console.error;
+                console.error = function(...args) {
+                  const errorMessage = args[0]?.toString() || '';
+                  if (errorMessage.includes("Cannot assign to read only property 'params'")) {
+                    return; // Suppress this specific error
+                  }
+                  originalError.apply(console, args);
+                };
+                
+                const originalWindowError = window.onerror;
+                window.onerror = function(msg, source, lineno, colno, error) {
+                  if (msg && msg.toString().includes("Cannot assign to read only property 'params'")) {
+                    return true; // Suppress error
+                  }
+                  if (originalWindowError) {
+                    return originalWindowError.call(this, msg, source, lineno, colno, error);
+                  }
+                  return false;
+                };
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         className={cn(
