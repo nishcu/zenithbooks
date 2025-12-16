@@ -154,9 +154,9 @@ export class Form16PDFGenerator {
 
     const certificateData = [
       ['Certificate No.', partA.certificateNumber || ''],
-      ['Last updated on', partA.lastUpdatedOn || new Date().toLocaleDateString('en-IN')],
-      ['Valid From', partA.validFrom || `01/04/${form16Doc.financialYear.split('-')[0]}`],
-      ['Valid Till', partA.validTill || `31/03/${form16Doc.financialYear.split('-')[1]}`]
+      ['Last updated on', partA.lastUpdatedOn || ''],
+      ['Valid From', partA.validFrom || ''],
+      ['Valid Till', partA.validTill || '']
     ];
 
     // Call autoTable directly (already validated during initialization)
@@ -252,17 +252,21 @@ export class Form16PDFGenerator {
       q4: { amount: 0, section: '192', dateOfDeduction: '', dateOfDeposit: '', challanCIN: '' }
     };
 
+    // Helper to format amounts - show blank if 0
+    const formatAmount = (amount: number) => amount > 0 ? amount.toLocaleString('en-IN') : '';
+    const formatValue = (val: string | number) => val ? String(val) : '';
+    
     const tdsTableData = [
       ['Quarter', 'Section', 'Date of Deduction', 'Date of Deposit', 'Amount (₹)', 'Challan CIN'],
-      ['Q1', quarterlyTDS.q1.section, quarterlyTDS.q1.dateOfDeduction, quarterlyTDS.q1.dateOfDeposit, 
-       quarterlyTDS.q1.amount.toLocaleString('en-IN'), quarterlyTDS.q1.challanCIN || ''],
-      ['Q2', quarterlyTDS.q2.section, quarterlyTDS.q2.dateOfDeduction, quarterlyTDS.q2.dateOfDeposit, 
-       quarterlyTDS.q2.amount.toLocaleString('en-IN'), quarterlyTDS.q2.challanCIN || ''],
-      ['Q3', quarterlyTDS.q3.section, quarterlyTDS.q3.dateOfDeduction, quarterlyTDS.q3.dateOfDeposit, 
-       quarterlyTDS.q3.amount.toLocaleString('en-IN'), quarterlyTDS.q3.challanCIN || ''],
-      ['Q4', quarterlyTDS.q4.section, quarterlyTDS.q4.dateOfDeduction, quarterlyTDS.q4.dateOfDeposit, 
-       quarterlyTDS.q4.amount.toLocaleString('en-IN'), quarterlyTDS.q4.challanCIN || ''],
-      ['Total', '', '', '', partA.totalTdsDeducted.toLocaleString('en-IN'), '']
+      ['Q1', formatValue(quarterlyTDS.q1.section), formatValue(quarterlyTDS.q1.dateOfDeduction), formatValue(quarterlyTDS.q1.dateOfDeposit), 
+       formatAmount(quarterlyTDS.q1.amount), formatValue(quarterlyTDS.q1.challanCIN)],
+      ['Q2', formatValue(quarterlyTDS.q2.section), formatValue(quarterlyTDS.q2.dateOfDeduction), formatValue(quarterlyTDS.q2.dateOfDeposit), 
+       formatAmount(quarterlyTDS.q2.amount), formatValue(quarterlyTDS.q2.challanCIN)],
+      ['Q3', formatValue(quarterlyTDS.q3.section), formatValue(quarterlyTDS.q3.dateOfDeduction), formatValue(quarterlyTDS.q3.dateOfDeposit), 
+       formatAmount(quarterlyTDS.q3.amount), formatValue(quarterlyTDS.q3.challanCIN)],
+      ['Q4', formatValue(quarterlyTDS.q4.section), formatValue(quarterlyTDS.q4.dateOfDeduction), formatValue(quarterlyTDS.q4.dateOfDeposit), 
+       formatAmount(quarterlyTDS.q4.amount), formatValue(quarterlyTDS.q4.challanCIN)],
+      ['Total', '', '', '', formatAmount(partA.totalTdsDeducted || 0), '']
     ];
 
     // Call autoTable directly (already validated during initialization)
