@@ -3,10 +3,8 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
-import {
-  Form16ComputationEngine,
-  Form16PDFGenerator
-} from '@/lib/form-16-computation';
+import { Form16ComputationEngine } from '@/lib/form-16-computation';
+import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import {
   EmployeeMaster,
   SalaryStructure,
