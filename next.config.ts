@@ -24,11 +24,6 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
-  // Suppress params read-only warnings (Next.js 15 known issue)
-  onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
-  },
   webpack: (config, { isServer }) => {
     // Ensure jsPDF and jspdf-autotable work in server-side
     if (isServer) {
