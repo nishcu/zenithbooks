@@ -1334,9 +1334,20 @@ export default function BulkJournalEntryPage() {
                         <CardContent className="space-y-6">
                             {/* Step 1: Upload Bank Statement */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">1</div>
-                                    <Label className="text-base font-semibold">Upload Bank Statement</Label>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold">1</div>
+                                        <Label className="text-base font-semibold">Upload Bank Statement</Label>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleDownloadBankStatementTemplate}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Download Template (CSV/Excel)
+                                    </Button>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <div className="flex-1 space-y-2">
