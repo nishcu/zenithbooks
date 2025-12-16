@@ -1,9 +1,7 @@
-import jsPDF from 'jspdf';
 import { Form16Document, Form16Computation } from './form-16-models';
 
-// Import jspdf-autotable - use side-effect import which should work in both client and server
-// In Next.js, this should work for API routes as well
-import 'jspdf-autotable';
+// Dynamic import for jsPDF to handle server-side properly
+// This ensures jsPDF is loaded correctly in Next.js API routes
 
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
@@ -34,22 +32,27 @@ export class Form16PDFGenerator {
     form16Doc: Form16Document,
     password?: string
   ): Promise<Blob> {
-    // Ensure jspdf-autotable is loaded before creating PDF instance
-    // This is especially important for server-side rendering
-    if (typeof window === 'undefined') {
-      // Server-side: explicitly require the plugin
-      try {
-        require('jspdf-autotable');
-      } catch (e) {
-        console.error('Failed to load jspdf-autotable:', e);
-      }
+    // Dynamic import for server-side compatibility
+    // This ensures jsPDF and jspdf-autotable are properly loaded
+    let jsPDF: any;
+    try {
+      jsPDF = (await import('jspdf')).default;
+      // Import autotable plugin
+      await import('jspdf-autotable');
+    } catch (error) {
+      console.error('Failed to import jsPDF:', error);
+      throw new Error(`Failed to load jsPDF library: ${error instanceof Error ? error.message : 'Unknown error'}. Please ensure jspdf and jspdf-autotable are properly installed.`);
+    }
+    
+    if (!jsPDF) {
+      throw new Error('jsPDF is not properly installed or could not be loaded.');
     }
     
     const pdf = new jsPDF();
     
     // Verify autoTable is available
     if (typeof (pdf as any).autoTable !== 'function') {
-      throw new Error('jspdf-autotable plugin is not properly initialized. autoTable method is not available on jsPDF instance.');
+      throw new Error('jspdf-autotable plugin is not properly initialized. autoTable method is not available on jsPDF instance. Please ensure jspdf-autotable is installed: npm install jspdf-autotable');
     }
 
     // Set password protection if provided
