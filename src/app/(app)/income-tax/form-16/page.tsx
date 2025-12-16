@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, collection, query, where, getDocs, addDoc, Timestamp } from "firebase/firestore";
+import { auth, db, storage } from "@/lib/firebase";
+import { doc, collection, query, where, getDocs, addDoc, Timestamp, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
@@ -54,6 +55,8 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Form16Computation } from "@/lib/form-16-models";
+import { VAULT_CATEGORIES, VAULT_STORAGE_PATHS, VAULT_FILE_LIMITS } from "@/lib/vault-constants";
+import { FileKey } from "lucide-react";
 
 interface Employee {
   id: string;
@@ -2124,15 +2127,26 @@ export default function Form16() {
                   </div>
                 </div>
             </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
                 <Button
                   onClick={generateSingleForm16}
                   disabled={isLoading}
-                  className="w-full"
+                  className="flex-1"
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   {isLoading ? "Generating..." : "Generate Form 16"}
                 </Button>
+                {generatedPdf && (
+                  <Button
+                    onClick={saveToVault}
+                    disabled={isLoading}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <FileKey className="mr-2 h-4 w-4" />
+                    Save to Vault
+                  </Button>
+                )}
               </CardFooter>
         </Card>
 
