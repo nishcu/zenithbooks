@@ -479,25 +479,25 @@ function DashboardContent() {
               return (
                 <Link key={feature.href} href={feature.href}>
                   <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
-                    <CardHeader className="pb-4 lg:pb-6">
-                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-7 w-7 lg:h-8 lg:w-8 text-white group-hover:scale-110 transition-transform" />
+                    <CardHeader className="pb-3 px-4 pt-4">
+                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <CardTitle className="text-base lg:text-lg group-hover:text-primary transition-colors leading-tight">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
                           {feature.title}
                         </CardTitle>
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20">
+                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
                           {feature.badge}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0 px-6 lg:px-8">
-                      <CardDescription className="text-sm lg:text-base line-clamp-3 leading-relaxed">
+                    <CardContent className="pt-0 px-4 pb-4">
+                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
                         {feature.description}
                       </CardDescription>
                       {/* Arrow icon on hover */}
-                      <div className="mt-3 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <span className="text-xs font-medium">Open</span>
                         <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
@@ -546,25 +546,25 @@ function DashboardContent() {
               return (
                 <Link key={feature.href} href={feature.href}>
                   <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative">
-                    <CardHeader className="pb-4 lg:pb-6">
-                      <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-7 w-7 lg:h-8 lg:w-8 text-white group-hover:scale-110 transition-transform" />
+                    <CardHeader className="pb-3 px-4 pt-4">
+                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
                       </div>
-                      <div className="flex items-start justify-between gap-3">
-                        <CardTitle className="text-base lg:text-lg group-hover:text-primary transition-colors leading-tight">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
                           {feature.title}
                         </CardTitle>
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20">
+                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
                           {feature.badge}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0 px-6 lg:px-8">
-                      <CardDescription className="text-sm lg:text-base line-clamp-3 leading-relaxed">
+                    <CardContent className="pt-0 px-4 pb-4">
+                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
                         {feature.description}
                       </CardDescription>
                       {/* Arrow icon on hover */}
-                      <div className="mt-3 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <span className="text-xs font-medium">Open</span>
                         <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
