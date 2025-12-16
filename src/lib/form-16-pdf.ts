@@ -1,18 +1,32 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Form16Document, Form16Computation } from './form-16-models';
+
+// Import and initialize jspdf-autotable
+// For server-side (Node.js), we need to use require or dynamic import
+let autoTableInitialized = false;
+
+// Initialize autoTable for server-side
+if (typeof window === 'undefined') {
+  try {
+    // Use dynamic require for server-side
+    const autoTable = require('jspdf-autotable');
+    // The plugin should auto-initialize, but we ensure it's available
+    if (autoTable && !autoTableInitialized) {
+      autoTableInitialized = true;
+    }
+  } catch (e) {
+    console.warn('Could not load jspdf-autotable:', e);
+  }
+} else {
+  // Client-side: use side-effect import
+  require('jspdf-autotable');
+}
 
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
-}
-
-// Initialize autoTable plugin
-if (typeof window === 'undefined') {
-  // Server-side: ensure autoTable is available
-  (jsPDF as any).API.autoTable = autoTable;
 }
 
 export class Form16PDFGenerator {
