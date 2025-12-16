@@ -586,6 +586,126 @@ export default function Form16() {
     }
   };
 
+  const saveToVault = async () => {
+    if (!generatedPdf || !user) {
+      toast({
+        variant: "destructive",
+        title: "No PDF Available",
+        description: "Please generate Form 16 first"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Check storage limit
+      const settingsRef = doc(db, "vaultSettings", user.uid);
+      const settingsDoc = await getDoc(settingsRef);
+      const currentStorageUsed = settingsDoc.exists() 
+        ? settingsDoc.data().currentStorageUsed || 0 
+        : 0;
+
+      // Convert base64 PDF to Blob
+      const base64Data = generatedPdf.split(',')[1]; // Remove data:application/pdf;base64, prefix
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+
+      // Check if upload would exceed storage limit
+      if (currentStorageUsed + pdfBlob.size > VAULT_FILE_LIMITS.MAX_STORAGE_PER_USER) {
+        toast({
+          variant: "destructive",
+          title: "Storage Limit Exceeded",
+          description: `Upload would exceed storage limit of ${(VAULT_FILE_LIMITS.MAX_STORAGE_PER_USER / (1024 * 1024 * 1024)).toFixed(1)} GB. Please free up space.`
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Generate document ID and file name
+      const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const fileName = `Form16_${form16Data.employeeName || 'Employee'}_${form16Data.financialYear}_${Date.now()}.pdf`;
+      
+      // Prepare storage path
+      const storagePath = VAULT_STORAGE_PATHS.getCategoryPath(
+        user.uid,
+        VAULT_CATEGORIES.INCOME_TAX,
+        documentId,
+        1
+      );
+      const fullStoragePath = `${storagePath}/${fileName.replace(/\s+/g, '-')}`;
+
+      // Upload file to Firebase Storage
+      const storageRef = ref(storage, fullStoragePath);
+      await uploadBytes(storageRef, pdfBlob);
+
+      // Get download URL
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Save document metadata to Firestore
+      const documentRef = doc(db, "vaultDocuments", documentId);
+      const documentData = {
+        userId: user.uid,
+        fileName: fileName,
+        category: VAULT_CATEGORIES.INCOME_TAX,
+        currentVersion: 1,
+        fileSize: pdfBlob.size,
+        uploadedAt: serverTimestamp(),
+        lastUpdated: serverTimestamp(),
+        metadata: {
+          description: `Form 16 for ${form16Data.employeeName} - FY ${form16Data.financialYear}`,
+          documentDate: null,
+          tags: ['Form 16', form16Data.financialYear],
+        },
+        versions: {
+          1: {
+            fileUrl: downloadURL,
+            fileSize: pdfBlob.size,
+            fileType: 'application/pdf',
+            uploadedAt: serverTimestamp(),
+            versionNote: "Form 16 generated from Income Tax module",
+          },
+        },
+      };
+
+      await setDoc(documentRef, documentData);
+
+      // Update storage settings
+      if (settingsDoc.exists()) {
+        await updateDoc(settingsRef, {
+          currentStorageUsed: currentStorageUsed + pdfBlob.size,
+          lastUpdated: serverTimestamp(),
+        });
+      } else {
+        await setDoc(settingsRef, {
+          userId: user.uid,
+          totalStorageLimit: VAULT_FILE_LIMITS.MAX_STORAGE_PER_USER,
+          currentStorageUsed: pdfBlob.size,
+          createdAt: serverTimestamp(),
+          lastUpdated: serverTimestamp(),
+        });
+      }
+
+      toast({
+        title: "Saved to Vault",
+        description: "Form 16 has been saved to your Document Vault successfully"
+      });
+    } catch (error) {
+      console.error('Error saving to vault:', error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Failed to save Form 16 to vault. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const generateBulkForm16 = async () => {
     const selectedEmployees = employees.filter(emp => emp.selected);
     if (selectedEmployees.length === 0) {
