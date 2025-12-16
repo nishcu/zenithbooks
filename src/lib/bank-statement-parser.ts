@@ -355,9 +355,9 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       );
       
       if (!hasData) {
-        continue;
-      }
-      
+            continue;
+          }
+
       const result = parseTransactionRow(row, i);
       if (result.error) {
         errors.push(result.error);
@@ -416,9 +416,9 @@ function parseBankStatementCSVBasic(csvText: string): BankStatementParseResult {
       
       // Skip if all values are empty
       if (values.every(v => !v || v === '')) {
-        continue;
-      }
-      
+            continue;
+          }
+
       const result = parseTransactionRow(row, i);
       if (result.error) {
         errors.push(result.error);
@@ -500,36 +500,66 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
     let text: string;
     try {
       // pdf-parse exports PDFParse class
+      // Configure worker BEFORE requiring to prevent dynamic loading issues
       const pdfParseModule = require('pdf-parse');
       const { PDFParse } = pdfParseModule;
       
-      // Configure worker for Node.js (prevents dynamic worker loading errors)
-      // In Node.js, we can set worker to empty string or null to disable worker
-      if (typeof PDFParse.setWorker === 'function') {
+      // Set worker configuration BEFORE creating any instances
+      // In Node.js, setWorker('') disables dynamic worker loading
+      if (typeof PDFParse?.setWorker === 'function') {
         try {
-          // Set worker to empty string for Node.js - uses built-in worker
           PDFParse.setWorker('');
-        } catch (workerError: any) {
-          // Ignore worker setup errors - not critical in Node.js
-          console.warn('Worker setup warning (non-critical):', workerError.message);
+        } catch (workerConfigError: any) {
+          // Log but continue - worker setup is optional in Node.js
+          console.warn('PDFParse worker configuration warning:', workerConfigError.message);
         }
       }
       
-      // In Node.js, PDFParse automatically detects environment and doesn't need worker setup
       // Create instance with data buffer
-      const pdfParser = new PDFParse({ data: pdfBuffer });
+      // In Node.js environment, PDFParse should use built-in parsing without worker
+      const pdfParser = new PDFParse({ 
+        data: pdfBuffer,
+        verbosity: pdfParseModule.VerbosityLevel?.ERRORS || 0
+      });
       
       // Get text from PDF
-      const result = await pdfParser.getText({});
-      text = result.text || '';
-    } catch (error: any) {
-      // If error mentions worker, it's trying to set up browser worker in Node.js
-      // This shouldn't happen, but if it does, provide helpful error
-      const errorMsg = error.message || String(error);
-      if (errorMsg.includes('worker') || errorMsg.includes('Cannot find module') || errorMsg.includes('expression is too dynamic')) {
-        throw new Error(`PDF parsing failed: Worker setup error. PDF format may not be supported, or file may be corrupted. Please try converting to CSV or Excel format.`);
+      // Wrap in try-catch to catch worker-related errors during parsing
+      try {
+        const result = await pdfParser.getText({});
+        text = result.text || '';
+      } catch (parseError: any) {
+        const parseErrorMsg = parseError.message || String(parseError);
+        // If worker error occurs during parsing, provide helpful message
+        if (parseErrorMsg.includes('worker') || parseErrorMsg.includes('Cannot find module') || parseErrorMsg.includes('expression is too dynamic')) {
+          throw new Error('PDF parsing failed due to worker configuration issue. Please convert your bank statement to CSV or Excel format and try again.');
+        }
+        throw parseError;
       }
-      throw new Error(`Failed to parse PDF: ${errorMsg}. PDF format may not be supported.`);
+    } catch (error: any) {
+      const errorMsg = error.message || String(error);
+      
+      // Check for worker-related errors
+      if (errorMsg.includes('worker') || errorMsg.includes('Cannot find module') || errorMsg.includes('expression is too dynamic')) {
+        // Return a user-friendly error suggesting CSV/Excel conversion
+        return {
+          transactions: [],
+          errors: [{
+            row: 0,
+            message: 'PDF parsing is not available due to technical limitations. Please convert your bank statement to CSV or Excel format and try again. Use the "Download Template" button for the correct format.'
+          }],
+          format: 'pdf'
+        };
+      }
+      
+      // Other PDF parsing errors
+      return {
+        transactions: [],
+        errors: [{
+          row: 0,
+          message: `PDF parsing failed: ${errorMsg}. Please convert your bank statement to CSV or Excel format and try again.`
+        }],
+        format: 'pdf'
+      };
     }
     
     if (!text || text.trim().length === 0) {
@@ -560,9 +590,9 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
           (lineLower.includes('opening balance') && lineLower.match(/opening\s+balance.*$/i)) ||
           (lineLower.includes('closing balance') && lineLower.match(/closing\s+balance.*$/i)) ||
           lineLower.match(/^statement\s+of\s+account\s*$/i)) {
-        continue;
-      }
-      
+            continue;
+          }
+
       try {
         // Try to extract date (DD/MM/YYYY, DD-MM-YYYY, or YYYY-MM-DD)
         const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
@@ -690,8 +720,8 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
         message: 'No transactions found in PDF. The PDF format may not be supported. Please try converting to CSV or Excel format.'
       });
     }
-    
-  } catch (error: any) {
+      
+    } catch (error: any) {
     errors.push({
       row: 0,
       message: `PDF parsing error: ${error.message || 'Unknown error'}. PDF format may not be supported.`
