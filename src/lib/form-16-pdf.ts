@@ -222,7 +222,7 @@ export class Form16PDFGenerator {
       ['PAN of the Recipient', partA.employeePan || ''],
       ['Address of the Recipient', partA.employeeAddress || ''],
       ['Aadhaar Number (if available)', partA.employeeAadhaar || ''],
-      ['Designation', partA.employeeDesignation],
+      ['Designation', partA?.employeeDesignation || 'Employee'],
       ['Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
         const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
@@ -334,9 +334,9 @@ export class Form16PDFGenerator {
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.text('Signature: _________________________', 20, yPos);
     yPos += 10;
-    pdf.text(`(${form16Doc.signatory.name})`, 20, yPos);
+    pdf.text(`(${form16Doc.signatory?.name || 'N/A'})`, 20, yPos);
     yPos += 5;
-    pdf.text(form16Doc.signatory.designation, 20, yPos);
+    pdf.text(form16Doc.signatory?.designation || 'N/A', 20, yPos);
 
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);
@@ -376,9 +376,9 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employerData = [
-      ['1. Name of the Employer', form16Doc.employerName],
+      ['1. Name of the Employer', form16Doc.employerName || 'N/A'],
       ['2. Address of the Employer', form16Doc.employerAddress || ''],
-      ['3. TAN of the Employer', form16Doc.employerTan],
+      ['3. TAN of the Employer', form16Doc.employerTan || 'N/A'],
       ['4. PAN of the Employer', form16Doc.employerPan || ''],
       ['5. Assessment Year', form16Doc.assessmentYear]
     ];
