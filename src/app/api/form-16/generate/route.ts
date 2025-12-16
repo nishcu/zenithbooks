@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
     }
 
     const employee = { id: employeeDoc.id, ...employeeDoc.data() } as EmployeeMaster;
+    
+    // Override tax regime if provided in request (for Form 16 generation)
+    if (overrideTaxRegime) {
+      employee.taxRegime = overrideTaxRegime;
+    }
 
     // Verify user has access to this employee
     if (employee.employerId !== userId) {

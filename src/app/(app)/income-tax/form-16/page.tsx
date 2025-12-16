@@ -82,6 +82,7 @@ interface Form16Data {
   employeeAddress: string;
   employeeDesignation: string;
   employeeDoj: string; // Date of Joining
+  taxRegime: 'OLD' | 'NEW'; // Tax Regime for Form 16 generation
   signatoryName: string;
   signatoryDesignation: string;
   signatoryPlace: string;
@@ -510,6 +511,7 @@ export default function Form16() {
           employerTan: form16Data.employerTan,
           employerPan: form16Data.employerPan,
           employerAddress: form16Data.employerAddress,
+          taxRegime: form16Data.taxRegime,
           signatoryName: form16Data.signatoryName,
           signatoryDesignation: form16Data.signatoryDesignation,
           signatoryPlace: form16Data.signatoryPlace,
@@ -1039,6 +1041,7 @@ export default function Form16() {
                           employeeAddress: employee?.address || "",
                           employeeDesignation: employee?.designation || "",
                           employeeDoj: doj,
+                          taxRegime: (employee?.taxRegime as 'OLD' | 'NEW') || 'NEW',
                           employerName: employee ? prev.employerName : prev.employerName
                         }));
                       }}
@@ -1117,6 +1120,24 @@ export default function Form16() {
                         onChange={(e) => setForm16Data(prev => ({ ...prev, employeeDoj: e.target.value }))}
                         placeholder="Select date of joining"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tax Regime *</Label>
+                      <Select
+                        value={form16Data.taxRegime}
+                        onValueChange={(value: 'OLD' | 'NEW') => setForm16Data(prev => ({ ...prev, taxRegime: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="OLD">Old Tax Regime</SelectItem>
+                          <SelectItem value="NEW">New Tax Regime</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the tax regime for this Form 16. This overrides the employee's default regime.
+                      </p>
                     </div>
                   </div>
                 </div>
