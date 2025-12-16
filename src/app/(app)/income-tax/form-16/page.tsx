@@ -204,7 +204,8 @@ export default function Form16() {
     tdsDetails: {
       totalTdsDeducted: 0,
       relief89: 0
-    }
+    },
+    taxRegime: "NEW"
   });
 
   const [computationResult, setComputationResult] = useState<Form16Computation | null>(null);
