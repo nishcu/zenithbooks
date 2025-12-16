@@ -158,8 +158,28 @@ export default function VaultAccessPage() {
         }),
       }).catch(err => console.error("Failed to log access:", err));
 
+      // Detect file type from file name extension
+      const getFileType = (fileName: string): string => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        const mimeTypes: Record<string, string> = {
+          'pdf': 'application/pdf',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'xls': 'application/vnd.ms-excel',
+          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'txt': 'text/plain',
+          'zip': 'application/zip',
+        };
+        return mimeTypes[extension || ''] || 'application/octet-stream';
+      };
+
       // Use server-side proxy for download to handle CORS and authentication
-      const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(document.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent("application/pdf")}`;
+      const fileType = getFileType(document.fileName);
+      const downloadUrl = `/api/vault/download?fileUrl=${encodeURIComponent(document.fileUrl)}&fileName=${encodeURIComponent(document.fileName)}&fileType=${encodeURIComponent(fileType)}`;
       
       // Create a temporary link and trigger download
       const link = document.createElement("a");
