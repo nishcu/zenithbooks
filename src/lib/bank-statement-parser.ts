@@ -493,47 +493,34 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       }
     }
     
-    // Dynamic import to avoid server-side issues
-    // pdf-parse is a CommonJS module that exports a function directly
-    // In ES6 import, it comes as default, but we need to handle both cases
-    let parseFunction: any;
+    // pdf-parse is a CommonJS module
+    // Use require() directly in Node.js environment (server-side)
+    const pdfBuffer = Buffer.from(arrayBuffer);
     
+    let data: any;
     try {
-      // Use require for CommonJS modules (more reliable in Node.js)
+      // In Node.js, require() works directly for CommonJS modules
       const pdfParse = require('pdf-parse');
-      // pdf-parse exports the function directly when using require
+      
+      // pdf-parse exports a function directly
       if (typeof pdfParse === 'function') {
-        parseFunction = pdfParse;
+        data = await pdfParse(pdfBuffer);
       } else if (pdfParse.default && typeof pdfParse.default === 'function') {
-        parseFunction = pdfParse.default;
+        data = await pdfParse.default(pdfBuffer);
       } else {
-        throw new Error(`pdf-parse require() returned non-function. Type: ${typeof pdfParse}`);
-      }
-    } catch (requireError) {
-      // Fallback to ES6 import if require fails
-      try {
+        // Try dynamic import as fallback
         const pdfParseModule = await import('pdf-parse');
-        // ES6 import might have it as default or as the module itself
-        if (typeof pdfParseModule === 'function') {
-          parseFunction = pdfParseModule;
-        } else if (pdfParseModule.default && typeof pdfParseModule.default === 'function') {
-          parseFunction = pdfParseModule.default;
+        const parseFn = pdfParseModule.default || pdfParseModule;
+        if (typeof parseFn === 'function') {
+          data = await parseFn(pdfBuffer);
         } else {
-          // Try to find the function in the module
-          const func = Object.values(pdfParseModule).find((v: any) => typeof v === 'function' && v.length > 0);
-          if (func) {
-            parseFunction = func;
-          } else {
-            throw new Error(`pdf-parse import() structure unexpected. Keys: ${Object.keys(pdfParseModule).join(', ')}`);
-          }
+          throw new Error(`pdf-parse module structure unexpected. Type: ${typeof pdfParse}, Import type: ${typeof parseFn}`);
         }
-      } catch (importError) {
-        throw new Error(`Failed to load pdf-parse: ${requireError instanceof Error ? requireError.message : 'require failed'} AND ${importError instanceof Error ? importError.message : 'import failed'}`);
       }
+    } catch (error: any) {
+      throw new Error(`Failed to parse PDF: ${error.message || 'Unknown error'}`);
     }
     
-    const pdfBuffer = Buffer.from(arrayBuffer);
-    const data = await parseFunction(pdfBuffer);
     const text = data.text;
     
     if (!text || text.trim().length === 0) {
