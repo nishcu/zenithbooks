@@ -214,8 +214,8 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employeeData = [
-      ['Name of the Recipient', partA.employeeName],
-      ['PAN of the Recipient', partA.employeePan],
+      ['Name of the Recipient', partA.employeeName || ''],
+      ['PAN of the Recipient', partA.employeePan || ''],
       ['Address of the Recipient', partA.employeeAddress || ''],
       ['Aadhaar Number (if available)', partA.employeeAadhaar || ''],
       ['Designation', partA.employeeDesignation],
