@@ -371,6 +371,7 @@ export async function POST(request: NextRequest) {
         }
       },
       partB: computation,
+      chapterVIADeductions: chapterVIAData,
       signatory: {
         name: finalSignatoryName,
         designation: finalSignatoryDesignation,

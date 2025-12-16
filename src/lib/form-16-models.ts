@@ -381,6 +381,9 @@ export interface Form16Document {
   // Part B (Annexure)
   // Details of salary paid and any other income and tax deducted
   partB: Form16Computation;
+  
+  // Store Chapter VI-A deductions for PDF generation
+  chapterVIADeductions?: ChapterVIA_Deductions;
 
   // Signatory Details (Required for Form 16)
   signatory: {

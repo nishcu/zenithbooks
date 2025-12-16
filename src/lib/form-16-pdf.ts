@@ -563,25 +563,30 @@ export class Form16PDFGenerator {
     pdf.text('14. DEDUCTIONS UNDER CHAPTER VI-A:', 20, yPos);
     yPos += 8;
 
+    // Get Chapter VI-A deductions - use stored values or default to 0
+    const chapterVIA = form16Doc.chapterVIADeductions;
+    const formatAmount = (val: number | undefined) => (val || 0).toLocaleString('en-IN');
+    
     const chapterVIAData = [
-      ['(a) Section 80C (Life Insurance, PPF, NSC, etc.)', '0'],
-      ['(b) Section 80CCC (Pension funds)', '0'],
-      ['(c) Section 80CCD(1) (NPS employee contribution)', '0'],
-      ['(d) Section 80CCD(1B) (NPS self-contribution)', '0'],
-      ['(e) Section 80CCD(2) (NPS employer contribution)', '0'],
-      ['(f) Section 80D (Health insurance premium)', '0'],
-      ['(g) Section 80DD (Medical treatment of dependent)', '0'],
-      ['(h) Section 80DDB (Medical treatment)', '0'],
-      ['(i) Section 80E (Interest on education loan)', '0'],
-      ['(j) Section 80EE/80EEA (Interest on home loan)', '0'],
-      ['(k) Section 80G (Donations)', '0'],
-      ['(l) Section 80GG (Rent paid)', '0'],
-      ['(m) Section 80GGA (Donations for scientific research)', '0'],
-      ['(n) Section 80GGC (Donations to political parties)', '0'],
-      ['(o) Section 80TTA (Interest on savings accounts)', '0'],
-      ['(p) Section 80TTB (Interest on deposits for senior citizens)', '0'],
-      ['(q) Any other deductions under Chapter VI-A', '0'],
-      ['Total Deductions u/s VI-A', partB.deductionsChapterVIA.toLocaleString('en-IN')]
+      ['(a) Section 80C (Life Insurance, PPF, NSC, etc.)', formatAmount(chapterVIA?.section80C)],
+      ['(b) Section 80CCC (Pension funds)', formatAmount(chapterVIA?.section80CCC)],
+      ['(c) Section 80CCD(1) (NPS employee contribution)', formatAmount(chapterVIA?.section80CCD1)],
+      ['(d) Section 80CCD(1B) (NPS self-contribution)', formatAmount(chapterVIA?.section80CCD1B)],
+      ['(e) Section 80CCD(2) (NPS employer contribution)', formatAmount(chapterVIA?.section80CCD2)],
+      ['(f) Section 80D (Health insurance premium)', formatAmount(chapterVIA?.section80D)],
+      ['(g) Section 80DD (Medical treatment of dependent)', formatAmount(chapterVIA?.section80DD)],
+      ['(h) Section 80DDB (Medical treatment)', formatAmount(chapterVIA?.section80DDB)],
+      ['(i) Section 80E (Interest on education loan)', formatAmount(chapterVIA?.section80E)],
+      ['(j) Section 80EE (Interest on home loan)', formatAmount(chapterVIA?.section80EE)],
+      ['(j) Section 80EEA (Interest on home loan - affordable housing)', formatAmount(chapterVIA?.section80EEA)],
+      ['(k) Section 80G (Donations)', formatAmount(chapterVIA?.section80G)],
+      ['(l) Section 80GG (Rent paid)', formatAmount(chapterVIA?.section80GG)],
+      ['(m) Section 80GGA (Donations for scientific research)', formatAmount(chapterVIA?.section80GGA)],
+      ['(n) Section 80GGC (Donations to political parties)', formatAmount(chapterVIA?.section80GGC)],
+      ['(o) Section 80TTA (Interest on savings accounts)', formatAmount(chapterVIA?.section80TTA)],
+      ['(p) Section 80TTB (Interest on deposits for senior citizens)', formatAmount(chapterVIA?.section80TTB)],
+      ['(q) Any other deductions under Chapter VI-A', formatAmount(chapterVIA?.otherDeductions ? Object.values(chapterVIA.otherDeductions).reduce((a, b) => a + b, 0) : 0)],
+      ['Total Deductions u/s VI-A', (partB.deductionsChapterVIA || 0).toLocaleString('en-IN')]
     ];
 
     // Call autoTable directly (already validated during initialization)

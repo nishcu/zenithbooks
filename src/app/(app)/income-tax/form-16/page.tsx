@@ -105,10 +105,22 @@ interface Form16Data {
   };
   deductions80: {
     section80C: number;
+    section80CCC: number;
+    section80CCD1: number;
     section80CCD1B: number;
+    section80CCD2: number;
     section80D: number;
-    section80TTA: number;
+    section80DD: number;
+    section80DDB: number;
+    section80E: number;
+    section80EE: number;
+    section80EEA: number;
     section80G: number;
+    section80GG: number;
+    section80GGA: number;
+    section80GGC: number;
+    section80TTA: number;
+    section80TTB: number;
   };
   otherIncome: {
     savingsInterest: number;
@@ -166,10 +178,22 @@ export default function Form16() {
     },
     deductions80: {
       section80C: 0,
+      section80CCC: 0,
+      section80CCD1: 0,
       section80CCD1B: 0,
+      section80CCD2: 0,
       section80D: 0,
+      section80DD: 0,
+      section80DDB: 0,
+      section80E: 0,
+      section80EE: 0,
+      section80EEA: 0,
+      section80G: 0,
+      section80GG: 0,
+      section80GGA: 0,
+      section80GGC: 0,
       section80TTA: 0,
-      section80G: 0
+      section80TTB: 0
     },
     otherIncome: {
       savingsInterest: 0,
@@ -1333,6 +1357,127 @@ export default function Form16() {
                       />
                 </div>
                 <div className="space-y-2">
+                      <Label>Section 80CCC (Pension funds)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80CCC}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80CCC: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80CCD(1) (NPS employee contribution)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80CCD1}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80CCD1: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80CCD(2) (NPS employer contribution)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80CCD2}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80CCD2: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80DD (Medical treatment of dependent)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80DD}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80DD: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80DDB (Medical treatment)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80DDB}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80DDB: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80E (Interest on education loan)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80E}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80E: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80EE (Interest on home loan)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80EE}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80EE: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80EEA (Interest on home loan - affordable housing)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80EEA}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80EEA: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80GG (Rent paid)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80GG}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80GG: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80GGA (Donations for scientific research)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80GGA}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80GGA: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
+                      <Label>Section 80GGC (Donations to political parties)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.deductions80.section80GGC}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          deductions80: { ...prev.deductions80, section80GGC: Number(e.target.value) }
+                        }))}
+                      />
+                </div>
+                <div className="space-y-2">
                       <Label>Section 80TTA</Label>
                       <Input
                         type="number"
@@ -1562,15 +1707,63 @@ export default function Form16() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Section 80D:</span>
-                          <span className="font-mono">₹{form16Data.deductions80.section80D.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80D || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80CCC:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80CCC || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80CCD(1):</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80CCD1 || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80CCD(2):</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80CCD2 || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80DD:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80DD || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80DDB:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80DDB || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80E:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80E || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80EE:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80EE || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80EEA:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80EEA || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80GG:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80GG || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80GGA:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80GGA || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80GGC:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80GGC || 0).toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Section 80TTA:</span>
-                          <span className="font-mono">₹{form16Data.deductions80.section80TTA.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80TTA || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Section 80TTB:</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80TTB || 0).toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Section 80G:</span>
-                          <span className="font-mono">₹{form16Data.deductions80.section80G.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">₹{(form16Data.deductions80.section80G || 0).toLocaleString('en-IN')}</span>
                         </div>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">
