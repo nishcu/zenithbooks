@@ -450,10 +450,56 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
   const transactions: BankTransaction[] = [];
   
   try {
+    // Check if we're in a server environment (Node.js)
+    if (typeof window !== 'undefined') {
+      // Browser environment - PDF parsing not supported in browser
+      throw new Error('PDF parsing is only supported in server-side environments. Please use the API endpoint.');
+    }
+    
+    // Polyfill DOMMatrix for pdf-parse if it's not available (Node.js environment)
+    // pdf-parse may try to use DOMMatrix which is browser-only
+    if (typeof global !== 'undefined') {
+      // @ts-ignore - Adding polyfill for Node.js
+      if (!global.DOMMatrix) {
+        // @ts-ignore
+        global.DOMMatrix = class DOMMatrix {
+          constructor(init?: string | number[]) {
+            this.a = 1;
+            this.b = 0;
+            this.c = 0;
+            this.d = 1;
+            this.e = 0;
+            this.f = 0;
+            if (Array.isArray(init) && init.length >= 6) {
+              this.a = init[0];
+              this.b = init[1];
+              this.c = init[2];
+              this.d = init[3];
+              this.e = init[4];
+              this.f = init[5];
+            }
+          }
+          a: number = 1;
+          b: number = 0;
+          c: number = 0;
+          d: number = 1;
+          e: number = 0;
+          f: number = 0;
+          multiply(other: any): DOMMatrix { return this; }
+          translate(x: number, y: number): DOMMatrix { return this; }
+          scale(x: number, y?: number): DOMMatrix { return this; }
+          rotate(angle: number): DOMMatrix { return this; }
+        };
+      }
+    }
+    
     // Dynamic import to avoid server-side issues
     const pdfParse = await import('pdf-parse');
     const pdfBuffer = Buffer.from(arrayBuffer);
-    const data = await pdfParse.default(pdfBuffer);
+    
+    // Use pdf-parse - it should work in Node.js
+    const parseFunction = pdfParse.default || pdfParse;
+    const data = await parseFunction(pdfBuffer);
     const text = data.text;
     
     if (!text || text.trim().length === 0) {
