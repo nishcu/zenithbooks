@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { Buffer } from 'buffer';
 import { Form16ComputationEngine } from '@/lib/form-16-computation';
 import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import {
