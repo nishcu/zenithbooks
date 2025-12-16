@@ -5,7 +5,6 @@
  */
 
 import * as XLSX from 'xlsx';
-import { formatExcelFromJson } from './export-utils';
 import type { BankTransaction } from './bank-statement-parser';
 
 export interface JournalTemplateRow {
@@ -119,12 +118,39 @@ export function generateJournalTemplateRows(
  * @param rows - Journal template rows
  * @returns Excel workbook buffer
  */
+/**
+ * Apply formatting to Excel worksheet (simplified version for server-side)
+ */
+function applyExcelFormatting(worksheet: XLSX.WorkSheet, jsonData: JournalTemplateRow[]): void {
+  if (!jsonData || jsonData.length === 0) return;
+  
+  const headers = Object.keys(jsonData[0]);
+  const rows = jsonData.map(row => headers.map(h => {
+    const value = row[h as keyof JournalTemplateRow];
+    return value !== null && value !== undefined ? String(value) : "";
+  }));
+  
+  // Calculate optimal column widths
+  const colWidths = headers.map((_, i) => {
+    let maxWidth = headers[i]?.length || 10;
+    rows.forEach((row) => {
+      const cellValue = row[i] ? String(row[i]) : "";
+      const width = cellValue.length;
+      if (width > maxWidth) {
+        maxWidth = width;
+      }
+    });
+    return { wch: Math.max(Math.min(maxWidth + 3, 60), 12) };
+  });
+  worksheet["!cols"] = colWidths;
+}
+
 export function generateJournalTemplateExcelBuffer(
   rows: JournalTemplateRow[]
 ): Buffer {
   // Create main data sheet
   const ws = XLSX.utils.json_to_sheet(rows);
-  formatExcelFromJson(ws, rows);
+  applyExcelFormatting(ws, rows);
   
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Journal Entries");
@@ -154,7 +180,19 @@ export function generateJournalTemplateExcelBuffer(
   ];
   
   const wsInstructions = XLSX.utils.json_to_sheet(instructions);
-  formatExcelFromJson(wsInstructions, instructions);
+  // Apply formatting to instructions sheet
+  if (instructions.length > 0) {
+    const instHeaders = Object.keys(instructions[0]);
+    const instColWidths = instHeaders.map((_, i) => {
+      let maxWidth = instHeaders[i]?.length || 10;
+      instructions.forEach((row) => {
+        const cellValue = String(row[instHeaders[i] as keyof typeof row] || '');
+        if (cellValue.length > maxWidth) maxWidth = cellValue.length;
+      });
+      return { wch: Math.max(Math.min(maxWidth + 3, 60), 12) };
+    });
+    wsInstructions["!cols"] = instColWidths;
+  }
   XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
   
   // Return Buffer for server-side use
@@ -175,7 +213,7 @@ export function generateJournalTemplateExcelDownload(
 ): void {
   // Create main data sheet
   const ws = XLSX.utils.json_to_sheet(rows);
-  formatExcelFromJson(ws, rows);
+  applyExcelFormatting(ws, rows);
   
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Journal Entries");
