@@ -1336,12 +1336,12 @@ export default function BulkJournalEntryPage() {
                                         <Input
                                             id="bank-statement-upload"
                                             type="file"
-                                            accept=".csv,.xlsx,.xls"
+                                            accept=".csv,.xlsx,.xls,.pdf"
                                             onChange={handleBankStatementUpload}
                                             disabled={isParsingBankStatement}
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            Supported formats: CSV, Excel (.xlsx, .xls). The parser automatically detects columns for Date, Description, Debit, Credit, and Balance.
+                                            Supported formats: CSV, Excel (.xlsx, .xls), PDF (.pdf). The parser automatically detects columns for Date, Description, Debit, Credit, and Balance. Note: PDF parsing works best with text-based PDFs and may vary by bank format.
                                         </p>
                                     </div>
                                 </div>

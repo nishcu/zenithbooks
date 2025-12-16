@@ -20,7 +20,7 @@ export interface BankTransaction {
 export interface BankStatementParseResult {
   transactions: BankTransaction[];
   errors: ParseError[];
-  format: 'csv' | 'excel';
+  format: 'csv' | 'excel' | 'pdf';
   detectedFormat?: string; // Bank name if detected
 }
 
@@ -442,6 +442,164 @@ function parseBankStatementCSVBasic(csvText: string): BankStatementParseResult {
 }
 
 /**
+ * Parse PDF file - Extract text and parse transaction data
+ * Note: PDF parsing is format-dependent and may not work perfectly for all banks
+ */
+export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<BankStatementParseResult> {
+  const errors: ParseError[] = [];
+  const transactions: BankTransaction[] = [];
+  
+  try {
+    // Dynamic import to avoid server-side issues
+    const pdfParse = await import('pdf-parse');
+    const pdfBuffer = Buffer.from(arrayBuffer);
+    const data = await pdfParse.default(pdfBuffer);
+    const text = data.text;
+    
+    if (!text || text.trim().length === 0) {
+      return {
+        transactions: [],
+        errors: [{ row: 0, message: 'PDF file appears to be empty or contains no extractable text' }],
+        format: 'pdf'
+      };
+    }
+    
+    // Split text into lines
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    // Try to find transaction patterns in the text
+    // Common patterns:
+    // - Date Description Amount
+    // - DD/MM/YYYY Description DR/CR Amount
+    // - Date | Description | Debit | Credit | Balance
+    
+    // Look for table-like structures or transaction lines
+    let transactionStartIndex = -1;
+    
+    // Find header row or transaction start
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].toLowerCase();
+      if (line.includes('date') && (line.includes('description') || line.includes('particulars') || line.includes('narration'))) {
+        transactionStartIndex = i + 1;
+        break;
+      }
+    }
+    
+    // If no header found, start from beginning (PDFs vary)
+    const startIndex = transactionStartIndex > 0 ? transactionStartIndex : 0;
+    
+    // Parse lines as transactions
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Skip header rows, summary rows, etc.
+      if (line.toLowerCase().includes('opening balance') || 
+          line.toLowerCase().includes('closing balance') ||
+          line.toLowerCase().includes('total') ||
+          line.toLowerCase().includes('statement period') ||
+          line.toLowerCase().includes('account number')) {
+        continue;
+      }
+      
+      try {
+        // Try to extract date (DD/MM/YYYY or DD-MM-YYYY)
+        const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+        if (!dateMatch) continue;
+        
+        const dateStr = dateMatch[1].replace(/-/g, '/');
+        
+        // Extract amounts (numbers with or without currency symbols)
+        const amountMatches = line.match(/(?:₹|Rs\.?|INR|)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d{2})?)/g);
+        if (!amountMatches || amountMatches.length === 0) continue;
+        
+        // Extract description (text between date and amounts)
+        const dateIndex = line.indexOf(dateStr);
+        const firstAmountIndex = line.indexOf(amountMatches[0]);
+        const description = line.substring(dateIndex + dateStr.length, firstAmountIndex).trim();
+        
+        if (!description || description.length < 3) continue;
+        
+        // Determine if it's debit or credit
+        // Common indicators: DR, CR, Debit, Credit, or position in statement
+        const isDebit = line.toLowerCase().includes('dr') || 
+                       line.toLowerCase().includes('debit') ||
+                       line.toLowerCase().includes('withdraw') ||
+                       /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*\d+.*\s+(\d+)/.test(line); // Amount at end often indicates debit
+        
+        const isCredit = line.toLowerCase().includes('cr') ||
+                        line.toLowerCase().includes('credit') ||
+                        line.toLowerCase().includes('deposit');
+        
+        // Extract numeric amounts (remove currency symbols and commas)
+        const amounts = amountMatches.map(match => {
+          const numStr = match.replace(/[₹Rs.,INR\s]/g, '');
+          return parseFloat(numStr);
+        }).filter(num => !isNaN(num) && num > 0);
+        
+        if (amounts.length === 0) continue;
+        
+        // Use the first significant amount
+        const amount = amounts[0];
+        
+        // Determine debit/credit
+        let debit = 0;
+        let credit = 0;
+        
+        if (isDebit && !isCredit) {
+          debit = amount;
+        } else if (isCredit || (!isDebit && !isCredit)) {
+          // If unclear or credit indicator, assume credit (deposit)
+          credit = amount;
+        } else {
+          // If both or ambiguous, skip
+          continue;
+        }
+        
+        // Extract reference if present (UTR, Cheque No, etc.)
+        const refMatch = line.match(/(?:UTR|CHQ|CHQNO|REF|REFNO)[\s:]*([A-Z0-9]+)/i);
+        const reference = refMatch ? refMatch[1] : undefined;
+        
+        transactions.push({
+          date: dateStr,
+          description: description.substring(0, 200), // Limit description length
+          debit,
+          credit,
+          balance: 0, // Balance might be in another column, hard to extract reliably
+          reference,
+          rowIndex: i + 1
+        });
+        
+      } catch (lineError: any) {
+        errors.push({
+          row: i + 1,
+          message: `Error parsing line: ${lineError.message || 'Unknown error'}`,
+          data: line
+        });
+      }
+    }
+    
+    if (transactions.length === 0) {
+      errors.push({
+        row: 0,
+        message: 'No transactions found in PDF. The PDF format may not be supported. Please try converting to CSV or Excel format.'
+      });
+    }
+    
+  } catch (error: any) {
+    errors.push({
+      row: 0,
+      message: `PDF parsing error: ${error.message || 'Unknown error'}. PDF format may not be supported.`
+    });
+  }
+  
+  return {
+    transactions,
+    errors,
+    format: 'pdf'
+  };
+}
+
+/**
  * Parse Excel/JSON data (from XLSX.utils.sheet_to_json)
  */
 export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResult {
@@ -591,10 +749,22 @@ export async function parseExcel(file: File): Promise<ParsedResult> {
 
 /**
  * Compatibility function: Parse PDF file (for bank-reconciliation page)
- * PDF parsing is not implemented - throws error
+ * Takes a File object and returns ParsedResult
  */
 export async function parsePDF(file: File): Promise<ParsedResult> {
-  throw new Error('PDF parsing is not yet implemented. Please convert your PDF to CSV or Excel format.');
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await parseBankStatementPDF(arrayBuffer);
+  
+  const transactions = result.transactions.map(convertToParsedTransaction);
+  const skippedRows = result.errors.map(err => convertToSkippedRow(err));
+  
+  return {
+    transactions,
+    rawRowCount: result.transactions.length + result.errors.length,
+    skippedRowCount: result.errors.length,
+    warnings: result.errors.length > 0 ? result.errors.map(e => `Row ${e.row}: ${e.message}`) : [],
+    skippedRows: skippedRows.length > 0 ? skippedRows : undefined,
+  };
 }
 
 /**

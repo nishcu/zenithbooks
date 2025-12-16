@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { parseBankStatementCSV, parseBankStatementExcel, type BankTransaction, type BankStatementParseResult } from '@/lib/bank-statement-parser';
+import { parseBankStatementCSV, parseBankStatementExcel, parseBankStatementPDF, type BankTransaction, type BankStatementParseResult } from '@/lib/bank-statement-parser';
 
 // Route configuration
 export const runtime = 'nodejs';
@@ -45,11 +45,11 @@ export async function POST(request: NextRequest) {
     const fileName = file.name;
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
-    if (!['csv', 'xlsx', 'xls'].includes(fileExtension || '')) {
+    if (!['csv', 'xlsx', 'xls', 'pdf'].includes(fileExtension || '')) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Unsupported file format. Please upload CSV (.csv) or Excel (.xlsx, .xls) file.' 
+          error: 'Unsupported file format. Please upload CSV (.csv), Excel (.xlsx, .xls), or PDF (.pdf) file.' 
         },
         { status: 400 }
       );
@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
       // Parse CSV
       const csvText = new TextDecoder().decode(arrayBuffer);
       parseResult = parseBankStatementCSV(csvText);
+    } else if (fileExtension === 'pdf') {
+      // Parse PDF
+      parseResult = await parseBankStatementPDF(arrayBuffer);
     } else {
       // Parse Excel
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
