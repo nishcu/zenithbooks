@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body: Form16Request = await request.json();
-    const { employeeId, financialYear, overrideData } = body;
+    const body: Form16Request & { signatoryName?: string; signatoryDesignation?: string; signatoryPlace?: string } = await request.json();
+    const { employeeId, financialYear, overrideData, signatoryName, signatoryDesignation, signatoryPlace } = body;
 
     if (!employeeId || !financialYear) {
       return NextResponse.json(
@@ -243,10 +243,32 @@ export async function POST(request: NextRequest) {
     // Create Form 16 document
     const assessmentYear = `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`;
 
-    // Calculate period dates
-    const fyStart = `01/04/${financialYear.split('-')[0]}`;
-    const fyEnd = `31/03/${financialYear.split('-')[1]}`;
-    const today = new Date().toLocaleDateString('en-IN');
+    // Calculate period dates based on DOJ and financial year
+    const fyStartDate = new Date(`${financialYear.split('-')[0]}-04-01`);
+    const fyEndDate = new Date(`${financialYear.split('-')[1]}-03-31`);
+    const dojDate = employee.doj instanceof Date ? employee.doj : new Date(employee.doj);
+    
+    // Period of employment: from DOJ or FY start (whichever is later) to FY end or current date (whichever is earlier)
+    const periodFrom = dojDate > fyStartDate ? dojDate : fyStartDate;
+    const periodTo = new Date() < fyEndDate ? new Date() : fyEndDate;
+    
+    const formatDate = (date: Date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    const fyStart = formatDate(fyStartDate);
+    const fyEnd = formatDate(fyEndDate);
+    const periodFromStr = formatDate(periodFrom);
+    const periodToStr = formatDate(periodTo);
+    const today = formatDate(new Date());
+
+    // Get signatory details from request body or use defaults
+    const finalSignatoryName = signatoryName || employerData?.name || employerData?.companyName || 'Authorized Signatory';
+    const finalSignatoryDesignation = signatoryDesignation || 'Authorized Signatory';
+    const finalSignatoryPlace = signatoryPlace || employerData?.address?.split(',')[0] || '';
 
     const form16Document: Omit<Form16Document, 'id'> = {
       employeeId,
@@ -263,11 +285,11 @@ export async function POST(request: NextRequest) {
         validTill: fyEnd,
         employeeName: employee.name,
         employeePan: employee.pan,
-        employeeAddress: employee.aadhaar || '', // Can be updated with actual address
+        employeeAddress: employee.address || '', // Employee address
         employeeDesignation: employee.designation,
         employeeAadhaar: employee.aadhaar,
-        periodFrom: fyStart,
-        periodTo: fyEnd,
+        periodFrom: periodFromStr,
+        periodTo: periodToStr,
         totalTdsDeducted: tdsData.totalTdsDeducted,
         tdsDetails: {
           ...tdsData,
@@ -280,6 +302,12 @@ export async function POST(request: NextRequest) {
         }
       },
       partB: computation,
+      signatory: {
+        name: finalSignatoryName,
+        designation: finalSignatoryDesignation,
+        place: finalSignatoryPlace,
+        date: today
+      },
       generatedBy: userId,
       generatedAt: Timestamp.now(),
       version: 1,

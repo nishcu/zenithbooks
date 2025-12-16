@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, collection, query, where, getDocs, addDoc, Timestamp } from "firebase/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
 import {
@@ -25,6 +25,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   FileSignature,
   Printer,
   Download,
@@ -37,7 +46,8 @@ import {
   CheckCircle,
   XCircle,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Plus
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -52,6 +62,7 @@ interface Employee {
   designation: string;
   aadhar?: string;
   address?: string;
+  doj?: Date | string; // Date of Joining
   selected?: boolean;
   status?: string;
   taxRegime?: string;
@@ -69,6 +80,11 @@ interface Form16Data {
   employeePan: string;
   employeeAadhar: string;
   employeeAddress: string;
+  employeeDesignation: string;
+  employeeDoj: string; // Date of Joining
+  signatoryName: string;
+  signatoryDesignation: string;
+  signatoryPlace: string;
   salaryStructure: {
     basic: number;
     hra: number;
@@ -182,6 +198,21 @@ export default function Form16() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Add Employee Dialog State
+  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
+  const [newEmployee, setNewEmployee] = useState({
+    name: "",
+    pan: "",
+    aadhaar: "",
+    designation: "",
+    address: "",
+    doj: new Date().toISOString().split('T')[0],
+    employmentType: "permanent" as "permanent" | "contract" | "probation",
+    residentialStatus: "resident" as "resident" | "non-resident" | "resident-but-not-ordinarily-resident",
+    taxRegime: "NEW" as "OLD" | "NEW"
+  });
+  const [isAddingEmployee, setIsAddingEmployee] = useState(false);
+
   // Validation function
   const validateForm16Data = (data: Form16Data): string[] => {
     const errors: string[] = [];
@@ -196,6 +227,23 @@ export default function Form16() {
     }
     if (!data.employeeAddress.trim()) {
       errors.push("Employee address is required");
+    }
+    if (!data.employeeDesignation.trim()) {
+      errors.push("Employee designation is required");
+    }
+    if (!data.employeeDoj) {
+      errors.push("Date of joining is required");
+    }
+    
+    // Signatory details validation
+    if (!data.signatoryName.trim()) {
+      errors.push("Signatory name is required");
+    }
+    if (!data.signatoryDesignation.trim()) {
+      errors.push("Signatory designation is required");
+    }
+    if (!data.signatoryPlace.trim()) {
+      errors.push("Place of signing is required");
     }
 
     // PAN format validation (AAAAA0000A)
@@ -272,7 +320,8 @@ export default function Form16() {
       const snapshot = await getDocs(employeesQuery);
       const employeeList = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        status: doc.data().status || "Active"
       })) as Employee[];
       setEmployees(employeeList);
     } catch (error) {
@@ -282,6 +331,125 @@ export default function Form16() {
         title: "Error",
         description: "Failed to load employees"
       });
+    }
+  };
+
+  const handleAddEmployee = async () => {
+    // Validation
+    if (!newEmployee.name.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Employee name is required"
+      });
+      return;
+    }
+
+    if (!newEmployee.pan.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Employee PAN is required"
+      });
+      return;
+    }
+
+    // Validate PAN format
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(newEmployee.pan.toUpperCase())) {
+      toast({
+        variant: "destructive",
+        title: "Invalid PAN",
+        description: "PAN must be in format ABCDE1234F"
+      });
+      return;
+    }
+
+    // Validate Aadhaar if provided
+    if (newEmployee.aadhaar && !/^\d{12}$/.test(newEmployee.aadhaar.replace(/\s/g, ''))) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Aadhaar",
+        description: "Aadhaar must be 12 digits"
+      });
+      return;
+    }
+
+    setIsAddingEmployee(true);
+    try {
+      // Create employee in Firestore
+      const employeeData = {
+        empId: `EMP-${Date.now()}`,
+        name: newEmployee.name.trim(),
+        pan: newEmployee.pan.toUpperCase(),
+        aadhaar: newEmployee.aadhaar.replace(/\s/g, '') || undefined,
+        designation: newEmployee.designation.trim() || "Employee",
+        address: newEmployee.address.trim() || "",
+        doj: new Date(newEmployee.doj),
+        employmentType: newEmployee.employmentType,
+        residentialStatus: newEmployee.residentialStatus,
+        taxRegime: newEmployee.taxRegime,
+        employerId: user!.uid,
+        status: "Active",
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+
+      const employeeRef = await addDoc(collection(db, 'employees'), employeeData);
+      
+      // Add to local state
+      const addedEmployee: Employee = {
+        id: employeeRef.id,
+        name: employeeData.name,
+        pan: employeeData.pan,
+        aadhaar: employeeData.aadhaar,
+        designation: employeeData.designation,
+        address: employeeData.address,
+        status: "Active",
+        taxRegime: employeeData.taxRegime
+      };
+      
+      setEmployees(prev => [...prev, addedEmployee]);
+      
+      // Auto-select the newly added employee
+      setForm16Data(prev => ({
+        ...prev,
+        employeeId: employeeRef.id,
+        employeeName: employeeData.name,
+        employeePan: employeeData.pan,
+        employeeAadhar: employeeData.aadhaar || "",
+        employeeAddress: employeeData.address
+      }));
+
+      // Reset form
+      setNewEmployee({
+        name: "",
+        pan: "",
+        aadhaar: "",
+        designation: "",
+        address: "",
+        doj: new Date().toISOString().split('T')[0],
+        employmentType: "permanent",
+        residentialStatus: "resident",
+        taxRegime: "NEW"
+      });
+
+      setIsAddEmployeeDialogOpen(false);
+      
+      toast({
+        variant: "default",
+        title: "Success",
+        description: `${employeeData.name} has been added successfully`
+      });
+    } catch (error: any) {
+      console.error('Error adding employee:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add employee"
+      });
+    } finally {
+      setIsAddingEmployee(false);
     }
   };
 
@@ -310,6 +478,9 @@ export default function Form16() {
         body: JSON.stringify({
           employeeId: form16Data.employeeId,
           financialYear: form16Data.financialYear,
+          signatoryName: form16Data.signatoryName,
+          signatoryDesignation: form16Data.signatoryDesignation,
+          signatoryPlace: form16Data.signatoryPlace,
           overrideData: {
             salaryStructure: form16Data.salaryStructure,
             exemptions: form16Data.exemptions,
@@ -605,11 +776,161 @@ export default function Form16() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Select Employee</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Select Employee</Label>
+                      <Dialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" size="sm" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add Employee
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Add New Employee</DialogTitle>
+                            <DialogDescription>
+                              Add a new employee to generate Form 16. All fields marked with * are required.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-name">Employee Name *</Label>
+                                <Input
+                                  id="emp-name"
+                                  value={newEmployee.name}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, name: e.target.value }))}
+                                  placeholder="Enter employee name"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-pan">PAN *</Label>
+                                <Input
+                                  id="emp-pan"
+                                  value={newEmployee.pan}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, pan: e.target.value.toUpperCase() }))}
+                                  placeholder="ABCDE1234F"
+                                  maxLength={10}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-aadhaar">Aadhaar Number</Label>
+                                <Input
+                                  id="emp-aadhaar"
+                                  value={newEmployee.aadhaar}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, aadhaar: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
+                                  placeholder="123456789012"
+                                  maxLength={12}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-designation">Designation</Label>
+                                <Input
+                                  id="emp-designation"
+                                  value={newEmployee.designation}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, designation: e.target.value }))}
+                                  placeholder="Employee designation"
+                                />
+                              </div>
+                              <div className="space-y-2 col-span-2">
+                                <Label htmlFor="emp-address">Address</Label>
+                                <Textarea
+                                  id="emp-address"
+                                  value={newEmployee.address}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, address: e.target.value }))}
+                                  placeholder="Enter employee address"
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-doj">Date of Joining</Label>
+                                <Input
+                                  id="emp-doj"
+                                  type="date"
+                                  value={newEmployee.doj}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, doj: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-type">Employment Type</Label>
+                                <Select
+                                  value={newEmployee.employmentType}
+                                  onValueChange={(value: "permanent" | "contract" | "probation") => 
+                                    setNewEmployee(prev => ({ ...prev, employmentType: value }))
+                                  }
+                                >
+                                  <SelectTrigger id="emp-type">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="permanent">Permanent</SelectItem>
+                                    <SelectItem value="contract">Contract</SelectItem>
+                                    <SelectItem value="probation">Probation</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-residential">Residential Status</Label>
+                                <Select
+                                  value={newEmployee.residentialStatus}
+                                  onValueChange={(value: "resident" | "non-resident" | "resident-but-not-ordinarily-resident") => 
+                                    setNewEmployee(prev => ({ ...prev, residentialStatus: value }))
+                                  }
+                                >
+                                  <SelectTrigger id="emp-residential">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="resident">Resident</SelectItem>
+                                    <SelectItem value="non-resident">Non-Resident</SelectItem>
+                                    <SelectItem value="resident-but-not-ordinarily-resident">Resident but not Ordinarily Resident</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="emp-regime">Tax Regime</Label>
+                                <Select
+                                  value={newEmployee.taxRegime}
+                                  onValueChange={(value: "OLD" | "NEW") => 
+                                    setNewEmployee(prev => ({ ...prev, taxRegime: value }))
+                                  }
+                                >
+                                  <SelectTrigger id="emp-regime">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="OLD">Old Regime</SelectItem>
+                                    <SelectItem value="NEW">New Regime</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setIsAddEmployeeDialogOpen(false)}
+                              disabled={isAddingEmployee}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={handleAddEmployee}
+                              disabled={isAddingEmployee}
+                            >
+                              {isAddingEmployee ? "Adding..." : "Add Employee"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <Select
                       value={form16Data.employeeId}
                       onValueChange={(value) => {
                         const employee = employees.find(e => e.id === value);
+                        const doj = employee?.doj ? (employee.doj instanceof Date ? employee.doj.toISOString().split('T')[0] : new Date(employee.doj).toISOString().split('T')[0]) : "";
                         setForm16Data(prev => ({
                           ...prev,
                           employeeId: value,
@@ -617,6 +938,8 @@ export default function Form16() {
                           employeePan: employee?.pan || "",
                           employeeAadhar: employee?.aadhar || "",
                           employeeAddress: employee?.address || "",
+                          employeeDesignation: employee?.designation || "",
+                          employeeDoj: doj,
                           employerName: employee ? prev.employerName : prev.employerName
                         }));
                       }}
@@ -625,11 +948,16 @@ export default function Form16() {
                         <SelectValue placeholder="Select an employee" />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees.filter(emp => emp.status === "Active").map(employee => (
+                        {employees.filter(emp => emp.status === "Active" || !emp.status).map(employee => (
                           <SelectItem key={employee.id} value={employee.id}>
-                            {employee.name} - {employee.pan} ({employee.designation})
+                            {employee.name} - {employee.pan} ({employee.designation || "Employee"})
                           </SelectItem>
                         ))}
+                        {employees.filter(emp => emp.status === "Active" || !emp.status).length === 0 && (
+                          <SelectItem value="no-employees" disabled>
+                            No employees found. Click "Add Employee" to create one.
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -672,6 +1000,59 @@ export default function Form16() {
                         onChange={(e) => setForm16Data(prev => ({ ...prev, employeeAddress: e.target.value }))}
                         placeholder="Enter complete employee address"
                         rows={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Designation *</Label>
+                      <Input
+                        value={form16Data.employeeDesignation}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeDesignation: e.target.value }))}
+                        placeholder="Enter employee designation"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Date of Joining *</Label>
+                      <Input
+                        type="date"
+                        value={form16Data.employeeDoj}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeDoj: e.target.value }))}
+                        placeholder="Select date of joining"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Signatory Details */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Signatory Details</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Details of the person authorized to sign the Form 16 certificate
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Signatory Name *</Label>
+                      <Input
+                        value={form16Data.signatoryName}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, signatoryName: e.target.value }))}
+                        placeholder="Name of authorized signatory"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Signatory Designation *</Label>
+                      <Input
+                        value={form16Data.signatoryDesignation}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, signatoryDesignation: e.target.value }))}
+                        placeholder="Designation of signatory"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Place *</Label>
+                      <Input
+                        value={form16Data.signatoryPlace}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, signatoryPlace: e.target.value }))}
+                        placeholder="Place of signing"
                       />
                     </div>
                   </div>
@@ -1477,7 +1858,7 @@ export default function Form16() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {employees.filter(emp => emp.status === "Active").map(employee => (
+                        {employees.filter(emp => emp.status === "Active" || !emp.status).map(employee => (
                           <TableRow key={employee.id}>
                             <TableCell>
                               <Checkbox

@@ -207,10 +207,51 @@ export class Form16PDFGenerator {
       }
     });
 
+    // Signatory Section
+    yPos = (pdf as any).lastAutoTable.finalY + 20;
+    if (yPos > 250) {
+      pdf.addPage();
+      yPos = 20;
+    }
+
+    pdf.setFontSize(this.FONT_SIZE.NORMAL);
+    pdf.setTextColor(...this.COLORS.PRIMARY);
+    pdf.text('Signatory Details:', 20, yPos);
+    yPos += 10;
+
+    const signatoryData = [
+      ['Name', form16Doc.signatory.name],
+      ['Designation', form16Doc.signatory.designation],
+      ['Place', form16Doc.signatory.place],
+      ['Date', form16Doc.signatory.date]
+    ];
+
+    pdf.autoTable({
+      startY: yPos,
+      head: [],
+      body: signatoryData,
+      theme: 'plain',
+      styles: { fontSize: this.FONT_SIZE.SMALL },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50 },
+        1: { cellWidth: 100 }
+      }
+    });
+
+    yPos = (pdf as any).lastAutoTable.finalY + 15;
+
+    // Signature line
+    pdf.setFontSize(this.FONT_SIZE.SMALL);
+    pdf.text('Signature: _________________________', 20, yPos);
+    yPos += 10;
+    pdf.text(`(${form16Doc.signatory.name})`, 20, yPos);
+    yPos += 5;
+    pdf.text(form16Doc.signatory.designation, 20, yPos);
+
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.setTextColor(100, 100, 100);
-    pdf.text('This is a computer generated certificate and does not require signature.', 20, 270);
+    pdf.text('This is a computer generated certificate.', 20, 270);
   }
 
   /**
@@ -554,6 +595,47 @@ export class Form16PDFGenerator {
         1: { cellWidth: 50, halign: 'right' }
       }
     });
+
+    // Signatory Section
+    let finalYPos = (pdf as any).lastAutoTable.finalY + 20;
+    if (finalYPos > 240) {
+      pdf.addPage();
+      finalYPos = 20;
+    }
+
+    pdf.setFontSize(this.FONT_SIZE.NORMAL);
+    pdf.setTextColor(...this.COLORS.PRIMARY);
+    pdf.text('Signatory Details:', 20, finalYPos);
+    finalYPos += 10;
+
+    const signatoryData = [
+      ['Name', form16Doc.signatory.name],
+      ['Designation', form16Doc.signatory.designation],
+      ['Place', form16Doc.signatory.place],
+      ['Date', form16Doc.signatory.date]
+    ];
+
+    pdf.autoTable({
+      startY: finalYPos,
+      head: [],
+      body: signatoryData,
+      theme: 'plain',
+      styles: { fontSize: this.FONT_SIZE.SMALL },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50 },
+        1: { cellWidth: 100 }
+      }
+    });
+
+    finalYPos = (pdf as any).lastAutoTable.finalY + 15;
+
+    // Signature line
+    pdf.setFontSize(this.FONT_SIZE.SMALL);
+    pdf.text('Signature: _________________________', 20, finalYPos);
+    finalYPos += 10;
+    pdf.text(`(${form16Doc.signatory.name})`, 20, finalYPos);
+    finalYPos += 5;
+    pdf.text(form16Doc.signatory.designation, 20, finalYPos);
 
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);

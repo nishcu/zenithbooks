@@ -7,6 +7,7 @@ export interface EmployeeMaster {
   name: string;
   pan: string;
   aadhaar?: string;
+  address?: string; // Employee address
   designation: string;
   doj: Date;
   employmentType: 'permanent' | 'contract' | 'probation';
@@ -380,6 +381,14 @@ export interface Form16Document {
   // Part B (Annexure)
   // Details of salary paid and any other income and tax deducted
   partB: Form16Computation;
+
+  // Signatory Details (Required for Form 16)
+  signatory: {
+    name: string;              // Name of the person signing
+    designation: string;       // Designation of the signatory
+    place: string;             // Place of signing
+    date: string;              // Date of signing (DD/MM/YYYY)
+  };
 
   // Metadata
   generatedBy: string; // User ID
