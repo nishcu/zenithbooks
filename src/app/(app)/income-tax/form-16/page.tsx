@@ -620,7 +620,7 @@ export default function Form16() {
         setBulkResults(result.data);
         toast({
           title: "Bulk Generation Complete",
-          description: `Generated ${result.data.summary.successful} Form 16 documents`
+          description: `Generated ${result.data?.summary?.successful || 0} Form 16 documents`
         });
       } else {
         toast({
@@ -2824,26 +2824,26 @@ export default function Form16() {
                 </div>
                 </div>
 
-              {bulkResults && (
+              {bulkResults && bulkResults.summary && (
                 <div className="space-y-4">
                   <Separator />
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span>Successful: {bulkResults.summary.successful}</span>
+                      <span>Successful: {bulkResults.summary.successful || 0}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <XCircle className="h-5 w-5 text-red-600" />
-                      <span>Failed: {bulkResults.summary.failed}</span>
+                      <span>Failed: {bulkResults.summary.failed || 0}</span>
                     </div>
                 </div>
 
-                  {bulkResults.summary.errors.length > 0 && (
+                  {bulkResults.summary.errors && bulkResults.summary.errors.length > 0 && (
                     <div className="space-y-2">
                       <h5 className="font-medium text-red-600">Errors:</h5>
                       {bulkResults.summary.errors.map((error: any, index: number) => (
                         <div key={index} className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                          <strong>{error.employeeId}:</strong> {error.errors.join(', ')}
+                          <strong>{error.employeeId}:</strong> {error.errors?.join(', ') || error.error || 'Unknown error'}
                         </div>
                       ))}
                     </div>
@@ -2860,7 +2860,7 @@ export default function Form16() {
                 <Users className="mr-2 h-4 w-4" />
                 {isLoading ? "Generating..." : `Generate Form 16 for ${employees.filter(e => e.selected).length} Employees`}
               </Button>
-              {bulkResults && bulkResults.summary && bulkResults.summary.successful > 0 && (
+              {bulkResults && bulkResults.summary && (bulkResults.summary.successful || 0) > 0 && (
                 <Button
                   onClick={downloadBulkPDFs}
                   disabled={isLoading}
