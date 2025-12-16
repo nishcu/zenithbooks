@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useContext, memo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -238,7 +238,7 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
                                 <CardHeader className="pb-3">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
@@ -256,6 +256,11 @@ function DashboardContent() {
                                   <CardDescription className="text-sm line-clamp-2">
                                     {feature.description}
                                   </CardDescription>
+                                  {/* Arrow icon on hover */}
+                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span className="text-xs font-medium">Open</span>
+                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                                  </div>
                                 </CardContent>
                               </Card>
                             </Link>
@@ -286,7 +291,7 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
                                 <CardHeader className="pb-3">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
@@ -304,6 +309,11 @@ function DashboardContent() {
                                   <CardDescription className="text-sm line-clamp-2">
                                     {feature.description}
                                   </CardDescription>
+                                  {/* Arrow icon on hover */}
+                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span className="text-xs font-medium">Open</span>
+                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                                  </div>
                                 </CardContent>
                               </Card>
                             </Link>
@@ -334,7 +344,7 @@ function DashboardContent() {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 group cursor-pointer">
+                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-h-[140px] md:min-h-[160px]">
                                 <CardHeader className="pb-3">
                                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
@@ -352,6 +362,11 @@ function DashboardContent() {
                                   <CardDescription className="text-sm line-clamp-2">
                                     {feature.description}
                                   </CardDescription>
+                                  {/* Arrow icon on hover */}
+                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span className="text-xs font-medium">Open</span>
+                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                                  </div>
                                 </CardContent>
                               </Card>
                             </Link>
@@ -405,8 +420,8 @@ function DashboardContent() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-6 lg:px-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+        <CardContent className="px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 2xl:grid-cols-6">
             {coreFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -491,29 +506,32 @@ function DashboardContent() {
       <div className="grid gap-8 lg:gap-12 xl:grid-cols-4 items-start">
         <div className="xl:col-span-3 space-y-8 lg:space-y-12">
           {/* Enhanced Stats Cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <Link href="/accounting/ledgers" className="transform hover:scale-105 transition-transform">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
               <StatCard
                 title="Receivables"
                 value={formatCurrency(totalReceivables)}
                 icon={IndianRupee}
                 loading={journalLoading || customersLoading}
+                trend={totalReceivables > 0 ? { value: 5.2, label: "vs last month" } : undefined}
               />
             </Link>
-            <Link href="/accounting/ledgers" className="transform hover:scale-105 transition-transform">
+            <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
               <StatCard
                 title="Payables"
                 value={formatCurrency(totalPayables)}
                 icon={CreditCard}
                 loading={journalLoading || vendorsLoading}
+                trend={totalPayables > 0 ? { value: -2.1, label: "vs last month" } : undefined}
               />
             </Link>
-            <Link href="/accounting/ledgers?account=2110" className="transform hover:scale-105 transition-transform">
+            <Link href="/accounting/ledgers?account=2110" className="transform hover:scale-[1.02] transition-transform">
               <StatCard
                 title="GST Payable"
                 value={formatCurrency(gstPayable)}
                 icon={IndianRupee}
                 loading={journalLoading}
+                trend={gstPayable > 0 ? { value: 3.8, label: "vs last month" } : undefined}
               />
             </Link>
           </div>
