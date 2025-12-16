@@ -218,10 +218,10 @@ export class Form16PDFGenerator {
     yPos += 10;
 
     const employeeData = [
-      ['Name of the Recipient', partA.employeeName || ''],
-      ['PAN of the Recipient', partA.employeePan || ''],
-      ['Address of the Recipient', partA.employeeAddress || ''],
-      ['Aadhaar Number (if available)', partA.employeeAadhaar || ''],
+      ['Name of the Recipient', partA?.employeeName || 'N/A'],
+      ['PAN of the Recipient', partA?.employeePan || 'N/A'],
+      ['Address of the Recipient', partA?.employeeAddress || ''],
+      ['Aadhaar Number (if available)', partA?.employeeAadhaar || ''],
       ['Designation', partA?.employeeDesignation || 'Employee'],
       ['Period of Employment', (() => {
         const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
