@@ -539,31 +539,61 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
       const line = lines[i];
       
       // Skip header rows, summary rows, etc.
-      if (line.toLowerCase().includes('opening balance') || 
-          line.toLowerCase().includes('closing balance') ||
-          line.toLowerCase().includes('total') ||
-          line.toLowerCase().includes('statement period') ||
-          line.toLowerCase().includes('account number')) {
+      const lineLower = line.toLowerCase();
+      if (lineLower.includes('opening balance') || 
+          lineLower.includes('closing balance') ||
+          lineLower.includes('statement period') ||
+          lineLower.includes('account number') ||
+          (lineLower.includes('total') && lineLower.includes('page')) ||
+          lineLower.match(/^page\s+\d+/i) ||
+          lineLower.match(/^statement\s+of\s+account/i)) {
         continue;
       }
       
       try {
-        // Try to extract date (DD/MM/YYYY or DD-MM-YYYY)
-        const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+        // Try to extract date (DD/MM/YYYY, DD-MM-YYYY, or YYYY-MM-DD)
+        const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
         if (!dateMatch) continue;
         
-        const dateStr = dateMatch[1].replace(/-/g, '/');
+        const dateStr = dateMatch[0].replace(/-/g, '/');
         
-        // Extract amounts (numbers with or without currency symbols)
-        const amountMatches = line.match(/(?:₹|Rs\.?|INR|)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d{2})?)/g);
+        // Extract amounts - more flexible pattern
+        // Match numbers with commas, decimals, currency symbols
+        const amountPattern = /(?:₹|Rs\.?|INR\s*|)\s*(\d{1,3}(?:,\d{2,3})*(?:\.\d{2})?)/gi;
+        const amountMatches: string[] = [];
+        let match;
+        while ((match = amountPattern.exec(line)) !== null) {
+          amountMatches.push(match[0]);
+        }
+        
         if (!amountMatches || amountMatches.length === 0) continue;
         
-        // Extract description (text between date and amounts)
-        const dateIndex = line.indexOf(dateStr);
+        // Extract description (text between date and amounts, or before/after)
+        const dateIndex = line.indexOf(dateMatch[0]);
         const firstAmountIndex = line.indexOf(amountMatches[0]);
-        const description = line.substring(dateIndex + dateStr.length, firstAmountIndex).trim();
         
-        if (!description || description.length < 3) continue;
+        let description = '';
+        if (dateIndex < firstAmountIndex) {
+          // Date comes before amount
+          description = line.substring(dateIndex + dateMatch[0].length, firstAmountIndex).trim();
+        } else {
+          // Amount comes before date (less common)
+          description = line.substring(firstAmountIndex + amountMatches[0].length, dateIndex).trim();
+        }
+        
+        // If description is too short, try to get text from the whole line excluding date and amounts
+        if (!description || description.length < 2) {
+          // Remove date and all amounts from line, what remains is description
+          let descLine = line;
+          descLine = descLine.replace(dateMatch[0], '');
+          amountMatches.forEach(amt => {
+            descLine = descLine.replace(amt, '');
+          });
+          description = descLine.replace(/[|,;]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+        
+        // Skip if description is still too short or is just numbers/special chars
+        if (!description || description.length < 2 || /^[\d\s\.\-]+$/.test(description)) continue;
         
         // Determine if it's debit or credit
         // Common indicators: DR, CR, Debit, Credit, or position in statement
