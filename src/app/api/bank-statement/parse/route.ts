@@ -79,7 +79,85 @@ export async function POST(request: NextRequest) {
         raw: false // Convert dates and numbers to strings for processing
       });
 
+      // Primary attempt: header-based parsing (works when the first row is the table header)
       parseResult = parseBankStatementExcel(jsonData);
+
+      // Fallback: many bank exports have account details first, and the transaction table starts later.
+      // In those cases, sheet_to_json() above often produces unusable keys, resulting in 0 transactions.
+      if (!parseResult.transactions.length) {
+        const matrix = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1, // raw grid
+          defval: '',
+          raw: false,
+          blankrows: false,
+        }) as any[][];
+
+        const normalizeCell = (v: any) => String(v ?? '').trim();
+        const headerKeywords = [
+          'transaction date',
+          'value date',
+          'date',
+          'particulars',
+          'description',
+          'narration',
+          'debit',
+          'credit',
+          'balance',
+          'cheque',
+          'cheque no',
+        ];
+
+        const isLikelyHeaderRow = (row: any[]) => {
+          const joined = row.map(normalizeCell).join(' ').toLowerCase();
+          const hits = headerKeywords.filter(k => joined.includes(k)).length;
+          // Need at least 3 header-ish tokens to be confident
+          return hits >= 3;
+        };
+
+        const headerRowIndex = (() => {
+          const maxScan = Math.min(matrix.length, 80);
+          for (let i = 0; i < maxScan; i++) {
+            const row = matrix[i] || [];
+            if (isLikelyHeaderRow(row)) return i;
+          }
+          return -1;
+        })();
+
+        if (headerRowIndex >= 0) {
+          const headerRow = (matrix[headerRowIndex] || []).map(normalizeCell);
+          const maxCols = headerRow.length;
+
+          const makeKey = (rawKey: string, colIdx: number) => {
+            const key = rawKey.replace(/\s+/g, ' ').trim();
+            if (key) return key;
+            return `Column_${colIdx + 1}`;
+          };
+
+          const rowsAsObjects: Record<string, any>[] = [];
+          for (let r = headerRowIndex + 1; r < matrix.length; r++) {
+            const row = matrix[r] || [];
+            // Skip completely empty rows
+            const hasAny = row.some(cell => normalizeCell(cell) !== '');
+            if (!hasAny) continue;
+
+            // Some exports repeat the header row; when detected, skip it.
+            if (isLikelyHeaderRow(row)) continue;
+
+            const obj: Record<string, any> = {};
+            for (let c = 0; c < maxCols; c++) {
+              const key = makeKey(headerRow[c], c);
+              obj[key] = row[c] ?? '';
+            }
+            rowsAsObjects.push(obj);
+          }
+
+          const fallbackResult = parseBankStatementExcel(rowsAsObjects);
+          if (fallbackResult.transactions.length) {
+            parseResult = fallbackResult;
+            parseResult.detectedFormat = (parseResult.detectedFormat || '') + 'excel-fallback-grid';
+          }
+        }
+      }
     }
 
     // Return parsed results
