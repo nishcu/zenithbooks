@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "@/lib/firebase";
-import { addDoc, collection, deleteDoc, doc, query, serverTimestamp, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -77,6 +77,9 @@ export default function PayrollEmployeesPage() {
     }, [employeesSnapshot, user]);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isViewOpen, setIsViewOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<PayrollEmployee | null>(null);
     const [newEmployee, setNewEmployee] = useState({
         name: "",
         pan: "",
@@ -88,6 +91,61 @@ export default function PayrollEmployeesPage() {
         taxRegime: "NEW" as "OLD" | "NEW"
     });
     const { toast } = useToast();
+
+    const openView = (emp: PayrollEmployee) => {
+        setSelectedEmployee(emp);
+        setIsViewOpen(true);
+    };
+
+    const openEdit = (emp: PayrollEmployee) => {
+        setSelectedEmployee(emp);
+        setNewEmployee({
+            name: emp.name || "",
+            pan: (emp.pan || "").toUpperCase(),
+            aadhaar: emp.aadhaar || "",
+            designation: emp.designation || "",
+            doj: emp.doj || "",
+            employmentType: (emp.employmentType || "permanent") as any,
+            residentialStatus: (emp.residentialStatus || "resident") as any,
+            taxRegime: (emp.taxRegime || "NEW") as any,
+        });
+        setIsEditOpen(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!user || !selectedEmployee?.id) {
+            toast({ variant: "destructive", title: "Login required", description: "Please login." });
+            return;
+        }
+        if (!newEmployee.name || !newEmployee.pan || !newEmployee.designation) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please provide name, PAN, and designation." });
+            return;
+        }
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+        if (!panRegex.test(newEmployee.pan)) {
+            toast({ variant: "destructive", title: "Invalid PAN", description: "PAN must be in format ABCDE1234F" });
+            return;
+        }
+        try {
+            await updateDoc(doc(db, "employees", selectedEmployee.id), {
+                employerId: user.uid, // ensure ownership
+                name: newEmployee.name.trim(),
+                pan: newEmployee.pan.trim().toUpperCase(),
+                aadhaar: (newEmployee.aadhaar || "").trim(),
+                designation: newEmployee.designation.trim(),
+                doj: newEmployee.doj || "",
+                employmentType: newEmployee.employmentType,
+                residentialStatus: newEmployee.residentialStatus,
+                taxRegime: newEmployee.taxRegime,
+                updatedAt: serverTimestamp(),
+            });
+            toast({ title: "Employee Updated", description: `${newEmployee.name} has been updated.` });
+            setIsEditOpen(false);
+            setSelectedEmployee(null);
+        } catch (e: any) {
+            toast({ variant: "destructive", title: "Update failed", description: e?.message || "Unknown error" });
+        }
+    };
 
     const handleAddEmployee = async () => {
         if (!user) {
@@ -279,6 +337,107 @@ export default function PayrollEmployeesPage() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
+                {/* View Employee */}
+                <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+                    <DialogContent className="max-w-xl">
+                        <DialogHeader>
+                            <DialogTitle>Employee Profile</DialogTitle>
+                            <DialogDescription>View employee details.</DialogDescription>
+                        </DialogHeader>
+                        {selectedEmployee ? (
+                            <div className="grid grid-cols-2 gap-4 py-2 text-sm">
+                                <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{selectedEmployee.name}</span></div>
+                                <div><span className="text-muted-foreground">Employee ID:</span> <span className="font-mono">{selectedEmployee.id}</span></div>
+                                <div><span className="text-muted-foreground">PAN:</span> <span className="font-mono">{selectedEmployee.pan}</span></div>
+                                <div><span className="text-muted-foreground">Aadhaar:</span> <span className="font-mono">{selectedEmployee.aadhaar || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Designation:</span> <span className="font-medium">{selectedEmployee.designation}</span></div>
+                                <div><span className="text-muted-foreground">DOJ:</span> <span className="font-medium">{selectedEmployee.doj || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Employment Type:</span> <span className="font-medium">{selectedEmployee.employmentType || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Residential Status:</span> <span className="font-medium">{selectedEmployee.residentialStatus || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Tax Regime:</span> <span className="font-medium">{selectedEmployee.taxRegime || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Status:</span> <span className="font-medium">{selectedEmployee.status || "—"}</span></div>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-muted-foreground">No employee selected.</div>
+                        )}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+                            {selectedEmployee && (
+                                <Button onClick={() => { setIsViewOpen(false); openEdit(selectedEmployee); }}>
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                </Button>
+                            )}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit Employee */}
+                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Edit Employee</DialogTitle>
+                            <DialogDescription>Update employee details and save.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-name">Employee Name *</Label>
+                                    <Input id="edit-emp-name" value={newEmployee.name} onChange={e => setNewEmployee(p => ({...p, name: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-pan">PAN Number *</Label>
+                                    <Input id="edit-emp-pan" value={newEmployee.pan} onChange={e => setNewEmployee(p => ({...p, pan: e.target.value.toUpperCase()}))} maxLength={10} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-aadhaar">Aadhaar Number</Label>
+                                    <Input id="edit-emp-aadhaar" value={newEmployee.aadhaar} onChange={e => setNewEmployee(p => ({...p, aadhaar: e.target.value}))} maxLength={12} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-designation">Designation *</Label>
+                                    <Input id="edit-emp-designation" value={newEmployee.designation} onChange={e => setNewEmployee(p => ({...p, designation: e.target.value}))} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-doj">Date of Joining</Label>
+                                    <Input id="edit-emp-doj" type="date" value={newEmployee.doj} onChange={e => setNewEmployee(p => ({...p, doj: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-emp-type">Employment Type</Label>
+                                    <select id="edit-emp-type" className="h-10 w-full rounded-md border border-input px-3" value={newEmployee.employmentType} onChange={e => setNewEmployee(p => ({...p, employmentType: e.target.value as any}))}>
+                                        <option value="permanent">Permanent</option>
+                                        <option value="contract">Contract</option>
+                                        <option value="probation">Probation</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-residential-status">Residential Status</Label>
+                                    <select id="edit-residential-status" className="h-10 w-full rounded-md border border-input px-3" value={newEmployee.residentialStatus} onChange={e => setNewEmployee(p => ({...p, residentialStatus: e.target.value as any}))}>
+                                        <option value="resident">Resident</option>
+                                        <option value="non-resident">Non-Resident</option>
+                                        <option value="resident-but-not-ordinarily-resident">RNOR</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-tax-regime">Tax Regime</Label>
+                                    <select id="edit-tax-regime" className="h-10 w-full rounded-md border border-input px-3" value={newEmployee.taxRegime} onChange={e => setNewEmployee(p => ({...p, taxRegime: e.target.value as any}))}>
+                                        <option value="NEW">New Tax Regime</option>
+                                        <option value="OLD">Old Tax Regime</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                            <Button onClick={handleSaveEdit}>Save Changes</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <Card>
@@ -338,8 +497,12 @@ export default function PayrollEmployeesPage() {
                                                 <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem><FileText className="mr-2"/> View Profile</DropdownMenuItem>
-                                                <DropdownMenuItem><Edit className="mr-2"/> Edit Employee</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => openView(emp)}>
+                                                    <FileText className="mr-2"/> View Profile
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => openEdit(emp)}>
+                                                    <Edit className="mr-2"/> Edit Employee
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem className="text-destructive" onClick={() => handleDeactivate(emp.id)}>
                                                     <Trash2 className="mr-2"/> Remove
                                                 </DropdownMenuItem>
