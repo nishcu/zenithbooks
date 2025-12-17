@@ -285,31 +285,34 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden min-w-0">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full min-w-0">
+                      {/* Mobile app-like layout: 3 cols on mobile, 4 on larger phones */}
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 w-full min-w-0">
                         {coreFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
-                                <CardHeader className="pb-3 px-4 pt-4">
+                              <Card className="h-full rounded-xl hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-2 hover:border-primary/40 group cursor-pointer min-w-0">
+                                <CardHeader className="px-3 pt-3 pb-2 sm:px-4 sm:pt-4 sm:pb-3">
                                   <div className="flex items-start justify-between mb-2">
-                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
+                                    <Badge variant="secondary" className="text-[10px] shrink-0 px-1.5 py-0.5 hidden md:inline-flex">
                                       {feature.badge}
                                     </Badge>
+                                    {/* Mobile: small category dot */}
+                                    <span className="md:hidden inline-block h-2 w-2 rounded-full bg-primary/40" aria-hidden />
                                   </div>
-                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 mx-auto group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
-                                  <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
+                                  <CardTitle className="text-xs sm:text-sm font-semibold text-center group-hover:text-primary transition-colors leading-tight line-clamp-1">
                                     {feature.title}
                                   </CardTitle>
                                 </CardHeader>
-                                <CardContent className="pt-0 px-4 pb-4">
-                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+                                  <CardDescription className="hidden md:block text-xs line-clamp-2 leading-snug text-muted-foreground text-center">
                                     {feature.description}
                                   </CardDescription>
-                                  {/* Arrow icon on hover */}
-                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  {/* Desktop hover affordance */}
+                                  <div className="hidden md:flex mt-2 items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <span className="text-xs font-medium">Open</span>
                                     <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
@@ -338,31 +341,32 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
+                      {/* Mobile app-like layout: 3 cols on mobile, 4 on larger phones */}
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
-                                <CardHeader className="pb-3 px-4 pt-4">
-                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                                    <Icon className="h-6 w-6 text-white" />
-                                  </div>
-                                  <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
-                                      {feature.title}
-                                    </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
+                              <Card className="h-full rounded-xl hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-2 hover:border-primary/40 group cursor-pointer min-w-0">
+                                <CardHeader className="px-3 pt-3 pb-2 sm:px-4 sm:pt-4 sm:pb-3">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <Badge variant="secondary" className="text-[10px] shrink-0 px-1.5 py-0.5 hidden md:inline-flex">
                                       {feature.badge}
                                     </Badge>
+                                    <span className="md:hidden inline-block h-2 w-2 rounded-full bg-primary/40" aria-hidden />
                                   </div>
+                                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 mx-auto group-hover:scale-110 transition-transform`}>
+                                    <Icon className="h-6 w-6 text-white" />
+                                  </div>
+                                  <CardTitle className="text-xs sm:text-sm font-semibold text-center group-hover:text-primary transition-colors leading-tight line-clamp-1">
+                                    {feature.title}
+                                  </CardTitle>
                                 </CardHeader>
-                                <CardContent className="pt-0 px-4 pb-4">
-                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+                                  <CardDescription className="hidden md:block text-xs line-clamp-2 leading-snug text-muted-foreground text-center">
                                     {feature.description}
                                   </CardDescription>
-                                  {/* Arrow icon on hover */}
-                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <div className="hidden md:flex mt-2 items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <span className="text-xs font-medium">Open</span>
                                     <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
@@ -391,7 +395,7 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
-                      <div className="grid gap-4 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
@@ -473,7 +477,7 @@ function DashboardContent() {
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 w-full">
             {coreFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -540,7 +544,7 @@ function DashboardContent() {
           </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 w-full">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 w-full">
             {quickAccessFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
