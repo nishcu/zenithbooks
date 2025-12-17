@@ -504,31 +504,43 @@ function DashboardContent() {
             {coreFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
-                    <CardHeader className="pb-3 px-4 pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
-                          {feature.badge}
-                        </Badge>
+                <Link key={feature.href} href={feature.href} className="block">
+                  <Card className="group cursor-pointer border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] min-w-0 overflow-hidden bg-gradient-to-br from-card to-muted/10 relative aspect-square md:aspect-auto md:h-full md:hover:-translate-y-2">
+                    {/* Mobile app-icon layout */}
+                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-lg`}>
+                        <Icon className="h-6 w-6 text-white" />
                       </div>
-                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
-                      </div>
-                      <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
+                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2">
                         {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 px-4 pb-4">
-                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
-                        {feature.description}
-                      </CardDescription>
-                      {/* Arrow icon on hover */}
-                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs font-medium">Open</span>
-                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
-                    </CardContent>
+                    </div>
+
+                    {/* Desktop layout (existing rich tile) */}
+                    <div className="hidden md:block">
+                      <CardHeader className="pb-3 px-4 pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
+                            {feature.badge}
+                          </Badge>
+                        </div>
+                        <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                          <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
+                        </div>
+                        <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
+                          {feature.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 px-4 pb-4">
+                        <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
+                          {feature.description}
+                        </CardDescription>
+                        <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <span className="text-xs font-medium">Open</span>
+                          <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </CardContent>
+                    </div>
                   </Card>
                 </Link>
               );
@@ -571,31 +583,43 @@ function DashboardContent() {
             {quickAccessFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
-                    <CardHeader className="pb-3 px-4 pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
-                          {feature.badge}
-                        </Badge>
+                <Link key={feature.href} href={feature.href} className="block">
+                  <Card className="group cursor-pointer border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] min-w-0 overflow-hidden bg-gradient-to-br from-card to-muted/10 relative aspect-square md:aspect-auto md:h-full md:hover:-translate-y-2">
+                    {/* Mobile app-icon layout */}
+                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-lg`}>
+                        <Icon className="h-6 w-6 text-white" />
                       </div>
-                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
-                      </div>
-                      <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
+                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2">
                         {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 px-4 pb-4">
-                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
-                        {feature.description}
-                      </CardDescription>
-                      {/* Arrow icon on hover */}
-                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs font-medium">Open</span>
-                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
-                    </CardContent>
+                    </div>
+
+                    {/* Desktop layout (existing rich tile) */}
+                    <div className="hidden md:block">
+                      <CardHeader className="pb-3 px-4 pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
+                            {feature.badge}
+                          </Badge>
+                        </div>
+                        <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                          <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
+                        </div>
+                        <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
+                          {feature.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 px-4 pb-4">
+                        <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
+                          {feature.description}
+                        </CardDescription>
+                        <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <span className="text-xs font-medium">Open</span>
+                          <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </CardContent>
+                    </div>
                   </Card>
                 </Link>
               );
