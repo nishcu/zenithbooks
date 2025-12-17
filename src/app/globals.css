@@ -796,6 +796,8 @@ html {
 }
 
 .rdp-table {
+  /* Keep DayPicker's table semantics to avoid broken grids across the app */
+  display: table;
   width: 100%;
   max-width: 100%;
   border-collapse: separate;
@@ -803,14 +805,12 @@ html {
 }
 
 .rdp-head_row {
-  display: flex;
+  display: table-row;
   width: 100%;
-  margin-bottom: 0.5rem;
 }
 
 .rdp-head_cell {
-  flex: 1 1 0;
-  min-width: 0;
+  display: table-cell;
   width: var(--rdp-cell-size);
   height: var(--rdp-cell-size);
   text-align: center;
@@ -819,13 +819,11 @@ html {
   color: hsl(var(--muted-foreground));
   padding: 0;
   margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  vertical-align: middle;
 }
 
 .rdp-row {
-  display: flex;
+  display: table-row;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -833,13 +831,13 @@ html {
 
 .rdp-cell {
   position: relative;
+  display: table-cell;
   width: var(--rdp-cell-size);
   height: var(--rdp-cell-size);
   text-align: center;
   padding: 0;
   margin: 0;
-  flex: 1 1 0;
-  min-width: 0;
+  vertical-align: middle;
 }
 
 .rdp-day {
