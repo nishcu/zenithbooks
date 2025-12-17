@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -31,38 +31,45 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where } from "firebase/firestore";
 
-const sampleEmployees = [
-  {
-    id: "EMP-001",
-    name: "Rohan Sharma",
-    gross: 80000,
-    deductions: 15000,
-    net: 65000,
-    selected: true,
-  },
-  {
-    id: "EMP-002",
-    name: "Priya Mehta",
-    gross: 120000,
-    deductions: 25000,
-    net: 95000,
-    selected: true,
-  },
-  {
-    id: "EMP-003",
-    name: "Anjali Singh",
-    gross: 60000,
-    deductions: 10000,
-    net: 50000,
-    selected: true,
-  },
-];
+type RunPayrollEmployee = {
+  id: string;
+  name: string;
+  selected: boolean;
+  gross: number;
+  deductions: number;
+  net: number;
+};
 
 export default function RunPayrollPage() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [employees, setEmployees] = useState(sampleEmployees);
+  const [user] = useAuthState(auth);
+  const employeesQuery = user ? query(collection(db, "employees"), where("employerId", "==", user.uid)) : null;
+  const [employeesSnapshot, employeesLoading] = useCollection(employeesQuery);
+  const [employees, setEmployees] = useState<RunPayrollEmployee[]>([]);
+
+  // Hydrate from Firestore (once loaded). Salary fields can be wired later; keep 0 for now.
+  // This removes dummy data and makes payroll use the real employee master.
+  useEffect(() => {
+    if (!employeesSnapshot) return;
+    const rows: RunPayrollEmployee[] = employeesSnapshot.docs.map((d) => {
+      const data: any = d.data();
+      return {
+        id: d.id,
+        name: data?.name || "Employee",
+        selected: true,
+        gross: 0,
+        deductions: 0,
+        net: 0,
+      };
+    });
+    setEmployees(rows);
+  }, [employeesSnapshot]);
 
   const handleNext = () => {
     toast({
@@ -95,6 +102,9 @@ export default function RunPayrollPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {employeesLoading && (
+                <div className="text-sm text-muted-foreground mb-3">Loading employees...</div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>

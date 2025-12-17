@@ -1,7 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { addDoc, collection, deleteDoc, doc, query, serverTimestamp, where } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -45,60 +49,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+// NOTE: payroll employees are stored in Firestore ("employees" collection).
+// Dummy data removed to avoid confusion.
 
-const initialEmployees = [
-    {
-        id: "EMP-001",
-        name: "Rohan Sharma",
-        pan: "ABCDE1234F",
-        aadhaar: "123456789012",
-        designation: "Software Engineer",
-        doj: "2023-04-01",
-        employmentType: "permanent",
-        residentialStatus: "resident",
-        taxRegime: "NEW",
-        status: "Active"
-    },
-    {
-        id: "EMP-002",
-        name: "Priya Mehta",
-        pan: "FGHIJ5678K",
-        aadhaar: "234567890123",
-        designation: "Product Manager",
-        doj: "2023-01-15",
-        employmentType: "permanent",
-        residentialStatus: "resident",
-        taxRegime: "NEW",
-        status: "Active"
-    },
-    {
-        id: "EMP-003",
-        name: "Anjali Singh",
-        pan: "LMNOP9012M",
-        aadhaar: "345678901234",
-        designation: "UX Designer",
-        doj: "2023-06-01",
-        employmentType: "contract",
-        residentialStatus: "resident",
-        taxRegime: "OLD",
-        status: "Active"
-    },
-    {
-        id: "EMP-004",
-        name: "Vikram Rathod",
-        pan: "QRSTU3456N",
-        aadhaar: "456789012345",
-        designation: "QA Engineer",
-        doj: "2022-08-10",
-        employmentType: "permanent",
-        residentialStatus: "resident",
-        taxRegime: "NEW",
-        status: "Resigned"
-    },
-];
+type PayrollEmployee = {
+  id: string;
+  employerId?: string;
+  name: string;
+  pan: string;
+  aadhaar?: string;
+  designation: string;
+  doj?: string;
+  employmentType?: "permanent" | "contract" | "probation";
+  residentialStatus?: "resident" | "non-resident" | "resident-but-not-ordinarily-resident";
+  taxRegime?: "OLD" | "NEW";
+  status?: "Active" | "Resigned";
+};
 
 export default function PayrollEmployeesPage() {
-    const [employees, setEmployees] = useState(initialEmployees);
+    const [user] = useAuthState(auth);
+    const employeesQuery = user ? query(collection(db, "employees"), where("employerId", "==", user.uid)) : null;
+    const [employeesSnapshot, employeesLoading, employeesError] = useCollection(employeesQuery);
+    const employees: PayrollEmployee[] = useMemo(() => {
+      // If not logged in, show empty list (no dummy data)
+      if (!user) return [];
+      return employeesSnapshot?.docs.map(d => ({ id: d.id, ...(d.data() as any) })) || [];
+    }, [employeesSnapshot, user]);
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [newEmployee, setNewEmployee] = useState({
         name: "",
@@ -112,7 +89,11 @@ export default function PayrollEmployeesPage() {
     });
     const { toast } = useToast();
 
-    const handleAddEmployee = () => {
+    const handleAddEmployee = async () => {
+        if (!user) {
+            toast({ variant: "destructive", title: "Login required", description: "Please login to add employees." });
+            return;
+        }
         if (!newEmployee.name || !newEmployee.pan || !newEmployee.designation) {
             toast({
                 variant: "destructive",
@@ -133,20 +114,46 @@ export default function PayrollEmployeesPage() {
             return;
         }
 
-        const newId = `EMP-${String(employees.length + 1).padStart(3, '0')}`;
-        setEmployees([...employees, { id: newId, ...newEmployee, status: "Active" }]);
-        toast({ title: "Employee Added", description: `${newEmployee.name} has been added.` });
-        setIsDialogOpen(false);
-        setNewEmployee({
-            name: "",
-            pan: "",
-            aadhaar: "",
-            designation: "",
-            doj: "",
-            employmentType: "permanent",
-            residentialStatus: "resident",
-            taxRegime: "NEW"
-        });
+        try {
+            await addDoc(collection(db, "employees"), {
+                employerId: user.uid,
+                name: newEmployee.name.trim(),
+                pan: newEmployee.pan.trim().toUpperCase(),
+                aadhaar: (newEmployee.aadhaar || "").trim(),
+                designation: newEmployee.designation.trim(),
+                doj: newEmployee.doj || "",
+                employmentType: newEmployee.employmentType,
+                residentialStatus: newEmployee.residentialStatus,
+                taxRegime: newEmployee.taxRegime,
+                status: "Active",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+            toast({ title: "Employee Added", description: `${newEmployee.name} has been added.` });
+            setIsDialogOpen(false);
+            setNewEmployee({
+                name: "",
+                pan: "",
+                aadhaar: "",
+                designation: "",
+                doj: "",
+                employmentType: "permanent",
+                residentialStatus: "resident",
+                taxRegime: "NEW",
+            });
+        } catch (e: any) {
+            toast({ variant: "destructive", title: "Failed to add employee", description: e?.message || "Unknown error" });
+        }
+    };
+
+    const handleDeactivate = async (employeeId: string) => {
+        if (!user) return;
+        try {
+            await deleteDoc(doc(db, "employees", employeeId));
+            toast({ title: "Employee removed" });
+        } catch (e: any) {
+            toast({ variant: "destructive", title: "Action failed", description: e?.message || "Unknown error" });
+        }
     };
 
     return (
@@ -279,6 +286,11 @@ export default function PayrollEmployeesPage() {
                     <CardTitle>Employee List</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    {employeesError && (
+                        <div className="mb-3 text-sm text-destructive">
+                            Failed to load employees: {(employeesError as any)?.message || "Unknown error"}
+                        </div>
+                    )}
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -292,7 +304,19 @@ export default function PayrollEmployeesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {employees.map(emp => (
+                            {employeesLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                        Loading employees...
+                                    </TableCell>
+                                </TableRow>
+                            ) : employees.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                        No employees yet. Click “Add New Employee” to create one.
+                                    </TableCell>
+                                </TableRow>
+                            ) : employees.map(emp => (
                                 <TableRow key={emp.id}>
                                     <TableCell className="font-mono">{emp.id}</TableCell>
                                     <TableCell className="font-medium">{emp.name}</TableCell>
@@ -316,7 +340,9 @@ export default function PayrollEmployeesPage() {
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem><FileText className="mr-2"/> View Profile</DropdownMenuItem>
                                                 <DropdownMenuItem><Edit className="mr-2"/> Edit Employee</DropdownMenuItem>
-                                                <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2"/> Deactivate</DropdownMenuItem>
+                                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeactivate(emp.id)}>
+                                                    <Trash2 className="mr-2"/> Remove
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
