@@ -1,7 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocument } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import {
   Card,
   CardContent,
@@ -22,7 +26,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
 
@@ -35,12 +38,48 @@ type Component = {
 // Start empty to avoid showing dummy/default data.
 const initialComponents: Component[] = [];
 
+type PayrollSettingsDoc = {
+    employerId: string;
+    statutory: {
+        pfEnabled: boolean;
+        pfNumber: string;
+        esiEnabled: boolean;
+        esiNumber: string;
+        ptEnabled: boolean;
+    };
+    components: Component[];
+    updatedAt?: any;
+    createdAt?: any;
+};
 
 export default function PayrollSettingsPage() {
+    const [user] = useAuthState(auth);
+    const settingsRef = useMemo(() => (user ? doc(db, "payrollSettings", user.uid) : null), [user]);
+    const [settingsSnap, settingsLoading, settingsError] = useDocument(settingsRef as any);
+
     const [components, setComponents] = useState(initialComponents);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [newComponent, setNewComponent] = useState({ name: "", type: "earning" as 'earning' | 'deduction' });
     const [editingComponent, setEditingComponent] = useState<Component | null>(null);
+
+    const [pfEnabled, setPfEnabled] = useState(true);
+    const [pfNumber, setPfNumber] = useState("");
+    const [esiEnabled, setEsiEnabled] = useState(true);
+    const [esiNumber, setEsiNumber] = useState("");
+    const [ptEnabled, setPtEnabled] = useState(false);
+
+    // Load saved settings from Firestore
+    useEffect(() => {
+        if (!settingsSnap?.exists()) return;
+        const data = settingsSnap.data() as any;
+        const statutory = data?.statutory || {};
+        setPfEnabled(!!statutory.pfEnabled);
+        setPfNumber(statutory.pfNumber || "");
+        setEsiEnabled(!!statutory.esiEnabled);
+        setEsiNumber(statutory.esiNumber || "");
+        setPtEnabled(!!statutory.ptEnabled);
+        setComponents(Array.isArray(data?.components) ? data.components : []);
+    }, [settingsSnap]);
 
     const handleOpenDialog = (component: Component | null = null) => {
         setEditingComponent(component);
@@ -61,12 +100,42 @@ export default function PayrollSettingsPage() {
         setComponents(components.filter(c => c.id !== id));
     };
 
+    const handleSaveSettings = async () => {
+        if (!user) return;
+        const payload: PayrollSettingsDoc = {
+            employerId: user.uid,
+            statutory: {
+                pfEnabled,
+                pfNumber: pfNumber.trim(),
+                esiEnabled,
+                esiNumber: esiNumber.trim(),
+                ptEnabled,
+            },
+            components,
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+        };
+        await setDoc(doc(db, "payrollSettings", user.uid), payload, { merge: true });
+    };
+
     return (
         <div className="space-y-8 max-w-2xl mx-auto">
             <div>
                 <h1 className="text-3xl font-bold">Payroll Settings</h1>
                 <p className="text-muted-foreground">Configure your organization's payroll components and rules.</p>
             </div>
+
+            {settingsLoading && (
+                <div className="text-sm text-muted-foreground">Loading saved settings...</div>
+            )}
+            {settingsError && (
+                <div className="text-sm text-destructive">
+                    Failed to load settings: {(settingsError as any)?.message || "Unknown error"}
+                </div>
+            )}
+            {!user && (
+                <div className="text-sm text-destructive">Please login to manage payroll settings.</div>
+            )}
             
             <Card>
                 <CardHeader>
@@ -75,23 +144,23 @@ export default function PayrollSettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="pf-enabled" defaultChecked/>
+                        <Checkbox id="pf-enabled" checked={pfEnabled} onCheckedChange={(v) => setPfEnabled(!!v)} />
                         <Label htmlFor="pf-enabled">Enable Provident Fund (PF)</Label>
                     </div>
                     <div className="space-y-2 pl-6">
                         <Label>PF Number</Label>
-                        <Input placeholder="Enter PF number"/>
+                        <Input placeholder="Enter PF number" value={pfNumber} onChange={(e) => setPfNumber(e.target.value)} />
                     </div>
                      <div className="flex items-center space-x-2 pt-4">
-                        <Checkbox id="esi-enabled" defaultChecked/>
+                        <Checkbox id="esi-enabled" checked={esiEnabled} onCheckedChange={(v) => setEsiEnabled(!!v)} />
                         <Label htmlFor="esi-enabled">Enable Employee State Insurance (ESI)</Label>
                     </div>
                      <div className="space-y-2 pl-6">
                         <Label>ESI Number</Label>
-                        <Input placeholder="Enter ESI number"/>
+                        <Input placeholder="Enter ESI number" value={esiNumber} onChange={(e) => setEsiNumber(e.target.value)} />
                     </div>
                      <div className="flex items-center space-x-2 pt-4">
-                        <Checkbox id="pt-enabled"/>
+                        <Checkbox id="pt-enabled" checked={ptEnabled} onCheckedChange={(v) => setPtEnabled(!!v)} />
                         <Label htmlFor="pt-enabled">Enable Professional Tax (PT)</Label>
                     </div>
                 </CardContent>
@@ -133,7 +202,7 @@ export default function PayrollSettingsPage() {
                      </div>
                 </CardContent>
                  <CardFooter className="justify-end">
-                    <Button>
+                    <Button onClick={handleSaveSettings} disabled={!user}>
                         <Save className="mr-2"/>
                         Save Settings
                     </Button>

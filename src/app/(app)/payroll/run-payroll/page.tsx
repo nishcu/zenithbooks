@@ -40,6 +40,9 @@ type RunPayrollEmployee = {
   id: string;
   name: string;
   selected: boolean;
+  basic: number;
+  hra: number;
+  otherAllowances: number;
   gross: number;
   deductions: number;
   net: number;
@@ -69,6 +72,9 @@ export default function RunPayrollPage() {
         id: d.id,
         name: data?.name || "Employee",
         selected: true,
+        basic: Math.max(0, basic),
+        hra: Math.max(0, hra),
+        otherAllowances: Math.max(0, otherAllowances),
         gross,
         deductions: Math.max(0, deductions),
         net,
@@ -171,6 +177,16 @@ export default function RunPayrollPage() {
         );
       case 2:
         const totalNetPay = employees.reduce((acc, e) => e.selected ? acc + e.net : acc, 0);
+        const selectedEmployees = employees.filter(e => e.selected);
+        const totals = selectedEmployees.reduce((acc, e) => {
+          acc.basic += e.basic;
+          acc.hra += e.hra;
+          acc.otherAllowances += e.otherAllowances;
+          acc.gross += e.gross;
+          acc.deductions += e.deductions;
+          acc.net += e.net;
+          return acc;
+        }, { basic: 0, hra: 0, otherAllowances: 0, gross: 0, deductions: 0, net: 0 });
         return (
             <Card>
                  <CardHeader>
@@ -185,9 +201,65 @@ export default function RunPayrollPage() {
                 <CardContent className="space-y-4">
                     <div className="p-4 border rounded-lg space-y-2">
                         <div className="flex justify-between"><span className="text-muted-foreground">Pay Period:</span> <span className="font-medium">July 2024</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Total Employees:</span> <span className="font-medium">{employees.filter(e => e.selected).length}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Total Employees:</span> <span className="font-medium">{selectedEmployees.length}</span></div>
                         <Separator/>
                         <div className="flex justify-between font-bold text-lg"><span className="text-foreground">Total Net Payout:</span> <span className="font-mono">₹{totalNetPay.toLocaleString('en-IN')}</span></div>
+                    </div>
+
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="px-4 py-3 border-b bg-muted/30">
+                        <div className="font-semibold text-sm">Salary Breakdown (Monthly)</div>
+                        <div className="text-xs text-muted-foreground">
+                          This is calculated from each employee’s saved salary structure (Basic + HRA + Other − Deductions).
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Employee</TableHead>
+                              <TableHead className="text-right">Basic</TableHead>
+                              <TableHead className="text-right">HRA</TableHead>
+                              <TableHead className="text-right">Other</TableHead>
+                              <TableHead className="text-right">Gross</TableHead>
+                              <TableHead className="text-right">Deductions</TableHead>
+                              <TableHead className="text-right">Net</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedEmployees.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                  No employees selected.
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              <>
+                                {selectedEmployees.map((emp) => (
+                                  <TableRow key={emp.id}>
+                                    <TableCell className="font-medium">{emp.name}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.basic.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.hra.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.otherAllowances.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.gross.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.deductions.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.net.toLocaleString("en-IN")}</TableCell>
+                                  </TableRow>
+                                ))}
+                                <TableRow>
+                                  <TableCell className="font-semibold">Total</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.basic.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.hra.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.otherAllowances.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.gross.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.deductions.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.net.toLocaleString("en-IN")}</TableCell>
+                                </TableRow>
+                              </>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                 </CardContent>
                 <CardFooter className="justify-between">
