@@ -434,6 +434,27 @@ function normalizeDate(dateValue: any): string {
   if (!dateValue) return '';
   
   const dateStr = String(dateValue).trim();
+
+  // Support DD-MMM-YYYY (e.g., 01-Oct-2025) commonly used in bank statements
+  // and DD-MMM-YY (rare)
+  const monthMap: Record<string, string> = {
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', sept: '09', oct: '10', nov: '11', dec: '12',
+  };
+  const mmmMatch = dateStr.match(/^(\d{1,2})-([A-Za-z]{3,4})-(\d{2}|\d{4})$/);
+  if (mmmMatch) {
+    const day = String(parseInt(mmmMatch[1], 10)).padStart(2, '0');
+    const monKey = mmmMatch[2].toLowerCase();
+    const month = monthMap[monKey];
+    let year = mmmMatch[3];
+    if (year.length === 2) {
+      // Assume 20YY for statements
+      year = `20${year}`;
+    }
+    if (month) {
+      return `${day}/${month}/${year}`;
+    }
+  }
   
   // If already in DD/MM/YYYY format, return as is
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
@@ -622,6 +643,7 @@ function looksLikeDate(value: any): boolean {
     /^\d{2}\.\d{2}\.\d{4}$/, // DD.MM.YYYY
     /^\d{1,2}\/\d{1,2}\/\d{4}$/, // D/M/YYYY or M/D/YYYY
     /^\d{1,2}-\d{1,2}-\d{4}$/, // D-M-YYYY or M-D-YYYY
+    /^\d{1,2}-[A-Za-z]{3,4}-\d{2,4}$/, // DD-MMM-YYYY (e.g., 01-Oct-2025), allow Sept
   ];
   
   // Check if matches any date pattern
