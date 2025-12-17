@@ -53,19 +53,25 @@ export default function RunPayrollPage() {
   const [employeesSnapshot, employeesLoading] = useCollection(employeesQuery);
   const [employees, setEmployees] = useState<RunPayrollEmployee[]>([]);
 
-  // Hydrate from Firestore (once loaded). Salary fields can be wired later; keep 0 for now.
-  // This removes dummy data and makes payroll use the real employee master.
+  // Hydrate from Firestore (once loaded) and compute gross/deductions/net
+  // based on saved employee.salary.* (monthly).
   useEffect(() => {
     if (!employeesSnapshot) return;
     const rows: RunPayrollEmployee[] = employeesSnapshot.docs.map((d) => {
       const data: any = d.data();
+      const basic = Number(data?.salary?.basic || 0) || 0;
+      const hra = Number(data?.salary?.hra || 0) || 0;
+      const otherAllowances = Number(data?.salary?.otherAllowances || 0) || 0;
+      const deductions = Number(data?.salary?.deductions || 0) || 0;
+      const gross = Math.max(0, basic + hra + otherAllowances);
+      const net = Math.max(0, gross - deductions);
       return {
         id: d.id,
         name: data?.name || "Employee",
         selected: true,
-        gross: 0,
-        deductions: 0,
-        net: 0,
+        gross,
+        deductions: Math.max(0, deductions),
+        net,
       };
     });
     setEmployees(rows);

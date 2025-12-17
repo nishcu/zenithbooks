@@ -64,6 +64,12 @@ type PayrollEmployee = {
   residentialStatus?: "resident" | "non-resident" | "resident-but-not-ordinarily-resident";
   taxRegime?: "OLD" | "NEW";
   status?: "Active" | "Resigned";
+  salary?: {
+    basic?: number;
+    hra?: number;
+    otherAllowances?: number;
+    deductions?: number;
+  };
 };
 
 export default function PayrollEmployeesPage() {
@@ -88,7 +94,11 @@ export default function PayrollEmployeesPage() {
         doj: "",
         employmentType: "permanent" as "permanent" | "contract" | "probation",
         residentialStatus: "resident" as "resident" | "non-resident" | "resident-but-not-ordinarily-resident",
-        taxRegime: "NEW" as "OLD" | "NEW"
+        taxRegime: "NEW" as "OLD" | "NEW",
+        salaryBasic: "",
+        salaryHra: "",
+        salaryOther: "",
+        salaryDeductions: "",
     });
     const { toast } = useToast();
 
@@ -108,8 +118,17 @@ export default function PayrollEmployeesPage() {
             employmentType: (emp.employmentType || "permanent") as any,
             residentialStatus: (emp.residentialStatus || "resident") as any,
             taxRegime: (emp.taxRegime || "NEW") as any,
+            salaryBasic: String(emp.salary?.basic ?? ""),
+            salaryHra: String(emp.salary?.hra ?? ""),
+            salaryOther: String(emp.salary?.otherAllowances ?? ""),
+            salaryDeductions: String(emp.salary?.deductions ?? ""),
         });
         setIsEditOpen(true);
+    };
+
+    const toNumberOrZero = (v: string) => {
+        const n = parseFloat(String(v || "").replace(/,/g, ""));
+        return isNaN(n) ? 0 : Math.max(0, n);
     };
 
     const handleSaveEdit = async () => {
@@ -137,6 +156,12 @@ export default function PayrollEmployeesPage() {
                 employmentType: newEmployee.employmentType,
                 residentialStatus: newEmployee.residentialStatus,
                 taxRegime: newEmployee.taxRegime,
+                salary: {
+                    basic: toNumberOrZero(newEmployee.salaryBasic),
+                    hra: toNumberOrZero(newEmployee.salaryHra),
+                    otherAllowances: toNumberOrZero(newEmployee.salaryOther),
+                    deductions: toNumberOrZero(newEmployee.salaryDeductions),
+                },
                 updatedAt: serverTimestamp(),
             });
             toast({ title: "Employee Updated", description: `${newEmployee.name} has been updated.` });
@@ -183,6 +208,12 @@ export default function PayrollEmployeesPage() {
                 employmentType: newEmployee.employmentType,
                 residentialStatus: newEmployee.residentialStatus,
                 taxRegime: newEmployee.taxRegime,
+                salary: {
+                    basic: toNumberOrZero(newEmployee.salaryBasic),
+                    hra: toNumberOrZero(newEmployee.salaryHra),
+                    otherAllowances: toNumberOrZero(newEmployee.salaryOther),
+                    deductions: toNumberOrZero(newEmployee.salaryDeductions),
+                },
                 status: "Active",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -198,6 +229,10 @@ export default function PayrollEmployeesPage() {
                 employmentType: "permanent",
                 residentialStatus: "resident",
                 taxRegime: "NEW",
+                salaryBasic: "",
+                salaryHra: "",
+                salaryOther: "",
+                salaryDeductions: "",
             });
         } catch (e: any) {
             toast({ variant: "destructive", title: "Failed to add employee", description: e?.message || "Unknown error" });
@@ -253,6 +288,55 @@ export default function PayrollEmployeesPage() {
                                         placeholder="ABCDE1234F"
                                         maxLength={10}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <div className="text-sm font-semibold">Salary Structure (Monthly)</div>
+                                <div className="text-xs text-muted-foreground mb-3">
+                                    Enter monthly values like Basic 100000, HRA 20000, Deductions 10000.
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emp-sal-basic">Basic</Label>
+                                        <Input
+                                            id="emp-sal-basic"
+                                            inputMode="decimal"
+                                            value={newEmployee.salaryBasic}
+                                            onChange={e => setNewEmployee(p => ({...p, salaryBasic: e.target.value}))}
+                                            placeholder="100000"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emp-sal-hra">HRA</Label>
+                                        <Input
+                                            id="emp-sal-hra"
+                                            inputMode="decimal"
+                                            value={newEmployee.salaryHra}
+                                            onChange={e => setNewEmployee(p => ({...p, salaryHra: e.target.value}))}
+                                            placeholder="20000"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emp-sal-other">Other Allowances</Label>
+                                        <Input
+                                            id="emp-sal-other"
+                                            inputMode="decimal"
+                                            value={newEmployee.salaryOther}
+                                            onChange={e => setNewEmployee(p => ({...p, salaryOther: e.target.value}))}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emp-sal-ded">Total Deductions</Label>
+                                        <Input
+                                            id="emp-sal-ded"
+                                            inputMode="decimal"
+                                            value={newEmployee.salaryDeductions}
+                                            onChange={e => setNewEmployee(p => ({...p, salaryDeductions: e.target.value}))}
+                                            placeholder="10000"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -429,6 +513,31 @@ export default function PayrollEmployeesPage() {
                                         <option value="NEW">New Tax Regime</option>
                                         <option value="OLD">Old Tax Regime</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <div className="text-sm font-semibold">Salary Structure (Monthly)</div>
+                                <div className="text-xs text-muted-foreground mb-3">
+                                    Enter monthly values like Basic 100000, HRA 20000, Deductions 10000.
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-sal-basic">Basic</Label>
+                                        <Input id="edit-sal-basic" inputMode="decimal" value={newEmployee.salaryBasic} onChange={e => setNewEmployee(p => ({...p, salaryBasic: e.target.value}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-sal-hra">HRA</Label>
+                                        <Input id="edit-sal-hra" inputMode="decimal" value={newEmployee.salaryHra} onChange={e => setNewEmployee(p => ({...p, salaryHra: e.target.value}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-sal-other">Other Allowances</Label>
+                                        <Input id="edit-sal-other" inputMode="decimal" value={newEmployee.salaryOther} onChange={e => setNewEmployee(p => ({...p, salaryOther: e.target.value}))} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-sal-ded">Total Deductions</Label>
+                                        <Input id="edit-sal-ded" inputMode="decimal" value={newEmployee.salaryDeductions} onChange={e => setNewEmployee(p => ({...p, salaryDeductions: e.target.value}))} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
