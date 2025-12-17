@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Search, Briefcase, Star, Users, Award, MapPin, Filter, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { professionals } from '@/lib/professionals';
 import Image from 'next/image';
+import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const serviceAreas = [
     { value: "gst_registration", label: "GST Registration" },
@@ -33,12 +35,36 @@ const serviceAreas = [
     { value: "others", label: "Others" },
 ];
 
+type ProfessionalDoc = {
+  id: string;
+  name: string;
+  title?: string;
+  firm?: string;
+  location?: string;
+  rating?: number;
+  reviews?: number;
+  bio?: string;
+  experience?: number;
+  staff?: number;
+  professionals?: number;
+  specialties?: string[];
+  imageUrl?: string;
+  status?: "pending" | "approved" | "rejected";
+};
+
 export default function FindProfessionalPage() {
     const router = useRouter();
     const [selectedService, setSelectedService] = useState<string | null>(null);
     const [selectedType, setSelectedType] = useState<string>("all");
     const [selectedCity, setSelectedCity] = useState<string>("all");
     const [searchTerm, setSearchTerm] = useState("");
+
+    const prosQuery = query(collection(db, "professionals"), where("status", "==", "approved"));
+    const [prosSnap, prosLoading, prosError] = useCollection(prosQuery);
+    const professionals: ProfessionalDoc[] = useMemo(
+      () => prosSnap?.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) || [],
+      [prosSnap]
+    );
 
     // Predefined professional types
     const predefinedTypes = [
@@ -52,18 +78,18 @@ export default function FindProfessionalPage() {
 
     // Get unique cities and types
     const cities = useMemo(() => {
-        const citySet = new Set(professionals.map(pro => pro.location));
+        const citySet = new Set(professionals.map(pro => pro.location).filter(Boolean) as string[]);
         return Array.from(citySet).sort();
-    }, []);
+    }, [professionals]);
 
     const types = useMemo(() => {
         // Combine predefined types with types from data
         const typeSet = new Set([
             ...predefinedTypes,
-            ...professionals.map(pro => pro.title)
+            ...professionals.map(pro => pro.title).filter(Boolean) as string[]
         ]);
         return Array.from(typeSet).sort();
-    }, []);
+    }, [professionals]);
 
     // Filter professionals
     const filteredProfessionals = useMemo(() => {
@@ -118,7 +144,7 @@ export default function FindProfessionalPage() {
             
             return true;
         });
-    }, [selectedService, selectedType, selectedCity, searchTerm]);
+    }, [professionals, selectedService, selectedType, selectedCity, searchTerm]);
 
     const handleBookAppointment = (proName: string, proType: string) => {
         const serviceQuery = selectedService ? `&service=${selectedService}` : '';
@@ -256,7 +282,19 @@ export default function FindProfessionalPage() {
       </div>
 
       {/* Professionals Grid */}
-      {filteredProfessionals.length > 0 ? (
+      {prosError ? (
+        <Card>
+          <CardContent className="py-8 text-sm text-destructive">
+            Failed to load professionals: {(prosError as any)?.message || "Unknown error"}
+          </CardContent>
+        </Card>
+      ) : prosLoading ? (
+        <Card>
+          <CardContent className="py-8 text-sm text-muted-foreground">
+            Loading professionals...
+          </CardContent>
+        </Card>
+      ) : filteredProfessionals.length > 0 ? (
         <div className="grid md:grid-cols-2 gap-6">
           {filteredProfessionals.map((pro) => (
             <Card 
@@ -266,7 +304,7 @@ export default function FindProfessionalPage() {
               <CardHeader className="flex flex-row items-start bg-gradient-to-br from-muted/50 to-muted/30 gap-4 pb-4">
                 <div className="relative">
                   <Image 
-                    src={pro.imageUrl} 
+                    src={pro.imageUrl || "https://picsum.photos/seed/pro/80/80"} 
                     alt={pro.name} 
                     width={80} 
                     height={80} 
@@ -290,38 +328,38 @@ export default function FindProfessionalPage() {
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1">
                       <Star className="text-yellow-500 fill-yellow-500 h-4 w-4"/>
-                      <span className="font-semibold text-sm">{pro.rating}</span>
-                      <span className="text-xs text-muted-foreground">({pro.reviews})</span>
+                      <span className="font-semibold text-sm">{(pro.rating ?? 0).toFixed ? (pro.rating ?? 0).toFixed(1) : (pro.rating ?? 0)}</span>
+                      <span className="text-xs text-muted-foreground">({pro.reviews ?? 0})</span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />
-                      {pro.location}
+                      {pro.location || "—"}
                     </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                <p className="text-sm text-muted-foreground italic line-clamp-2">"{pro.bio}"</p>
+                <p className="text-sm text-muted-foreground italic line-clamp-2">"{pro.bio || ''}"</p>
                 
                 <div className="grid grid-cols-3 gap-4 text-center border-t border-b py-4">
                   <div className="space-y-1">
                     <div className="flex items-center justify-center gap-1">
                       <Clock className="h-4 w-4 text-primary" />
-                      <p className="text-2xl font-bold">{pro.experience}+</p>
+                      <p className="text-2xl font-bold">{pro.experience ?? 0}+</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Years Exp.</p>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-center gap-1">
                       <Users className="h-4 w-4 text-primary" />
-                      <p className="text-2xl font-bold">{pro.staff}</p>
+                      <p className="text-2xl font-bold">{pro.staff ?? 0}</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Total Staff</p>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-center gap-1">
                       <Award className="h-4 w-4 text-primary" />
-                      <p className="text-2xl font-bold">{pro.professionals}</p>
+                      <p className="text-2xl font-bold">{pro.professionals ?? 0}</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Professionals</p>
                   </div>
@@ -330,7 +368,7 @@ export default function FindProfessionalPage() {
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Specialties:</Label>
                   <div className="flex flex-wrap gap-2">
-                    {pro.specialties.map(spec => (
+                    {(pro.specialties || []).map(spec => (
                       <Badge key={spec} variant="secondary" className="text-xs">{spec}</Badge>
                     ))}
                   </div>

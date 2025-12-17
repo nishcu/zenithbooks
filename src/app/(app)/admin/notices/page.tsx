@@ -1,7 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { collection, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   Table,
   TableBody,
@@ -42,7 +45,7 @@ const initialNotices: Notice[] = [
     { id: 'NTC-003', clientName: 'Synergy Corp', noticeType: 'ROC Notice', submittedOn: new Date(2024, 7, 10), assignedTo: 'Unassigned', status: 'Pending Assignment' },
 ];
 
-const professionals = ['Priya Mehta', 'Sunil Gupta', 'Rohan Sharma', 'Anjali Singh'];
+// NOTE: Previously this was dummy data. Now we pull approved professionals from Firestore.
 
 export default function AdminNotices() {
   const [notices, setNotices] = useState<Notice[]>(initialNotices);
@@ -54,6 +57,13 @@ export default function AdminNotices() {
   const [selectedStatus, setSelectedStatus] = useState<Notice['status']>('Pending Assignment');
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const prosQuery = query(collection(db, "professionals"), where("status", "==", "approved"));
+  const [prosSnap] = useCollection(prosQuery);
+  const professionals: string[] = useMemo(() => {
+    const names = prosSnap?.docs.map((d) => String((d.data() as any)?.name || "").trim()).filter(Boolean) || [];
+    return Array.from(new Set(names)).sort();
+  }, [prosSnap]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
