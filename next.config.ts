@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Avoid dev-time cross-origin issues when accessing from LAN IP (Next.js 15+)
+  allowedDevOrigins: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://192.168.1.4:3000",
+  ],
   experimental: {
     // Ensure proper client component handling
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
