@@ -192,6 +192,7 @@ export async function POST(request: NextRequest) {
       errors: parseResult.errors,
       format: parseResult.format,
       analysis: parseResult.analysis,
+      stats: parseResult.stats,
       totalRows: parseResult.transactions.length + parseResult.errors.length,
       validTransactions: parseResult.transactions.length,
       errorCount: parseResult.errors.length,

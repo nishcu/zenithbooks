@@ -162,6 +162,7 @@ export default function BulkJournalEntryPage() {
     const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
     const [bankStatementErrors, setBankStatementErrors] = useState<any[]>([]);
     const [bankStatementAnalysis, setBankStatementAnalysis] = useState<any | null>(null);
+    const [bankStatementStats, setBankStatementStats] = useState<any | null>(null);
     const [selectedBankAccount, setSelectedBankAccount] = useState<string>("");
     const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
 
@@ -970,6 +971,7 @@ export default function BulkJournalEntryPage() {
         setBankTransactions([]);
         setBankStatementErrors([]);
         setBankStatementAnalysis(null);
+        setBankStatementStats(null);
 
         try {
             const formData = new FormData();
@@ -989,6 +991,7 @@ export default function BulkJournalEntryPage() {
             setBankTransactions(data.transactions || []);
             setBankStatementErrors(data.errors || []);
             setBankStatementAnalysis(data.analysis || null);
+            setBankStatementStats(data.stats || null);
 
             if (data.validTransactions === 0 && data.errorCount > 0) {
                 toast({
@@ -1484,6 +1487,43 @@ export default function BulkJournalEntryPage() {
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
+                                            {bankStatementStats && (
+                                                <div className="rounded-md border p-3 bg-muted/20">
+                                                    <div className="text-sm font-semibold mb-2">Parsing Statistics</div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Input Rows</div>
+                                                            <div className="font-semibold">{bankStatementStats.inputRows ?? "—"}</div>
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Processed</div>
+                                                            <div className="font-semibold">{bankStatementStats.processedRows ?? "—"}</div>
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Parsed</div>
+                                                            <div className="font-semibold">{bankStatementStats.parsedTransactions ?? "—"}</div>
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Errors</div>
+                                                            <div className="font-semibold">{bankStatementStats.errorRows ?? "—"}</div>
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Skipped (Empty)</div>
+                                                            <div className="font-semibold">{bankStatementStats.skippedEmptyRows ?? "—"}</div>
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            <div className="text-muted-foreground">Skipped (Summary)</div>
+                                                            <div className="font-semibold">{bankStatementStats.skippedSummaryRows ?? "—"}</div>
+                                                        </div>
+                                                    </div>
+                                                    {Array.isArray(bankStatementStats.warnings) && bankStatementStats.warnings.length > 0 && (
+                                                        <div className="mt-2 text-xs text-muted-foreground">
+                                                            {bankStatementStats.warnings.slice(0, 2).join(" • ")}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                                 <div className="rounded-md border p-3">
                                                     <div className="text-xs text-muted-foreground">Total Rows / Columns</div>

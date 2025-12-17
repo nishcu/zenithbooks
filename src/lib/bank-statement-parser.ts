@@ -23,6 +23,7 @@ export interface BankStatementParseResult {
   format: 'csv' | 'excel' | 'pdf';
   detectedFormat?: string; // Bank name if detected
   analysis?: SheetAnalysis;
+  stats?: ParseStats;
 }
 
 export interface ParseError {
@@ -68,6 +69,29 @@ export interface SheetAnalysis {
   dateColumns: ColumnConfidence[];
   amountColumns: ColumnConfidence[];
   notes: string[];
+}
+
+export interface ParseStats {
+  /** Rows in the parsed jsonData array (not counting original file header lines for CSV) */
+  inputRows: number;
+  /** Start index chosen for parsing (0-based in jsonData) */
+  startIndex: number;
+  /** End index processed (exclusive, 0-based) */
+  endIndex: number;
+  /** Total rows iterated (endIndex - startIndex) */
+  processedRows: number;
+  /** Rows skipped because all values were empty */
+  skippedEmptyRows: number;
+  /** Rows skipped because they look like repeated header/section headings */
+  skippedHeaderRows: number;
+  /** Rows skipped because they look like summary/non-transaction rows */
+  skippedSummaryRows: number;
+  /** Rows that produced a transaction */
+  parsedTransactions: number;
+  /** Rows that produced a non-ignored error */
+  errorRows: number;
+  /** For quick UI messaging */
+  warnings: string[];
 }
 
 /**
@@ -500,6 +524,47 @@ function normalizeDescription(value: any): string {
 }
 
 /**
+ * Detect summary/non-transaction rows that should be skipped (not treated as errors).
+ * Examples: "Opening Balance", "Balance Brought Forward", "Total", "Closing Balance".
+ */
+function isSummaryRow(row: any): boolean {
+  if (!row || typeof row !== 'object') return false;
+  const values = Object.values(row).map(v => String(v ?? '').trim()).filter(Boolean);
+  if (values.length === 0) return false;
+
+  const text = values.join(' ').toLowerCase();
+  const keywords = [
+    'opening balance',
+    'closing balance',
+    'balance brought forward',
+    'brought forward',
+    'balance carried forward',
+    'carried forward',
+    'total',
+    'grand total',
+    'summary',
+    'statement total',
+    'end of statement',
+  ];
+
+  const keywordHit = keywords.some(k => text.includes(k));
+  if (!keywordHit) return false;
+
+  // If it also looks like a real transaction (has a date), do NOT treat as summary.
+  const hasAnyDateLike = values.some(v => looksLikeDate(v));
+  if (hasAnyDateLike) return false;
+
+  // Summary rows often have one or more amounts but no date.
+  const hasNumber = values.some(v => {
+    const cleaned = v.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+    const num = parseFloat(cleaned);
+    return !isNaN(num) && isFinite(num) && Math.abs(num) >= 1;
+  });
+
+  return hasNumber || keywordHit;
+}
+
+/**
  * Check if a row looks like a header row (contains header keywords but no actual transaction data)
  */
 function isHeaderRow(row: any): boolean {
@@ -804,6 +869,18 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
   const errors: ParseError[] = [];
   const transactions: BankTransaction[] = [];
   let analysis: SheetAnalysis | undefined = undefined;
+  const stats: ParseStats = {
+    inputRows: 0,
+    startIndex: 0,
+    endIndex: 0,
+    processedRows: 0,
+    skippedEmptyRows: 0,
+    skippedHeaderRows: 0,
+    skippedSummaryRows: 0,
+    parsedTransactions: 0,
+    errorRows: 0,
+    warnings: [],
+  };
   
   try {
     // Use PapaParse for robust CSV handling
@@ -829,6 +906,7 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
     }
     
     const jsonData = parseResult.data as any[];
+    stats.inputRows = jsonData?.length || 0;
     
     if (!jsonData || jsonData.length === 0) {
       return {
@@ -846,6 +924,8 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
     // But we still need to check if the "data" actually starts later
     // Use the enhanced findFirstDataRow function for consistent behavior with Excel parsing
     const startIndex = findFirstDataRow(jsonData);
+    stats.startIndex = startIndex;
+    stats.endIndex = jsonData.length;
     
     // Process rows starting from the first data row
     for (let i = startIndex; i < jsonData.length; i++) {
@@ -857,11 +937,19 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       );
       
       if (!hasData) {
+        stats.skippedEmptyRows++;
         continue;
       }
       
       // Skip header-like rows that might appear later
       if (isHeaderRow(row) && i > startIndex + 2) {
+        stats.skippedHeaderRows++;
+        continue;
+      }
+
+      // Skip summary/non-transaction rows
+      if (isSummaryRow(row)) {
+        stats.skippedSummaryRows++;
         continue;
       }
 
@@ -870,10 +958,17 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
         // Only add error if it's not just a missing date (might be a summary row)
         if (!result.error.message.includes('Date column not found')) {
           errors.push(result.error);
+          stats.errorRows++;
         }
       } else if (result.transaction) {
         transactions.push(result.transaction);
+        stats.parsedTransactions++;
       }
+    }
+    stats.processedRows = Math.max(0, stats.endIndex - stats.startIndex);
+
+    if (transactions.length === 0) {
+      stats.warnings.push('No transactions parsed from CSV (check date/amount columns or summary-only exports).');
     }
     
   } catch (error: any) {
@@ -881,13 +976,15 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       row: 0,
       message: `CSV parsing error: ${error.message || 'Unknown error'}`,
     });
+    stats.warnings.push('CSV parse threw an exception; check file format.');
   }
   
   return {
     transactions,
     errors,
     format: 'csv',
-    analysis
+    analysis,
+    stats
   };
 }
 
@@ -1253,18 +1350,36 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
   const errors: ParseError[] = [];
   const transactions: BankTransaction[] = [];
   const analysis = analyzeSheetStructure(jsonData, { scanRows: 80, startRow: 0 });
+  const stats: ParseStats = {
+    inputRows: jsonData?.length || 0,
+    startIndex: 0,
+    endIndex: jsonData?.length || 0,
+    processedRows: 0,
+    skippedEmptyRows: 0,
+    skippedHeaderRows: 0,
+    skippedSummaryRows: 0,
+    parsedTransactions: 0,
+    errorRows: 0,
+    warnings: [],
+  };
   
   if (!jsonData || jsonData.length === 0) {
     return {
       transactions: [],
       errors: [{ row: 0, message: 'Excel file appears to be empty or has no data rows' }],
       format: 'excel',
-      analysis
+      analysis,
+      stats: {
+        ...stats,
+        warnings: [...stats.warnings, 'Empty excel sheet (0 rows).'],
+      }
     };
   }
   
   // Find where actual transaction data starts (skip header rows)
   const startIndex = findFirstDataRow(jsonData);
+  stats.startIndex = startIndex;
+  stats.endIndex = jsonData.length;
   
   // Process rows starting from the first data row
   for (let i = startIndex; i < jsonData.length; i++) {
@@ -1276,11 +1391,19 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
     );
     
     if (!hasData) {
+      stats.skippedEmptyRows++;
       continue;
     }
     
     // Skip header-like rows that might appear later (e.g., section headers)
     if (isHeaderRow(row) && i > startIndex + 2) {
+      stats.skippedHeaderRows++;
+      continue;
+    }
+
+    // Skip summary/non-transaction rows
+    if (isSummaryRow(row)) {
+      stats.skippedSummaryRows++;
       continue;
     }
 
@@ -1289,17 +1412,25 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
       // Only add error if it's not just a missing date (might be a summary row)
       if (!result.error.message.includes('Date column not found')) {
         errors.push(result.error);
+        stats.errorRows++;
       }
     } else if (result.transaction) {
       transactions.push(result.transaction);
+      stats.parsedTransactions++;
     }
+  }
+  stats.processedRows = Math.max(0, stats.endIndex - stats.startIndex);
+
+  if (transactions.length === 0) {
+    stats.warnings.push('No transactions parsed from Excel (check date/amount columns or summary-only exports).');
   }
   
   return {
     transactions,
     errors,
     format: 'excel',
-    analysis
+    analysis,
+    stats
   };
 }
 
