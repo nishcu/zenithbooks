@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,6 +161,7 @@ export default function BulkJournalEntryPage() {
     const [isParsingBankStatement, setIsParsingBankStatement] = useState(false);
     const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>([]);
     const [bankStatementErrors, setBankStatementErrors] = useState<any[]>([]);
+    const [bankStatementAnalysis, setBankStatementAnalysis] = useState<any | null>(null);
     const [selectedBankAccount, setSelectedBankAccount] = useState<string>("");
     const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
 
@@ -969,6 +969,7 @@ export default function BulkJournalEntryPage() {
         setIsParsingBankStatement(true);
         setBankTransactions([]);
         setBankStatementErrors([]);
+        setBankStatementAnalysis(null);
 
         try {
             const formData = new FormData();
@@ -987,6 +988,7 @@ export default function BulkJournalEntryPage() {
 
             setBankTransactions(data.transactions || []);
             setBankStatementErrors(data.errors || []);
+            setBankStatementAnalysis(data.analysis || null);
 
             if (data.validTransactions === 0 && data.errorCount > 0) {
                 toast({
@@ -1467,6 +1469,115 @@ export default function BulkJournalEntryPage() {
                                             </ul>
                                         </AlertDescription>
                                     </Alert>
+                                )}
+
+                                {/* Phase 2: Sheet structure analysis (debug + confidence) */}
+                                {bankStatementAnalysis && (
+                                    <Card className="border-dashed">
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="text-base flex items-center gap-2">
+                                                <Info className="h-4 w-4 text-primary" />
+                                                Detected Sheet Structure
+                                            </CardTitle>
+                                            <CardDescription>
+                                                This is an automatic analysis of your statement format (helps explain what was detected).
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-xs text-muted-foreground">Total Rows / Columns</div>
+                                                    <div className="text-sm font-semibold">
+                                                        {bankStatementAnalysis.totalRows ?? "—"} / {bankStatementAnalysis.totalColumns ?? "—"}
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-xs text-muted-foreground">Non-empty Rows / Columns</div>
+                                                    <div className="text-sm font-semibold">
+                                                        {bankStatementAnalysis.nonEmptyRows ?? "—"} / {bankStatementAnalysis.nonEmptyColumns ?? "—"}
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-xs text-muted-foreground">Data Start / End Row</div>
+                                                    <div className="text-sm font-semibold">
+                                                        {bankStatementAnalysis.dataStartRow ?? "—"} / {bankStatementAnalysis.dataEndRow ?? "—"}
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-xs text-muted-foreground">Header Row Index</div>
+                                                    <div className="text-sm font-semibold">
+                                                        {bankStatementAnalysis.headerRowIndex ?? "—"}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-sm font-semibold mb-2">Detected Date Columns</div>
+                                                    {Array.isArray(bankStatementAnalysis.dateColumns) && bankStatementAnalysis.dateColumns.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                            {bankStatementAnalysis.dateColumns.slice(0, 3).map((c: any, idx: number) => (
+                                                                <div key={idx} className="text-xs">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="font-mono break-all">{c.key}</span>
+                                                                        <Badge variant="secondary">
+                                                                            {Math.round((c.confidence || 0) * 100)}%
+                                                                        </Badge>
+                                                                    </div>
+                                                                    {Array.isArray(c.samples) && c.samples.length > 0 && (
+                                                                        <div className="mt-1 text-muted-foreground">
+                                                                            e.g. {c.samples.slice(0, 2).join(", ")}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground">No date column confidently detected.</div>
+                                                    )}
+                                                </div>
+
+                                                <div className="rounded-md border p-3">
+                                                    <div className="text-sm font-semibold mb-2">Detected Amount Columns</div>
+                                                    {Array.isArray(bankStatementAnalysis.amountColumns) && bankStatementAnalysis.amountColumns.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                            {bankStatementAnalysis.amountColumns.slice(0, 3).map((c: any, idx: number) => (
+                                                                <div key={idx} className="text-xs">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="font-mono break-all">{c.key}</span>
+                                                                        <Badge variant="secondary">
+                                                                            {Math.round((c.confidence || 0) * 100)}%
+                                                                        </Badge>
+                                                                    </div>
+                                                                    {Array.isArray(c.samples) && c.samples.length > 0 && (
+                                                                        <div className="mt-1 text-muted-foreground">
+                                                                            e.g. {c.samples.slice(0, 2).join(", ")}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground">No amount column confidently detected.</div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {Array.isArray(bankStatementAnalysis.notes) && bankStatementAnalysis.notes.length > 0 && (
+                                                <Alert className="border-muted bg-muted/30">
+                                                    <Info className="h-4 w-4" />
+                                                    <AlertTitle>Notes</AlertTitle>
+                                                    <AlertDescription>
+                                                        <ul className="list-disc list-inside mt-2 text-sm">
+                                                            {bankStatementAnalysis.notes.slice(0, 6).map((n: string, idx: number) => (
+                                                                <li key={idx}>{n}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
+                                        </CardContent>
+                                    </Card>
                                 )}
                             </div>
 
