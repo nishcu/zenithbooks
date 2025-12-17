@@ -290,33 +290,44 @@ function DashboardContent() {
                         {coreFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
-                            <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full rounded-xl hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-2 hover:border-primary/40 group cursor-pointer min-w-0">
-                                <CardHeader className="px-3 pt-3 pb-2 sm:px-4 sm:pt-4 sm:pb-3">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <Badge variant="secondary" className="text-[10px] shrink-0 px-1.5 py-0.5 hidden md:inline-flex">
-                                      {feature.badge}
-                                    </Badge>
-                                    {/* Mobile: small category dot */}
-                                    <span className="md:hidden inline-block h-2 w-2 rounded-full bg-primary/40" aria-hidden />
-                                  </div>
-                                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 mx-auto group-hover:scale-110 transition-transform`}>
+                            <Link key={feature.href} href={feature.href} className="block">
+                              {/* Mobile: square app-icon tile. Desktop: keep richer card layout */}
+                              <Card className="group cursor-pointer border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] min-w-0 md:h-full md:rounded-xl md:hover:-translate-y-1 aspect-square md:aspect-auto">
+                                {/* Mobile compact layout */}
+                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
+                                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-sm`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
-                                  <CardTitle className="text-xs sm:text-sm font-semibold text-center group-hover:text-primary transition-colors leading-tight line-clamp-1">
+                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                                     {feature.title}
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
-                                  <CardDescription className="hidden md:block text-xs line-clamp-2 leading-snug text-muted-foreground text-center">
-                                    {feature.description}
-                                  </CardDescription>
-                                  {/* Desktop hover affordance */}
-                                  <div className="hidden md:flex mt-2 items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <span className="text-xs font-medium">Open</span>
-                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
-                                </CardContent>
+                                </div>
+
+                                {/* Desktop layout */}
+                                <div className="hidden md:block">
+                                  <CardHeader className="pb-3 px-4 pt-4">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
+                                        {feature.badge}
+                                      </Badge>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                      <Icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
+                                      {feature.title}
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent className="pt-0 px-4 pb-4">
+                                    <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                      {feature.description}
+                                    </CardDescription>
+                                    <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                      <span className="text-xs font-medium">Open</span>
+                                      <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                  </CardContent>
+                                </div>
                               </Card>
                             </Link>
                           );
@@ -346,31 +357,43 @@ function DashboardContent() {
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
-                            <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full rounded-xl hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] border-2 hover:border-primary/40 group cursor-pointer min-w-0">
-                                <CardHeader className="px-3 pt-3 pb-2 sm:px-4 sm:pt-4 sm:pb-3">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <Badge variant="secondary" className="text-[10px] shrink-0 px-1.5 py-0.5 hidden md:inline-flex">
-                                      {feature.badge}
-                                    </Badge>
-                                    <span className="md:hidden inline-block h-2 w-2 rounded-full bg-primary/40" aria-hidden />
-                                  </div>
-                                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 mx-auto group-hover:scale-110 transition-transform`}>
+                            <Link key={feature.href} href={feature.href} className="block">
+                              <Card className="group cursor-pointer border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] min-w-0 md:h-full md:rounded-xl md:hover:-translate-y-1 aspect-square md:aspect-auto">
+                                {/* Mobile compact layout */}
+                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
+                                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-sm`}>
                                     <Icon className="h-6 w-6 text-white" />
                                   </div>
-                                  <CardTitle className="text-xs sm:text-sm font-semibold text-center group-hover:text-primary transition-colors leading-tight line-clamp-1">
+                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                                     {feature.title}
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
-                                  <CardDescription className="hidden md:block text-xs line-clamp-2 leading-snug text-muted-foreground text-center">
-                                    {feature.description}
-                                  </CardDescription>
-                                  <div className="hidden md:flex mt-2 items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <span className="text-xs font-medium">Open</span>
-                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
-                                </CardContent>
+                                </div>
+
+                                {/* Desktop layout */}
+                                <div className="hidden md:block">
+                                  <CardHeader className="pb-3 px-4 pt-4">
+                                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                      <Icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <div className="flex items-start justify-between gap-2">
+                                      <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
+                                        {feature.title}
+                                      </CardTitle>
+                                      <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
+                                        {feature.badge}
+                                      </Badge>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="pt-0 px-4 pb-4">
+                                    <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                      {feature.description}
+                                    </CardDescription>
+                                    <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                      <span className="text-xs font-medium">Open</span>
+                                      <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                  </CardContent>
+                                </div>
                               </Card>
                             </Link>
                           );
