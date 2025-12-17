@@ -32,9 +32,9 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollection } from "react-firebase-hooks/firestore";
+import { useCollection, useDocument } from "react-firebase-hooks/firestore";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, doc, query, where } from "firebase/firestore";
 
 type RunPayrollEmployee = {
   id: string;
@@ -44,7 +44,11 @@ type RunPayrollEmployee = {
   hra: number;
   otherAllowances: number;
   gross: number;
-  deductions: number;
+  salaryDeductions: number;
+  pf: number;
+  esi: number;
+  pt: number;
+  deductions: number; // total deductions = salary + pf + esi + pt
   net: number;
 };
 
@@ -55,6 +59,16 @@ export default function RunPayrollPage() {
   const employeesQuery = user ? query(collection(db, "employees"), where("employerId", "==", user.uid)) : null;
   const [employeesSnapshot, employeesLoading] = useCollection(employeesQuery);
   const [employees, setEmployees] = useState<RunPayrollEmployee[]>([]);
+  const settingsRef = user ? doc(db, "payrollSettings", user.uid) : null;
+  const [settingsSnap] = useDocument(settingsRef as any);
+
+  const statutory = (settingsSnap?.data() as any)?.statutory || {};
+  const pfEnabled = !!statutory.pfEnabled;
+  const esiEnabled = !!statutory.esiEnabled;
+  const ptEnabled = !!statutory.ptEnabled;
+  const pfRatePercent = Number(statutory.pfEmployeeRatePercent || 0) || 0;
+  const esiRatePercent = Number(statutory.esiEmployeeRatePercent || 0) || 0;
+  const ptAmount = Number(statutory.ptEmployeeAmount || 0) || 0;
 
   // Hydrate from Firestore (once loaded) and compute gross/deductions/net
   // based on saved employee.salary.* (monthly).
@@ -65,9 +79,15 @@ export default function RunPayrollPage() {
       const basic = Number(data?.salary?.basic || 0) || 0;
       const hra = Number(data?.salary?.hra || 0) || 0;
       const otherAllowances = Number(data?.salary?.otherAllowances || 0) || 0;
-      const deductions = Number(data?.salary?.deductions || 0) || 0;
+      const salaryDeductions = Number(data?.salary?.deductions || 0) || 0;
       const gross = Math.max(0, basic + hra + otherAllowances);
+
+      const pf = pfEnabled ? Math.max(0, (basic * pfRatePercent) / 100) : 0;
+      const esi = esiEnabled ? Math.max(0, (gross * esiRatePercent) / 100) : 0;
+      const pt = ptEnabled ? Math.max(0, ptAmount) : 0;
+      const deductions = Math.max(0, salaryDeductions) + pf + esi + pt;
       const net = Math.max(0, gross - deductions);
+
       return {
         id: d.id,
         name: data?.name || "Employee",
@@ -76,12 +96,16 @@ export default function RunPayrollPage() {
         hra: Math.max(0, hra),
         otherAllowances: Math.max(0, otherAllowances),
         gross,
-        deductions: Math.max(0, deductions),
+        salaryDeductions: Math.max(0, salaryDeductions),
+        pf,
+        esi,
+        pt,
+        deductions,
         net,
       };
     });
     setEmployees(rows);
-  }, [employeesSnapshot]);
+  }, [employeesSnapshot, pfEnabled, esiEnabled, ptEnabled, pfRatePercent, esiRatePercent, ptAmount]);
 
   const handleNext = () => {
     toast({
@@ -183,10 +207,14 @@ export default function RunPayrollPage() {
           acc.hra += e.hra;
           acc.otherAllowances += e.otherAllowances;
           acc.gross += e.gross;
+          acc.salaryDeductions += e.salaryDeductions;
+          acc.pf += e.pf;
+          acc.esi += e.esi;
+          acc.pt += e.pt;
           acc.deductions += e.deductions;
           acc.net += e.net;
           return acc;
-        }, { basic: 0, hra: 0, otherAllowances: 0, gross: 0, deductions: 0, net: 0 });
+        }, { basic: 0, hra: 0, otherAllowances: 0, gross: 0, salaryDeductions: 0, pf: 0, esi: 0, pt: 0, deductions: 0, net: 0 });
         return (
             <Card>
                  <CardHeader>
@@ -210,7 +238,7 @@ export default function RunPayrollPage() {
                       <div className="px-4 py-3 border-b bg-muted/30">
                         <div className="font-semibold text-sm">Salary Breakdown (Monthly)</div>
                         <div className="text-xs text-muted-foreground">
-                          This is calculated from each employee’s saved salary structure (Basic + HRA + Other − Deductions).
+                          This is calculated from each employee’s salary + statutory deductions (PF/ESI/PT from Payroll Settings).
                         </div>
                       </div>
                       <div className="overflow-x-auto">
@@ -222,7 +250,11 @@ export default function RunPayrollPage() {
                               <TableHead className="text-right">HRA</TableHead>
                               <TableHead className="text-right">Other</TableHead>
                               <TableHead className="text-right">Gross</TableHead>
-                              <TableHead className="text-right">Deductions</TableHead>
+                              <TableHead className="text-right">PF</TableHead>
+                              <TableHead className="text-right">ESI</TableHead>
+                              <TableHead className="text-right">PT</TableHead>
+                              <TableHead className="text-right">Other Deductions</TableHead>
+                              <TableHead className="text-right">Total Deductions</TableHead>
                               <TableHead className="text-right">Net</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -242,6 +274,10 @@ export default function RunPayrollPage() {
                                     <TableCell className="text-right font-mono">₹{emp.hra.toLocaleString("en-IN")}</TableCell>
                                     <TableCell className="text-right font-mono">₹{emp.otherAllowances.toLocaleString("en-IN")}</TableCell>
                                     <TableCell className="text-right font-mono">₹{emp.gross.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.pf.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.esi.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.pt.toLocaleString("en-IN")}</TableCell>
+                                    <TableCell className="text-right font-mono">₹{emp.salaryDeductions.toLocaleString("en-IN")}</TableCell>
                                     <TableCell className="text-right font-mono">₹{emp.deductions.toLocaleString("en-IN")}</TableCell>
                                     <TableCell className="text-right font-mono">₹{emp.net.toLocaleString("en-IN")}</TableCell>
                                   </TableRow>
@@ -252,6 +288,10 @@ export default function RunPayrollPage() {
                                   <TableCell className="text-right font-mono font-semibold">₹{totals.hra.toLocaleString("en-IN")}</TableCell>
                                   <TableCell className="text-right font-mono font-semibold">₹{totals.otherAllowances.toLocaleString("en-IN")}</TableCell>
                                   <TableCell className="text-right font-mono font-semibold">₹{totals.gross.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.pf.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.esi.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.pt.toLocaleString("en-IN")}</TableCell>
+                                  <TableCell className="text-right font-mono font-semibold">₹{totals.salaryDeductions.toLocaleString("en-IN")}</TableCell>
                                   <TableCell className="text-right font-mono font-semibold">₹{totals.deductions.toLocaleString("en-IN")}</TableCell>
                                   <TableCell className="text-right font-mono font-semibold">₹{totals.net.toLocaleString("en-IN")}</TableCell>
                                 </TableRow>

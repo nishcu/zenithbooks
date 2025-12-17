@@ -43,9 +43,12 @@ type PayrollSettingsDoc = {
     statutory: {
         pfEnabled: boolean;
         pfNumber: string;
+        pfEmployeeRatePercent?: number; // user-configurable
         esiEnabled: boolean;
         esiNumber: string;
+        esiEmployeeRatePercent?: number; // user-configurable
         ptEnabled: boolean;
+        ptEmployeeAmount?: number; // user-configurable fixed amount per month
     };
     components: Component[];
     updatedAt?: any;
@@ -64,9 +67,12 @@ export default function PayrollSettingsPage() {
 
     const [pfEnabled, setPfEnabled] = useState(true);
     const [pfNumber, setPfNumber] = useState("");
+    const [pfRatePercent, setPfRatePercent] = useState("12");
     const [esiEnabled, setEsiEnabled] = useState(true);
     const [esiNumber, setEsiNumber] = useState("");
+    const [esiRatePercent, setEsiRatePercent] = useState("0");
     const [ptEnabled, setPtEnabled] = useState(false);
+    const [ptAmount, setPtAmount] = useState("0");
 
     // Load saved settings from Firestore
     useEffect(() => {
@@ -75,11 +81,23 @@ export default function PayrollSettingsPage() {
         const statutory = data?.statutory || {};
         setPfEnabled(!!statutory.pfEnabled);
         setPfNumber(statutory.pfNumber || "");
+        setPfRatePercent(
+            statutory.pfEmployeeRatePercent != null ? String(statutory.pfEmployeeRatePercent) : "12"
+        );
         setEsiEnabled(!!statutory.esiEnabled);
         setEsiNumber(statutory.esiNumber || "");
+        setEsiRatePercent(
+            statutory.esiEmployeeRatePercent != null ? String(statutory.esiEmployeeRatePercent) : "0"
+        );
         setPtEnabled(!!statutory.ptEnabled);
+        setPtAmount(statutory.ptEmployeeAmount != null ? String(statutory.ptEmployeeAmount) : "0");
         setComponents(Array.isArray(data?.components) ? data.components : []);
     }, [settingsSnap]);
+
+    const toNumberOrZero = (v: string) => {
+        const n = parseFloat(String(v || "").replace(/,/g, ""));
+        return isNaN(n) ? 0 : n;
+    };
 
     const handleOpenDialog = (component: Component | null = null) => {
         setEditingComponent(component);
@@ -107,9 +125,12 @@ export default function PayrollSettingsPage() {
             statutory: {
                 pfEnabled,
                 pfNumber: pfNumber.trim(),
+                pfEmployeeRatePercent: toNumberOrZero(pfRatePercent),
                 esiEnabled,
                 esiNumber: esiNumber.trim(),
+                esiEmployeeRatePercent: toNumberOrZero(esiRatePercent),
                 ptEnabled,
+                ptEmployeeAmount: toNumberOrZero(ptAmount),
             },
             components,
             updatedAt: serverTimestamp(),
@@ -151,6 +172,16 @@ export default function PayrollSettingsPage() {
                         <Label>PF Number</Label>
                         <Input placeholder="Enter PF number" value={pfNumber} onChange={(e) => setPfNumber(e.target.value)} />
                     </div>
+                    <div className="space-y-2 pl-6">
+                        <Label>PF Employee % (Monthly)</Label>
+                        <Input
+                            inputMode="decimal"
+                            placeholder="12"
+                            value={pfRatePercent}
+                            onChange={(e) => setPfRatePercent(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">This % will be applied on employee Basic (monthly).</p>
+                    </div>
                      <div className="flex items-center space-x-2 pt-4">
                         <Checkbox id="esi-enabled" checked={esiEnabled} onCheckedChange={(v) => setEsiEnabled(!!v)} />
                         <Label htmlFor="esi-enabled">Enable Employee State Insurance (ESI)</Label>
@@ -159,9 +190,29 @@ export default function PayrollSettingsPage() {
                         <Label>ESI Number</Label>
                         <Input placeholder="Enter ESI number" value={esiNumber} onChange={(e) => setEsiNumber(e.target.value)} />
                     </div>
+                    <div className="space-y-2 pl-6">
+                        <Label>ESI Employee % (Monthly)</Label>
+                        <Input
+                            inputMode="decimal"
+                            placeholder="0.75"
+                            value={esiRatePercent}
+                            onChange={(e) => setEsiRatePercent(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">This % will be applied on employee Gross (monthly).</p>
+                    </div>
                      <div className="flex items-center space-x-2 pt-4">
                         <Checkbox id="pt-enabled" checked={ptEnabled} onCheckedChange={(v) => setPtEnabled(!!v)} />
                         <Label htmlFor="pt-enabled">Enable Professional Tax (PT)</Label>
+                    </div>
+                    <div className="space-y-2 pl-6">
+                        <Label>PT Amount (Monthly)</Label>
+                        <Input
+                            inputMode="decimal"
+                            placeholder="200"
+                            value={ptAmount}
+                            onChange={(e) => setPtAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Fixed amount per employee per month (e.g., ₹200).</p>
                     </div>
                 </CardContent>
             </Card>
