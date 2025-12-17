@@ -340,17 +340,17 @@
 
 /* Responsive tables */
 @media (max-width: 640px) {
-  table {
+  table:not(.rdp-table) {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
   }
 
-  table thead {
+  table:not(.rdp-table) thead {
     display: none;
   }
 
-  table tbody tr {
+  table:not(.rdp-table) tbody tr {
     display: block;
     margin-bottom: 1rem;
     border: 1px solid hsl(var(--border));
@@ -358,14 +358,14 @@
     padding: 0.5rem;
   }
 
-  table tbody td {
+  table:not(.rdp-table) tbody td {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem;
     border: none;
   }
 
-  table tbody td::before {
+  table:not(.rdp-table) tbody td::before {
     content: attr(data-label);
     font-weight: 600;
     margin-right: 1rem;
