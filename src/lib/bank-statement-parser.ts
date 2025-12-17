@@ -22,12 +22,302 @@ export interface BankStatementParseResult {
   errors: ParseError[];
   format: 'csv' | 'excel' | 'pdf';
   detectedFormat?: string; // Bank name if detected
+  analysis?: SheetAnalysis;
 }
 
 export interface ParseError {
   row: number;
   message: string;
   data?: any;
+}
+
+export interface ColumnConfidence {
+  /**
+   * Column key (object property name) when parsing object rows
+   * or "Column_#" when parsed from a raw grid.
+   */
+  key: string;
+  /** 0-based index (best-effort for object rows) */
+  index: number;
+  /** 0..1 confidence */
+  confidence: number;
+  /** number of matches observed in scan */
+  matchCount: number;
+  /** number of non-empty values observed in scan */
+  nonEmptyCount: number;
+  /** Small set of samples for debugging */
+  samples: string[];
+}
+
+export interface SheetAnalysis {
+  totalRows: number;
+  totalColumns: number;
+  nonEmptyRows: number;
+  nonEmptyColumns: number;
+  /**
+   * Best guess of where transaction-like rows start/end (0-based indices)
+   * based on detected date/amount patterns.
+   */
+  dataStartRow: number | null;
+  dataEndRow: number | null;
+  /**
+   * Best guess header row index (0-based) if found, else null.
+   * For CSV header=true parsing, this will generally be null (since header row isn't in jsonData).
+   */
+  headerRowIndex: number | null;
+  dateColumns: ColumnConfidence[];
+  amountColumns: ColumnConfidence[];
+  notes: string[];
+}
+
+/**
+ * Analyze a sheet-like JSON array and detect structure before parsing:
+ * - how many rows/columns actually have data
+ * - which columns look like date / amount
+ * - rough transaction data boundaries (start/end rows)
+ *
+ * This is intentionally conservative and is used for validation + better error reporting,
+ * not for the core parsing logic.
+ */
+export function analyzeSheetStructure(
+  jsonData: any[],
+  opts?: { scanRows?: number; startRow?: number }
+): SheetAnalysis {
+  const scanRows = Math.max(1, opts?.scanRows ?? 80);
+  const startRow = Math.max(0, opts?.startRow ?? 0);
+
+  const totalRows = Array.isArray(jsonData) ? jsonData.length : 0;
+  const notes: string[] = [];
+
+  if (!jsonData || !Array.isArray(jsonData) || totalRows === 0) {
+    return {
+      totalRows: 0,
+      totalColumns: 0,
+      nonEmptyRows: 0,
+      nonEmptyColumns: 0,
+      dataStartRow: null,
+      dataEndRow: null,
+      headerRowIndex: null,
+      dateColumns: [],
+      amountColumns: [],
+      notes: ['Empty sheet (no rows).'],
+    };
+  }
+
+  // Determine column keys union (for object rows)
+  const keySet = new Set<string>();
+  for (let i = 0; i < Math.min(totalRows, startRow + scanRows); i++) {
+    const row = jsonData[i];
+    if (row && typeof row === 'object' && !Array.isArray(row)) {
+      Object.keys(row).forEach(k => keySet.add(k));
+    }
+  }
+  const keys = Array.from(keySet);
+  const totalColumns = keys.length || (jsonData[0] && typeof jsonData[0] === 'object' ? Object.keys(jsonData[0]).length : 0);
+
+  const normalize = (v: any) => String(v ?? '').trim();
+  const isNonEmpty = (v: any) => normalize(v) !== '';
+
+  // Count non-empty rows
+  let nonEmptyRows = 0;
+  const rowNonEmptyFlags: boolean[] = new Array(totalRows).fill(false);
+  for (let i = 0; i < totalRows; i++) {
+    const row = jsonData[i];
+    const hasData =
+      row && typeof row === 'object'
+        ? Object.values(row).some(v => isNonEmpty(v))
+        : isNonEmpty(row);
+    if (hasData) {
+      nonEmptyRows++;
+      rowNonEmptyFlags[i] = true;
+    }
+  }
+
+  // Count non-empty columns (by key) within scan window
+  const colNonEmptyCount: Record<string, number> = {};
+  keys.forEach(k => (colNonEmptyCount[k] = 0));
+
+  const scanEnd = Math.min(totalRows, startRow + scanRows);
+  for (let i = startRow; i < scanEnd; i++) {
+    const row = jsonData[i];
+    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+    for (const k of keys) {
+      if (isNonEmpty((row as any)[k])) colNonEmptyCount[k] = (colNonEmptyCount[k] || 0) + 1;
+    }
+  }
+  const nonEmptyColumns = keys.filter(k => (colNonEmptyCount[k] || 0) > 0).length;
+
+  // Detect header row (heuristic): row with multiple header keywords and low numeric density
+  let headerRowIndex: number | null = null;
+  const headerKeywords = [
+    'transaction date',
+    'value date',
+    'posting date',
+    'date',
+    'particulars',
+    'description',
+    'narration',
+    'remarks',
+    'debit',
+    'credit',
+    'withdrawal',
+    'deposit',
+    'balance',
+    'cheque',
+    'ref',
+    'reference',
+  ];
+
+  const looksHeaderLike = (row: any): boolean => {
+    if (!row || typeof row !== 'object') return false;
+    const values = Object.values(row).map(v => normalize(v).toLowerCase()).filter(Boolean);
+    if (values.length === 0) return false;
+    const joined = values.join(' ');
+    const hit = headerKeywords.filter(k => joined.includes(k)).length;
+    const numericHits = values.filter(v => {
+      const cleaned = v.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+      const num = parseFloat(cleaned);
+      return !isNaN(num) && Math.abs(num) > 0;
+    }).length;
+    // Many header terms, but not mostly numbers
+    return hit >= 3 && numericHits <= Math.max(1, Math.floor(values.length * 0.2));
+  };
+
+  for (let i = startRow; i < Math.min(scanEnd, startRow + 80); i++) {
+    const row = jsonData[i];
+    if (looksHeaderLike(row)) {
+      headerRowIndex = i;
+      break;
+    }
+  }
+
+  // Column confidence for dates and amounts
+  const dateCols: ColumnConfidence[] = [];
+  const amountCols: ColumnConfidence[] = [];
+
+  const buildSamples = (arr: string[]) => arr.filter(Boolean).slice(0, 5);
+
+  for (let idx = 0; idx < keys.length; idx++) {
+    const key = keys[idx];
+    let dateMatch = 0;
+    let amountMatch = 0;
+    let nonEmpty = 0;
+    const samples: string[] = [];
+
+    for (let i = startRow; i < scanEnd; i++) {
+      const row = jsonData[i];
+      if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+      const raw = (row as any)[key];
+      if (!isNonEmpty(raw)) continue;
+      nonEmpty++;
+      const str = normalize(raw);
+      if (samples.length < 12) samples.push(str);
+
+      // Date pattern (reuse the improved detector)
+      if (looksLikeDate(str)) dateMatch++;
+
+      // Amount pattern: numeric / currency formatted
+      const cleaned = str.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+      const num = parseFloat(cleaned);
+      if (!isNaN(num) && isFinite(num)) {
+        // ignore small integers like 0/1 that might be page numbers
+        if (Math.abs(num) >= 1) amountMatch++;
+      }
+    }
+
+    const denom = Math.max(1, nonEmpty);
+    const dateConfidence = dateMatch / denom;
+    const amountConfidence = amountMatch / denom;
+
+    if (dateMatch >= 3 && dateConfidence >= 0.3) {
+      dateCols.push({
+        key,
+        index: idx,
+        confidence: Math.min(1, dateConfidence),
+        matchCount: dateMatch,
+        nonEmptyCount: nonEmpty,
+        samples: buildSamples(samples),
+      });
+    }
+
+    if (amountMatch >= 3 && amountConfidence >= 0.3) {
+      amountCols.push({
+        key,
+        index: idx,
+        confidence: Math.min(1, amountConfidence),
+        matchCount: amountMatch,
+        nonEmptyCount: nonEmpty,
+        samples: buildSamples(samples),
+      });
+    }
+  }
+
+  dateCols.sort((a, b) => b.confidence - a.confidence);
+  amountCols.sort((a, b) => b.confidence - a.confidence);
+
+  if (dateCols.length === 0) notes.push('No strong date column detected in the scanned window.');
+  if (amountCols.length === 0) notes.push('No strong amount column detected in the scanned window.');
+  if (headerRowIndex === null) notes.push('No header row confidently detected (this can be normal for some exports).');
+
+  // Estimate data boundaries: first/last row (within scan) that looks like transaction data
+  let dataStartRow: number | null = null;
+  let dataEndRow: number | null = null;
+
+  const bestDateKey = dateCols[0]?.key;
+  const bestAmountKey = amountCols[0]?.key;
+
+  const rowLooksLikeTxn = (row: any): boolean => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
+    if (!Object.values(row).some(v => isNonEmpty(v))) return false;
+    // Avoid header-like rows
+    if (looksHeaderLike(row)) return false;
+
+    const dateOk = bestDateKey ? looksLikeDate((row as any)[bestDateKey]) : Object.values(row).some(v => looksLikeDate(v));
+    let amtOk = false;
+    if (bestAmountKey) {
+      const v = normalize((row as any)[bestAmountKey]);
+      const cleaned = v.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+      const num = parseFloat(cleaned);
+      amtOk = !isNaN(num) && Math.abs(num) >= 1;
+    } else {
+      amtOk = Object.values(row).some(v => {
+        const s = normalize(v);
+        const cleaned = s.replace(/[₹$€£,]/g, '').replace(/\s/g, '');
+        const num = parseFloat(cleaned);
+        return !isNaN(num) && Math.abs(num) >= 1;
+      });
+    }
+    return !!(dateOk || amtOk);
+  };
+
+  for (let i = 0; i < totalRows; i++) {
+    if (!rowNonEmptyFlags[i]) continue;
+    if (rowLooksLikeTxn(jsonData[i])) {
+      dataStartRow = i;
+      break;
+    }
+  }
+
+  for (let i = totalRows - 1; i >= 0; i--) {
+    if (!rowNonEmptyFlags[i]) continue;
+    if (rowLooksLikeTxn(jsonData[i])) {
+      dataEndRow = i;
+      break;
+    }
+  }
+
+  return {
+    totalRows,
+    totalColumns,
+    nonEmptyRows,
+    nonEmptyColumns,
+    dataStartRow,
+    dataEndRow,
+    headerRowIndex,
+    dateColumns: dateCols.slice(0, 5),
+    amountColumns: amountCols.slice(0, 5),
+    notes,
+  };
 }
 
 // Compatibility types for bank-reconciliation page
@@ -513,6 +803,7 @@ function parseTransactionRow(row: any, rowIndex: number): { transaction: BankTra
 export function parseBankStatementCSV(csvText: string): BankStatementParseResult {
   const errors: ParseError[] = [];
   const transactions: BankTransaction[] = [];
+  let analysis: SheetAnalysis | undefined = undefined;
   
   try {
     // Use PapaParse for robust CSV handling
@@ -547,6 +838,9 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
       };
     }
     
+    // Analyze sheet structure for better validation/error reporting
+    analysis = analyzeSheetStructure(jsonData, { scanRows: 80, startRow: 0 });
+
     // Find where actual transaction data starts (skip header rows if CSV doesn't have proper headers)
     // For CSV with header: true, PapaParse treats first row as header, so data starts at index 0
     // But we still need to check if the "data" actually starts later
@@ -592,7 +886,8 @@ export function parseBankStatementCSV(csvText: string): BankStatementParseResult
   return {
     transactions,
     errors,
-    format: 'csv'
+    format: 'csv',
+    analysis
   };
 }
 
@@ -957,12 +1252,14 @@ export async function parseBankStatementPDF(arrayBuffer: ArrayBuffer): Promise<B
 export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResult {
   const errors: ParseError[] = [];
   const transactions: BankTransaction[] = [];
+  const analysis = analyzeSheetStructure(jsonData, { scanRows: 80, startRow: 0 });
   
   if (!jsonData || jsonData.length === 0) {
     return {
       transactions: [],
       errors: [{ row: 0, message: 'Excel file appears to be empty or has no data rows' }],
-      format: 'excel'
+      format: 'excel',
+      analysis
     };
   }
   
@@ -1001,7 +1298,8 @@ export function parseBankStatementExcel(jsonData: any[]): BankStatementParseResu
   return {
     transactions,
     errors,
-    format: 'excel'
+    format: 'excel',
+    analysis
   };
 }
 

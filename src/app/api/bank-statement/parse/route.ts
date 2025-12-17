@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { parseBankStatementCSV, parseBankStatementExcel, parseBankStatementPDF, type BankTransaction, type BankStatementParseResult } from '@/lib/bank-statement-parser';
+import { parseBankStatementCSV, parseBankStatementExcel, parseBankStatementPDF, analyzeSheetStructure, type BankTransaction, type BankStatementParseResult } from '@/lib/bank-statement-parser';
 
 // Route configuration
 export const runtime = 'nodejs';
@@ -155,7 +155,32 @@ export async function POST(request: NextRequest) {
           if (fallbackResult.transactions.length) {
             parseResult = fallbackResult;
             parseResult.detectedFormat = (parseResult.detectedFormat || '') + 'excel-fallback-grid';
+          } else {
+            // Provide analysis even when parsing fails, to help user understand structure
+            parseResult.analysis = analyzeSheetStructure(rowsAsObjects, { scanRows: 80, startRow: 0 });
           }
+        }
+      }
+    }
+
+    // Better validation + error reporting based on analysis (CSV/Excel)
+    if ((parseResult.format === 'csv' || parseResult.format === 'excel') && parseResult.transactions.length === 0) {
+      const a = parseResult.analysis;
+      if (a) {
+        const hints: string[] = [];
+        if (!a.dateColumns?.length) hints.push('No date-like column detected');
+        if (!a.amountColumns?.length) hints.push('No amount-like column detected');
+        if (a.dataStartRow === null) hints.push('No transaction-like rows detected');
+        if (a.nonEmptyRows === 0) hints.push('Sheet appears empty');
+
+        if (hints.length) {
+          parseResult.errors = [
+            ...(parseResult.errors || []),
+            {
+              row: 0,
+              message: `Parsing produced 0 transactions. ${hints.join('. ')}. Please ensure the statement contains a transaction table with Date/Debit/Credit columns.`,
+            },
+          ];
         }
       }
     }
@@ -166,6 +191,7 @@ export async function POST(request: NextRequest) {
       transactions: parseResult.transactions,
       errors: parseResult.errors,
       format: parseResult.format,
+      analysis: parseResult.analysis,
       totalRows: parseResult.transactions.length + parseResult.errors.length,
       validTransactions: parseResult.transactions.length,
       errorCount: parseResult.errors.length,
