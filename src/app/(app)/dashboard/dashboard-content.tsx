@@ -294,11 +294,11 @@ function DashboardContent() {
                               {/* Mobile: square app-icon tile. Desktop: keep richer card layout */}
                               <Card className="group cursor-pointer border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] min-w-0 md:h-full md:rounded-xl md:hover:-translate-y-1 aspect-square md:aspect-auto">
                                 {/* Mobile compact layout */}
-                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
-                                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-sm`}>
-                                    <Icon className="h-6 w-6 text-white" />
+                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center px-2 py-2">
+                                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-1 shadow-lg`}>
+                                    <Icon className="h-7 w-7 text-white" />
                                   </div>
-                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 w-full group-hover:text-primary transition-colors">
                                     {feature.title}
                                   </div>
                                 </div>
@@ -360,11 +360,11 @@ function DashboardContent() {
                             <Link key={feature.href} href={feature.href} className="block">
                               <Card className="group cursor-pointer border-2 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] min-w-0 md:h-full md:rounded-xl md:hover:-translate-y-1 aspect-square md:aspect-auto">
                                 {/* Mobile compact layout */}
-                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
-                                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-sm`}>
-                                    <Icon className="h-6 w-6 text-white" />
+                                <div className="md:hidden h-full w-full flex flex-col items-center justify-center px-2 py-2">
+                                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-1 shadow-lg`}>
+                                    <Icon className="h-7 w-7 text-white" />
                                   </div>
-                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                                  <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 w-full group-hover:text-primary transition-colors">
                                     {feature.title}
                                   </div>
                                 </div>
@@ -507,11 +507,11 @@ function DashboardContent() {
                 <Link key={feature.href} href={feature.href} className="block">
                   <Card className="group cursor-pointer border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] min-w-0 overflow-hidden bg-gradient-to-br from-card to-muted/10 relative aspect-square md:aspect-auto md:h-full md:hover:-translate-y-2">
                     {/* Mobile app-icon layout */}
-                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-lg`}>
-                        <Icon className="h-6 w-6 text-white" />
+                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center px-2 py-2">
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-1 shadow-lg`}>
+                        <Icon className="h-7 w-7 text-white" />
                       </div>
-                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2">
+                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 w-full">
                         {feature.title}
                       </div>
                     </div>
@@ -586,11 +586,11 @@ function DashboardContent() {
                 <Link key={feature.href} href={feature.href} className="block">
                   <Card className="group cursor-pointer border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 active:scale-[0.98] min-w-0 overflow-hidden bg-gradient-to-br from-card to-muted/10 relative aspect-square md:aspect-auto md:h-full md:hover:-translate-y-2">
                     {/* Mobile app-icon layout */}
-                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center p-3">
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 shadow-lg`}>
-                        <Icon className="h-6 w-6 text-white" />
+                    <div className="md:hidden h-full w-full flex flex-col items-center justify-center px-2 py-2">
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-1 shadow-lg`}>
+                        <Icon className="h-7 w-7 text-white" />
                       </div>
-                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2">
+                      <div className="text-[11px] font-semibold text-center leading-tight line-clamp-2 w-full">
                         {feature.title}
                       </div>
                     </div>
