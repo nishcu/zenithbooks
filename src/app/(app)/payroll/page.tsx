@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useMemo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Users, IndianRupee, FileText, Landmark } from "lucide-react";
 import Link from "next/link";
@@ -15,21 +16,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-const payrollSummary = {
-    activeEmployees: 12,
-    netPay: 850000,
-    taxesDeducted: 120000,
-    providentFund: 60000
-};
-
-const recentPayruns = [
-    { id: "PAY-2024-07", month: "July 2024", status: "Paid", amount: 850000 },
-    { id: "PAY-2024-06", month: "June 2024", status: "Paid", amount: 845000 },
-    { id: "PAY-2024-05", month: "May 2024", status: "Paid", amount: 840000 },
-];
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 export default function PayrollPage() {
+    const [user] = useAuthState(auth);
+    const employeesQuery = user ? query(collection(db, "employees"), where("employerId", "==", user.uid)) : null;
+    const [employeesSnapshot, employeesLoading] = useCollection(employeesQuery);
+    const activeEmployees = useMemo(() => {
+        if (!employeesSnapshot) return 0;
+        return employeesSnapshot.docs.filter(d => (d.data() as any)?.status !== "Resigned").length;
+    }, [employeesSnapshot]);
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -47,23 +47,26 @@ export default function PayrollPage() {
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard 
                     title="Active Employees"
-                    value={String(payrollSummary.activeEmployees)}
+                    value={employeesLoading ? "…" : String(activeEmployees)}
                     icon={Users}
                 />
                  <StatCard 
                     title="Net Pay (Last Month)"
-                    value={`₹${payrollSummary.netPay.toLocaleString('en-IN')}`}
+                    value="—"
                     icon={IndianRupee}
+                    description="Run payroll to generate totals"
                 />
                  <StatCard 
                     title="Taxes Deducted (TDS)"
-                    value={`₹${payrollSummary.taxesDeducted.toLocaleString('en-IN')}`}
+                    value="—"
                     icon={FileText}
+                    description="Available after payrun"
                 />
                  <StatCard 
                     title="Provident Fund (PF)"
-                    value={`₹${payrollSummary.providentFund.toLocaleString('en-IN')}`}
+                    value="—"
                     icon={Landmark}
+                    description="Available after payrun"
                 />
             </div>
             
@@ -83,14 +86,11 @@ export default function PayrollPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {recentPayruns.map(run => (
-                                <TableRow key={run.id}>
-                                    <TableCell className="font-medium">{run.id}</TableCell>
-                                    <TableCell>{run.month}</TableCell>
-                                    <TableCell><Badge className="bg-green-600">{run.status}</Badge></TableCell>
-                                    <TableCell className="text-right font-mono">₹{run.amount.toLocaleString('en-IN')}</TableCell>
-                                </TableRow>
-                            ))}
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                    No payroll runs yet. Click “Run Payroll” to create your first payrun.
+                                </TableCell>
+                            </TableRow>
                         </TableBody>
                     </Table>
                 </CardContent>

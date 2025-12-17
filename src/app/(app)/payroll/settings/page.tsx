@@ -32,13 +32,8 @@ type Component = {
     type: 'earning' | 'deduction';
 };
 
-const initialComponents: Component[] = [
-    { id: 'basic', name: 'Basic Salary', type: 'earning' },
-    { id: 'hra', name: 'House Rent Allowance (HRA)', type: 'earning' },
-    { id: 'special', name: 'Special Allowance', type: 'earning' },
-    { id: 'pf', name: 'Provident Fund (PF)', type: 'deduction' },
-    { id: 'proftax', name: 'Professional Tax', type: 'deduction' },
-];
+// Start empty to avoid showing dummy/default data.
+const initialComponents: Component[] = [];
 
 
 export default function PayrollSettingsPage() {
@@ -85,7 +80,7 @@ export default function PayrollSettingsPage() {
                     </div>
                     <div className="space-y-2 pl-6">
                         <Label>PF Number</Label>
-                        <Input defaultValue="MH/BOM/1234567/000/1234567"/>
+                        <Input placeholder="Enter PF number"/>
                     </div>
                      <div className="flex items-center space-x-2 pt-4">
                         <Checkbox id="esi-enabled" defaultChecked/>
@@ -93,7 +88,7 @@ export default function PayrollSettingsPage() {
                     </div>
                      <div className="space-y-2 pl-6">
                         <Label>ESI Number</Label>
-                        <Input defaultValue="12345678901234567"/>
+                        <Input placeholder="Enter ESI number"/>
                     </div>
                      <div className="flex items-center space-x-2 pt-4">
                         <Checkbox id="pt-enabled"/>

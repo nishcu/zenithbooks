@@ -23,6 +23,10 @@ import * as XLSX from 'xlsx';
 import { format } from "date-fns";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { formatExcelFromJson } from "@/lib/export-utils";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 const months = [
     { value: "0", label: "January" }, { value: "1", label: "February" }, { value: "2", label: "March" },
@@ -38,19 +42,35 @@ export default function PayrollReportsPage() {
     const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
     const { toast } = useToast();
     const reportRef = useRef<HTMLDivElement>(null);
+    const [user] = useAuthState(auth);
+    const employeesQuery = user ? query(collection(db, "employees"), where("employerId", "==", user.uid)) : null;
+    const [employeesSnapshot] = useCollection(employeesQuery);
 
     const handleDownload = () => {
-        toast({
-            title: "Download Initiated",
-            description: `Your ${reportType} report is being generated.`
-        });
-        
-        // Simulate data generation for the report
-        const reportData = [
-            { "Employee ID": "EMP-001", "Name": "Rohan Sharma", "Gross Pay": 80000, "Deductions": 15000, "Net Pay": 65000 },
-            { "Employee ID": "EMP-002", "Name": "Priya Mehta", "Gross Pay": 120000, "Deductions": 25000, "Net Pay": 95000 },
-            { "Employee ID": "EMP-003", "Name": "Anjali Singh", "Gross Pay": 60000, "Deductions": 10000, "Net Pay": 50000 },
-        ];
+        if (!user) {
+            toast({ variant: "destructive", title: "Login required", description: "Please login to generate reports." });
+            return;
+        }
+
+        const employees = employeesSnapshot?.docs.map(d => ({ id: d.id, ...(d.data() as any) })) || [];
+        if (employees.length === 0) {
+            toast({ variant: "destructive", title: "No employees", description: "Add employees in Payroll → Employees first." });
+            return;
+        }
+
+        toast({ title: "Generating report", description: `Preparing ${reportType} for ${monthName} ${selectedYear}` });
+
+        // Minimal real report: list employees (amounts will come from payruns when implemented)
+        const reportData = employees.map((e: any) => ({
+            "Employee ID": e.id,
+            "Name": e.name || "",
+            "PAN": e.pan || "",
+            "Designation": e.designation || "",
+            "Status": e.status || "Active",
+            "Gross Pay": "",
+            "Deductions": "",
+            "Net Pay": "",
+        }));
 
         const worksheet = XLSX.utils.json_to_sheet(reportData);
         
