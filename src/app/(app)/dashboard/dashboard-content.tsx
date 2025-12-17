@@ -298,8 +298,8 @@ function DashboardContent() {
                                       {feature.badge}
                                     </Badge>
                                   </div>
-                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                                    <Icon className="h-6 w-6 text-white" />
+                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                    <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
                                   </div>
                                   <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
                                     {feature.title}
@@ -346,8 +346,8 @@ function DashboardContent() {
                             <Link key={feature.href} href={feature.href}>
                               <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
                                 <CardHeader className="pb-3 px-4 pt-4">
-                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                                    <Icon className="h-6 w-6 text-white" />
+                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                    <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
                                   </div>
                                   <div className="flex items-start justify-between gap-2">
                                     <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
@@ -399,8 +399,8 @@ function DashboardContent() {
                             <Link key={feature.href} href={feature.href}>
                               <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
                                 <CardHeader className="pb-3 px-4 pt-4">
-                                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                                    <Icon className="h-6 w-6 text-white" />
+                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                    <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
                                   </div>
                                   <div className="flex items-start justify-between gap-2">
                                     <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
@@ -486,8 +486,8 @@ function DashboardContent() {
                           {feature.badge}
                         </Badge>
                       </div>
-                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
+                      <div className={`w-14 h-14 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                        <Icon className="h-7 w-7 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
                       </div>
                       <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
                         {feature.title}
@@ -552,8 +552,8 @@ function DashboardContent() {
                           {feature.badge}
                         </Badge>
                       </div>
-                      <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-6 w-6 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
+                      <div className={`w-14 h-14 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                        <Icon className="h-7 w-7 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
                       </div>
                       <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
                         {feature.title}
