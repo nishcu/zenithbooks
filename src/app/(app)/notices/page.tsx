@@ -27,11 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MailWarning, Upload, UserCheck, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
@@ -165,17 +161,13 @@ export default function NoticesPage() {
                     </div>
                     <FormField control={form.control} name="dueDate" render={({ field }) => (
                         <FormItem><FormLabel>Due Date for Reply</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {field.value ? format(field.value, "PPP") : <span>Pick a due date</span>}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent>
-                            </Popover>
+                            <FormControl>
+                                <Input
+                                    type="date"
+                                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                    onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                                />
+                            </FormControl>
                         <FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="description" render={({ field }) => (
