@@ -185,15 +185,29 @@ export default function NoticesPage() {
                             userId={user?.uid || ''}
                             userEmail={user?.email || ''}
                             userName={user?.displayName || ''}
+                            postPaymentContext={{
+                              key: "pending_on_demand_action",
+                              payload: {
+                                type: "notice_request",
+                                returnTo: "/notices",
+                                payload: {
+                                  amount: servicePrice,
+                                  noticeType: form.getValues("noticeType"),
+                                  dueDate: form.getValues("dueDate") ? (form.getValues("dueDate") as any).toISOString?.() : null,
+                                  description: form.getValues("description") || "",
+                                  fileName: (form.getValues("noticeFile") as any)?.name || null,
+                                  fileType: (form.getValues("noticeFile") as any)?.type || null,
+                                },
+                              },
+                            }}
                             onSuccess={(paymentId) => {
-                                // After successful payment, submit the form
+                                // NOTE: Cashfree usually redirects to /payment/success, so this callback may not run.
+                                // Post-payment creation happens in /payment/success via pending_on_demand_action.
                                 handlePaymentSuccess(paymentId, {
-                                    reportType: "Notice Reply",
-                                    clientName: "Notice Reply Service",
-                                    formData: form.getValues(),
+                                  reportType: "Notice Reply",
+                                  clientName: "Notice Reply Service",
+                                  formData: form.getValues(),
                                 });
-                                // Now submit the form
-                                form.handleSubmit((values) => handleSubmit(values))();
                             }}
                             onFailure={() => {
                                 toast({

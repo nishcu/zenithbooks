@@ -8,7 +8,7 @@ import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -139,6 +139,20 @@ function PaymentSuccessContent() {
             const raw = localStorage.getItem("pending_on_demand_action");
             if (raw && orderIdParam) {
               const pending = JSON.parse(raw);
+              // Always record the last successful on-demand payment (used for generic resume/UX)
+              try {
+                localStorage.setItem(
+                  "on_demand_last_payment",
+                  JSON.stringify({
+                    planId,
+                    orderId: orderIdParam,
+                    paymentId: paymentIdParam || null,
+                    at: Date.now(),
+                    pendingType: pending?.type || "unknown",
+                  })
+                );
+              } catch {}
+
               if (pending?.type === "form16") {
                 // Store an unlock token for the Form 16 page to consume
                 localStorage.setItem(
@@ -154,6 +168,50 @@ function PaymentSuccessContent() {
                 );
                 localStorage.removeItem("pending_on_demand_action");
                 redirectTo = pending.returnTo || "/income-tax/form-16";
+              } else if (pending?.type === "cma_report") {
+                // Store an unlock token for CMA report page to consume + auto-generate
+                localStorage.setItem(
+                  "on_demand_unlock",
+                  JSON.stringify({
+                    type: "cma_report",
+                    orderId: orderIdParam,
+                    paymentId: paymentIdParam || null,
+                    planId,
+                    at: Date.now(),
+                    payload: pending.payload || null,
+                  })
+                );
+                localStorage.removeItem("pending_on_demand_action");
+                redirectTo = pending.returnTo || "/reports/cma-report";
+              } else if (pending?.type === "notice_request") {
+                // Create the notice request after payment (can't rely on originating page callbacks due to redirect)
+                if (user?.uid) {
+                  const n = pending?.payload || {};
+                  await addDoc(collection(db, "noticeRequests"), {
+                    userId: user.uid,
+                    noticeType: n.noticeType || "UNKNOWN",
+                    fileName: n.fileName || null,
+                    fileType: n.fileType || null,
+                    dueDate: n.dueDate ? new Date(n.dueDate) : null,
+                    description: n.description || "",
+                    status: "Pending Assignment",
+                    requestedAt: serverTimestamp(),
+                    payment: {
+                      provider: "cashfree",
+                      orderId: orderIdParam,
+                      paymentId: paymentIdParam || null,
+                      amount: n.amount ?? null,
+                      planId: planId || null,
+                    },
+                    source: "payment_success",
+                  });
+                }
+                localStorage.removeItem("pending_on_demand_action");
+                redirectTo = pending.returnTo || "/notices";
+              } else if (pending?.returnTo) {
+                // Generic: just send the user back to where they initiated the payment
+                localStorage.removeItem("pending_on_demand_action");
+                redirectTo = pending.returnTo;
               }
             }
           } catch (e) {

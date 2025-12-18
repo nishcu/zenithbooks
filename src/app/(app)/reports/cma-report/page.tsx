@@ -135,6 +135,37 @@ export default function CmaReportGeneratorPage() {
   useEffect(() => {
     getServicePricing().then(setPricing);
   }, []);
+
+  // Resume paid flow after Cashfree redirect:
+  // /payment/success will set `on_demand_unlock` with type=cma_report
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("on_demand_unlock");
+      if (!raw) return;
+      const unlock = JSON.parse(raw);
+      if (unlock?.type !== "cma_report") return;
+
+      const p = unlock?.payload || {};
+      // Restore inputs (best-effort)
+      if (typeof p.numProjectedYears === "number") setNumProjectedYears(p.numProjectedYears);
+      if (Array.isArray(p.revenueGrowth)) setRevenueGrowth(p.revenueGrowth);
+      if (Array.isArray(p.expenseChange)) setExpenseChange(p.expenseChange);
+      if (p.loanAssumptions) setLoanAssumptions(p.loanAssumptions);
+      if (Array.isArray(p.fixedAssets)) setFixedAssets(p.fixedAssets);
+      if (p.auditedFinancials) setAuditedFinancials(p.auditedFinancials);
+      if (typeof p.auditedFileName === "string") setAuditedFileName(p.auditedFileName);
+
+      // Auto-generate and show report
+      setTimeout(() => {
+        handleGenerateReport();
+      }, 50);
+
+      localStorage.removeItem("on_demand_unlock");
+    } catch (e) {
+      console.error("Failed to resume CMA post-payment flow:", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const handleGenerateReport = () => {
     setIsGenerating(true);
@@ -687,6 +718,22 @@ export default function CmaReportGeneratorPage() {
                             userId={user?.uid || ''}
                             userEmail={user?.email || ''}
                             userName={user?.displayName || ''}
+                            postPaymentContext={{
+                              key: "pending_on_demand_action",
+                              payload: {
+                                type: "cma_report",
+                                returnTo: "/reports/cma-report",
+                                payload: {
+                                  numProjectedYears,
+                                  revenueGrowth,
+                                  expenseChange,
+                                  loanAssumptions,
+                                  fixedAssets,
+                                  auditedFinancials,
+                                  auditedFileName,
+                                },
+                              },
+                            }}
                             onSuccess={(paymentId) => {
                                 handlePaymentSuccess(paymentId, {
                                     reportType: "CMA Report",
