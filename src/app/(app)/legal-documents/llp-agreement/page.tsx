@@ -30,6 +30,7 @@ import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
@@ -348,42 +349,21 @@ ${data.partners.slice(1).map((p, i) => `_________________________\n(Partner ${i+
                                 <Button type="button" variant="outline" onClick={() => setStep(1)}>
                                     <ArrowLeft className="mr-2"/> Back to Edit
                                 </Button>
-                                {effectivePrice > 0 && !showDocument ? (
-                                    <CashfreeCheckout
-                                        amount={effectivePrice}
-                                        planId="llp_agreement_download"
-                                        planName="LLP Agreement Download"
-                                        userId={user?.uid || ''}
-                                        userEmail={user?.email || ''}
-                                        userName={user?.displayName || ''}
-                                        onSuccess={(paymentId) => {
-                                            setShowDocument(true);
-                                            toast({
-                                                title: "Payment Successful",
-                                                description: "Your document is ready for download."
-                                            });
-                                        }}
-                                        onFailure={() => {
-                                            toast({
-                                                variant: "destructive",
-                                                title: "Payment Failed",
-                                                description: "Payment was not completed. Please try again."
-                                            });
-                                        }}
-                                    />
-                                ) : (
-                                    showDocument && (
-                                        <div className="flex gap-2">
-                                            <Button type="button" onClick={handlePrint}>
-                                                <Printer className="mr-2"/> Print/Save as PDF
-                                            </Button>
-                                            <ShareButtons
-                                                contentRef={printRef}
-                                                fileName={`LLP_Agreement_${form.getValues("llpName")}`}
-                                            />
-                                        </div>
-                                    )
-                                )}
+                                <OnDemandPayAndUseActions
+                                  userId={user?.uid || ""}
+                                  userEmail={user?.email || ""}
+                                  userName={user?.displayName || ""}
+                                  planId="llp_agreement_download"
+                                  planName="LLP Agreement Download"
+                                  amount={effectivePrice}
+                                  fileName={`LLP_Agreement_${form.getValues("llpName")}`}
+                                  contentRef={printRef}
+                                  documentType="llp_agreement"
+                                  documentName={`LLP_Agreement_${form.getValues("llpName")}`}
+                                  metadata={{ source: "legal-documents" }}
+                                  showDocument={showDocument}
+                                  setShowDocument={setShowDocument}
+                                />
                             </CardFooter>
                         </Card>
                     )}

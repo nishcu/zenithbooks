@@ -293,6 +293,20 @@ function PaymentSuccessContent() {
                         at: Date.now(),
                       })
                     );
+
+                    // Special-case: some legacy pages don't use ShareButtons.beforeDownload yet.
+                    // For these, we treat "unlock" as the single use.
+                    if (pending.planId === "partnership_deed_download") {
+                      try {
+                        await updateDoc(doc(db, "paymentTransactions", `cf_${orderIdParam}`), {
+                          consumedAt: serverTimestamp(),
+                          updatedAt: serverTimestamp(),
+                          consumedBy: "payment_success:plan_unlock(partnership_deed_download)",
+                        } as any);
+                      } catch (e) {
+                        console.error("Failed to consume payment ticket for partnership deed unlock:", e);
+                      }
+                    }
                   }
                 } catch {}
                 localStorage.removeItem("pending_on_demand_action");

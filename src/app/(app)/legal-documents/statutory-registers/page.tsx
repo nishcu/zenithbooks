@@ -18,6 +18,7 @@ import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
+import { useOnDemandTicket } from "@/hooks/use-on-demand-ticket";
 
 const registers = [
     { id: "reg_members", label: "Register of Members (MGT-1)" },
@@ -37,6 +38,10 @@ export default function StatutoryRegisters() {
     const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
     const [showDocument, setShowDocument] = useState(false);
     useOnDemandUnlock("statutory_registers_download", () => setShowDocument(true));
+    const { ticket, refresh, consume } = useOnDemandTicket({
+      userId: user?.uid,
+      planId: "statutory_registers_download",
+    });
 
     // Fetch user subscription info
     useEffect(() => {
@@ -155,9 +160,13 @@ export default function StatutoryRegisters() {
         )
       : basePrice;
 
-    if (!showDocument && effectivePrice === 0) {
-      setShowDocument(true);
-    }
+    useEffect(() => {
+      if (!showDocument && effectivePrice === 0) setShowDocument(true);
+    }, [effectivePrice, showDocument]);
+
+    useEffect(() => {
+      if (ticket?.id && !showDocument) setShowDocument(true);
+    }, [ticket?.id, showDocument]);
 
     return (
         <div className="space-y-8 max-w-2xl mx-auto">
@@ -193,7 +202,7 @@ export default function StatutoryRegisters() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                  {effectivePrice > 0 && !showDocument ? (
+                  {effectivePrice > 0 && !showDocument && !ticket?.id ? (
                     <CashfreeCheckout
                       amount={effectivePrice}
                       planId="statutory_registers_download"
@@ -201,25 +210,45 @@ export default function StatutoryRegisters() {
                       userId={user?.uid || ''}
                       userEmail={user?.email || ''}
                       userName={user?.displayName || ''}
-                      onSuccess={(paymentId) => {
+                      onSuccess={() => {
+                        // redirect flow handled by /payment/success + useOnDemandUnlock; keep this for demo/non-redirect
                         setShowDocument(true);
-                        toast({
-                          title: "Payment Successful",
-                          description: "You can now generate the registers."
-                        });
-                      }}
-                      onFailure={() => {
-                        toast({
-                          variant: "destructive",
-                          title: "Payment Failed",
-                          description: "Payment was not completed. Please try again."
-                        });
+                        void refresh();
                       }}
                     />
                   ) : (
-                    <Button onClick={handleGenerate} disabled={!showDocument && effectivePrice > 0}>
-                        <FileDown className="mr-2"/>
-                        Generate Selected Registers
+                    <Button
+                      onClick={async () => {
+                        try {
+                          if (effectivePrice > 0) {
+                            if (!ticket?.id) {
+                              toast({
+                                variant: "destructive",
+                                title: "Payment required",
+                                description: "Please complete payment to generate registers.",
+                              });
+                              return;
+                            }
+                            await consume(ticket.id);
+                            toast({
+                              title: "Ticket used",
+                              description: "1 payment = 1 generation. Your ticket has been consumed.",
+                            });
+                          }
+                          await handleGenerate();
+                        } catch (e: any) {
+                          console.error(e);
+                          toast({
+                            variant: "destructive",
+                            title: "Generation failed",
+                            description: e?.message || "Could not generate registers.",
+                          });
+                        }
+                      }}
+                      disabled={!showDocument && effectivePrice > 0}
+                    >
+                      <FileDown className="mr-2"/>
+                      Generate Selected Registers
                     </Button>
                   )}
                 </CardFooter>

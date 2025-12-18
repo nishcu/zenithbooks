@@ -190,47 +190,24 @@ export default function SocietyRegistrationDeed() {
                       "registration_deeds"
                     )
                   : basePrice;
-                
-                if (effectivePrice > 0 && !showDocument) {
-                  return (
-                    <CashfreeCheckout
-                      amount={effectivePrice}
-                      planId="society_deed_download"
-                      planName="Society Registration Deed Download"
-                      userId={user?.uid || ''}
-                      userEmail={user?.email || ''}
-                      userName={user?.displayName || ''}
-                      onSuccess={(paymentId) => {
-                        setShowDocument(true);
-                        toast({
-                          title: "Payment Successful",
-                          description: "Your document is ready for download."
-                        });
-                      }}
-                      onFailure={() => {
-                        toast({
-                          variant: "destructive",
-                          title: "Payment Failed",
-                          description: "Payment was not completed. Please try again."
-                        });
-                      }}
-                    />
-                  );
-                } else {
-                  if (!showDocument && effectivePrice === 0) {
-                    setShowDocument(true);
-                  }
-                  return showDocument ? (
-                    <div className="flex gap-2">
-                      <Button type="button" onClick={handlePrint}><Printer className="mr-2"/> Print/Save as PDF</Button>
-                      <ShareButtons
-                        contentRef={printRef}
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="society_deed_download"
+                        planName="Society Registration Deed Download"
+                        amount={effectivePrice}
                         fileName={`Society_Registration_Deed_${formData.societyName}`}
+                        contentRef={printRef}
+                        documentType="society_deed"
+                        documentName={`Society_Registration_Deed_${formData.societyName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
                       />
-                    </div>
-                  ) : null;
-                }
-              })()}
+                    );
+                  })()}
             </CardFooter>
           </Card>
         );

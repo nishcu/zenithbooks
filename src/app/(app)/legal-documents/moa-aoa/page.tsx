@@ -31,6 +31,7 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
@@ -121,9 +122,9 @@ export default function MoaAoaPage() {
       )
     : basePrice;
 
-  if (!showDocument && effectivePrice === 0 && result) {
-    setShowDocument(true);
-  }
+  useEffect(() => {
+    if (!showDocument && effectivePrice === 0 && result) setShowDocument(true);
+  }, [effectivePrice, result, showDocument]);
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -188,37 +189,23 @@ export default function MoaAoaPage() {
                 </div>
               </CardContent>
               <CardFooter className="justify-end">
-                {effectivePrice > 0 && !showDocument ? (
-                  <CashfreeCheckout
-                    amount={effectivePrice}
+                {result ? (
+                  <OnDemandPayAndUseActions
+                    userId={user?.uid || ""}
+                    userEmail={user?.email || ""}
+                    userName={user?.displayName || ""}
                     planId="moa_aoa_download"
                     planName="MOA & AOA Download"
-                    userId={user?.uid || ''}
-                    userEmail={user?.email || ''}
-                    userName={user?.displayName || ''}
-                    onSuccess={(paymentId) => {
-                      setShowDocument(true);
-                      toast({
-                        title: "Payment Successful",
-                        description: "Your document is ready for download."
-                      });
-                    }}
-                    onFailure={() => {
-                      toast({
-                        variant: "destructive",
-                        title: "Payment Failed",
-                        description: "Payment was not completed. Please try again."
-                      });
-                    }}
+                    amount={effectivePrice}
+                    fileName={`MOA_Objects_${form.getValues("companyName")}`}
+                    contentRef={printRef}
+                    documentType="moa_aoa"
+                    documentName={`MOA_Objects_${form.getValues("companyName")}`}
+                    metadata={{ source: "legal-documents" }}
+                    showDocument={showDocument}
+                    setShowDocument={setShowDocument}
                   />
-                ) : (
-                  showDocument && (
-                    <ShareButtons
-                      contentRef={printRef}
-                      fileName={`MOA_Objects_${form.getValues("companyName")}`}
-                    />
-                  )
-                )}
+                ) : null}
               </CardFooter>
             </Card>
           )}

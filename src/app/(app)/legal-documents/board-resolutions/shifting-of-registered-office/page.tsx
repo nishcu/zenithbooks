@@ -153,47 +153,23 @@ export default function ShiftingOfOfficePage() {
                           "company_documents"
                         )
                       : basePrice;
-                    
-                    if (!showDocument && effectivePrice === 0) {
-                      setShowDocument(true);
-                    }
-                    
-                    if (effectivePrice > 0 && !showDocument) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="board_resolutions_download"
-                          planName="Board Resolution Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      return showDocument ? (
-                        <div className="flex gap-2">
-                          <Button onClick={handlePrint}><Printer className="mr-2" /> Print / Save as PDF</Button>
-                          <ShareButtons
-                            contentRef={printRef}
-                            fileName={`Board_Resolution_Shifting_Office_${formData.companyName}`}
-                          />
-                        </div>
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="board_resolutions_download"
+                        planName="Board Resolution Download"
+                        amount={effectivePrice}
+                        fileName={`Board_Resolution_Shifting_Office_${formData.companyName}`}
+                        contentRef={printRef}
+                        documentType="board_resolutions"
+                        documentName={`Board_Resolution_Shifting_Office_${formData.companyName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>
