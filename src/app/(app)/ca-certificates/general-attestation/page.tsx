@@ -290,6 +290,19 @@ export default function GeneralAttestationPage() {
                       userId={user?.uid || ''}
                       userEmail={user?.email || ''}
                       userName={user?.displayName || ''}
+                      postPaymentContext={{
+                        key: "pending_ca_certificate",
+                        payload: {
+                          type: "ca_certificate",
+                          planId: "general_attestation_cert",
+                          amount: effectivePrice,
+                          reportType: "General Attestation Certificate",
+                          clientName: form.getValues("clientName"),
+                          documentType: "general-attestation-certificate",
+                          documentName: form.getValues("documentName") || "General Attestation Certificate",
+                          formData: form.getValues(),
+                        },
+                      }}
                       onSuccess={(paymentId) => {
                         handlePaymentSuccess(paymentId, {
                           reportType: "General Attestation Certificate",

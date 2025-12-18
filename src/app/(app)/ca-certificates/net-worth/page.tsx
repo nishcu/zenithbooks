@@ -565,6 +565,19 @@ export default function NetWorthCertificatePage() {
                                       userId={user?.uid || ''}
                                       userEmail={user?.email || ''}
                                       userName={user?.displayName || ''}
+                                      postPaymentContext={{
+                                        key: "pending_ca_certificate",
+                                        payload: {
+                                          type: "ca_certificate",
+                                          planId: "net_worth_cert",
+                                          amount: effectivePrice,
+                                          reportType: "Net Worth Certificate",
+                                          clientName: form.getValues("clientName"),
+                                          documentType: "net-worth-certificate",
+                                          documentName: form.getValues("documentName") || "Net Worth Certificate",
+                                          formData: form.getValues(),
+                                        },
+                                      }}
                                       onSuccess={(paymentId) => {
                                         handlePaymentSuccess(paymentId, {
                                           reportType: "Net Worth Certificate",

@@ -327,6 +327,19 @@ export default function ForeignRemittancePage() {
                                 userId={user?.uid || ''}
                                 userEmail={user?.email || ''}
                                 userName={user?.displayName || ''}
+                                postPaymentContext={{
+                                  key: "pending_ca_certificate",
+                                  payload: {
+                                    type: "ca_certificate",
+                                    planId: "foreign_remittance_cert",
+                                    amount: effectivePrice,
+                                    reportType: "Form 15CB (Foreign Remittance)",
+                                    clientName: form.getValues("remitterName"),
+                                    documentType: "foreign-remittance-form-15cb",
+                                    documentName: form.getValues("documentName") || "Form 15CB (Foreign Remittance)",
+                                    formData: form.getValues(),
+                                  },
+                                }}
                                 onSuccess={(paymentId) => {
                                   handlePaymentSuccess(paymentId, {
                                     reportType: "Form 15CB (Foreign Remittance)",

@@ -361,6 +361,19 @@ export default function TurnoverCertificatePage() {
                                userId={user?.uid || ''}
                                userEmail={user?.email || ''}
                                userName={user?.displayName || ''}
+                               postPaymentContext={{
+                                 key: "pending_ca_certificate",
+                                 payload: {
+                                   type: "ca_certificate",
+                                   planId: "turnover_cert",
+                                   amount: effectivePrice,
+                                   reportType: "Turnover Certificate",
+                                   clientName: form.getValues("entityName"),
+                                   documentType: "turnover-certificate",
+                                   documentName: form.getValues("documentName") || "Turnover Certificate",
+                                   formData: form.getValues(),
+                                 },
+                               }}
                                onSuccess={async (paymentId) => {
                                    // After successful payment, create the certification request
                                    setIsSubmitting(true);

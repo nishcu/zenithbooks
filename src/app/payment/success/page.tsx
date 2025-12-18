@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -65,6 +66,70 @@ function PaymentSuccessContent() {
             title: 'Payment Successful!',
             description: 'Your payment has been verified and subscription activated.',
           });
+
+          // If this payment came from a CA certificate purchase, finalize the flow here
+          // (Cashfree checkout typically redirects, so the originating page may not run callbacks).
+          try {
+            const raw = localStorage.getItem("pending_ca_certificate");
+            if (raw && user?.uid && orderIdParam) {
+              const pending = JSON.parse(raw);
+              if (pending?.type === "ca_certificate") {
+                const now = new Date();
+                const baseId = `cf_${orderIdParam}`;
+
+                // 1) Autosave into My Documents (userDocuments)
+                await setDoc(
+                  doc(db, "userDocuments", baseId),
+                  {
+                    userId: user.uid,
+                    documentType: pending.documentType || "ca-certificate",
+                    documentName: pending.documentName || pending.reportType || "CA Certificate",
+                    status: "Paid",
+                    formData: pending.formData || {},
+                    payment: {
+                      provider: "cashfree",
+                      orderId: orderIdParam,
+                      paymentId: paymentIdParam || null,
+                      amount: pending.amount ?? null,
+                      planId: pending.planId || null,
+                    },
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                  },
+                  { merge: true }
+                );
+
+                // 2) Send certification request to admin
+                await setDoc(
+                  doc(db, "certificationRequests", baseId),
+                  {
+                    reportType: pending.reportType || "CA Certificate",
+                    clientName: pending.clientName || "",
+                    requestedBy: user.displayName || user.email,
+                    userId: user.uid,
+                    requestDate: serverTimestamp(),
+                    status: "Pending",
+                    draftUrl: "#",
+                    signedDocumentUrl: null,
+                    formData: pending.formData || {},
+                    cashfreeOrderId: orderIdParam,
+                    cashfreePaymentId: paymentIdParam || null,
+                    amount: pending.amount ?? null,
+                    serviceId: pending.planId || null,
+                    source: "payment_success",
+                    createdAt: serverTimestamp(),
+                  },
+                  { merge: true }
+                );
+
+                // Clear after successful writes
+                localStorage.removeItem("pending_ca_certificate");
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment CA certificate finalization failed:", e);
+            // Do not fail the payment success screen; user can retry by contacting admin/support.
+          }
           
           // Clear pending plan ID
           localStorage.removeItem('pending_plan_id');

@@ -13,6 +13,14 @@ interface CashfreeCheckoutProps {
   userId: string;
   userEmail?: string;
   userName?: string;
+  /**
+   * Optional payload to persist before redirecting to Cashfree.
+   * This lets /payment/success complete post-payment actions (e.g., autosave document).
+   */
+  postPaymentContext?: {
+    key: string; // localStorage key
+    payload: any; // JSON-serializable payload
+  };
   onSuccess?: (paymentId: string) => void;
   onFailure?: () => void;
 }
@@ -30,6 +38,7 @@ export function CashfreeCheckout({
   userId,
   userEmail,
   userName,
+  postPaymentContext,
   onSuccess,
   onFailure,
 }: CashfreeCheckoutProps) {
@@ -55,6 +64,15 @@ export function CashfreeCheckout({
       
       // Store planId in localStorage for payment success page
       localStorage.setItem('pending_plan_id', planId);
+
+      // Store optional post-payment context for the success page to finish the flow
+      if (postPaymentContext?.key) {
+        try {
+          localStorage.setItem(postPaymentContext.key, JSON.stringify(postPaymentContext.payload ?? {}));
+        } catch (e) {
+          console.warn('Failed to persist postPaymentContext:', e);
+        }
+      }
 
       // Prepare customer details
       const customerDetailsPayload = {

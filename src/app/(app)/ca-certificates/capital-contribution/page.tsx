@@ -329,6 +329,19 @@ export default function CapitalContributionCertificatePage() {
                                 userId={user?.uid || ''}
                                 userEmail={user?.email || ''}
                                 userName={user?.displayName || ''}
+                                postPaymentContext={{
+                                  key: "pending_ca_certificate",
+                                  payload: {
+                                    type: "ca_certificate",
+                                    planId: "capital_contribution_cert",
+                                    amount: effectivePrice,
+                                    reportType: "Capital Contribution Certificate",
+                                    clientName: form.getValues("contributorName"),
+                                    documentType: "capital-contribution-certificate",
+                                    documentName: form.getValues("documentName") || "Capital Contribution Certificate",
+                                    formData: form.getValues(),
+                                  },
+                                }}
                                 onSuccess={(paymentId) => {
                                   handlePaymentSuccess(paymentId, {
                                     reportType: "Capital Contribution Certificate",

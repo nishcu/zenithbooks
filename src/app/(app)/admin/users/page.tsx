@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 type User = {
   id: string;
@@ -42,6 +43,7 @@ type User = {
 
 export default function AdminUsers() {
   const [user] = useAuthState(auth);
+  const isSuperAdmin = !!user?.uid && user.uid === SUPER_ADMIN_UID;
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

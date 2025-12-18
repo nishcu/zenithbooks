@@ -464,6 +464,19 @@ export default function VisaImmigrationCertificatePage() {
                                       userId={user?.uid || ''}
                                       userEmail={user?.email || ''}
                                       userName={user?.displayName || ''}
+                                      postPaymentContext={{
+                                        key: "pending_ca_certificate",
+                                        payload: {
+                                          type: "ca_certificate",
+                                          planId: "visa_immigration_cert",
+                                          amount: effectivePrice,
+                                          reportType: "Visa & Immigration Financials",
+                                          clientName: form.getValues("studentName"),
+                                          documentType: "visa-immigration-financials",
+                                          documentName: form.getValues("documentName") || "Visa & Immigration Financials",
+                                          formData: form.getValues(),
+                                        },
+                                      }}
                                       onSuccess={(paymentId) => {
                                         handlePaymentSuccess(paymentId, {
                                           reportType: "Visa & Immigration Financials",
