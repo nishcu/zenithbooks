@@ -27,6 +27,9 @@ export const servicePricing: ServicePricing = {
         { id: "cma_report", name: "CMA Report", price: 4999 },
         { id: "sales_analysis", name: "Sales Analysis", price: 999 },
         { id: "purchase_analysis", name: "Purchase Analysis", price: 999 },
+        // Income Tax
+        { id: "form16_individual", name: "Form 16 Generation (Individual)", price: 499 },
+        { id: "form16_bulk", name: "Form 16 Generation (Bulk)", price: 1999 },
     ],
     ca_certs: [
         { id: "net_worth", name: "Net Worth Certificate", price: 2499 },
