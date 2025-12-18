@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";

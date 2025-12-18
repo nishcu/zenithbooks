@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
