@@ -133,30 +133,7 @@ export default function RapidVoucherEntryPage() {
     },
   });
 
-  // TEMPORARY SAFETY SWITCH:
-  // Keep hooks above returns to avoid Rules-of-Hooks violations (React error #310 in prod).
-  const DISABLE_RAPID_VOUCHERS = true;
-  if (DISABLE_RAPID_VOUCHERS) {
-    return (
-      <div className="space-y-6 p-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Temporarily unavailable</CardTitle>
-            <CardDescription>
-              We&apos;re fixing an issue on this page. Please use the regular voucher entry for now.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push("/accounting/vouchers")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Vouchers
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
+  // Re-enabled: Rapid Voucher Entry UI (hooks remain above any returns).
   
   const voucherType = form.watch("type");
   const partyList = voucherType === 'receipt' ? customers : vendors;
@@ -178,6 +155,25 @@ export default function RapidVoucherEntryPage() {
             {customersError && <p><strong>Customers:</strong> {customersError}</p>}
             {vendorsError && <p><strong>Vendors:</strong> {vendorsError}</p>}
           </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-6 p-8 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Please sign in</CardTitle>
+            <CardDescription>You need to be logged in to create vouchers.</CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button variant="outline" onClick={() => router.push("/login")}>
+              Go to Login
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     );
@@ -322,7 +318,17 @@ export default function RapidVoucherEntryPage() {
                                 <FormLabel>{partyLabel}</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
-                                    <SelectTrigger><SelectValue placeholder={customersLoading || vendorsLoading ? "Loading..." : "Select Party"} /></SelectTrigger>
+                                    <SelectTrigger>
+                                      <SelectValue
+                                        placeholder={
+                                          customersLoading || vendorsLoading
+                                            ? "Loading..."
+                                            : partyList.length === 0
+                                              ? (voucherType === "receipt" ? "No customers found" : "No vendors found")
+                                              : "Select Party"
+                                        }
+                                      />
+                                    </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
                                     {partyList.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -343,7 +349,7 @@ export default function RapidVoucherEntryPage() {
                        <FormField control={form.control} name="mode" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Mode</FormLabel>
-                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                     <SelectContent>
                                         <SelectItem value="bank">Bank</SelectItem>
