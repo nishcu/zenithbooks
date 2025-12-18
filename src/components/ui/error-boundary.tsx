@@ -15,12 +15,13 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo?: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error: Error): State | null {
@@ -39,6 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
     
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    this.setState({ errorInfo });
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
@@ -72,6 +74,14 @@ export class ErrorBoundary extends Component<Props, State> {
                   <AlertTitle>Error Details</AlertTitle>
                   <AlertDescription className="font-mono text-xs">
                     {this.state.error.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {this.state.errorInfo?.componentStack && (
+                <Alert>
+                  <AlertTitle>Component Stack</AlertTitle>
+                  <AlertDescription className="font-mono text-[10px] whitespace-pre-wrap max-h-40 overflow-auto">
+                    {this.state.errorInfo.componentStack}
                   </AlertDescription>
                 </Alert>
               )}
