@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 // Removed unused Tabs import
@@ -65,15 +65,17 @@ export default function TransactionsPage() {
           getDocs(
             query(
               collection(db, "certificationRequests"),
-              where("userId", "==", user.uid),
-              orderBy("requestDate", "desc")
+              // Avoid composite index requirement (where + orderBy).
+              // We'll sort combined results client-side anyway.
+              where("userId", "==", user.uid)
             )
           ),
           getDocs(
             query(
               collection(db, "paymentTransactions"),
-              where("userId", "==", user.uid),
-              orderBy("createdAt", "desc")
+              // Avoid composite index requirement (where + orderBy).
+              // We'll sort combined results client-side anyway.
+              where("userId", "==", user.uid)
             )
           ),
         ]);
