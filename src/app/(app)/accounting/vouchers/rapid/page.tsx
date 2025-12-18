@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useContext, useMemo, useCallback } from "react";
+import { useState, useContext, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -37,8 +37,7 @@ import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narrat
 import { allAccounts } from "@/lib/accounts";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
-import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
+import { collection, query, where, doc, getDoc, getDocs } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -61,20 +60,66 @@ export default function RapidVoucherEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [user] = useAuthState(auth);
-  // Always provide valid Firestore refs/queries to hooks (avoid passing null/undefined which can crash in prod builds)
-  const uid = user?.uid || "__noop__";
-  const userDocRef = doc(db, 'users', uid);
-  const [userData, userDataLoading, userDataError] = useDocumentData(userDocRef);
+  const uid = user?.uid || null;
+  const [userData, setUserData] = useState<any>(null);
+  const [userDataError, setUserDataError] = useState<string | null>(null);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
   
-  const customersQuery = query(collection(db, 'customers'), where("userId", "==", uid));
-  const [customersSnapshot, customersLoading, customersError] = useCollection(customersQuery);
-  const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
+  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState<string | null>(null);
 
-  const vendorsQuery = query(collection(db, 'vendors'), where("userId", "==", uid));
-  const [vendorsSnapshot, vendorsLoading, vendorsError] = useCollection(vendorsQuery);
-  const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
+  const [vendors, setVendors] = useState<Array<{ id: string; name: string }>>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [vendorsError, setVendorsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!uid) {
+      setUserData(null);
+      setCustomers([]);
+      setVendors([]);
+      return;
+    }
+
+    (async () => {
+      // user
+      try {
+        setUserDataError(null);
+        const snap = await getDoc(doc(db, "users", uid));
+        setUserData(snap.exists() ? snap.data() : null);
+      } catch (e: any) {
+        console.error(e);
+        setUserDataError(e?.message || "Failed to load user");
+      }
+
+      // customers
+      try {
+        setCustomersError(null);
+        setCustomersLoading(true);
+        const snap = await getDocs(query(collection(db, "customers"), where("userId", "==", uid)));
+        setCustomers(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
+      } catch (e: any) {
+        console.error(e);
+        setCustomersError(e?.message || "Failed to load customers");
+      } finally {
+        setCustomersLoading(false);
+      }
+
+      // vendors
+      try {
+        setVendorsError(null);
+        setVendorsLoading(true);
+        const snap = await getDocs(query(collection(db, "vendors"), where("userId", "==", uid)));
+        setVendors(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
+      } catch (e: any) {
+        console.error(e);
+        setVendorsError(e?.message || "Failed to load vendors");
+      } finally {
+        setVendorsLoading(false);
+      }
+    })();
+  }, [uid]);
 
   const form = useForm<RapidVoucherForm>({
     resolver: zodResolver(rapidVoucherSchema),
@@ -104,9 +149,9 @@ export default function RapidVoucherEntryPage() {
             <CardDescription>Please refresh the page. If it persists, contact support.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {userDataError && <p><strong>User:</strong> {String((userDataError as any)?.message || userDataError)}</p>}
-            {customersError && <p><strong>Customers:</strong> {String((customersError as any)?.message || customersError)}</p>}
-            {vendorsError && <p><strong>Vendors:</strong> {String((vendorsError as any)?.message || vendorsError)}</p>}
+            {userDataError && <p><strong>User:</strong> {userDataError}</p>}
+            {customersError && <p><strong>Customers:</strong> {customersError}</p>}
+            {vendorsError && <p><strong>Vendors:</strong> {vendorsError}</p>}
           </CardContent>
         </Card>
       </div>
