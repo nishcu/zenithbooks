@@ -61,16 +61,17 @@ export default function RapidVoucherEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [user] = useAuthState(auth);
-  const userDocRef = user ? doc(db, 'users', user.uid) : null;
-  const [userData] = useDocumentData(userDocRef);
+  // react-firebase-hooks expects undefined when absent; null can cause runtime issues in production builds
+  const userDocRef = user ? doc(db, 'users', user.uid) : undefined;
+  const [userData] = useDocumentData(userDocRef as any);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
   
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : undefined;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
 
-  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
+  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : undefined;
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
   const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
 
