@@ -210,6 +210,20 @@ function PaymentSuccessContent() {
                 redirectTo = pending.returnTo || "/notices";
               } else if (pending?.returnTo) {
                 // Generic: just send the user back to where they initiated the payment
+                try {
+                  if (pending?.planId) {
+                    localStorage.setItem(
+                      "on_demand_unlock",
+                      JSON.stringify({
+                        type: "plan",
+                        planId: pending.planId,
+                        orderId: orderIdParam,
+                        paymentId: paymentIdParam || null,
+                        at: Date.now(),
+                      })
+                    );
+                  }
+                } catch {}
                 localStorage.removeItem("pending_on_demand_action");
                 redirectTo = pending.returnTo;
               }

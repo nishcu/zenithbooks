@@ -33,6 +33,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
@@ -91,6 +92,7 @@ export default function LoanAgreementPage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("loan_agreement_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,

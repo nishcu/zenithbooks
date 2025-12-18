@@ -34,6 +34,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useEffect } from "react";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -70,6 +71,7 @@ export default function RentalReceiptsPage() {
   const [pricing, setPricing] = useState<ServicePricing | null>(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("rental_receipts_download", () => setShowDocument(true));
 
   // Fetch user subscription info
   useEffect(() => {

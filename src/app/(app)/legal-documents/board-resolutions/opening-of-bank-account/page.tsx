@@ -17,6 +17,7 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 
@@ -41,6 +42,7 @@ export default function BankAccountResolutionPage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("board_resolutions_download", () => setShowDocument(true));
 
   // Fetch user subscription info
   useEffect(() => {

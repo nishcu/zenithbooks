@@ -19,6 +19,7 @@ import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect } from "react";
@@ -50,6 +51,7 @@ export default function TrustDeedPage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("trust_deed_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,

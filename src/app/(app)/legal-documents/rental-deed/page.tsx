@@ -43,6 +43,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect } from "react";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 
 const formSchema = z.object({
   landlordName: z.string().min(3, "Lessor name is required."),
@@ -84,6 +85,7 @@ export default function RentalDeedPage() {
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("rental_deed_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,

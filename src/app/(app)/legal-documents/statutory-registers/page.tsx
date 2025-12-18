@@ -17,6 +17,7 @@ import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 
 const registers = [
     { id: "reg_members", label: "Register of Members (MGT-1)" },
@@ -35,6 +36,7 @@ export default function StatutoryRegisters() {
     const [pricing, setPricing] = useState(null);
     const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
     const [showDocument, setShowDocument] = useState(false);
+    useOnDemandUnlock("statutory_registers_download", () => setShowDocument(true));
 
     // Fetch user subscription info
     useEffect(() => {
