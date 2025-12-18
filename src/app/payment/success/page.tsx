@@ -67,6 +67,9 @@ function PaymentSuccessContent() {
             description: 'Your payment has been verified and subscription activated.',
           });
 
+          // Decide where to redirect after success (default dashboard)
+          let redirectTo: string = '/dashboard';
+
           // If this payment came from a CA certificate purchase, finalize the flow here
           // (Cashfree checkout typically redirects, so the originating page may not run callbacks).
           try {
@@ -130,13 +133,39 @@ function PaymentSuccessContent() {
             console.error("Post-payment CA certificate finalization failed:", e);
             // Do not fail the payment success screen; user can retry by contacting admin/support.
           }
+
+          // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
+          try {
+            const raw = localStorage.getItem("pending_on_demand_action");
+            if (raw && orderIdParam) {
+              const pending = JSON.parse(raw);
+              if (pending?.type === "form16") {
+                // Store an unlock token for the Form 16 page to consume
+                localStorage.setItem(
+                  "on_demand_unlock",
+                  JSON.stringify({
+                    type: "form16",
+                    mode: pending.mode, // "single" | "bulk"
+                    orderId: orderIdParam,
+                    paymentId: paymentIdParam || null,
+                    planId,
+                    at: Date.now(),
+                  })
+                );
+                localStorage.removeItem("pending_on_demand_action");
+                redirectTo = pending.returnTo || "/income-tax/form-16";
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment on-demand finalization failed:", e);
+          }
           
           // Clear pending plan ID
           localStorage.removeItem('pending_plan_id');
           
-          // Redirect to dashboard after 3 seconds
+          // Redirect after 3 seconds
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push(redirectTo);
           }, 3000);
         } else {
           setStatus('failed');

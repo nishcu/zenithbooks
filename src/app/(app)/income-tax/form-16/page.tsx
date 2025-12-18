@@ -7,6 +7,9 @@ import { doc, collection, query, where, getDocs, addDoc, Timestamp, setDoc, getD
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { UpgradeRequiredAlert } from "@/components/upgrade-required-alert";
+import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { getServicePricing } from "@/lib/pricing-service";
+import { getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import {
   Card,
   CardContent,
@@ -157,11 +160,56 @@ export default function Form16() {
   const [userData] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
+  const userType = (userData?.userType || 'business') as "business" | "professional";
 
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("single");
   const [isLoading, setIsLoading] = useState(false);
+
+  // On-demand pricing + payment gating
+  const [pricing, setPricing] = useState<any>(null);
+  const [pendingPaymentMode, setPendingPaymentMode] = useState<"single" | "bulk" | null>(null);
+  const [unlockedMode, setUnlockedMode] = useState<"single" | "bulk" | null>(null);
+
+  useEffect(() => {
+    getServicePricing().then(setPricing).catch(() => setPricing(null));
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("on_demand_unlock");
+      if (!raw) return;
+      const unlock = JSON.parse(raw);
+      if (unlock?.type === "form16" && (unlock?.mode === "single" || unlock?.mode === "bulk")) {
+        setUnlockedMode(unlock.mode);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const getForm16EffectivePrice = (mode: "single" | "bulk") => {
+    const services = pricing?.reports || [];
+    const base =
+      mode === "single"
+        ? (services.find((s: any) => s.id === "form16_individual")?.price ?? 0)
+        : (services.find((s: any) => s.id === "form16_bulk")?.price ?? 0);
+    return getEffectiveServicePrice(base, userType, subscriptionPlan, "reports");
+  };
+
+  const requirePaymentOrUnlock = (mode: "single" | "bulk"): boolean => {
+    const effectivePrice = pricing ? getForm16EffectivePrice(mode) : 0;
+    if (effectivePrice <= 0) return true;
+    if (unlockedMode === mode) return true;
+
+    setPendingPaymentMode(mode);
+    toast({
+      title: "Payment Required",
+      description: `Please complete payment to generate Form 16 (${mode === "single" ? "Individual" : "Bulk"}).`,
+    });
+    return false;
+  };
 
   // Single Form 16 state
   const [form16Data, setForm16Data] = useState<Form16Data>({
@@ -514,6 +562,7 @@ export default function Form16() {
   };
 
   const generateSingleForm16 = async () => {
+    if (!requirePaymentOrUnlock("single")) return;
     // Validate form data
     const errors = validateForm16Data(form16Data);
     if (errors.length > 0) {
@@ -563,6 +612,10 @@ export default function Form16() {
       if (result.success) {
         setComputationResult(result.data.computation);
         setGeneratedPdf(result.data.pdfUrl);
+        if (unlockedMode === "single") {
+          setUnlockedMode(null);
+          localStorage.removeItem("on_demand_unlock");
+        }
         toast({
           title: "Success",
           description: "Form 16 generated successfully"
@@ -707,6 +760,7 @@ export default function Form16() {
   };
 
   const generateBulkForm16 = async () => {
+    if (!requirePaymentOrUnlock("bulk")) return;
     const selectedEmployees = employees.filter(emp => emp.selected);
     if (selectedEmployees.length === 0) {
       toast({
@@ -741,6 +795,10 @@ export default function Form16() {
 
       if (result.success) {
         setBulkResults(result.data);
+        if (unlockedMode === "bulk") {
+          setUnlockedMode(null);
+          localStorage.removeItem("on_demand_unlock");
+        }
         toast({
           title: "Bulk Generation Complete",
           description: `Generated ${result.data?.summary?.successful || 0} Form 16 documents`
@@ -2248,14 +2306,44 @@ export default function Form16() {
                 </div>
             </CardContent>
               <CardFooter className="flex gap-2">
-                <Button
-                  onClick={generateSingleForm16}
-                  disabled={isLoading}
-                  className="flex-1"
-                >
-                  <Calculator className="mr-2 h-4 w-4" />
-                  {isLoading ? "Generating..." : "Generate Form 16"}
-                </Button>
+                {(() => {
+                  const effectivePrice = pricing ? getForm16EffectivePrice("single") : 0;
+                  const needsPayment = effectivePrice > 0 && unlockedMode !== "single";
+
+                  if (needsPayment && pendingPaymentMode === "single" && user) {
+                    return (
+                      <div className="flex-1">
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="form16_individual"
+                          planName="Form 16 Generation (Individual)"
+                          userId={user.uid}
+                          userEmail={user.email || ""}
+                          userName={user.displayName || ""}
+                          postPaymentContext={{
+                            key: "pending_on_demand_action",
+                            payload: {
+                              type: "form16",
+                              mode: "single",
+                              returnTo: "/income-tax/form-16?tab=single",
+                            },
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Button
+                      onClick={generateSingleForm16}
+                      disabled={isLoading || (effectivePrice > 0 && !pricing)}
+                      className="flex-1"
+                    >
+                      <Calculator className="mr-2 h-4 w-4" />
+                      {isLoading ? "Generating..." : effectivePrice > 0 ? `Pay & Generate (₹${effectivePrice})` : "Generate Form 16"}
+                    </Button>
+                  );
+                })()}
                 {generatedPdf && (
                   <Button
                     onClick={saveToVault}
@@ -3111,14 +3199,48 @@ export default function Form16() {
               )}
             </CardContent>
             <CardFooter className="flex gap-2">
-              <Button
-                onClick={generateBulkForm16}
-                disabled={isLoading || employees.filter(e => e.selected).length === 0}
-                className="flex-1"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                {isLoading ? "Generating..." : `Generate Form 16 for ${employees.filter(e => e.selected).length} Employees`}
-              </Button>
+              {(() => {
+                const effectivePrice = pricing ? getForm16EffectivePrice("bulk") : 0;
+                const needsPayment = effectivePrice > 0 && unlockedMode !== "bulk";
+
+                if (needsPayment && pendingPaymentMode === "bulk" && user) {
+                  return (
+                    <div className="flex-1">
+                      <CashfreeCheckout
+                        amount={effectivePrice}
+                        planId="form16_bulk"
+                        planName="Form 16 Generation (Bulk)"
+                        userId={user.uid}
+                        userEmail={user.email || ""}
+                        userName={user.displayName || ""}
+                        postPaymentContext={{
+                          key: "pending_on_demand_action",
+                          payload: {
+                            type: "form16",
+                            mode: "bulk",
+                            returnTo: "/income-tax/form-16?tab=bulk",
+                          },
+                        }}
+                      />
+                    </div>
+                  );
+                }
+
+                return (
+                  <Button
+                    onClick={generateBulkForm16}
+                    disabled={isLoading || employees.filter(e => e.selected).length === 0 || (effectivePrice > 0 && !pricing)}
+                    className="flex-1"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    {isLoading
+                      ? "Generating..."
+                      : effectivePrice > 0
+                        ? `Pay & Generate (₹${effectivePrice})`
+                        : `Generate Form 16 for ${employees.filter(e => e.selected).length} Employees`}
+                  </Button>
+                );
+              })()}
               {bulkResults && bulkResults.summary && (bulkResults.summary.successful || 0) > 0 && (
                 <Button
                   onClick={downloadBulkPDFs}
