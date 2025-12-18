@@ -61,18 +61,19 @@ export default function RapidVoucherEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [user] = useAuthState(auth);
-  // react-firebase-hooks expects undefined when absent; null can cause runtime issues in production builds
-  const userDocRef = user ? doc(db, 'users', user.uid) : undefined;
-  const [userData] = useDocumentData(userDocRef as any);
+  // Always provide valid Firestore refs/queries to hooks (avoid passing null/undefined which can crash in prod builds)
+  const uid = user?.uid || "__noop__";
+  const userDocRef = doc(db, 'users', uid);
+  const [userData, userDataLoading, userDataError] = useDocumentData(userDocRef);
   const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
   const isFreemium = subscriptionPlan === 'freemium';
   
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : undefined;
-  const [customersSnapshot, customersLoading] = useCollection(customersQuery);
+  const customersQuery = query(collection(db, 'customers'), where("userId", "==", uid));
+  const [customersSnapshot, customersLoading, customersError] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
 
-  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : undefined;
-  const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
+  const vendorsQuery = query(collection(db, 'vendors'), where("userId", "==", uid));
+  const [vendorsSnapshot, vendorsLoading, vendorsError] = useCollection(vendorsQuery);
   const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
 
   const form = useForm<RapidVoucherForm>({
@@ -93,6 +94,25 @@ export default function RapidVoucherEntryPage() {
   const voucherPrefix = voucherType === 'receipt' ? 'RV' : 'PV';
 
   // Early return AFTER all hooks are called
+  if (userDataError || customersError || vendorsError) {
+    return (
+      <div className="space-y-4 p-8">
+        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Something went wrong</CardTitle>
+            <CardDescription>Please refresh the page. If it persists, contact support.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {userDataError && <p><strong>User:</strong> {String((userDataError as any)?.message || userDataError)}</p>}
+            {customersError && <p><strong>Customers:</strong> {String((customersError as any)?.message || customersError)}</p>}
+            {vendorsError && <p><strong>Vendors:</strong> {String((vendorsError as any)?.message || vendorsError)}</p>}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (user && isFreemium) {
     return (
       <div className="space-y-8 p-8">
