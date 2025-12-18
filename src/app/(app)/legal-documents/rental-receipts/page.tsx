@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,7 +35,7 @@ import { auth, db } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useEffect } from "react";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
-import { collection, doc, getDocs, limit, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -73,8 +73,7 @@ export default function RentalReceiptsPage() {
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
   useOnDemandUnlock("rental_receipts_download", () => setShowDocument(true));
-  const PENDING_FORM_KEY = "pending_rental_receipts_form";
-  const [entitlement, setEntitlement] = useState<{ id: string; orderId?: string; consumedAt?: Date | null } | null>(null);
+  const [entitlement, setEntitlement] = useState<{ id: string; orderId?: string | null; paymentId?: string | null; consumedAt?: Date | null } | null>(null);
 
   // Fetch user subscription info
   useEffect(() => {
@@ -105,55 +104,14 @@ export default function RentalReceiptsPage() {
   });
 
   const formData = form.watch();
-  const canPay = form.formState.isValid;
 
-  // Restore form values after payment redirect (so user doesn't need to re-enter)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(PENDING_FORM_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        form.reset({
-          ...form.getValues(),
-          ...parsed,
-        });
-      }
-    } catch (e) {
-      console.error("Failed to restore rental receipt form:", e);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // "Movie ticket" style unlock: if the user has already paid (server-side),
-  // do NOT ask payment again; load latest saved paid receipt if available.
+  // Movie ticket style:
+  // Pay first -> get ONE unused ticket -> then fill -> download once (consumes ticket).
   useEffect(() => {
     if (!user?.uid) return;
     (async () => {
       try {
-        // 1) Restore latest saved receipt (if any) so user doesn't re-enter
-        // NOTE: Don't rely on ordering/indexes here; just take the newest client-side if multiple.
-        const docsSnap = await getDocs(
-          query(
-            collection(db, "userDocuments"),
-            where("userId", "==", user.uid),
-            where("documentType", "==", "rental-receipts"),
-            limit(10)
-          )
-        );
-        const docCandidates = docsSnap.docs
-          .map((d) => ({ id: d.id, data: d.data() as any }))
-          .sort((a, b) => {
-            const ad = a.data?.createdAt?.toDate?.()?.getTime?.() || 0;
-            const bd = b.data?.createdAt?.toDate?.()?.getTime?.() || 0;
-            return bd - ad;
-          });
-        const latestDoc = docCandidates[0]?.data;
-        if (latestDoc?.formData) {
-          form.reset({ ...form.getValues(), ...latestDoc.formData });
-        }
-
-        // 2) Find an UNUSED paid ticket (1 payment = 1 download)
+        // Find an UNUSED paid ticket (1 payment = 1 download)
         const paySnap = await getDocs(
           query(
             collection(db, "paymentTransactions"),
@@ -180,12 +138,22 @@ export default function RentalReceiptsPage() {
           setEntitlement({
             id: unused.id,
             orderId: unused.data?.orderId || null,
+            paymentId: unused.data?.paymentId || null,
             consumedAt: null,
           });
           setShowDocument(true);
         } else {
           // No unused ticket -> require payment again
-          setEntitlement(tickets[0] ? { id: tickets[0].id, orderId: tickets[0].data?.orderId || null, consumedAt: new Date() } : null);
+          setEntitlement(
+            tickets[0]
+              ? {
+                  id: tickets[0].id,
+                  orderId: tickets[0].data?.orderId || null,
+                  paymentId: tickets[0].data?.paymentId || null,
+                  consumedAt: new Date(),
+                }
+              : null
+          );
           setShowDocument(false);
         }
       } catch (e) {
@@ -210,6 +178,31 @@ export default function RentalReceiptsPage() {
     // Immediately lock UI again (ticket consumed)
     setShowDocument(false);
   };
+
+  const saveToMyDocuments = useCallback(async () => {
+    if (!user?.uid) throw new Error("Please sign in again.");
+    if (!entitlement?.orderId) throw new Error("Order ID missing. Please pay again.");
+    const docId = `cf_${entitlement.orderId}`;
+    await setDoc(
+      doc(db, "userDocuments", docId),
+      {
+        userId: user.uid,
+        documentType: "rental-receipts",
+        documentName: `Rent Receipt - ${form.getValues("rentPeriod") || ""}`.trim(),
+        status: "Paid",
+        formData: form.getValues(),
+        payment: {
+          provider: "cashfree",
+          orderId: entitlement.orderId,
+          paymentId: entitlement.paymentId || null,
+          planId: "rental_receipts_download",
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }, [user?.uid, entitlement?.orderId, entitlement?.paymentId, form]);
   
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const whatsappMessage = `Hi ${formData.landlordName}, here is the rent receipt for ${formattedPeriod} for your records. Thank you.`;
@@ -320,40 +313,27 @@ export default function RentalReceiptsPage() {
 
                   if (requiresPayment) {
                     return (
-                      canPay ? (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="rental_receipts_download"
-                          planName="Rental Receipts Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          postPaymentContext={{
-                            key: PENDING_FORM_KEY,
-                            payload: {
-                              ...form.getValues(),
-                            },
-                          }}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      ) : (
-                        <Button size="lg" disabled className="w-full">
-                          Fill all fields to Pay & Save
-                        </Button>
-                      )
+                      <CashfreeCheckout
+                        amount={effectivePrice}
+                        planId="rental_receipts_download"
+                        planName="Rental Receipts Download"
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        onSuccess={() => {
+                          toast({
+                            title: "Payment Successful",
+                            description: "Ticket unlocked. Now fill details and download once.",
+                          });
+                        }}
+                        onFailure={() => {
+                          toast({
+                            variant: "destructive",
+                            title: "Payment Failed",
+                            description: "Payment was not completed. Please try again."
+                          });
+                        }}
+                      />
                     );
                   } else {
                     // Show download buttons (either free or already paid)
@@ -365,7 +345,14 @@ export default function RentalReceiptsPage() {
                         contentRef={printRef}
                         fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
                         whatsappMessage={whatsappMessage}
-                        beforeDownload={consumeTicketOnce}
+                        beforeDownload={async () => {
+                          const ok = await form.trigger();
+                          if (!ok) throw new Error("Please fill all required fields before download.");
+                          if (effectivePrice > 0) {
+                            await saveToMyDocuments();
+                            await consumeTicketOnce();
+                          }
+                        }}
                       />
                     ) : null;
                   }

@@ -171,37 +171,8 @@ function PaymentSuccessContent() {
             // Do not fail the payment success screen; user can retry by contacting admin/support.
           }
 
-          // If this payment came from a Legal Document download (e.g., rental receipts), autosave to My Documents
-          try {
-            const raw = localStorage.getItem("pending_rental_receipts_form");
-            if (raw && user?.uid && orderIdParam) {
-              const formData = JSON.parse(raw);
-              const baseId = `cf_${orderIdParam}`;
-              await setDoc(
-                doc(db, "userDocuments", baseId),
-                {
-                  userId: user.uid,
-                  documentType: "rental-receipts",
-                  documentName: `Rent Receipt - ${formData?.rentPeriod || ""}`.trim(),
-                  status: "Paid",
-                  formData: formData || {},
-                  payment: {
-                    provider: "cashfree",
-                    orderId: orderIdParam,
-                    paymentId: paymentIdParam || null,
-                    amount: null,
-                    planId: planId || null,
-                  },
-                  createdAt: serverTimestamp(),
-                  updatedAt: serverTimestamp(),
-                },
-                { merge: true }
-              );
-              // keep the form in localStorage so the page can restore it, but remove if it's too large later
-            }
-          } catch (e) {
-            console.error("Post-payment rental receipt autosave failed:", e);
-          }
+          // Rental Receipts is "pay first -> fill -> download once".
+          // So we DO NOT save a userDocument here (fields aren't filled yet).
 
           // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
           try {
