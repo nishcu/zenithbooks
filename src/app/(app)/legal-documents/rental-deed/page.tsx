@@ -350,45 +350,23 @@ export default function RentalDeedPage() {
                           "registration_deeds"
                         )
                       : basePrice;
-                    const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                    if (requiresPayment) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="rental_deed_download"
-                          planName="Rental Deed Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      // Show download buttons (either free or already paid)
-                      if (!showDocument && effectivePrice === 0) {
-                        setShowDocument(true);
-                      }
-                      return showDocument ? (
-                        <ShareButtons
-                          contentRef={printRef}
-                          fileName={`Rental_Agreement_${formData.tenantName}`}
-                        />
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="rental_deed_download"
+                        planName="Rental Deed Download"
+                        amount={effectivePrice}
+                        fileName={`Rental_Agreement_${formData.tenantName}`}
+                        contentRef={printRef}
+                        documentType="rental_deed"
+                        documentName={`Rental_Agreement_${formData.tenantName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>

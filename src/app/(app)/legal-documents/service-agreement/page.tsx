@@ -264,45 +264,23 @@ export default function ServiceAgreementPage() {
                           "agreements"
                         )
                       : basePrice;
-                    const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                    if (requiresPayment) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="service_agreement_download"
-                          planName="Service Agreement Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      // Show download buttons (either free or already paid)
-                      if (!showDocument && effectivePrice === 0) {
-                        setShowDocument(true);
-                      }
-                      return showDocument ? (
-                        <ShareButtons
-                          contentRef={printRef}
-                          fileName={`Service_Agreement_${formData.clientName}`}
-                        />
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="service_agreement_download"
+                        planName="Service Agreement Download"
+                        amount={effectivePrice}
+                        fileName={`Service_Agreement_${formData.clientName}`}
+                        contentRef={printRef}
+                        documentType="service_agreement"
+                        documentName={`Service_Agreement_${formData.clientName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>

@@ -244,45 +244,23 @@ export default function AppointmentLetterPage() {
                           "hr_documents"
                         )
                       : basePrice;
-                    const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                    if (requiresPayment) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="appointment_letter_download"
-                          planName="Appointment Letter Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      // Show download buttons (either free or already paid)
-                      if (!showDocument && effectivePrice === 0) {
-                        setShowDocument(true);
-                      }
-                      return showDocument ? (
-                        <ShareButtons 
-                          contentRef={printRef}
-                          fileName={`Appointment_Letter_${formData.employeeName}`}
-                        />
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="appointment_letter_download"
+                        planName="Appointment Letter Download"
+                        amount={effectivePrice}
+                        fileName={`Appointment_Letter_${formData.employeeName}`}
+                        contentRef={printRef}
+                        documentType="appointment_letter"
+                        documentName={`Appointment_Letter_${formData.employeeName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>

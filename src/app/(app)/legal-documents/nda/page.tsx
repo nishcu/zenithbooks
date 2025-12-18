@@ -258,45 +258,23 @@ export default function NdaPage() {
                           "agreements"
                         )
                       : basePrice;
-                    const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                    if (requiresPayment) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="nda_download"
-                          planName="NDA Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      // Show download buttons (either free or already paid)
-                      if (!showDocument && effectivePrice === 0) {
-                        setShowDocument(true);
-                      }
-                      return showDocument ? (
-                        <ShareButtons
-                          contentRef={printRef}
-                          fileName={`NDA_${formData.disclosingPartyName}_${formData.receivingPartyName}`}
-                        />
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="nda_download"
+                        planName="NDA Download"
+                        amount={effectivePrice}
+                        fileName={`NDA_${formData.disclosingPartyName}_${formData.receivingPartyName}`}
+                        contentRef={printRef}
+                        documentType="nda"
+                        documentName={`NDA_${formData.disclosingPartyName}_${formData.receivingPartyName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>

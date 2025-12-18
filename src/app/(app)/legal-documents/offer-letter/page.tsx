@@ -208,47 +208,24 @@ export default function OfferLetterPage() {
                         "hr_documents"
                       )
                     : basePrice;
-                  const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                  if (requiresPayment) {
-                    return (
-                      <CashfreeCheckout
-                        amount={effectivePrice}
-                        planId="offer_letter_download"
-                        planName="Offer Letter Download"
+                  return (
+                      <OnDemandPayAndUseActions
                         userId={user?.uid || ''}
                         userEmail={user?.email || ''}
                         userName={user?.displayName || ''}
-                        onSuccess={(paymentId) => {
-                          setShowDocument(true);
-                          toast({
-                            title: "Payment Successful",
-                            description: "Your document is ready for download."
-                          });
-                        }}
-                        onFailure={() => {
-                          toast({
-                            variant: "destructive",
-                            title: "Payment Failed",
-                            description: "Payment was not completed. Please try again."
-                          });
-                        }}
+                        planId="offer_letter_download"
+                        planName="Offer Letter Download"
+                        amount={effectivePrice}
+                        fileName={`Offer_Letter_${formData.candidateName}`}
+                        contentRef={printRef}
+                        documentType="offer_letter"
+                        documentName={`Offer_Letter_${formData.candidateName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
                       />
                     );
-                  } else {
-                    // Show download buttons (either free or already paid)
-                    if (!showDocument && effectivePrice === 0) {
-                      setShowDocument(true);
-                    }
-                    return showDocument ? (
-                      <ShareButtons 
-                        contentRef={printRef}
-                        fileName={`Offer_Letter_${formData.candidateName}`}
-                        whatsappMessage={whatsappMessage}
-                      />
-                    ) : null;
-                  }
-                })()}
+                  })()}
             </CardFooter>
         </Card>
 

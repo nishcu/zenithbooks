@@ -365,46 +365,24 @@ export default function AccountingEngagementLetterPage() {
                             "accounting_documents"
                           )
                         : basePrice;
-                      const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                      if (requiresPayment) {
-                        return (
-                          <CashfreeCheckout
-                            amount={effectivePrice}
-                            planId="accounting_engagement_letter_download"
-                            planName="Accounting Engagement Letter Download"
-                            userId={user?.uid || ''}
-                            userEmail={user?.email || ''}
-                            userName={user?.displayName || ''}
-                            onSuccess={(paymentId) => {
-                              setShowDocument(true);
-                              toast({
-                                title: "Payment Successful",
-                                description: "Your document is ready for download."
-                              });
-                            }}
-                            onFailure={() => {
-                              toast({
-                                variant: "destructive",
-                                title: "Payment Failed",
-                                description: "Payment was not completed. Please try again."
-                              });
-                            }}
-                          />
-                        );
-                      } else {
-                        // Show download buttons (either free or already paid)
-                        if (!showDocument && effectivePrice === 0) {
-                          setShowDocument(true);
-                        }
-                        return showDocument ? (
-                          <ShareButtons
-                            contentRef={printRef}
-                            fileName={`Accounting_Engagement_Letter_${formData.clientName}`}
-                          />
-                        ) : null;
-                      }
-                    })()}
+                      return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="accounting_engagement_letter_download"
+                        planName="Accounting Engagement Letter Download"
+                        amount={effectivePrice}
+                        fileName={`Accounting_Engagement_Letter_${formData.clientName}`}
+                        contentRef={printRef}
+                        documentType="accounting_engagement_letter"
+                        documentName={`Accounting_Engagement_Letter_${formData.clientName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
+                  })()}
                 </CardFooter>
             </Card>
         );

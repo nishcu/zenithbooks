@@ -274,45 +274,23 @@ export default function FranchiseAgreementPage() {
                           "agreements"
                         )
                       : basePrice;
-                    const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                    if (requiresPayment) {
-                      return (
-                        <CashfreeCheckout
-                          amount={effectivePrice}
-                          planId="franchise_agreement_download"
-                          planName="Franchise Agreement Download"
-                          userId={user?.uid || ''}
-                          userEmail={user?.email || ''}
-                          userName={user?.displayName || ''}
-                          onSuccess={(paymentId) => {
-                            setShowDocument(true);
-                            toast({
-                              title: "Payment Successful",
-                              description: "Your document is ready for download."
-                            });
-                          }}
-                          onFailure={() => {
-                            toast({
-                              variant: "destructive",
-                              title: "Payment Failed",
-                              description: "Payment was not completed. Please try again."
-                            });
-                          }}
-                        />
-                      );
-                    } else {
-                      // Show download buttons (either free or already paid)
-                      if (!showDocument && effectivePrice === 0) {
-                        setShowDocument(true);
-                      }
-                      return showDocument ? (
-                        <ShareButtons
-                          contentRef={printRef}
-                          fileName={`Franchise_Agreement_${formData.franchisorName}`}
-                        />
-                      ) : null;
-                    }
+                    return (
+                      <OnDemandPayAndUseActions
+                        userId={user?.uid || ''}
+                        userEmail={user?.email || ''}
+                        userName={user?.displayName || ''}
+                        planId="franchise_agreement_download"
+                        planName="Franchise Agreement Download"
+                        amount={effectivePrice}
+                        fileName={`Franchise_Agreement_${formData.franchisorName}`}
+                        contentRef={printRef}
+                        documentType="franchise_agreement"
+                        documentName={`Franchise_Agreement_${formData.franchisorName}`}
+                        metadata={{ source: "legal-documents" }}
+                        showDocument={showDocument}
+                        setShowDocument={setShowDocument}
+                      />
+                    );
                   })()}
                 </CardFooter>
             </Card>
