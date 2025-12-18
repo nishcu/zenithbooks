@@ -92,6 +92,7 @@ export default function MyDocumentsPage() {
         'self-affidavit-gst': '/legal-documents/self-affidavit-gst',
         'llp-agreement': '/legal-documents/llp-agreement',
         'rental-receipt': '/legal-documents/rental-receipt',
+        'rental-receipts': '/legal-documents/rental-receipts',
         'founders-agreement': '/legal-documents/founders-agreement',
         'consultant-agreement': '/legal-documents/consultant-agreement',
         'service-agreement': '/legal-documents/service-agreement',

@@ -14,12 +14,13 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
-  const [user] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     const orderIdParam = searchParams.get('order_id');
     const paymentIdParam = searchParams.get('payment_id');
     const orderStatus = searchParams.get('order_status');
@@ -36,6 +37,17 @@ function PaymentSuccessContent() {
         });
         return;
       }
+
+    if (!user?.uid) {
+      // User must be logged in to complete post-payment actions (save to My Documents, etc.)
+      setStatus('failed');
+      toast({
+        variant: 'default',
+        title: 'Please Sign In',
+        description: 'Please sign in again and refresh this page to complete your purchase and save the document.',
+      });
+      return;
+    }
 
     // Verify payment with backend
     const verifyPayment = async () => {
@@ -320,7 +332,7 @@ function PaymentSuccessContent() {
     };
 
     verifyPayment();
-  }, [searchParams, user, router, toast]);
+  }, [searchParams, user, authLoading, router, toast]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

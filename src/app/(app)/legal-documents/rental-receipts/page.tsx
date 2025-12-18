@@ -90,6 +90,7 @@ export default function RentalReceiptsPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       tenantName: "",
       landlordName: "",
@@ -102,6 +103,7 @@ export default function RentalReceiptsPage() {
   });
 
   const formData = form.watch();
+  const canPay = form.formState.isValid;
 
   // Restore form values after payment redirect (so user doesn't need to re-enter)
   useEffect(() => {
@@ -230,34 +232,40 @@ export default function RentalReceiptsPage() {
 
                   if (requiresPayment) {
                     return (
-                      <CashfreeCheckout
-                        amount={effectivePrice}
-                        planId="rental_receipts_download"
-                        planName="Rental Receipts Download"
-                        userId={user?.uid || ''}
-                        userEmail={user?.email || ''}
-                        userName={user?.displayName || ''}
-                        postPaymentContext={{
-                          key: PENDING_FORM_KEY,
-                          payload: {
-                            ...form.getValues(),
-                          },
-                        }}
-                        onSuccess={(paymentId) => {
-                          setShowDocument(true);
-                          toast({
-                            title: "Payment Successful",
-                            description: "Your document is ready for download."
-                          });
-                        }}
-                        onFailure={() => {
-                          toast({
-                            variant: "destructive",
-                            title: "Payment Failed",
-                            description: "Payment was not completed. Please try again."
-                          });
-                        }}
-                      />
+                      canPay ? (
+                        <CashfreeCheckout
+                          amount={effectivePrice}
+                          planId="rental_receipts_download"
+                          planName="Rental Receipts Download"
+                          userId={user?.uid || ''}
+                          userEmail={user?.email || ''}
+                          userName={user?.displayName || ''}
+                          postPaymentContext={{
+                            key: PENDING_FORM_KEY,
+                            payload: {
+                              ...form.getValues(),
+                            },
+                          }}
+                          onSuccess={(paymentId) => {
+                            setShowDocument(true);
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your document is ready for download."
+                            });
+                          }}
+                          onFailure={() => {
+                            toast({
+                              variant: "destructive",
+                              title: "Payment Failed",
+                              description: "Payment was not completed. Please try again."
+                            });
+                          }}
+                        />
+                      ) : (
+                        <Button size="lg" disabled className="w-full">
+                          Fill all fields to Pay & Save
+                        </Button>
+                      )
                     );
                   } else {
                     // Show download buttons (either free or already paid)
