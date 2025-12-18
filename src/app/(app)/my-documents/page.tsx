@@ -134,6 +134,58 @@ export default function MyDocumentsPage() {
     };
 
     const handleDownload = async (doc: any) => {
+        // For saved HTML snapshots (legal docs/on-demand), generate PDF from snapshot
+        if (doc?.htmlSnapshot && typeof doc.htmlSnapshot === "string" && doc.htmlSnapshot.trim()) {
+            try {
+                toast({
+                    title: "Generating PDF...",
+                    description: "Preparing your saved document for download.",
+                });
+
+                const printWindow = window.open('', '_blank', 'width=900,height=700');
+                if (!printWindow) {
+                    throw new Error('Failed to open print window. Please allow popups for this site.');
+                }
+
+                const safeTitle = (doc.documentName || "Document").toString().replace(/</g, "&lt;");
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${safeTitle}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                            @media print { body { margin: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        ${doc.htmlSnapshot}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+
+                // Wait for content to render
+                await new Promise(resolve => setTimeout(resolve, 700));
+                printWindow.focus();
+                printWindow.print();
+
+                toast({
+                    title: "Ready",
+                    description: "Use your browser's Save as PDF to download.",
+                });
+                return;
+            } catch (e: any) {
+                console.error(e);
+                toast({
+                    variant: "destructive",
+                    title: "Download failed",
+                    description: e?.message || "Could not download this document.",
+                });
+                return;
+            }
+        }
+
         // For certified documents, generate PDF on-demand
         if (doc.isCertified) {
             try {

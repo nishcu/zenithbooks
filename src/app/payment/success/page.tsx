@@ -8,7 +8,7 @@ import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { addDoc, collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -162,6 +162,17 @@ function PaymentSuccessContent() {
                   { merge: true }
                 );
 
+                // 3) Consume ticket immediately (service request has been created)
+                try {
+                  await updateDoc(doc(db, "paymentTransactions", baseId), {
+                    consumedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    consumedBy: "payment_success:ca_certificate",
+                  } as any);
+                } catch (e) {
+                  console.error("Failed to consume payment ticket for CA certificate:", e);
+                }
+
                 // Clear after successful writes
                 localStorage.removeItem("pending_ca_certificate");
               }
@@ -221,6 +232,16 @@ function PaymentSuccessContent() {
                     payload: pending.payload || null,
                   })
                 );
+                // Consume ticket now (this purchase is considered used; the CMA page will still generate/download)
+                try {
+                  await updateDoc(doc(db, "paymentTransactions", `cf_${orderIdParam}`), {
+                    consumedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    consumedBy: "payment_success:cma_report",
+                  } as any);
+                } catch (e) {
+                  console.error("Failed to consume payment ticket for CMA report:", e);
+                }
                 localStorage.removeItem("pending_on_demand_action");
                 redirectTo = pending.returnTo || "/reports/cma-report";
               } else if (pending?.type === "notice_request") {
@@ -245,6 +266,16 @@ function PaymentSuccessContent() {
                     },
                     source: "payment_success",
                   });
+                }
+                // Consume ticket now (service request has been created)
+                try {
+                  await updateDoc(doc(db, "paymentTransactions", `cf_${orderIdParam}`), {
+                    consumedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    consumedBy: "payment_success:notice_request",
+                  } as any);
+                } catch (e) {
+                  console.error("Failed to consume payment ticket for notice request:", e);
                 }
                 localStorage.removeItem("pending_on_demand_action");
                 redirectTo = pending.returnTo || "/notices";
