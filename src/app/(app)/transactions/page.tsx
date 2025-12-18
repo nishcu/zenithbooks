@@ -60,13 +60,20 @@ export default function TransactionsPage() {
         const allTransactions: Transaction[] = [];
 
         // Fetch user data and certification requests in parallel
-        const [userDoc, certRequestsSnapshot] = await Promise.all([
+        const [userDoc, certRequestsSnapshot, paymentsSnapshot] = await Promise.all([
           getDoc(doc(db, "users", user.uid)),
           getDocs(
             query(
               collection(db, "certificationRequests"),
               where("userId", "==", user.uid),
               orderBy("requestDate", "desc")
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "paymentTransactions"),
+              where("userId", "==", user.uid),
+              orderBy("createdAt", "desc")
             )
           ),
         ]);
@@ -153,6 +160,48 @@ export default function TransactionsPage() {
             paymentId: data.paymentId,
             serviceId: data.serviceId,
             reportType: data.reportType,
+          });
+        });
+
+        // Process payment transactions (on-demand + subscription payments)
+        paymentsSnapshot.forEach((docSnap) => {
+          const data: any = docSnap.data();
+          const dt = data.createdAt?.toDate?.() || data.updatedAt?.toDate?.() || new Date();
+          const pid = String(data.planId || "");
+
+          let type: Transaction["type"] = "subscription";
+          let description = pid || "Payment";
+
+          if (pid === "business" || pid === "professional") {
+            type = "subscription";
+            description = `${pid} Plan`;
+          } else if (pid.includes("notice")) {
+            type = "notice";
+            description = "Notice Handling";
+          } else if (pid.includes("cma")) {
+            type = "report";
+            description = "CMA Report";
+          } else if (pid.includes("form16")) {
+            type = "report";
+            description = "Form 16";
+          } else if (pid.includes("download") || pid.includes("agreement") || pid.includes("deed") || pid.includes("letter") || pid.includes("resolution")) {
+            type = "legal_document";
+            description = "Legal Document";
+          } else {
+            type = "legal_document";
+          }
+
+          allTransactions.push({
+            id: `pay_${docSnap.id}`,
+            type,
+            description,
+            amount: Number(data.amount) || 0,
+            date: dt,
+            status: String(data.status || "SUCCESS"),
+            orderId: data.orderId,
+            paymentId: data.paymentId,
+            serviceId: data.planId,
+            reportType: data.planId,
           });
         });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
@@ -212,16 +212,41 @@ export async function POST(request: NextRequest) {
               0
           ) || 0;
 
-          const userRef = doc(db, 'users', userId);
-          await updateDoc(userRef, {
-            subscriptionStatus: 'active',
-            subscriptionPlan: planId,
-            lastPaymentDate: serverTimestamp(),
-            cashfreePaymentId: paymentId,
-            cashfreeOrderId: orderId,
-            paymentAmount: verifiedAmount,
-            paymentStatus: orderStatus || paymentStatus || 'SUCCESS',
-          });
+          // Always record a payment transaction (for full transaction history)
+          try {
+            await setDoc(
+              doc(db, "paymentTransactions", `cf_${orderId}`),
+              {
+                userId,
+                provider: "cashfree",
+                orderId,
+                paymentId: paymentId || null,
+                planId: planId || null,
+                amount: verifiedAmount,
+                status: orderStatus || paymentStatus || "SUCCESS",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          } catch (e) {
+            console.error("Failed to write paymentTransactions:", e);
+          }
+
+          // Only subscription purchases should update the user's subscription fields.
+          const isSubscriptionPlan = planId === "business" || planId === "professional";
+          if (isSubscriptionPlan) {
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+              subscriptionStatus: 'active',
+              subscriptionPlan: planId,
+              lastPaymentDate: serverTimestamp(),
+              cashfreePaymentId: paymentId,
+              cashfreeOrderId: orderId,
+              paymentAmount: verifiedAmount,
+              paymentStatus: orderStatus || paymentStatus || 'SUCCESS',
+            });
+          }
         } catch (firestoreError) {
           console.error('Firestore update error:', firestoreError);
           // Don't fail the entire request if Firestore update fails

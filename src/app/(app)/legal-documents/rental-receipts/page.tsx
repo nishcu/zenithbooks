@@ -72,6 +72,7 @@ export default function RentalReceiptsPage() {
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
   const [showDocument, setShowDocument] = useState(false);
   useOnDemandUnlock("rental_receipts_download", () => setShowDocument(true));
+  const PENDING_FORM_KEY = "pending_rental_receipts_form";
 
   // Fetch user subscription info
   useEffect(() => {
@@ -101,6 +102,24 @@ export default function RentalReceiptsPage() {
   });
 
   const formData = form.watch();
+
+  // Restore form values after payment redirect (so user doesn't need to re-enter)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PENDING_FORM_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        form.reset({
+          ...form.getValues(),
+          ...parsed,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to restore rental receipt form:", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const whatsappMessage = `Hi ${formData.landlordName}, here is the rent receipt for ${formattedPeriod} for your records. Thank you.`;
@@ -218,6 +237,12 @@ export default function RentalReceiptsPage() {
                         userId={user?.uid || ''}
                         userEmail={user?.email || ''}
                         userName={user?.displayName || ''}
+                        postPaymentContext={{
+                          key: PENDING_FORM_KEY,
+                          payload: {
+                            ...form.getValues(),
+                          },
+                        }}
                         onSuccess={(paymentId) => {
                           setShowDocument(true);
                           toast({
