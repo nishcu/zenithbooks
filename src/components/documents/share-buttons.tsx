@@ -24,6 +24,11 @@ interface ShareButtonsProps {
   shareTitle?: string;
   showDownloadOnly?: boolean;
   enableEmailSend?: boolean;
+  /**
+   * Optional: invoked right before starting a download/share that generates a PDF.
+   * If it throws/rejects, the download/share is aborted.
+   */
+  beforeDownload?: () => void | Promise<void>;
 }
 
 export function ShareButtons({ 
@@ -34,12 +39,24 @@ export function ShareButtons({
   emailBody,
   shareTitle,
   showDownloadOnly = false,
-  enableEmailSend = true
+  enableEmailSend = true,
+  beforeDownload
 }: ShareButtonsProps) {
   const { toast } = useToast();
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const handleDownloadPdf = async () => {
+    try {
+      await beforeDownload?.();
+    } catch (e: any) {
+      console.error("beforeDownload blocked PDF generation:", e);
+      toast({
+        variant: "destructive",
+        title: "Download blocked",
+        description: e?.message || "Unable to download right now.",
+      });
+      return;
+    }
     const element = contentRef.current;
     if (!element) {
       toast({
@@ -107,6 +124,17 @@ export function ShareButtons({
   };
 
   const handleWhatsAppShare = async () => {
+    try {
+      await beforeDownload?.();
+    } catch (e: any) {
+      console.error("beforeDownload blocked WhatsApp share:", e);
+      toast({
+        variant: "destructive",
+        title: "Share blocked",
+        description: e?.message || "Unable to share right now.",
+      });
+      return;
+    }
     const message = whatsappMessage || `Check out this ${fileName}`;
 
     // Try to use Web Share API with PDF attachment if supported

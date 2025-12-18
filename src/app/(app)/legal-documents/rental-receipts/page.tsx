@@ -35,7 +35,7 @@ import { auth, db } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useEffect } from "react";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
-import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, limit, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -74,6 +74,7 @@ export default function RentalReceiptsPage() {
   const [showDocument, setShowDocument] = useState(false);
   useOnDemandUnlock("rental_receipts_download", () => setShowDocument(true));
   const PENDING_FORM_KEY = "pending_rental_receipts_form";
+  const [entitlement, setEntitlement] = useState<{ id: string; orderId?: string; consumedAt?: Date | null } | null>(null);
 
   // Fetch user subscription info
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function RentalReceiptsPage() {
         const latestDoc = docsSnap.docs[0]?.data() as any;
         if (latestDoc?.formData) {
           form.reset({ ...form.getValues(), ...latestDoc.formData });
-          setShowDocument(true);
+          // We'll only unlock download if ticket is unconsumed (checked below)
           return;
         }
 
@@ -159,8 +160,20 @@ export default function RentalReceiptsPage() {
           )
         );
 
-        if (paySnap.docs.length > 0) {
-          setShowDocument(true);
+        const payDoc = paySnap.docs[0];
+        if (payDoc) {
+          const p = payDoc.data() as any;
+          const consumedAt = p?.consumedAt?.toDate?.() || null;
+          setEntitlement({
+            id: payDoc.id,
+            orderId: p?.orderId || null,
+            consumedAt,
+          });
+          if (!consumedAt) {
+            setShowDocument(true);
+          } else {
+            setShowDocument(false);
+          }
         }
       } catch (e) {
         console.error("Rental receipts unlock check failed:", e);
@@ -168,6 +181,20 @@ export default function RentalReceiptsPage() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
+
+  const consumeTicketOnce = async () => {
+    if (!user?.uid) throw new Error("Please sign in again.");
+    if (!entitlement?.id) throw new Error("Payment not found. Please try again.");
+    if (entitlement.consumedAt) throw new Error("This ticket is already used. Please pay again.");
+    // Mark the payment transaction as consumed (one ticket = one download/share)
+    await updateDoc(doc(db, "paymentTransactions", entitlement.id), {
+      consumedAt: serverTimestamp(),
+      consumedBy: user.uid,
+      consumedFor: "rental_receipts_download",
+      updatedAt: serverTimestamp(),
+    });
+    setEntitlement({ ...entitlement, consumedAt: new Date() });
+  };
   
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const whatsappMessage = `Hi ${formData.landlordName}, here is the rent receipt for ${formattedPeriod} for your records. Thank you.`;
@@ -323,6 +350,7 @@ export default function RentalReceiptsPage() {
                         contentRef={printRef}
                         fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
                         whatsappMessage={whatsappMessage}
+                        beforeDownload={consumeTicketOnce}
                       />
                     ) : null;
                   }
