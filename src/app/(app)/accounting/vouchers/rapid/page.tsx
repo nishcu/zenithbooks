@@ -121,6 +121,30 @@ export default function RapidVoucherEntryPage() {
     })();
   }, [uid]);
 
+  // TEMPORARY SAFETY SWITCH:
+  // This page has been causing a production render crash (Minified React error #310) in some deployments.
+  // We disable the interactive UI here to prevent the crash from taking down the whole app.
+  // TODO: Re-enable after root cause is fully diagnosed in a dev build.
+  return (
+    <div className="space-y-6 p-8 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle>Temporarily unavailable</CardTitle>
+          <CardDescription>
+            We&apos;re fixing an issue on this page. Please use the regular voucher entry for now.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/accounting/vouchers")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Vouchers
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+
   const form = useForm<RapidVoucherForm>({
     resolver: zodResolver(rapidVoucherSchema),
     defaultValues: {
