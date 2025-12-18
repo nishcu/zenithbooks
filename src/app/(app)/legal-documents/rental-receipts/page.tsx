@@ -227,6 +227,9 @@ export default function RentalReceiptsPage() {
         <ArrowLeft className="size-4" />
         Back to Document Selection
       </Link>
+      <div className="text-xs text-muted-foreground">
+        Rental Receipts build: <span className="font-mono">pay-first-gate@2df3f56</span>
+      </div>
       <div className="text-center">
         <h1 className="text-3xl font-bold">Rental Receipts for HRA</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
