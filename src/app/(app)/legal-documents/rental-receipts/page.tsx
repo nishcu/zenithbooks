@@ -31,10 +31,11 @@ import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useEffect } from "react";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -122,6 +123,51 @@ export default function RentalReceiptsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // "Movie ticket" style unlock: if the user has already paid (server-side),
+  // do NOT ask payment again; load latest saved paid receipt if available.
+  useEffect(() => {
+    if (!user?.uid) return;
+    (async () => {
+      try {
+        // Prefer userDocuments record (created after successful payment on /payment/success)
+        const docsSnap = await getDocs(
+          query(
+            collection(db, "userDocuments"),
+            where("userId", "==", user.uid),
+            where("documentType", "==", "rental-receipts"),
+            orderBy("createdAt", "desc"),
+            limit(1)
+          )
+        );
+
+        const latestDoc = docsSnap.docs[0]?.data() as any;
+        if (latestDoc?.formData) {
+          form.reset({ ...form.getValues(), ...latestDoc.formData });
+          setShowDocument(true);
+          return;
+        }
+
+        // Fallback: if paymentTransactions has a successful payment for this plan, unlock UI
+        const paySnap = await getDocs(
+          query(
+            collection(db, "paymentTransactions"),
+            where("userId", "==", user.uid),
+            where("planId", "==", "rental_receipts_download"),
+            orderBy("createdAt", "desc"),
+            limit(1)
+          )
+        );
+
+        if (paySnap.docs.length > 0) {
+          setShowDocument(true);
+        }
+      } catch (e) {
+        console.error("Rental receipts unlock check failed:", e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
   
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const whatsappMessage = `Hi ${formData.landlordName}, here is the rent receipt for ${formattedPeriod} for your records. Thank you.`;
