@@ -99,6 +99,9 @@ export default function CmaReportGeneratorPage() {
   const [revenueGrowth, setRevenueGrowth] = useState<number[]>([15, 18, 20, 22, 25]);
   const [expenseChange, setExpenseChange] = useState<number[]>([10, 12, 14, 15, 18]);
   const [pricing, setPricing] = useState<ServicePricing | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [auditedFinancials, setAuditedFinancials] = useState<FinancialData | null>(null);
+  const [auditedFileName, setAuditedFileName] = useState<string | null>(null);
 
   const [loanAssumptions, setLoanAssumptions] = useState<LoanAssumptions>({
     type: "term-loan",
@@ -135,7 +138,7 @@ export default function CmaReportGeneratorPage() {
   
   const handleGenerateReport = () => {
     setIsGenerating(true);
-    const initialData = getInitialFinancials();
+    const initialData = auditedFinancials || getInitialFinancials();
     const assumptions = {
       revenueGrowth,
       expenseChange,
@@ -153,6 +156,105 @@ export default function CmaReportGeneratorPage() {
     toast({
         title: "CMA Report Generated",
         description: "Review the generated statements in the 'Generated CMA Report' tab."
+    });
+  };
+
+  const CMA_TEMPLATE_MAP: Record<string, keyof FinancialData> = {
+    // P&L
+    "revenue from operations": "netSales",
+    "net sales": "netSales",
+    "other operating income": "otherOpIncome",
+    "raw materials": "rawMaterials",
+    "raw materials consumed": "rawMaterials",
+    "direct wages": "directWages",
+    "power & fuel": "powerFuel",
+    "power and fuel": "powerFuel",
+    "depreciation": "depreciation",
+    "administrative salary": "adminSalary",
+    "admin salary": "adminSalary",
+    "rent": "rent",
+    "selling expenses": "sellingExpenses",
+    "other expenses": "otherExpenses",
+    "interest": "interest",
+    "tax": "tax",
+    // Balance sheet
+    "share capital": "shareCapital",
+    "reserves & surplus": "reservesSurplus",
+    "reserves and surplus": "reservesSurplus",
+    "term loan": "termLoan",
+    "unsecured loan": "unsecuredLoan",
+    "sundry creditors": "sundryCreditors",
+    "other liabilities": "otherLiabilities",
+    "gross fixed assets": "grossFixedAssets",
+    "accumulated depreciation": "accDepreciation",
+    "acc depreciation": "accDepreciation",
+    "investments": "investments",
+    "inventory": "inventory",
+    "sundry debtors": "sundryDebtors",
+    "cash & bank": "cashBank",
+    "cash and bank": "cashBank",
+    "other current assets": "otherCurrentAssets",
+  };
+
+  const parseAuditedFinancialsFile = async (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const reader = new FileReader();
+    const data: ArrayBuffer | string = await new Promise((resolve, reject) => {
+      reader.onerror = () => reject(new Error("Could not read file."));
+      reader.onload = () => resolve(reader.result as any);
+      if (ext === "csv") reader.readAsText(file);
+      else reader.readAsArrayBuffer(file);
+    });
+
+    const workbook =
+      ext === "csv"
+        ? XLSX.read(data as string, { type: "string", raw: true })
+        : XLSX.read(data as ArrayBuffer, { type: "array", raw: true });
+
+    const sheet =
+      workbook.Sheets["Audited Financials"] ||
+      workbook.Sheets[workbook.SheetNames[0]];
+
+    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+
+    // Expect columns: Particulars, Year 1, Year 2 (at minimum)
+    const parsed: FinancialData = {};
+
+    const toNumber = (v: any) => {
+      if (v === null || v === undefined || v === "") return 0;
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+      const cleaned = String(v).replace(/[,₹]/g, "").trim();
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    for (const row of rows) {
+      const pRaw = row["Particulars"] ?? row["particulars"] ?? row["PARTICULARS"];
+      const key = CMA_TEMPLATE_MAP[String(pRaw || "").toLowerCase().trim()];
+      if (!key) continue;
+
+      // Template convention: Year 1 = most recent audited year, Year 2 = previous year
+      // Our engine expects [FY-2, FY-1] for historical years, so map to [Year2, Year1]
+      const y1 = toNumber(row["Year 1"] ?? row["year 1"] ?? row["YEAR 1"]);
+      const y2 = toNumber(row["Year 2"] ?? row["year 2"] ?? row["YEAR 2"]);
+
+      parsed[key] = [y2, y1];
+    }
+
+    // Ensure all required keys exist (default 0 arrays)
+    const requiredKeys: Array<keyof FinancialData> = [
+      "netSales","otherOpIncome","rawMaterials","directWages","powerFuel","depreciation","adminSalary","rent","sellingExpenses","otherExpenses","interest","tax",
+      "shareCapital","reservesSurplus","termLoan","unsecuredLoan","sundryCreditors","otherLiabilities","grossFixedAssets","accDepreciation","investments","inventory","sundryDebtors","cashBank","otherCurrentAssets"
+    ];
+    for (const k of requiredKeys) {
+      if (!parsed[k]) parsed[k] = [0, 0];
+    }
+
+    setAuditedFinancials(parsed);
+    setAuditedFileName(file.name);
+    toast({
+      title: "Audited financials loaded",
+      description: `Parsed "${file.name}". You can now generate the CMA report using your uploaded data.`,
     });
   };
 
@@ -419,15 +521,44 @@ export default function CmaReportGeneratorPage() {
               </CardHeader>
               <CardContent>
                  <Alert variant="default" className="mb-4">
-                     <AlertTriangle className="h-4 w-4" />
-                     <AlertTitle>Using Mock Data</AlertTitle>
-                     <AlertDescription>For this demonstration, the report uses pre-populated historical data. The file upload functionality is for UI purposes only and does not currently parse uploaded files.</AlertDescription>
+                     <FileSpreadsheet className="h-4 w-4" />
+                     <AlertTitle>{auditedFinancials ? "Using Uploaded Data" : "No Audited File Uploaded Yet"}</AlertTitle>
+                     <AlertDescription>
+                       {auditedFinancials
+                         ? `Using your uploaded file: ${auditedFileName || "Audited Financials"} (2 historical years).`
+                         : "Upload audited financials (Excel/CSV) using the template. If you skip upload, the report will use sample data."}
+                     </AlertDescription>
                  </Alert>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary" disabled>
                     Use Existing Data (from App)
                   </Button>
-                  <Button variant="outline" disabled>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        await parseAuditedFinancialsFile(file);
+                      } catch (err: any) {
+                        console.error(err);
+                        toast({
+                          variant: "destructive",
+                          title: "Upload failed",
+                          description: err?.message || "Could not parse the uploaded file.",
+                        });
+                      } finally {
+                        e.currentTarget.value = "";
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Upload className="mr-2" /> Upload Audited Financials
                   </Button>
                   <Button variant="outline" onClick={handleDownloadTemplate}>
