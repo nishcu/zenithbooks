@@ -48,7 +48,22 @@ const COLUMN_ALIASES: Record<
   name: ["name", "item name", "product", "product name"],
   description: ["description", "details"],
   hsn: ["hsn", "hsn code", "sac", "sac code"],
-  gstRate: ["gst", "gst rate", "tax rate", "gst%", "tax%"],
+  gstRate: [
+    "gst",
+    "gst rate",
+    "gst rate (%)",
+    "gst rate(%)",
+    "gst rate %",
+    "gst%",
+    "gst %",
+    "gst percentage",
+    "gst percent",
+    "gst_rate",
+    "tax rate",
+    "tax rate (%)",
+    "tax%",
+    "tax %",
+  ],
   stock: ["stock", "opening stock", "qty", "quantity"],
   purchasePrice: ["purchase price", "cost price", "buy price", "purchase"],
   sellingPrice: ["selling price", "sale price", "mrp", "sell price"],
@@ -59,6 +74,13 @@ const REQUIRED_FIELDS: Array<keyof ParsedItemRow> = ["name"];
 
 const numberOrNull = (value: any): number | undefined => {
   if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "string") {
+    // Handle values like "5%" or " 18 % "
+    const cleaned = value.replace(/%/g, "").trim();
+    if (cleaned === "") return undefined;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
