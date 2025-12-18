@@ -40,7 +40,7 @@ export default function RentalReceiptPage() {
         return () => unsubscribe();
     }, []);
 
-    const rentalReceiptPrice = pricing?.hr_documents.find(d => d.id === 'rental_receipt_hra')?.price || 0;
+    const rentalReceiptPrice = pricing?.hr_documents?.find(d => d.id === 'rental_receipt_hra')?.price || 0;
     const requiresPayment = rentalReceiptPrice > 0;
 
     // Movie-ticket gate: find an unused ticket for this user
