@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
+import { CA_FIRM } from "@/lib/ca-firm";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ShareButtons } from "@/components/documents/share-buttons";
@@ -272,7 +273,7 @@ export default function TurnoverCertificatePage() {
     if (step === 2) {
         const formData = form.getValues();
         const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-        const whatsappMessage = `Dear ${formData.entityName},\n\nPlease find attached the Turnover Certificate for FY ${formData.financialYear}.\n\nThank you,\nS. KRANTHI KUMAR & Co.`;
+        const whatsappMessage = `Dear ${formData.entityName},\n\nPlease find attached the Turnover Certificate for FY ${formData.financialYear}.\n\nThank you,\n${CA_FIRM.name}`;
 
         return (
              <Card>
@@ -283,7 +284,7 @@ export default function TurnoverCertificatePage() {
                 <CardContent>
                      <div ref={printRef} className="prose dark:prose-invert max-w-none border rounded-lg p-8 bg-card text-card-foreground">
                         <header className="text-center border-b-2 pb-4 mb-8" style={{ borderColor: 'hsl(var(--sidebar-background))' }}>
-                            <h1 className="text-2xl font-bold m-0" style={{ color: 'hsl(var(--sidebar-background))' }}>S. KRANTHI KUMAR & Co.</h1>
+                            <h1 className="text-2xl font-bold m-0" style={{ color: 'hsl(var(--sidebar-background))' }}>{CA_FIRM.name}</h1>
                             <p className="text-sm m-0">Chartered Accountants</p>
                             <p className="text-xs m-0">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
                             <p className="text-xs m-0">Email: skkandco@gmail.com</p>
@@ -325,7 +326,7 @@ export default function TurnoverCertificatePage() {
                         </p>
 
                         <div className="mt-24 text-right">
-                            <p className="font-bold">For S. KRANTHI KUMAR & Co.</p>
+                            <p className="font-bold">For {CA_FIRM.name}</p>
                             <p>Chartered Accountants</p>
                             <div className="h-20"></div>
                             <p>(S. Kranthi Kumar)</p>

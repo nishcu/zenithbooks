@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { CA_FIRM } from "@/lib/ca-firm";
 import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
@@ -208,14 +209,14 @@ export default function AdminCertificationRequests() {
     try {
       // For certificates, use CA firm details instead of user company branding
       const caFirmDetails = {
-        companyName: "S K J D & Associates",
-        address1: "Chartered Accountants",
+        companyName: CA_FIRM.name,
+        address1: CA_FIRM.tagline,
         address2: "",
-        city: "Hyderabad",
-        state: "Telangana",
-        pincode: "500001",
-        gstin: "GSTIN of CA Firm",
-        pan: "PAN of CA Firm"
+        city: CA_FIRM.city,
+        state: CA_FIRM.state,
+        pincode: CA_FIRM.pincode,
+        gstin: CA_FIRM.gstin,
+        pan: CA_FIRM.pan
       };
       toast({
         title: "Generating PDF...",

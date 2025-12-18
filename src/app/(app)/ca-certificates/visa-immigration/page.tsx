@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
+import { CA_FIRM } from "@/lib/ca-firm";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
@@ -371,7 +372,7 @@ export default function VisaImmigrationCertificatePage() {
                 { source: "EDUCATIONAL LOAN", value: totalLoan },
             ];
 
-            const whatsappMessage = `Dear ${formData.studentName},\n\nPlease find attached the Financial Questionnaire for your visa application.\n\nTotal funds: ${toUsd(grandTotal).toLocaleString('en-US', { style: 'currency', currency: 'USD'})}\n\nThank you,\nS. KRANTHI KUMAR & Co.`;
+            const whatsappMessage = `Dear ${formData.studentName},\n\nPlease find attached the Financial Questionnaire for your visa application.\n\nTotal funds: ${toUsd(grandTotal).toLocaleString('en-US', { style: 'currency', currency: 'USD'})}\n\nThank you,\n${CA_FIRM.name}`;
 
             return (
                 <Card>
@@ -423,7 +424,7 @@ export default function VisaImmigrationCertificatePage() {
                                     <p>Sincerely</p>
                                 </div>
                                 <div className="text-left text-sm">
-                                    <p className="font-bold">S Kranthi Kumar & Co</p>
+                                    <p className="font-bold">{CA_FIRM.name}</p>
                                     <p>Chartered Accountants</p>
                                     <div className="h-20"></div>
                                     <p className="font-bold">S Kranthi Kumar</p>

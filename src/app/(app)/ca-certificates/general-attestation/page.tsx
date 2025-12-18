@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
+import { CA_FIRM } from "@/lib/ca-firm";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -225,7 +226,7 @@ export default function GeneralAttestationPage() {
     if (step === 2) {
       const formData = form.getValues();
       const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-      const whatsappMessage = `Dear ${formData.clientName},\n\nPlease find attached the draft certificate regarding "${formData.subject}" for your review.\n\nThank you,\nS. KRANTHI KUMAR & Co.`;
+      const whatsappMessage = `Dear ${formData.clientName},\n\nPlease find attached the draft certificate regarding "${formData.subject}" for your review.\n\nThank you,\n${CA_FIRM.name}`;
 
       return (
         <Card>
@@ -236,7 +237,7 @@ export default function GeneralAttestationPage() {
           <CardContent>
             <div ref={printRef} className="prose dark:prose-invert max-w-none border rounded-lg p-8 bg-card text-card-foreground">
               <header className="text-center border-b-2 pb-4 mb-8" style={{ borderColor: 'hsl(var(--sidebar-background))' }}>
-                <h1 className="text-2xl font-bold m-0" style={{ color: 'hsl(var(--sidebar-background))' }}>S. KRANTHI KUMAR & Co.</h1>
+                <h1 className="text-2xl font-bold m-0" style={{ color: 'hsl(var(--sidebar-background))' }}>{CA_FIRM.name}</h1>
                 <p className="text-sm m-0">Chartered Accountants</p>
                 <p className="text-xs m-0">H.No. 2-2-1130/2/A, G-1, Amberpet, Hyderabad-500013</p>
               </header>
@@ -254,7 +255,7 @@ export default function GeneralAttestationPage() {
               <h4 className="font-bold text-center underline my-6">{formData.subject.toUpperCase()}</h4>
               <p>{formData.certificateBody}</p>
               <div className="mt-24 text-right">
-                <p className="font-bold">For S. KRANTHI KUMAR & Co.</p>
+                <p className="font-bold">For {CA_FIRM.name}</p>
                 <p>Chartered Accountants</p>
                 <div className="h-20"></div>
                 <p>(S. Kranthi Kumar)</p><p>Proprietor</p><p>Membership No: 224983</p>

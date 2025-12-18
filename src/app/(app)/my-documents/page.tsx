@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { readBrandingSettings } from "@/lib/branding";
+import { CA_FIRM } from "@/lib/ca-firm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -238,14 +239,14 @@ export default function MyDocumentsPage() {
         const data = doc.certificateData || doc.formData;
         // For certificates, use CA firm details instead of user company branding
         const caFirmDetails = {
-            companyName: "S K J D & Associates",
-            address1: "Chartered Accountants",
+            companyName: CA_FIRM.name,
+            address1: CA_FIRM.tagline,
             address2: "",
-            city: "Hyderabad",
-            state: "Telangana",
-            pincode: "500001",
-            gstin: "GSTIN of CA Firm",
-            pan: "PAN of CA Firm"
+            city: CA_FIRM.city,
+            state: CA_FIRM.state,
+            pincode: CA_FIRM.pincode,
+            gstin: CA_FIRM.gstin,
+            pan: CA_FIRM.pan
         };
         console.log("Certificate data for PDF generation:", data); // Debug log
         console.log("Full document object:", doc); // Debug log

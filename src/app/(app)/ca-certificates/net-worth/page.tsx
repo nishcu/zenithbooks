@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
 import { ArrowLeft, FileSignature, Trash2, PlusCircle, ArrowRight, Loader2, Save } from "lucide-react";
 import Link from "next/link";
+import { CA_FIRM } from "@/lib/ca-firm";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableFooter as TableFoot, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -99,7 +100,7 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
                     fontWeight: 'bold',
                     color: '#2563eb',
                     margin: '0 0 8px 0'
-                }}>S. KRANTHI KUMAR & Co.</h1>
+                }}>{CA_FIRM.name}</h1>
                 <p style={{
                     fontSize: '14px',
                     margin: '0 0 4px 0'
@@ -263,7 +264,7 @@ const CertificateToPrint = React.forwardRef<HTMLDivElement, { formData: FormData
                 <p style={{
                     margin: '40px 0 10px 0',
                     fontWeight: 'bold'
-                }}>For S. KRANTHI KUMAR & Co.</p>
+                }}>For {CA_FIRM.name}</p>
                 <p style={{margin: '5px 0'}}>Chartered Accountants</p>
                 <div style={{height: '80px'}}></div>
                 <p style={{margin: '5px 0'}}>(S. Kranthi Kumar)</p>
@@ -511,7 +512,7 @@ export default function NetWorthCertificatePage() {
             )
         case 4:
             const formData = form.getValues();
-            const whatsappMessage = `Dear ${formData.clientName},\n\nPlease find attached the Net Worth Certificate as on ${new Date(formData.asOnDate).toLocaleDateString('en-GB')}.\n\nThank you,\nS. KRANTHI KUMAR & Co.`;
+            const whatsappMessage = `Dear ${formData.clientName},\n\nPlease find attached the Net Worth Certificate as on ${new Date(formData.asOnDate).toLocaleDateString('en-GB')}.\n\nThank you,\n${CA_FIRM.name}`;
 
             return (
                 <Card>
