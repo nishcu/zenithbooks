@@ -27,9 +27,12 @@ export class Form16ComputationEngine {
       ],
       cess: 0.04, // 4%
       surcharge: [
-        { min: 0, max: 5000000, rate: 0 },
-        { min: 5000000, max: 10000000, rate: 0.10 },
-        { min: 10000000, max: null, rate: 0.15 }
+        // General surcharge slabs for individuals (excluding special-rate income/marginal relief handling)
+        { min: 0, max: 5000000, rate: 0 },            // <= 50L
+        { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
+        { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
+        { min: 20000000, max: 50000000, rate: 0.25 }, // 2Cr - 5Cr
+        { min: 50000000, max: null, rate: 0.37 }      // > 5Cr
       ]
     },
     newRegime: {
@@ -43,15 +46,21 @@ export class Form16ComputationEngine {
       ],
       cess: 0.04, // 4%
       surcharge: [
-        { min: 0, max: 3000000, rate: 0 },
-        { min: 3000000, max: 5000000, rate: 0.05 },
-        { min: 5000000, max: 10000000, rate: 0.10 },
-        { min: 10000000, max: null, rate: 0.15 }
+        // New regime: surcharge applies similarly, but max surcharge is effectively capped (commonly 25%).
+        { min: 0, max: 5000000, rate: 0 },            // <= 50L
+        { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
+        { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
+        { min: 20000000, max: null, rate: 0.25 }      // > 2Cr (cap 25%)
       ]
     },
     rebate87A: {
+      // Old regime: income <= 5L -> rebate up to 12,500
+      // New regime (115BAC): income <= 7L -> rebate up to 25,000 (effectively zero tax up to 7L)
       maxAmount: 12500,
-      incomeLimit: 500000
+      incomeLimit: 500000,
+      // Backward-compatible extensions (used by our engine)
+      maxAmountNewRegime: 25000,
+      incomeLimitNewRegime: 700000
     }
   };
 
@@ -272,16 +281,26 @@ export class Form16ComputationEngine {
     taxRegime: 'OLD' | 'NEW'
   ): number {
     if (taxRegime === 'NEW') {
-      // NEW regime only allows Section 80CCD(1B) and Section 80CCD(2)
-      return (chapterVIA.section80CCD1B || 0) + (chapterVIA.section80CCD2 || 0);
+      // New regime (115BAC) disallows most Chapter VI-A deductions.
+      // Commonly allowed: 80CCD(2) (employer NPS contribution). Keep it simple and safe.
+      return (chapterVIA.section80CCD2 || 0);
     }
 
+    // Old regime: enforce major statutory caps where we can without extra inputs.
+    // 80C + 80CCC + 80CCD(1) combined cap: 1,50,000
+    const c80Combined = (chapterVIA.section80C || 0) + (chapterVIA.section80CCC || 0) + (chapterVIA.section80CCD1 || 0);
+    const c80Allowed = Math.min(c80Combined, 150000);
+
+    // 80CCD(1B) cap: 50,000
+    const c80ccd1bAllowed = Math.min((chapterVIA.section80CCD1B || 0), 50000);
+
+    // 80CCD(2) (employer NPS): leave as provided (limits depend on salary %, not available here)
+    const c80ccd2 = chapterVIA.section80CCD2 || 0;
+
     return (
-      (chapterVIA.section80C || 0) +
-      (chapterVIA.section80CCC || 0) +
-      (chapterVIA.section80CCD1 || 0) +
-      (chapterVIA.section80CCD1B || 0) +
-      (chapterVIA.section80CCD2 || 0) +
+      c80Allowed +
+      c80ccd1bAllowed +
+      c80ccd2 +
       (chapterVIA.section80D || 0) +
       (chapterVIA.section80DD || 0) +
       (chapterVIA.section80DDB || 0) +
@@ -374,7 +393,7 @@ export class Form16ComputationEngine {
     const taxOnIncome = this.calculateTaxOnly(income, regime);
     const surcharge = this.calculateSurcharge(income, taxOnIncome, regime);
     const taxAfterSurcharge = taxOnIncome + surcharge;
-    const rebate87A = this.calculateRebate87A(income, taxAfterSurcharge);
+    const rebate87A = this.calculateRebate87AByRegime(income, taxAfterSurcharge, regime);
     const taxAfterRebate = Math.max(0, taxAfterSurcharge - rebate87A);
     
     // Get regime-specific cess rate (4% for both regimes)
@@ -426,6 +445,18 @@ export class Form16ComputationEngine {
       return Math.min(taxOnIncome, this.taxRegimeConfig.rebate87A.maxAmount);
     }
     return 0;
+  }
+
+  private static calculateRebate87AByRegime(income: number, taxOnIncome: number, regime: 'OLD' | 'NEW'): number {
+    if (regime === 'NEW') {
+      const limit = (this.taxRegimeConfig.rebate87A as any).incomeLimitNewRegime ?? 700000;
+      const max = (this.taxRegimeConfig.rebate87A as any).maxAmountNewRegime ?? 25000;
+      if (income <= limit) {
+        return Math.min(taxOnIncome, max);
+      }
+      return 0;
+    }
+    return this.calculateRebate87A(income, taxOnIncome);
   }
 
   /**
