@@ -77,17 +77,40 @@ export default function TransactionsPage() {
           setUserData(userDataFromDoc);
 
           // Add subscription payment from user data (if available)
-          if (userDataFromDoc?.lastPaymentDate && userDataFromDoc?.paymentAmount) {
+          // Backward-compatible behavior:
+          // - paymentAmount can be 0 if older flows didn't pass order_amount back; still show it
+          // - some legacy users may have active plan but missing lastPaymentDate/paymentAmount; show a basic entry
+          const subscriptionPlan = userDataFromDoc?.subscriptionPlan;
+          const subscriptionStatus = userDataFromDoc?.subscriptionStatus;
+          const isPaidPlan =
+            subscriptionPlan === "business" || subscriptionPlan === "professional";
+          const isActive =
+            typeof subscriptionStatus === "string" &&
+            subscriptionStatus.toLowerCase() === "active";
+
+          if (userDataFromDoc?.lastPaymentDate && userDataFromDoc?.paymentAmount != null) {
             const paymentDate = userDataFromDoc.lastPaymentDate?.toDate() || new Date();
             allTransactions.push({
               id: `subscription_${userDataFromDoc.cashfreeOrderId || "latest"}`,
               type: "subscription",
-              description: `${userDataFromDoc.subscriptionPlan || "Subscription"} Plan`,
-              amount: userDataFromDoc.paymentAmount || 0,
+              description: `${subscriptionPlan || "Subscription"} Plan`,
+              amount: Number(userDataFromDoc.paymentAmount) || 0,
               date: paymentDate,
-              status: userDataFromDoc.subscriptionStatus || "active",
+              status: subscriptionStatus || "active",
               orderId: userDataFromDoc.cashfreeOrderId,
               paymentId: userDataFromDoc.cashfreePaymentId,
+            });
+          } else if (isPaidPlan && isActive) {
+            // Minimal fallback record so subscribed users can see something in Transaction History
+            allTransactions.push({
+              id: `subscription_${userDataFromDoc?.cashfreeOrderId || "active_plan"}`,
+              type: "subscription",
+              description: `${subscriptionPlan} Plan`,
+              amount: Number(userDataFromDoc?.paymentAmount) || 0,
+              date: new Date(),
+              status: subscriptionStatus,
+              orderId: userDataFromDoc?.cashfreeOrderId,
+              paymentId: userDataFromDoc?.cashfreePaymentId,
             });
           }
         }

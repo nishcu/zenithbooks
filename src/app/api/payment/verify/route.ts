@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             lastPaymentDate: serverTimestamp(),
             demoPaymentId: paymentId || `demo_${Date.now()}`,
             demoOrderId: orderId || `demo_order_${Date.now()}`,
-            paymentAmount: amount,
+            paymentAmount: Number(amount) || 0,
           });
         } catch (firestoreError) {
           console.error('Firestore update error in demo mode:', firestoreError);
@@ -204,6 +204,14 @@ export async function POST(request: NextRequest) {
       // Update user's subscription status in Firestore
       if (userId) {
         try {
+          // Prefer the verified amount from Cashfree order details (more reliable than client-provided query params)
+          const verifiedAmount = Number(
+            orderDetails?.order_amount ??
+              orderDetails?.data?.order_amount ??
+              amount ??
+              0
+          ) || 0;
+
           const userRef = doc(db, 'users', userId);
           await updateDoc(userRef, {
             subscriptionStatus: 'active',
@@ -211,7 +219,7 @@ export async function POST(request: NextRequest) {
             lastPaymentDate: serverTimestamp(),
             cashfreePaymentId: paymentId,
             cashfreeOrderId: orderId,
-            paymentAmount: amount,
+            paymentAmount: verifiedAmount,
             paymentStatus: orderStatus || paymentStatus || 'SUCCESS',
           });
         } catch (firestoreError) {
@@ -235,6 +243,7 @@ export async function POST(request: NextRequest) {
       // This is more lenient than Razorpay's strict verification
       if (userId && paymentId) {
         try {
+          const fallbackAmount = Number(amount) || 0;
           const userRef = doc(db, 'users', userId);
           await updateDoc(userRef, {
             subscriptionStatus: 'active',
@@ -242,7 +251,7 @@ export async function POST(request: NextRequest) {
             lastPaymentDate: serverTimestamp(),
             cashfreePaymentId: paymentId,
             cashfreeOrderId: orderId,
-            paymentAmount: amount,
+            paymentAmount: fallbackAmount,
             paymentStatus: 'VERIFICATION_FAILED',
           });
 
