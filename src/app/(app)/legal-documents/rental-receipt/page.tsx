@@ -14,8 +14,9 @@ import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { ShareButtons } from "@/components/documents/share-buttons";
+import { collection, doc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 
 export default function RentalReceiptPage() {
     const { toast } = useToast();
@@ -29,6 +30,7 @@ export default function RentalReceiptPage() {
     const [pricing, setPricing] = useState<ServicePricing | null>(null);
     const [showReceipt, setShowReceipt] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [ticketId, setTicketId] = useState<string | null>(null);
 
     useEffect(() => {
         getServicePricing().then(setPricing);
@@ -37,6 +39,37 @@ export default function RentalReceiptPage() {
         const unsubscribe = onPricingUpdate(setPricing);
         return () => unsubscribe();
     }, []);
+
+    const rentalReceiptPrice = pricing?.hr_documents.find(d => d.id === 'rental_receipt_hra')?.price || 0;
+    const requiresPayment = rentalReceiptPrice > 0;
+
+    // Movie-ticket gate: find an unused ticket for this user
+    useEffect(() => {
+        if (!user?.uid) return;
+        if (!requiresPayment) {
+            setShowReceipt(true);
+            return;
+        }
+        (async () => {
+            try {
+                const snap = await getDocs(
+                    query(
+                        collection(db, "paymentTransactions"),
+                        where("userId", "==", user.uid),
+                        where("planId", "==", "rental_receipts_download"),
+                        limit(20)
+                    )
+                );
+                const tickets = snap.docs
+                    .map(d => ({ id: d.id, data: d.data() as any }))
+                    .filter(t => !t.data?.consumedAt);
+                setTicketId(tickets[0]?.id || null);
+                setShowReceipt(!!tickets[0]);
+            } catch (e) {
+                console.error("Failed to load rental receipt ticket:", e);
+            }
+        })();
+    }, [user?.uid, requiresPayment]);
 
     const handleGenerate = () => {
         if (!tenantName || !landlordName || !rentAmount || !address) {
@@ -47,13 +80,7 @@ export default function RentalReceiptPage() {
             });
             return;
         }
-        
-        // If payment is required, don't show receipt yet - payment will handle it
-        if (rentalReceiptPrice && rentalReceiptPrice > 0) {
-            // Payment will be handled by CashfreeCheckout component
-            return;
-        }
-        
+
         // No payment required - show receipt directly
         setShowReceipt(true);
         toast({
@@ -68,22 +95,43 @@ export default function RentalReceiptPage() {
     };
 
     const handlePaymentSuccessCallback = (paymentId: string) => {
-        // After successful payment, show the receipt
-        setShowReceipt(true);
-        
+        // Cashfree redirects to /payment/success; the ticket will be available after redirect.
         toast({
-            title: "Payment Successful",
-            description: "Your rental receipt has been generated and is ready for download."
+            title: "Payment Initiated",
+            description: "Redirecting to payment success…",
         });
-        
-        // Scroll to receipt
-        setTimeout(() => {
-            printRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
     };
     
-    const rentalReceiptPrice = pricing?.hr_documents.find(d => d.id === 'rental_receipt_hra')?.price;
-    const requiresPayment = rentalReceiptPrice && rentalReceiptPrice > 0;
+    const beforeDownloadOnce = async () => {
+        if (!requiresPayment) return;
+        if (!user?.uid) throw new Error("Please sign in again.");
+        if (!ticketId) throw new Error("Ticket not found. Please pay again.");
+        if (!tenantName || !landlordName || !rentAmount || !address) throw new Error("Fill all fields before download.");
+
+        // Save to My Documents (unlimited downloads from there)
+        await setDoc(
+            doc(db, "userDocuments", `ticket_${ticketId}`),
+            {
+                userId: user.uid,
+                documentType: "rental-receipts",
+                documentName: `Rent Receipt - ${rentalMonth}`.trim(),
+                status: "Paid",
+                formData: { tenantName, landlordName, rentAmount, address, rentalMonth },
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+        );
+
+        // Consume ticket (1 payment = 1 receipt)
+        await updateDoc(doc(db, "paymentTransactions", ticketId), {
+            consumedAt: serverTimestamp(),
+            consumedBy: user.uid,
+            consumedFor: "rental_receipts_download",
+            updatedAt: serverTimestamp(),
+        });
+        setTicketId(null);
+    };
 
     return (
         <div className="space-y-8 max-w-2xl mx-auto print-container">
@@ -91,6 +139,9 @@ export default function RentalReceiptPage() {
                 <ArrowLeft className="size-4" />
                 Back to Document Selection
             </Link>
+            <div className="text-xs text-muted-foreground non-printable">
+                Rental Receipt build: <span className="font-mono">pay-first-singular@4b4a063</span>
+            </div>
             <div className="text-center non-printable">
                  <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4 mx-auto">
                     <IndianRupee className="h-8 w-8 text-primary" />
@@ -99,6 +150,33 @@ export default function RentalReceiptPage() {
                 <p className="text-muted-foreground">Easily generate and print a rental receipt for HRA claims.</p>
             </div>
 
+            {/* Pay-first gate: if paid and no ticket, show only payment */}
+            {requiresPayment && !ticketId ? (
+                <Card className="non-printable">
+                    <CardHeader>
+                        <CardTitle>Pay & Unlock</CardTitle>
+                        <CardDescription>Pay first to unlock 1 receipt (1 payment = 1 receipt).</CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                        <CashfreeCheckout
+                            amount={rentalReceiptPrice || 0}
+                            planId="rental_receipts_download"
+                            planName="Rental Receipt for HRA"
+                            userId={user?.uid || ''}
+                            userEmail={user?.email || ''}
+                            userName={user?.displayName || ''}
+                            onSuccess={handlePaymentSuccessCallback}
+                            onFailure={() => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Payment Failed",
+                                    description: "Payment was not completed. Please try again."
+                                });
+                            }}
+                        />
+                    </CardFooter>
+                </Card>
+            ) : (
             <Card className="non-printable">
                 <CardHeader>
                     <CardTitle>Enter Receipt Details</CardTitle>
@@ -127,33 +205,7 @@ export default function RentalReceiptPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    {requiresPayment ? (
-                        <div className="w-full">
-                            {!tenantName || !landlordName || !rentAmount || !address ? (
-                                <Button disabled className="w-full">
-                                    <Printer className="mr-2"/>
-                                    Please fill all fields to proceed
-                                </Button>
-                            ) : (
-                                <CashfreeCheckout
-                                    amount={rentalReceiptPrice || 0}
-                                    planId="rental_receipt_hra"
-                                    planName="Rental Receipt for HRA"
-                                    userId={user?.uid || ''}
-                                    userEmail={user?.email || ''}
-                                    userName={user?.displayName || ''}
-                                    onSuccess={handlePaymentSuccessCallback}
-                                    onFailure={() => {
-                                        toast({
-                                            variant: "destructive",
-                                            title: "Payment Failed",
-                                            description: "Payment was not completed. Please try again."
-                                        });
-                                    }}
-                                />
-                            )}
-                        </div>
-                    ) : (
+                    {!requiresPayment ? (
                         <Button onClick={handleGenerate} disabled={isGenerating}>
                             {isGenerating ? (
                                 <>
@@ -167,9 +219,10 @@ export default function RentalReceiptPage() {
                                 </>
                             )}
                         </Button>
-                    )}
+                    ) : null}
                 </CardFooter>
             </Card>
+            )}
 
             {/* Printable Receipt Area */}
             {showReceipt && (
@@ -200,6 +253,7 @@ export default function RentalReceiptPage() {
                             contentRef={printRef}
                             fileName={`Rental_Receipt_${tenantName}_${rentalMonth}`}
                             whatsappMessage={`Hi ${landlordName}, here is the rent receipt for ${new Date(rentalMonth + '-02').toLocaleString('default', { month: 'long', year: 'numeric' })} for your records. Thank you.`}
+                            beforeDownload={beforeDownloadOnce}
                         />
                     </CardFooter>
                 </Card>
