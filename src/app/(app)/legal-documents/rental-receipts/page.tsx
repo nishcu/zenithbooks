@@ -74,6 +74,7 @@ export default function RentalReceiptsPage() {
   const [showDocument, setShowDocument] = useState(false);
   useOnDemandUnlock("rental_receipts_download", () => setShowDocument(true));
   const [entitlement, setEntitlement] = useState<{ id: string; orderId?: string | null; paymentId?: string | null; consumedAt?: Date | null } | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   // Fetch user subscription info
   useEffect(() => {
@@ -207,6 +208,19 @@ export default function RentalReceiptsPage() {
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
   const whatsappMessage = `Hi ${formData.landlordName}, here is the rent receipt for ${formattedPeriod} for your records. Thank you.`;
 
+  const basePrice = pricing?.hr_documents?.find(s => s.id === 'rental_receipt_hra')?.price || 0;
+  const effectivePrice = userSubscriptionInfo
+    ? getEffectiveServicePrice(
+        basePrice,
+        userSubscriptionInfo.userType,
+        userSubscriptionInfo.subscriptionPlan,
+        "hr_documents"
+      )
+    : basePrice;
+
+  const hasUnusedTicket = !!(entitlement && !entitlement.consumedAt);
+  const payFirstRequired = effectivePrice > 0 && !hasUnusedTicket;
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       <Link href="/legal-documents" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -220,6 +234,50 @@ export default function RentalReceiptsPage() {
         </p>
       </div>
 
+      {/* Pay-first gate (movie ticket): if paid service and user has no unused ticket, show ONLY payment */}
+      {payFirstRequired ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pay & Unlock</CardTitle>
+            <CardDescription>
+              Pay first to unlock 1 rental receipt creation (1 payment = 1 receipt). After payment, you can fill details and save to My Documents.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Price: <span className="font-semibold">₹{effectivePrice}</span>
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-2 items-stretch">
+            <CashfreeCheckout
+              amount={effectivePrice}
+              planId="rental_receipts_download"
+              planName="Rental Receipts Download"
+              userId={user?.uid || ''}
+              userEmail={user?.email || ''}
+              userName={user?.displayName || ''}
+              onSuccess={() => {
+                setIsPaying(false);
+                toast({
+                  title: "Payment Successful",
+                  description: "Ticket unlocked. Now fill receipt details and download/save once.",
+                });
+              }}
+              onFailure={() => {
+                setIsPaying(false);
+                toast({
+                  variant: "destructive",
+                  title: "Payment Failed",
+                  description: "Payment was not completed. Please try again.",
+                });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              After saving, you can download the saved receipt unlimited times from <strong>My Documents</strong>.
+            </p>
+          </CardFooter>
+        </Card>
+      ) : (
       <div className="grid lg:grid-cols-2 gap-8 items-start">
         <Card>
           <CardHeader>
@@ -300,66 +358,45 @@ export default function RentalReceiptsPage() {
             </CardContent>
             <CardFooter>
                 {(() => {
-                  const basePrice = pricing?.hr_documents?.find(s => s.id === 'rental_receipt_hra')?.price || 0;
-                  const effectivePrice = userSubscriptionInfo
-                    ? getEffectiveServicePrice(
-                        basePrice,
-                        userSubscriptionInfo.userType,
-                        userSubscriptionInfo.subscriptionPlan,
-                        "hr_documents"
-                      )
-                    : basePrice;
-                  const requiresPayment = effectivePrice > 0 && !showDocument;
-
-                  if (requiresPayment) {
-                    return (
-                      <CashfreeCheckout
-                        amount={effectivePrice}
-                        planId="rental_receipts_download"
-                        planName="Rental Receipts Download"
-                        userId={user?.uid || ''}
-                        userEmail={user?.email || ''}
-                        userName={user?.displayName || ''}
-                        onSuccess={() => {
-                          toast({
-                            title: "Payment Successful",
-                            description: "Ticket unlocked. Now fill details and download once.",
-                          });
-                        }}
-                        onFailure={() => {
-                          toast({
-                            variant: "destructive",
-                            title: "Payment Failed",
-                            description: "Payment was not completed. Please try again."
-                          });
-                        }}
-                      />
-                    );
-                  } else {
-                    // Show download buttons (either free or already paid)
-                    if (!showDocument && effectivePrice === 0) {
-                      setShowDocument(true);
-                    }
+                  // Free service => allow unlimited usage on-page
+                  if (effectivePrice === 0) {
+                    if (!showDocument) setShowDocument(true);
                     return showDocument ? (
-                      <ShareButtons 
+                      <ShareButtons
                         contentRef={printRef}
                         fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
                         whatsappMessage={whatsappMessage}
-                        beforeDownload={async () => {
-                          const ok = await form.trigger();
-                          if (!ok) throw new Error("Please fill all required fields before download.");
-                          if (effectivePrice > 0) {
-                            await saveToMyDocuments();
-                            await consumeTicketOnce();
-                          }
-                        }}
                       />
                     ) : null;
                   }
+
+                  // Paid service => allow only if ticket exists
+                  if (!hasUnusedTicket) {
+                    return (
+                      <Button size="lg" className="w-full" disabled>
+                        Ticket not found. Please pay again.
+                      </Button>
+                    );
+                  }
+
+                  return (
+                    <ShareButtons
+                      contentRef={printRef}
+                      fileName={`Rent_Receipt_${formData.tenantName}_${formData.rentPeriod}`}
+                      whatsappMessage={whatsappMessage}
+                      beforeDownload={async () => {
+                        const ok = await form.trigger();
+                        if (!ok) throw new Error("Please fill all required fields before download.");
+                        await saveToMyDocuments(); // saves receipt
+                        await consumeTicketOnce(); // consumes ticket (1 payment = 1 receipt)
+                      }}
+                    />
+                  );
                 })()}
             </CardFooter>
         </Card>
       </div>
+      )}
     </div>
   );
 }
