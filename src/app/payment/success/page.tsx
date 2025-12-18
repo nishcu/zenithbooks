@@ -231,6 +231,35 @@ function PaymentSuccessContent() {
           } catch (e) {
             console.error("Post-payment on-demand finalization failed:", e);
           }
+
+          // Fallback: if we still haven't decided a destination, use pending_return_to + pending_plan_id
+          // This fixes cases where pending_on_demand_action wasn't persisted (or was cleared) but the user paid.
+          try {
+            if (redirectTo === "/dashboard") {
+              const returnTo = localStorage.getItem("pending_return_to");
+              const pendingPlanId = localStorage.getItem("pending_plan_id");
+              if (returnTo) {
+                if (pendingPlanId) {
+                  try {
+                    localStorage.setItem(
+                      "on_demand_unlock",
+                      JSON.stringify({
+                        type: "plan",
+                        planId: pendingPlanId,
+                        orderId: orderIdParam,
+                        paymentId: paymentIdParam || null,
+                        at: Date.now(),
+                      })
+                    );
+                  } catch {}
+                }
+                redirectTo = returnTo;
+              }
+              localStorage.removeItem("pending_return_to");
+            }
+          } catch (e) {
+            console.error("Post-payment fallback resume failed:", e);
+          }
           
           // Clear pending plan ID
           localStorage.removeItem('pending_plan_id');

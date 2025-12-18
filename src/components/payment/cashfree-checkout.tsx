@@ -65,6 +65,16 @@ export function CashfreeCheckout({
       // Store planId in localStorage for payment success page
       localStorage.setItem('pending_plan_id', planId);
 
+      // Always store a return-to URL for post-redirect resume (used as fallback if other keys are missing)
+      try {
+        localStorage.setItem(
+          "pending_return_to",
+          `${window.location.pathname}${window.location.search || ""}`
+        );
+      } catch (e) {
+        console.warn("Failed to persist pending_return_to:", e);
+      }
+
       // Always persist a generic "returnTo" context so /payment/success can send the user back
       // even if the originating page relies on onSuccess callbacks (Cashfree typically redirects).
       if (!postPaymentContext?.key) {
