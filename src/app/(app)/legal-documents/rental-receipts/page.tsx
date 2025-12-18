@@ -35,7 +35,7 @@ import { auth, db } from "@/lib/firebase";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useEffect } from "react";
 import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
-import { collection, doc, getDocs, limit, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, limit, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 
 const formSchema = z.object({
   tenantName: z.string().min(3, "Tenant's name is required."),
@@ -131,49 +131,62 @@ export default function RentalReceiptsPage() {
     if (!user?.uid) return;
     (async () => {
       try {
-        // Prefer userDocuments record (created after successful payment on /payment/success)
+        // 1) Restore latest saved receipt (if any) so user doesn't re-enter
+        // NOTE: Don't rely on ordering/indexes here; just take the newest client-side if multiple.
         const docsSnap = await getDocs(
           query(
             collection(db, "userDocuments"),
             where("userId", "==", user.uid),
             where("documentType", "==", "rental-receipts"),
-            orderBy("createdAt", "desc"),
-            limit(1)
+            limit(10)
           )
         );
-
-        const latestDoc = docsSnap.docs[0]?.data() as any;
+        const docCandidates = docsSnap.docs
+          .map((d) => ({ id: d.id, data: d.data() as any }))
+          .sort((a, b) => {
+            const ad = a.data?.createdAt?.toDate?.()?.getTime?.() || 0;
+            const bd = b.data?.createdAt?.toDate?.()?.getTime?.() || 0;
+            return bd - ad;
+          });
+        const latestDoc = docCandidates[0]?.data;
         if (latestDoc?.formData) {
           form.reset({ ...form.getValues(), ...latestDoc.formData });
-          // We'll only unlock download if ticket is unconsumed (checked below)
-          return;
         }
 
-        // Fallback: if paymentTransactions has a successful payment for this plan, unlock UI
+        // 2) Find an UNUSED paid ticket (1 payment = 1 download)
         const paySnap = await getDocs(
           query(
             collection(db, "paymentTransactions"),
             where("userId", "==", user.uid),
             where("planId", "==", "rental_receipts_download"),
-            orderBy("createdAt", "desc"),
-            limit(1)
+            limit(20)
           )
         );
 
-        const payDoc = paySnap.docs[0];
-        if (payDoc) {
-          const p = payDoc.data() as any;
-          const consumedAt = p?.consumedAt?.toDate?.() || null;
-          setEntitlement({
-            id: payDoc.id,
-            orderId: p?.orderId || null,
-            consumedAt,
+        const tickets = paySnap.docs
+          .map((d) => ({ id: d.id, data: d.data() as any }))
+          .filter((t) => {
+            const status = String(t.data?.status || "").toUpperCase();
+            return status.includes("PAID") || status.includes("SUCCESS") || status.includes("ACTIVE");
+          })
+          .sort((a, b) => {
+            const ad = a.data?.createdAt?.toDate?.()?.getTime?.() || 0;
+            const bd = b.data?.createdAt?.toDate?.()?.getTime?.() || 0;
+            return bd - ad;
           });
-          if (!consumedAt) {
-            setShowDocument(true);
-          } else {
-            setShowDocument(false);
-          }
+
+        const unused = tickets.find((t) => !t.data?.consumedAt);
+        if (unused) {
+          setEntitlement({
+            id: unused.id,
+            orderId: unused.data?.orderId || null,
+            consumedAt: null,
+          });
+          setShowDocument(true);
+        } else {
+          // No unused ticket -> require payment again
+          setEntitlement(tickets[0] ? { id: tickets[0].id, orderId: tickets[0].data?.orderId || null, consumedAt: new Date() } : null);
+          setShowDocument(false);
         }
       } catch (e) {
         console.error("Rental receipts unlock check failed:", e);
@@ -194,6 +207,8 @@ export default function RentalReceiptsPage() {
       updatedAt: serverTimestamp(),
     });
     setEntitlement({ ...entitlement, consumedAt: new Date() });
+    // Immediately lock UI again (ticket consumed)
+    setShowDocument(false);
   };
   
   const formattedPeriod = formData.rentPeriod ? new Date(formData.rentPeriod + '-02').toLocaleString('default', { month: 'long', year: 'numeric' }) : '';
