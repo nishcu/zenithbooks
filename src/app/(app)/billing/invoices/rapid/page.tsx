@@ -76,6 +76,18 @@ export default function RapidInvoiceEntryPage() {
     },
   });
 
+  const handleItemChange = useCallback((itemId?: string) => {
+    if (!itemId) {
+      form.setValue("itemId", undefined);
+      return;
+    }
+    form.setValue("itemId", itemId);
+    const selectedItem: any = items.find((i: any) => i.id === itemId);
+    if (selectedItem && typeof selectedItem.gstRate === "number") {
+      form.setValue("taxRate", selectedItem.gstRate, { shouldValidate: true });
+    }
+  }, [form, items]);
+
   const handleSave = useCallback(async (values: RapidInvoiceForm, closeOnSave: boolean) => {
     if (!accountingContext) return;
     const { addJournalVoucher } = accountingContext;
@@ -192,7 +204,7 @@ export default function RapidInvoiceEntryPage() {
                             <FormItem>
                                 <FormLabel>Product/Item (Optional)</FormLabel>
                                 <Select 
-                                    onValueChange={(value) => field.onChange(value || undefined)} 
+                                    onValueChange={(value) => handleItemChange(value || undefined)} 
                                     value={field.value || undefined}
                                 >
                                     <FormControl>

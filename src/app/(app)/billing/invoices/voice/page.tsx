@@ -556,6 +556,10 @@ export default function VoiceInvoiceEntryPage() {
       // Get item details
       const selectedItem = items.find((i: any) => i.id === parsed.itemId);
       if (selectedItem) {
+        // Auto-fill GST rate from item master if available
+        if (typeof selectedItem.gstRate === "number") {
+          form.setValue("taxRate", selectedItem.gstRate);
+        }
         const itemPrice = selectedItem.sellingPrice || selectedItem.price || 0;
         const quantity = parsed.quantity || 1;
         const subtotal = itemPrice * quantity;
@@ -890,6 +894,10 @@ export default function VoiceInvoiceEntryPage() {
                         // Auto-calculate amount when product is selected
                         const selectedItem = items.find((i: any) => i.id === value);
                         if (selectedItem) {
+                          // Auto-fill GST rate from item master if available
+                          if (typeof selectedItem.gstRate === "number") {
+                            form.setValue("taxRate", selectedItem.gstRate);
+                          }
                           const itemPrice = selectedItem.sellingPrice || selectedItem.price || 0;
                           const quantity = form.getValues("quantity") || 1;
                           const subtotal = itemPrice * quantity;

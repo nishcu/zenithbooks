@@ -38,6 +38,7 @@ export type Item = {
   id: string;
   name: string;
   hsn: string;
+  gstRate?: number;
   sellingPrice?: number;
   purchasePrice?: number;
   [key: string]: any;
@@ -229,6 +230,10 @@ export function ItemTable({ lineItems, setLineItems, items, itemsLoading, isPurc
                             description: selectedItem.name,
                             rate: price || 0,
                             hsn: selectedItem.hsn || "",
+                            // Auto-fill GST from item master if available; keep existing otherwise
+                            taxRate: !isPurchase
+                              ? (typeof selectedItem.gstRate === "number" ? selectedItem.gstRate : item.taxRate)
+                              : item.taxRate,
                             amount: (item.qty || 0) * (price || 0)
                         };
                     }

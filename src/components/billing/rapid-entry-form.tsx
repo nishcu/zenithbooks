@@ -42,7 +42,7 @@ type RapidEntryFormProps = {
   entryType: 'invoice' | 'purchase';
   partyList: { id: string; name: string; }[];
   partyLoading: boolean;
-  itemList: { id: string; name: string; sellingPrice?: number; purchasePrice?: number; }[];
+  itemList: { id: string; name: string; sellingPrice?: number; purchasePrice?: number; gstRate?: number; hsn?: string; }[];
   itemLoading: boolean;
 };
 
@@ -57,7 +57,9 @@ export function RapidEntryForm({
 }: RapidEntryFormProps) {
 
   const watchedAmount = Number(form.watch("amount")) || 0;
-  const taxAmount = watchedAmount * 0.18; // Assuming 18% GST
+  const selectedItem: any = itemList.find((i: any) => i.id === form.watch("itemId"));
+  const effectiveTaxRate = typeof selectedItem?.gstRate === "number" ? selectedItem.gstRate : 18;
+  const taxAmount = watchedAmount * (effectiveTaxRate / 100);
   const totalAmount = watchedAmount + taxAmount;
 
   const onSaveAndNew = form.handleSubmit(values => handleSave(values, false));
@@ -145,7 +147,7 @@ export function RapidEntryForm({
                      <div className="flex justify-end">
                         <div className="w-full max-w-sm space-y-2 border-t pt-4 mt-4">
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Taxable Amount</span><span>₹{watchedAmount.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm"><span className="text-muted-foreground">IGST @ 18%</span><span>₹{taxAmount.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm"><span className="text-muted-foreground">IGST @ {effectiveTaxRate}%</span><span>₹{taxAmount.toFixed(2)}</span></div>
                             <Separator/>
                             <div className="flex justify-between font-bold text-md"><span>Total Amount</span><span>₹{totalAmount.toFixed(2)}</span></div>
                         </div>
