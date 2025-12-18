@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Calendar as CalendarIcon,
   Save,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -23,12 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "firebase/firestore";
@@ -230,27 +222,19 @@ export default function NewSalesOrderPage() {
             </div>
             <div className="space-y-2">
               <Label>Order Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !orderDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {orderDate ? format(orderDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={orderDate} onSelect={setOrderDate} initialFocus /></PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={orderDate ? format(orderDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => setOrderDate(e.target.value ? new Date(e.target.value) : undefined)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Expiry Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !expiryDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expiryDate ? format(expiryDate, "PPP") : <span>Pick an expiry date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={expiryDate} onSelect={setExpiryDate} initialFocus /></PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={expiryDate ? format(expiryDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => setExpiryDate(e.target.value ? new Date(e.target.value) : undefined)}
+              />
             </div>
           </div>
           

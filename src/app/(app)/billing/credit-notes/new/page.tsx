@@ -5,7 +5,6 @@ import { useState, useContext } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Calendar as CalendarIcon,
   PlusCircle,
   Save,
   Trash2,
@@ -32,12 +31,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -45,7 +38,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
@@ -215,28 +207,11 @@ export default function NewCreditNotePage() {
             </div>
             <div className="space-y-2">
               <Label>Credit Note Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !creditNoteDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {creditNoteDate ? format(creditNoteDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={creditNoteDate}
-                    onSelect={setCreditNoteDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={creditNoteDate ? format(creditNoteDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => setCreditNoteDate(e.target.value ? new Date(e.target.value) : undefined)}
+              />
             </div>
           </div>
           

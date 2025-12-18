@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
-  Calendar as CalendarIcon,
   PlusCircle,
   Save,
 } from "lucide-react";
@@ -23,12 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { AccountingContext } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
@@ -261,23 +253,11 @@ export default function NewInvoicePage() {
             </div>
             <div className="space-y-2">
               <Label>Invoice Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !invoiceDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {invoiceDate ? format(invoiceDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={invoiceDate} onSelect={setInvoiceDate} initialFocus />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={invoiceDate ? format(invoiceDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => setInvoiceDate(e.target.value ? new Date(e.target.value) : undefined)}
+              />
             </div>
           </div>
           
