@@ -15,14 +15,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is authenticated and is super admin
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // For now, we'll check the user ID from the request
-    // In a real implementation, you'd verify the JWT token
+    // For now, we authorize via x-user-id header (same as PUT/DELETE).
+    // In a real implementation, you'd verify the Firebase ID token (Bearer JWT).
     const userId = request.headers.get('x-user-id');
     if (!userId || userId !== superAdminUid) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
