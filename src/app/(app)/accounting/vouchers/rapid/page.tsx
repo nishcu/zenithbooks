@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useContext, useMemo, useCallback, useEffect } from "react";
+import { useState, useContext, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -54,72 +54,23 @@ const rapidVoucherSchema = z.object({
 
 type RapidVoucherForm = z.infer<typeof rapidVoucherSchema>;
 
-export default function RapidVoucherEntryPage() {
-  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-  const accountingContext = useContext(AccountingContext);
+function RapidVoucherFormUI({
+  userId,
+  customers,
+  vendors,
+  customersLoading,
+  vendorsLoading,
+  onSaveVoucher,
+}: {
+  userId: string;
+  customers: Array<{ id: string; name: string }>;
+  vendors: Array<{ id: string; name: string }>;
+  customersLoading: boolean;
+  vendorsLoading: boolean;
+  onSaveVoucher: (voucher: any) => Promise<void>;
+}) {
   const { toast } = useToast();
   const router = useRouter();
-  const [user] = useAuthState(auth);
-  const uid = user?.uid || null;
-  const [userData, setUserData] = useState<any>(null);
-  const [userDataError, setUserDataError] = useState<string | null>(null);
-  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
-  const isFreemium = subscriptionPlan === 'freemium';
-  
-  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
-  const [customersLoading, setCustomersLoading] = useState(false);
-  const [customersError, setCustomersError] = useState<string | null>(null);
-
-  const [vendors, setVendors] = useState<Array<{ id: string; name: string }>>([]);
-  const [vendorsLoading, setVendorsLoading] = useState(false);
-  const [vendorsError, setVendorsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!uid) {
-      setUserData(null);
-      setCustomers([]);
-      setVendors([]);
-      return;
-    }
-
-    (async () => {
-      // user
-      try {
-        setUserDataError(null);
-        const snap = await getDoc(doc(db, "users", uid));
-        setUserData(snap.exists() ? snap.data() : null);
-      } catch (e: any) {
-        console.error(e);
-        setUserDataError(e?.message || "Failed to load user");
-      }
-
-      // customers
-      try {
-        setCustomersError(null);
-        setCustomersLoading(true);
-        const snap = await getDocs(query(collection(db, "customers"), where("userId", "==", uid)));
-        setCustomers(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
-      } catch (e: any) {
-        console.error(e);
-        setCustomersError(e?.message || "Failed to load customers");
-      } finally {
-        setCustomersLoading(false);
-      }
-
-      // vendors
-      try {
-        setVendorsError(null);
-        setVendorsLoading(true);
-        const snap = await getDocs(query(collection(db, "vendors"), where("userId", "==", uid)));
-        setVendors(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
-      } catch (e: any) {
-        console.error(e);
-        setVendorsError(e?.message || "Failed to load vendors");
-      } finally {
-        setVendorsLoading(false);
-      }
-    })();
-  }, [uid]);
 
   const form = useForm<RapidVoucherForm>({
     resolver: zodResolver(rapidVoucherSchema),
@@ -133,70 +84,12 @@ export default function RapidVoucherEntryPage() {
     },
   });
 
-  // Re-enabled: Rapid Voucher Entry UI (hooks remain above any returns).
-  
   const voucherType = form.watch("type");
   const partyList = voucherType === 'receipt' ? customers : vendors;
   const partyLabel = voucherType === 'receipt' ? 'Received From (Customer)' : 'Paid To (Vendor)';
   const voucherPrefix = voucherType === 'receipt' ? 'RV' : 'PV';
 
-  // Early return AFTER all hooks are called
-  if (userDataError || customersError || vendorsError) {
-    return (
-      <div className="space-y-4 p-8">
-        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Something went wrong</CardTitle>
-            <CardDescription>Please refresh the page. If it persists, contact support.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {userDataError && <p><strong>User:</strong> {userDataError}</p>}
-            {customersError && <p><strong>Customers:</strong> {customersError}</p>}
-            {vendorsError && <p><strong>Vendors:</strong> {vendorsError}</p>}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="space-y-6 p-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Please sign in</CardTitle>
-            <CardDescription>You need to be logged in to create vouchers.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button variant="outline" onClick={() => router.push("/login")}>
-              Go to Login
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Rapid Voucher Entry</h1>
-        <UpgradeRequiredAlert
-          featureName="Rapid Voucher Entry"
-          description="Quickly create receipt and payment vouchers with a Business or Professional plan."
-          backHref="/accounting/vouchers"
-          backLabel="Back to Vouchers"
-        />
-      </div>
-    );
-  }
-
   const handleSave = useCallback(async (values: RapidVoucherForm, closeOnSave: boolean) => {
-    if (!accountingContext) return;
-    const { addJournalVoucher } = accountingContext;
-
     const selectedParty = partyList.find(p => p.id === values.partyId);
 
     if (!selectedParty) {
@@ -241,6 +134,7 @@ export default function RapidVoucherEntryPage() {
             narration,
             lines: journalLines,
             amount: values.amount,
+            userId,
         };
 
         if (values.type === 'receipt') {
@@ -249,7 +143,7 @@ export default function RapidVoucherEntryPage() {
             newVoucher.vendorId = values.partyId;
         }
 
-        await addJournalVoucher(newVoucher);
+        await onSaveVoucher(newVoucher);
 
         toast({ title: "Voucher Saved", description: `${voucherId} has been created.` });
 
@@ -270,7 +164,7 @@ export default function RapidVoucherEntryPage() {
     } catch (e: any) {
         toast({ variant: "destructive", title: "Failed to save voucher", description: e.message });
     }
-  }, [accountingContext, partyList, toast, router, form, voucherPrefix]);
+  }, [partyList, toast, router, form, voucherPrefix, customers, vendors, userId, onSaveVoucher]);
 
   const onSaveAndNew = form.handleSubmit(values => handleSave(values, false));
   const onSaveAndClose = form.handleSubmit(values => handleSave(values, true));
@@ -377,5 +271,138 @@ export default function RapidVoucherEntryPage() {
         </form>
       </Form>
     </div>
+  );
+}
+
+export default function RapidVoucherEntryPage() {
+  // Parent only: auth/subscription/data loading; child contains useForm (prevents hook-order crashes)
+  const accountingContext = useContext(AccountingContext);
+  const router = useRouter();
+  const [user] = useAuthState(auth);
+  const uid = user?.uid || null;
+
+  const [userData, setUserData] = useState<any>(null);
+  const [userDataError, setUserDataError] = useState<string | null>(null);
+  const subscriptionPlan = userData?.subscriptionPlan || 'freemium';
+  const isFreemium = subscriptionPlan === 'freemium';
+
+  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState<string | null>(null);
+
+  const [vendors, setVendors] = useState<Array<{ id: string; name: string }>>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [vendorsError, setVendorsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!uid) {
+      setUserData(null);
+      setCustomers([]);
+      setVendors([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        setUserDataError(null);
+        const snap = await getDoc(doc(db, "users", uid));
+        setUserData(snap.exists() ? snap.data() : null);
+      } catch (e: any) {
+        console.error(e);
+        setUserDataError(e?.message || "Failed to load user");
+      }
+
+      try {
+        setCustomersError(null);
+        setCustomersLoading(true);
+        const snap = await getDocs(query(collection(db, "customers"), where("userId", "==", uid)));
+        setCustomers(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
+      } catch (e: any) {
+        console.error(e);
+        setCustomersError(e?.message || "Failed to load customers");
+      } finally {
+        setCustomersLoading(false);
+      }
+
+      try {
+        setVendorsError(null);
+        setVendorsLoading(true);
+        const snap = await getDocs(query(collection(db, "vendors"), where("userId", "==", uid)));
+        setVendors(snap.docs.map((d) => ({ id: d.id, name: (d.data() as any)?.name || "Unnamed" })));
+      } catch (e: any) {
+        console.error(e);
+        setVendorsError(e?.message || "Failed to load vendors");
+      } finally {
+        setVendorsLoading(false);
+      }
+    })();
+  }, [uid]);
+
+  if (userDataError || customersError || vendorsError) {
+    return (
+      <div className="space-y-4 p-8">
+        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Something went wrong</CardTitle>
+            <CardDescription>Please refresh the page. If it persists, contact support.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {userDataError && <p><strong>User:</strong> {userDataError}</p>}
+            {customersError && <p><strong>Customers:</strong> {customersError}</p>}
+            {vendorsError && <p><strong>Vendors:</strong> {vendorsError}</p>}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user || !uid) {
+    return (
+      <div className="space-y-6 p-8 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold">Rapid Voucher Entry</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Please sign in</CardTitle>
+            <CardDescription>You need to be logged in to create vouchers.</CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button variant="outline" onClick={() => router.push("/login")}>
+              Go to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isFreemium) {
+    return (
+      <div className="space-y-8 p-8">
+        <h1 className="text-3xl font-bold">Rapid Voucher Entry</h1>
+        <UpgradeRequiredAlert
+          featureName="Rapid Voucher Entry"
+          description="Quickly create receipt and payment vouchers with a Business or Professional plan."
+          backHref="/accounting/vouchers"
+          backLabel="Back to Vouchers"
+        />
+      </div>
+    );
+  }
+
+  const onSaveVoucher = async (voucher: any) => {
+    if (!accountingContext) throw new Error("Accounting context not ready.");
+    await accountingContext.addJournalVoucher(voucher);
+  };
+
+  return (
+    <RapidVoucherFormUI
+      userId={uid}
+      customers={customers}
+      vendors={vendors}
+      customersLoading={customersLoading}
+      vendorsLoading={vendorsLoading}
+      onSaveVoucher={onSaveVoucher}
+    />
   );
 }
