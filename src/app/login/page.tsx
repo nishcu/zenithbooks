@@ -4,6 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { ZenithBooksLogo } from "@/components/icons";
 import { motion } from "framer-motion";
 import { ClientOnly } from "@/components/client-only";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -95,34 +96,19 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex-1 lg:w-1/2 flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-background">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile Logo */}
-          <motion.div
-            className="lg:hidden flex items-center justify-center gap-3 mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="bg-primary/10 rounded-xl p-2">
-              <ZenithBooksLogo className="h-8 w-8 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">ZenithBooks</h1>
-              <p className="text-xs text-muted-foreground">Your Business at its Peak</p>
-            </div>
-          </motion.div>
-
+      <div className="flex-1 lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12 bg-background">
+        <div className="w-full max-w-md">
           {/* Login Form Card */}
           <motion.div
-            className="bg-card rounded-2xl shadow-lg border border-border/50 p-8 sm:p-10"
-            initial={{ opacity: 0, y: 20 }}
+            className="bg-card rounded-xl lg:rounded-2xl shadow-lg border border-border/50 p-6 sm:p-8 lg:p-10"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            transition={{ duration: 0.4 }}
           >
-            <div className="space-y-2 mb-8">
-              <h2 className="text-3xl font-bold text-foreground">Sign In</h2>
-              <p className="text-muted-foreground">
+            {/* Mobile: Compact Header */}
+            <div className="space-y-1 mb-6 lg:mb-8">
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Sign In</h2>
+              <p className="text-sm lg:text-base text-muted-foreground hidden lg:block">
                 Enter your credentials to access your account
               </p>
             </div>
@@ -130,12 +116,12 @@ export default function LoginPage() {
             <LoginForm />
           </motion.div>
 
-          {/* Footer */}
+          {/* Desktop Footer Only */}
           <motion.div
-            className="text-center text-sm text-muted-foreground"
+            className="hidden lg:block text-center text-sm text-muted-foreground mt-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
           >
             <p>&copy; {new Date().getFullYear()} ZenithBooks. All rights reserved.</p>
           </motion.div>
