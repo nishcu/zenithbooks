@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ClientOnly } from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 const fontInter = Inter({
   subsets: ['latin'],
@@ -91,6 +92,23 @@ export default function RootLayout({
           fontSourceCodePro.variable
         )}
       >
+        {/* Google Tag (gtag.js) - Supports GA4 (G-*) and Google Ads (AW-*) */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
         {/* Cashfree SDK - Loaded dynamically in checkout component for CSP safety */}
         {/* Script removed from here - using dynamic loader instead */}
         <ClientOnly>
@@ -100,6 +118,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <SplashScreen />
             <ErrorBoundary>
               {children}
             </ErrorBoundary>

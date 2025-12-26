@@ -178,12 +178,6 @@ export function SignupForm() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h3 className="text-xl font-semibold">Create an Account</h3>
-        <p className="text-sm text-muted-foreground">
-          Enter your information to create an account
-        </p>
-      </div>
 
       {isCheckingRedirect ? (
         <div className="flex flex-col items-center justify-center h-32">
@@ -352,12 +346,6 @@ export function SignupForm() {
             {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
             Sign up with Google
           </Button>
-        <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
-          <Link href="#login" className="underline">
-            Sign in
-          </Link>
-        </div>
       </>
       )}
 

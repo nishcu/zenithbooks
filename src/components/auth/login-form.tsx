@@ -202,12 +202,6 @@ export function LoginForm() {
   return (
     <>
       <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h3 className="text-xl font-semibold">Welcome Back</h3>
-          <p className="text-sm text-muted-foreground">
-            Enter your email below to login to your account
-          </p>
-        </div>
 
         {isCheckingRedirect ? (
           <div className="flex flex-col items-center justify-center h-32">

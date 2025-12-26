@@ -230,3 +230,50 @@ After adding environment variables, you need to redeploy:
 
 **Note**: The application will work without `GEMINI_API_KEY`, but AI features will be disabled and show error messages.
 
+---
+
+### 6. `NEXT_PUBLIC_GA_MEASUREMENT_ID` 📊 **OPTIONAL - For Analytics**
+
+**Purpose**: Google Tag (gtag.js) Measurement ID for tracking website analytics and conversions
+
+**Supports**:
+- Google Analytics 4 (GA4) - Format: `G-XXXXXXXXXX`
+- Google Ads Conversion Tracking - Format: `AW-XXXXXXXXXX`
+
+**Used For**:
+- Page views tracking
+- User behavior analytics
+- Conversion tracking
+- Traffic sources analysis
+- Google Ads conversions
+
+**How to Get**:
+1. **For GA4**: Visit [Google Analytics](https://analytics.google.com/)
+   - Go to **Admin** (gear icon) → **Data Streams**
+   - Click on your web stream
+   - Copy the **Measurement ID** (format: `G-XXXXXXXXXX`)
+
+2. **For Google Ads**: Visit [Google Ads](https://ads.google.com/)
+   - Go to **Tools & Settings** → **Conversions**
+   - Create or select a conversion action
+   - Copy the **Tag ID** (format: `AW-XXXXXXXXXX`)
+
+**Example**: `AW-17816756522` (for Google Ads conversion tracking)
+
+**How to Add in Vercel**:
+1. Go to your Vercel dashboard: https://vercel.com/dashboard
+2. Select your project: `zenithbooks`
+3. Go to **Settings** → **Environment Variables**
+4. Click **Add New**
+5. Name: `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+6. Value: Paste your Measurement ID (e.g., `G-XXXXXXXXXX`)
+7. Select environments: **Production**, **Preview**, and **Development** (or as needed)
+8. Click **Save**
+
+**Note**: 
+- The `NEXT_PUBLIC_` prefix makes this variable accessible in the browser
+- If not set, Google Analytics will simply not load (no errors)
+- After adding, redeploy your application for the changes to take effect
+
+**Status**: ✅ **Now implemented** - Google Tag is automatically loaded when this variable is set
+
