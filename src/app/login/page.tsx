@@ -5,8 +5,23 @@ import { ZenithBooksLogo } from "@/components/icons";
 import { motion } from "framer-motion";
 import { ClientOnly } from "@/components/client-only";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding & Visual (Hidden on mobile, shown on larger screens) */}

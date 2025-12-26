@@ -47,11 +47,23 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet" />
         <meta name="theme-color" content="#2F3C7E" />
-        {/* Suppress Next.js 15 params read-only error (known Turbopack issue) */}
+        {/* Prevent flash by hiding content until splash is ready */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Add splash-active class immediately to prevent flash (runs before React hydration)
+                try {
+                  document.documentElement.classList.add('splash-active');
+                  if (document.body) {
+                    document.body.classList.add('splash-active');
+                  } else {
+                    document.addEventListener('DOMContentLoaded', function() {
+                      document.body.classList.add('splash-active');
+                    });
+                  }
+                } catch(e) {}
+                
                 const originalError = console.error;
                 console.error = function(...args) {
                   const errorMessage = args[0]?.toString() || '';
@@ -118,7 +130,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <SplashScreen />
+            <div className="splash-screen-container">
+              <SplashScreen />
+            </div>
             <ErrorBoundary>
               {children}
             </ErrorBoundary>

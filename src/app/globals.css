@@ -93,6 +93,26 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+  
+  /* Prevent content flash during splash screen */
+  html.splash-active,
+  body.splash-active {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
+  
+  html.splash-active body > *:not(.splash-screen-container):not(script):not(style):not(noscript) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  html.splash-active .splash-screen-container,
+  body.splash-active .splash-screen-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
 }
 
 @keyframes scroll {

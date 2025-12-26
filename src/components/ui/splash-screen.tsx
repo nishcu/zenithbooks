@@ -7,25 +7,41 @@ import { cn } from "@/lib/utils";
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true);
-  const [shouldRender, setShouldRender] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Show splash screen for 1.5 seconds (1500ms)
+    // Only show splash on initial page load
+    if (typeof window === 'undefined') return;
+    
+    setMounted(true);
+    
+    // Ensure classes are set (backup in case head script didn't run)
+    document.body.classList.add('splash-active');
+    document.documentElement.classList.add('splash-active');
+    
+    // Hide splash after 1.5 seconds
     const timer = setTimeout(() => {
       setIsVisible(false);
-      // Remove from DOM after animation completes
+      
+      // Remove classes after fade animation completes
       setTimeout(() => {
-        setShouldRender(false);
-      }, 500);
+        document.body.classList.remove('splash-active');
+        document.documentElement.classList.remove('splash-active');
+      }, 450);
     }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // Cleanup on unmount
+      document.body.classList.remove('splash-active');
+      document.documentElement.classList.remove('splash-active');
+    };
   }, []);
 
-  if (!shouldRender) return null;
+  if (!mounted) return null;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {isVisible && (
         <motion.div
           key="splash-screen"
@@ -39,6 +55,7 @@ export function SplashScreen() {
             opacity: 0,
             transition: { duration: 0.4, ease: "easeOut" }
           }}
+          style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
         >
           {/* Animated Background Pattern */}
           <div className="absolute inset-0 overflow-hidden">
