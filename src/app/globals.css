@@ -95,23 +95,30 @@
   }
   
   /* Prevent content flash during splash screen */
-  html.splash-active,
+  html.splash-active {
+    overflow: hidden !important;
+  }
+  
   body.splash-active {
     overflow: hidden !important;
     height: 100vh !important;
+    position: relative !important;
   }
   
-  html.splash-active body > *:not(.splash-screen-container):not(script):not(style):not(noscript) {
+  /* Hide all body children except splash screen container */
+  body.splash-active > *:not(.splash-screen-container) {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
   
-  html.splash-active .splash-screen-container,
-  body.splash-active .splash-screen-container {
+  /* Ensure splash screen is visible */
+  body.splash-active .splash-screen-container,
+  html.splash-active .splash-screen-container {
     opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
+    display: block !important;
   }
 }
 
