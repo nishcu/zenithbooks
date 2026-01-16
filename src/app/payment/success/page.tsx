@@ -185,6 +185,34 @@ function PaymentSuccessContent() {
           // Rental Receipts is "pay first -> fill -> download once".
           // So we DO NOT save a userDocument here (fields aren't filled yet).
 
+          // If this payment came from ITR filing, redirect back to ITR form with payment completion
+          try {
+            const itrRaw = localStorage.getItem("pending_itr_payment");
+            if (itrRaw && orderIdParam) {
+              const itrPending = JSON.parse(itrRaw);
+              if (itrPending?.type === "itr_filing" && itrPending?.formType) {
+                // Store payment completion token for ITR page to consume
+                localStorage.setItem(
+                  "itr_payment_completed",
+                  JSON.stringify({
+                    formType: itrPending.formType,
+                    financialYear: itrPending.financialYear,
+                    orderId: orderIdParam,
+                    paymentId: paymentIdParam || null,
+                    planId: planId,
+                    amount: itrPending.amount,
+                    at: Date.now(),
+                  })
+                );
+                localStorage.removeItem("pending_itr_payment");
+                // Redirect to ITR new page with payment completion params
+                redirectTo = `/itr-filing/new?order_status=PAID&plan_id=${encodeURIComponent(planId || '')}&payment_completed=true&form_type=${encodeURIComponent(itrPending.formType)}`;
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment ITR handling failed:", e);
+          }
+
           // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
           try {
             const raw = localStorage.getItem("pending_on_demand_action");

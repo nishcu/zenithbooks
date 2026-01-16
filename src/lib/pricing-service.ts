@@ -55,6 +55,7 @@ function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing>
     gst_documents: mergeServiceLists(defaults.gst_documents, s.gst_documents as any),
     accounting_documents: mergeServiceLists(defaults.accounting_documents, s.accounting_documents as any),
     notice_handling: mergeServiceLists(defaults.notice_handling, s.notice_handling as any),
+    itr_filing: mergeServiceLists(defaults.itr_filing, s.itr_filing as any),
   };
 }
 

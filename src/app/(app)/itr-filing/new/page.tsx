@@ -75,14 +75,41 @@ export default function NewITRApplicationPage() {
     loadData();
   }, [user]);
 
-  // Check for payment completion from URL params (redirected from payment success)
+  // Check for payment completion from URL params or localStorage (redirected from payment success)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const orderStatus = urlParams.get('order_status');
     const planId = urlParams.get('plan_id');
-    if (orderStatus === 'PAID' && planId?.startsWith('itr')) {
+    const paymentCompletedParam = urlParams.get('payment_completed');
+    const formTypeParam = urlParams.get('form_type') as ITRFormType | null;
+
+    // Check URL params first
+    if (orderStatus === 'PAID' && (planId?.startsWith('itr') || paymentCompletedParam === 'true')) {
       setPaymentCompleted(true);
+      if (formTypeParam) {
+        setSelectedFormType(formTypeParam);
+      }
       setStep(1); // Move to document upload step
+      // Clean up URL params
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    // Check localStorage for payment completion token
+    try {
+      const itrPaymentCompleted = localStorage.getItem('itr_payment_completed');
+      if (itrPaymentCompleted) {
+        const paymentData = JSON.parse(itrPaymentCompleted);
+        if (paymentData?.formType) {
+          setPaymentCompleted(true);
+          setSelectedFormType(paymentData.formType);
+          setStep(1);
+          // Clear the localStorage token after using it
+          localStorage.removeItem('itr_payment_completed');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse ITR payment completion token:', e);
     }
   }, []);
 
@@ -584,8 +611,13 @@ export default function NewITRApplicationPage() {
                             userEmail={user.email || ''}
                             userName={user.displayName || user.email || ''}
                             postPaymentContext={{
-                              formType: selectedFormType,
-                              financialYear,
+                              key: 'pending_itr_payment',
+                              payload: {
+                                type: 'itr_filing',
+                                formType: selectedFormType,
+                                financialYear,
+                                amount: getFormPrice(selectedFormType),
+                              },
                             }}
                             onSuccess={handlePaymentSuccess}
                           />

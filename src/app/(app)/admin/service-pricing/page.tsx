@@ -194,6 +194,7 @@ export default function ServicePricingPage() {
             {renderServiceCategory("Management Reports", "reports")}
             {renderServiceCategory("CA Certificates", "ca_certs")}
             {renderServiceCategory("Notice Handling & Resolution", "notice_handling")}
+            {renderServiceCategory("ITR Filing", "itr_filing")}
             <Separator />
             {renderServiceCategory("Registration Deeds", "registration_deeds")}
             {renderServiceCategory("Founder & Startup Docs", "founder_startup")}
