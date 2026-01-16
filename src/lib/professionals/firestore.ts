@@ -115,15 +115,16 @@ export async function listProfessionals(filters?: {
     q = query(q, where('experience', '>=', filters.minExperience));
   }
   
-  // Order by rating (desc) then by createdAt
-  q = query(q, orderBy('rating', 'desc'), orderBy('createdAt', 'desc'));
+  // Order by createdAt (newest first)
+  // Note: Rating ordering is done client-side to avoid index requirements
+  q = query(q, orderBy('createdAt', 'desc'));
   
   if (filters?.limitCount) {
     q = query(q, limit(filters.limitCount));
   }
   
   const snapshot = await getDocs(q);
-  const professionals = snapshot.docs.map((doc) => {
+  let professionals = snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -131,6 +132,17 @@ export async function listProfessionals(filters?: {
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
     } as ProfessionalProfile;
+  });
+  
+  // Sort by rating (client-side) after fetching
+  professionals.sort((a, b) => {
+    const ratingA = a.rating || 0;
+    const ratingB = b.rating || 0;
+    if (ratingB !== ratingA) {
+      return ratingB - ratingA;
+    }
+    // If ratings are equal, sort by createdAt (newest first)
+    return b.createdAt.getTime() - a.createdAt.getTime();
   });
   
   // Filter by skills if provided (client-side as Firestore doesn't support array-contains-any easily)

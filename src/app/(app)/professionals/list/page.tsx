@@ -17,7 +17,7 @@ export default function ProfessionalsListPage() {
   const [professionals, setProfessionals] = useState<ProfessionalProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function ProfessionalsListPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (stateFilter) params.append("state", stateFilter);
+      if (stateFilter && stateFilter !== "all") params.append("state", stateFilter);
       if (cityFilter) params.append("city", cityFilter);
 
       const response = await fetch(`/api/professionals/list?${params.toString()}`);
@@ -77,12 +77,12 @@ export default function ProfessionalsListPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">State</label>
-                <Select value={stateFilter} onValueChange={setStateFilter}>
+                <Select value={stateFilter || undefined} onValueChange={(value) => setStateFilter(value === "all" ? "" : value || "")}>
                   <SelectTrigger>
                     <SelectValue placeholder="All states" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All states</SelectItem>
+                    <SelectItem value="all">All states</SelectItem>
                     {INDIA_STATES.map((s) => (
                       <SelectItem key={s} value={s}>
                         {s}
