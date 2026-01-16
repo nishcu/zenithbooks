@@ -37,7 +37,7 @@ import {
     ArrowRightLeft, Eraser, IndianRupee, Construction, Bell, CalendarDays,
     Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap, Key,
     AlertCircle, CheckCircle, Copy, SlidersHorizontal, Settings2, BarChart3,
-    ArrowRight, Upload, Download, Share2
+    ArrowRight, Upload, Download, Share2, ClipboardList, UserSearch
 } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -191,6 +191,19 @@ const allMenuItems = [
     label: "Find a Professional",
     icon: ConciergeBell,
     roles: ['business', 'professional', 'super_admin']
+  },
+  {
+    label: "Tasks & Networking",
+    icon: ClipboardList,
+    roles: ['business', 'professional'],
+    subItems: [
+      { href: "/tasks/post", label: "Post a Task", icon: FilePlus, roles: ['business', 'professional'] },
+      { href: "/tasks/browse", label: "Browse Tasks", icon: ClipboardList, roles: ['business', 'professional'] },
+      { href: "/tasks/my-tasks", label: "My Posted Tasks", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/tasks/my-applications", label: "My Applications", icon: CheckCircle, roles: ['business', 'professional'] },
+      { href: "/professionals/list", label: "Browse Professionals", icon: UserSearch, roles: ['business', 'professional'] },
+      { href: "/professionals/create-profile", label: "Create Profile", icon: UserCheck, roles: ['professional'] },
+    ],
   },
    { href: "/notices", label: "Handle Notices", icon: MailWarning, roles: ['business', 'professional'] },
   {
