@@ -15,11 +15,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // Initialize Firebase Admin if needed
+let adminInitialized = false;
 if (!getApps().length) {
   try {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
     if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
-      console.error('Firebase Admin credentials missing');
+      console.error('Firebase Admin credentials missing:', {
+        hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+        hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+        hasPrivateKey: !!privateKey,
+      });
     } else {
       initializeApp({
         credential: cert({
@@ -28,14 +33,44 @@ if (!getApps().length) {
           privateKey: privateKey,
         }),
       });
+      adminInitialized = true;
     }
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
+  }
+} else {
+  // App already exists
+  adminInitialized = true;
+}
+
+// Helper function to ensure Admin is initialized
+function ensureAdminInitialized() {
+  if (!adminInitialized && getApps().length === 0) {
+    throw new Error('Firebase Admin is not initialized. Please check environment variables: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure Firebase Admin is initialized
+    try {
+      ensureAdminInitialized();
+    } catch (initError: any) {
+      console.error('Firebase Admin initialization check failed:', initError);
+      return NextResponse.json(
+        { 
+          error: 'Server configuration error', 
+          message: initError.message || 'Firebase Admin is not properly configured. Please contact support.',
+          details: process.env.NODE_ENV === 'development' ? {
+            hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+            hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+            hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+          } : undefined
+        },
+        { status: 500 }
+      );
+    }
+
     // Get auth token
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -47,17 +82,8 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Verify Firebase Admin is initialized
-    let authAdmin;
-    try {
-      authAdmin = getAuth();
-    } catch (error) {
-      console.error('Firebase Admin not initialized:', error);
-      return NextResponse.json(
-        { error: 'Server configuration error', message: 'Authentication service not available' },
-        { status: 500 }
-      );
-    }
+    // Get Firebase Admin auth
+    const authAdmin = getAuth();
     
     const decodedToken = await authAdmin.verifyIdToken(token);
     const userId = decodedToken.uid;
