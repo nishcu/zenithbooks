@@ -109,8 +109,16 @@ export async function POST(request: NextRequest) {
       deadline: Timestamp.fromDate(deadlineDate),
     };
 
-    // Create task
-    const taskId = await createTaskPost(taskData);
+    // Create task - wrap in try-catch to get detailed error
+    let taskId;
+    try {
+      taskId = await createTaskPost(taskData);
+    } catch (createError: any) {
+      console.error('Error in createTaskPost:', createError);
+      console.error('Error stack:', createError?.stack);
+      console.error('Error code:', createError?.code);
+      throw createError; // Re-throw to be caught by outer catch
+    }
 
     return NextResponse.json({
       success: true,
@@ -119,15 +127,25 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error creating task:', error);
+    console.error('Error name:', error?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error code:', error?.code);
+    console.error('Error stack:', error?.stack);
+    
     const errorMessage = error?.message || 'Unknown error occurred';
-    const errorCode = error?.code || 'UNKNOWN_ERROR';
+    const errorCode = error?.code || error?.name || 'UNKNOWN_ERROR';
     
     return NextResponse.json(
       { 
         error: 'Failed to create task', 
         message: errorMessage,
         code: errorCode,
-        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+        details: process.env.NODE_ENV === 'development' ? {
+          stack: error?.stack,
+          name: error?.name,
+          code: error?.code,
+          fullError: error?.toString()
+        } : undefined
       },
       { status: 500 }
     );

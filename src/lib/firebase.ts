@@ -14,10 +14,37 @@ const firebaseConfig = {
   measurementId: "G-M7755L0HDD"
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
+// Initialize Firebase - ensure app exists before getting services
+let app;
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  // Try to get existing app as fallback
+  const apps = getApps();
+  app = apps.length > 0 ? apps[0] : initializeApp(firebaseConfig);
+}
+
+// Initialize services with error handling
+let db, auth, storage;
+try {
+  db = getFirestore(app);
+  auth = getAuth(app);
+  storage = getStorage(app);
+} catch (error) {
+  console.error('Firebase service initialization error:', error);
+  // Re-initialize app if services fail
+  if (!app || getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+  } else {
+    // If app exists but services failed, try to get services again
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+  }
+}
 
 export { app, db, auth, storage };

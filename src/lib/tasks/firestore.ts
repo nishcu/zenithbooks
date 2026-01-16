@@ -23,9 +23,10 @@ import {
 // Ensure Firebase is initialized before using db
 import { db } from '@/lib/firebase';
 
-// Verify db is available
+// Verify db is available and initialized
 if (!db) {
   console.error('Firestore db is not initialized. Check Firebase configuration.');
+  throw new Error('Firestore database is not initialized. Please check Firebase configuration.');
 }
 import type {
   TaskPost,
