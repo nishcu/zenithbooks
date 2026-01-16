@@ -6,7 +6,8 @@ import {
   FileText, ShoppingBag, FilePlus, FileMinus, ShoppingCart, 
   Package, Upload, Mic, FileSpreadsheet, BookOpen, Zap,
   Receipt, TrendingUp, BarChart3, FileCheck, Archive,
-  Truck, FileSignature, Wallet, Boxes
+  Truck, FileSignature, Wallet, Boxes, ReceiptText,
+  Scale, Shield, Award, Users, FilePenLine, Building2
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { SummaryCard } from "@/components/mobile/summary-card";
@@ -76,12 +77,12 @@ export function MobileDashboard() {
   const createActions = [
     { icon: FileText, label: "Invoice", href: "/billing/invoices/new" },
     { icon: ShoppingCart, label: "Purchase", href: "/purchases/new" },
-    { icon: FileCheck, label: "Quotation", href: "/billing/quotation" },
     { icon: Truck, label: "Delivery Challan", href: "/billing/delivery-challan" },
+    { icon: FileCheck, label: "Purchase Order", href: "/purchases/purchase-orders/new" },
     { icon: FilePlus, label: "Credit Note", href: "/billing/credit-notes/new" },
     { icon: FileMinus, label: "Debit Note", href: "/billing/debit-notes/new" },
     { icon: ShoppingBag, label: "Sales Order", href: "/billing/sales-orders/new" },
-    { icon: Package, label: "Purchase Order", href: "/purchases/purchase-orders/new" },
+    { icon: Package, label: "Items", href: "/billing/items" },
   ];
 
   // Core Features
@@ -116,16 +117,41 @@ export function MobileDashboard() {
     },
   ];
 
-  // Quick Access
+  // Quick Access - Compliance & Services
   const quickAccess = [
-    { icon: Truck, label: "E-Way Bill", href: "/eway-bill" },
-    { icon: FileSignature, label: "E-Invoice", href: "/e-invoice" },
-    { icon: Wallet, label: "Payments Timeline", href: "/transactions" },
-    { icon: Boxes, label: "Inventory Timeline", href: "/inventory" },
+    { icon: ReceiptText, label: "GST Filing", href: "/gst-filings" },
+    { icon: FileCheck, label: "ITR Filing", href: "/itr-filing" },
+    { icon: Award, label: "CA Certificates", href: "/ca-certificates" },
+    { icon: Shield, label: "Legal Documents", href: "/legal-documents" },
+    { icon: Users, label: "Find Professional", href: "/professional-services" },
+    { icon: FilePenLine, label: "Form 16", href: "/income-tax/form-16" },
     { icon: BarChart3, label: "Reports", href: "/reports" },
-    { icon: TrendingUp, label: "Insights", href: "/insights" },
-    { icon: FileText, label: "Invoice Templates", href: "/billing/invoices/templates" },
     { icon: Archive, label: "Document Vault", href: "/vault" },
+  ];
+
+  // Additional Services Section
+  const additionalServices = [
+    {
+      icon: Scale,
+      title: "Income Tax Tools",
+      description: "TDS, Advance Tax, and more",
+      href: "/income-tax",
+      color: "bg-blue-50 text-blue-700"
+    },
+    {
+      icon: Building2,
+      title: "Accounting Suite",
+      description: "Ledgers, Journals, Trial Balance",
+      href: "/accounting/ledgers",
+      color: "bg-purple-50 text-purple-700"
+    },
+    {
+      icon: TrendingUp,
+      title: "Financial Reports",
+      description: "P&L, Balance Sheet, CMA",
+      href: "/accounting/financial-statements/profit-and-loss",
+      color: "bg-green-50 text-green-700"
+    },
   ];
 
   return (
@@ -185,6 +211,52 @@ export function MobileDashboard() {
 
         {/* Document Vault Highlight */}
         <VaultCard />
+
+        {/* Additional Services Section */}
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-gray-900 px-1">More Services</h2>
+          <div className="space-y-3">
+            {additionalServices.map((service, idx) => (
+              <Link
+                key={idx}
+                href={service.href}
+                className="block"
+              >
+                <div className={`flex items-center gap-4 p-4 rounded-xl ${service.color} border border-current/10 hover:shadow-md transition-shadow active:scale-[0.98]`}>
+                  <div className="p-2 bg-white/50 rounded-lg">
+                    <service.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base">{service.title}</h3>
+                    <p className="text-sm opacity-80 mt-0.5">{service.description}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Help & Support Section */}
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-200">
+          <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Our team is here to assist you with GST, ITR, accounting, and more.
+          </p>
+          <div className="flex gap-2">
+            <Link
+              href="/professional-services"
+              className="flex-1 px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium text-center hover:bg-pink-700 active:scale-95 transition-all"
+            >
+              Find a Professional
+            </Link>
+            <Link
+              href="/vault"
+              className="flex-1 px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium text-center border border-gray-300 hover:bg-gray-50 active:scale-95 transition-all"
+            >
+              Document Vault
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

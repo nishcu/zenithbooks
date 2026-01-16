@@ -554,3 +554,26 @@ export async function updateRefundInfo(
     updatedAt: serverTimestamp(),
   });
 }
+
+// ==================== CA User Management ====================
+
+/**
+ * Check if a user is a CA team member or admin
+ */
+export async function isCAUser(userId: string): Promise<boolean> {
+  try {
+    const caUserRef = doc(db, COLLECTIONS.CA_USERS, userId);
+    const caUserDoc = await getDoc(caUserRef);
+    
+    if (!caUserDoc.exists()) {
+      return false;
+    }
+    
+    const data = caUserDoc.data();
+    // Check if user is active and has CA_TEAM or ADMIN role
+    return data.active === true && (data.role === 'CA_TEAM' || data.role === 'ADMIN');
+  } catch (error) {
+    console.error('Error checking CA user status:', error);
+    return false;
+  }
+}

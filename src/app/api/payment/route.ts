@@ -32,8 +32,24 @@ const appId = process.env.CASHFREE_APP_ID;
 const secret = process.env.CASHFREE_SECRET_KEY;
 
 if (!appId || !secret) {
+  console.error('Cashfree credentials missing:', {
+    hasAppId: !!appId,
+    hasSecret: !!secret,
+    envKeys: Object.keys(process.env).filter(k => k.includes('CASHFREE'))
+  });
+  
   return NextResponse.json(
-    { error: 'Cashfree keys missing', message: 'Configure APP_ID and SECRET_KEY' },
+    { 
+      error: 'Cashfree keys missing', 
+      message: 'Payment gateway not configured. Please configure CASHFREE_APP_ID and CASHFREE_SECRET_KEY environment variables.',
+      details: {
+        missingKeys: [
+          !appId ? 'CASHFREE_APP_ID' : null,
+          !secret ? 'CASHFREE_SECRET_KEY' : null
+        ].filter(Boolean),
+        help: 'Add these variables to your .env.local file or deployment environment settings.'
+      }
+    },
     { status: 500 }
   );
 }

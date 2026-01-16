@@ -160,9 +160,18 @@ export function CashfreeCheckout({
           errorMessage = data.message || data.error || 'Payment gateway error. Please try again later or contact support.';
           console.error('Payment API error details:', data);
           
+          // Special handling for missing Cashfree credentials
+          if (data.error === 'Cashfree keys missing' || data.message?.includes('CASHFREE_APP_ID')) {
+            errorMessage = 'Payment gateway is not configured. Please contact support or check your environment configuration.';
+            console.error('Cashfree credentials missing - ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are set in environment variables.');
+          }
+          
           // Log additional details for debugging
           if (data.details && process.env.NODE_ENV === 'development') {
             console.error('Cashfree API error details:', data.details);
+            if (data.details.missingKeys) {
+              console.error('Missing environment variables:', data.details.missingKeys);
+            }
           }
         } else {
           errorMessage = data.message || data.error || `Payment error (${response.status}). Please try again.`;
