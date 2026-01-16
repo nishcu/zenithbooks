@@ -29,29 +29,29 @@ interface TaskFiltersProps {
 }
 
 export function TaskFilters({ onFilterChange, initialFilters = {} }: TaskFiltersProps) {
-  const [category, setCategory] = useState(initialFilters.category || "");
-  const [state, setState] = useState(initialFilters.state || "");
+  const [category, setCategory] = useState(initialFilters.category ? (initialFilters.category === "" ? "all" : initialFilters.category) : "all");
+  const [state, setState] = useState(initialFilters.state ? (initialFilters.state === "" ? "all" : initialFilters.state) : "all");
   const [city, setCity] = useState(initialFilters.city || "");
   const [status, setStatus] = useState(initialFilters.status || "open");
 
   const handleApply = () => {
     onFilterChange({
-      category: category || undefined,
-      state: state || undefined,
+      category: category && category !== "all" ? category : undefined,
+      state: state && state !== "all" ? state : undefined,
       city: city || undefined,
       status: status || undefined,
     });
   };
 
   const handleClear = () => {
-    setCategory("");
-    setState("");
+    setCategory("all");
+    setState("all");
     setCity("");
     setStatus("open");
     onFilterChange({});
   };
 
-  const hasFilters = category || state || city || status !== "open";
+  const hasFilters = (category && category !== "all") || (state && state !== "all") || city || status !== "open";
 
   return (
     <Card>
@@ -76,12 +76,12 @@ export function TaskFilters({ onFilterChange, initialFilters = {} }: TaskFilters
             {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category || undefined} onValueChange={(value) => setCategory(value || "")}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All categories</SelectItem>
+                  <SelectItem value="all">All categories</SelectItem>
                   {TASK_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -110,12 +110,12 @@ export function TaskFilters({ onFilterChange, initialFilters = {} }: TaskFilters
             {/* State */}
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Select value={state} onValueChange={setState}>
+              <Select value={state || undefined} onValueChange={(value) => setState(value === "all" ? "" : value || "")}>
                 <SelectTrigger id="state">
                   <SelectValue placeholder="All states" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All states</SelectItem>
+                  <SelectItem value="all">All states</SelectItem>
                   {INDIA_STATES.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}

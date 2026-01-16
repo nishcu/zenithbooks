@@ -110,7 +110,7 @@ export function PostTaskForm() {
       <div className="space-y-2">
         <Label htmlFor="category">Category *</Label>
         <Select
-          value={formData.category}
+          value={formData.category || undefined}
           onValueChange={(value) => setFormData({ ...formData, category: value })}
           required
         >
@@ -154,8 +154,8 @@ export function PostTaskForm() {
         <div className="space-y-2">
           <Label htmlFor="state">State</Label>
           <Select
-            value={formData.state}
-            onValueChange={(value) => setFormData({ ...formData, state: value })}
+            value={formData.state || undefined}
+            onValueChange={(value) => setFormData({ ...formData, state: value || "" })}
           >
             <SelectTrigger id="state">
               <SelectValue placeholder="Select state" />
