@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       { 
         error: 'Failed to apply for task', 
         message: error.message || 'An unexpected error occurred',
-        ...(process.env.NODE_ENV === 'development' && { details: error.code || error.name })
+        code: error.code
       },
       { status: 500 }
     );
