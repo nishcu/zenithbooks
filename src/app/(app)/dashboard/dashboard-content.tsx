@@ -30,6 +30,7 @@ import { doc } from "firebase/firestore";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 import { VaultStatistics } from "@/components/dashboard/vault-statistics";
 import { AppDownloads } from "@/components/dashboard/app-downloads";
+import { VaultSpotlight } from "@/components/dashboard/vault-spotlight";
 
 
 function DashboardContent() {
@@ -453,208 +454,211 @@ function DashboardContent() {
 
   // Default Business Dashboard
   return (
-    <div className="space-y-8 lg:space-y-12 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-10 lg:space-y-16 w-full max-w-full overflow-x-hidden px-1">
+      {/* Hero Section - Value Messaging */}
+      <div className="space-y-2 pb-4 border-b border-border/40">
+        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          Your Complete CA & Accounting Platform
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-3xl">
+          Built for Indian CAs, MSMEs, and startups. Manage GST, Income Tax, Accounting, and Compliance all in one place.
+        </p>
+      </div>
+
       <MarketingCarousel />
 
-      {/* Core Features Section - Enhanced for Desktop */}
-      <Card className="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-background to-muted/20">
-        <CardHeader className="pb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-3xl lg:text-4xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <TrendingUp className="h-7 w-7 lg:h-8 lg:w-8 text-primary" />
-                </div>
-                Core Features
-              </CardTitle>
-              <CardDescription className="mt-3 text-base lg:text-lg">
-                Powerful tools to streamline your accounting workflow
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 w-full">
-            {coreFeatures.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
-                    <CardHeader className="pb-3 px-4 pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
-                          {feature.badge}
-                        </Badge>
-                      </div>
-                      <div className={`w-14 h-14 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-7 w-7 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
-                      </div>
-                      <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
-                        {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 px-4 pb-4">
-                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
-                        {feature.description}
-                      </CardDescription>
-                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs font-medium">Open</span>
-                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Document Vault Spotlight - Prominent */}
+      <VaultSpotlight />
 
-      {/* Separator with decorative element */}
-      <div className="relative my-8 lg:my-12">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border/40"></div>
+      {/* Core Features Section - Enhanced for Desktop */}
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Core Features</h2>
+          <p className="text-lg text-muted-foreground">
+            Time-saving tools designed for Indian CAs and businesses
+          </p>
         </div>
-        <div className="relative flex justify-center">
-          <div className="bg-background px-4">
-            <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
-          </div>
-        </div>
+        
+        <Card className="border border-border/50 shadow-lg bg-background">
+          <CardContent className="p-6 lg:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full">
+              {coreFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Link key={feature.href} href={feature.href}>
+                    <Card className="h-full hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer relative min-w-0 bg-card">
+                      <CardHeader className="pb-4 px-6 pt-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-2.5 py-1">
+                            {feature.badge}
+                          </Badge>
+                        </div>
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-all duration-300 shadow-md`}>
+                          <Icon className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
+                        </div>
+                        <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors leading-tight mb-2">
+                          {feature.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 px-6 pb-6">
+                        <CardDescription className="text-sm leading-relaxed text-muted-foreground mb-4">
+                          {feature.description}
+                        </CardDescription>
+                        <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+                          <span className="text-sm">Explore feature</span>
+                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Access Features Section - Enhanced with visual distinction */}
-      <Card className="border-2 border-primary/15 shadow-xl bg-gradient-to-br from-background via-muted/5 to-background">
-        <CardHeader className="pb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-3xl lg:text-4xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Building className="h-7 w-7 lg:h-8 lg:w-8 text-primary" />
-                </div>
-                Quick Access
-              </CardTitle>
-              <CardDescription className="mt-3 text-base lg:text-lg">
-                Navigate to key modules and features quickly
-              </CardDescription>
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Quick Access</h2>
+          <p className="text-lg text-muted-foreground">
+            Jump to key modules and essential features
+          </p>
+        </div>
+        
+        <Card className="border border-border/50 shadow-lg bg-background">
+          <CardContent className="p-6 lg:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+              {quickAccessFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Link key={feature.href} href={feature.href}>
+                    <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/40 group cursor-pointer relative min-w-0 bg-card">
+                      <CardHeader className="pb-4 px-6 pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-md`}>
+                            <Icon className="h-7 w-7 text-white" />
+                          </div>
+                          <Badge variant="secondary" className="text-xs shrink-0 bg-muted text-muted-foreground px-2.5 py-1">
+                            {feature.badge}
+                          </Badge>
+                        </div>
+                        <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors leading-tight mb-2">
+                          {feature.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 px-6 pb-6">
+                        <CardDescription className="text-sm leading-relaxed text-muted-foreground mb-4">
+                          {feature.description}
+                        </CardDescription>
+                        <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+                          <span className="text-sm">Open module</span>
+                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 w-full">
-            {quickAccessFeatures.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Link key={feature.href} href={feature.href}>
-                  <Card className="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary/50 group cursor-pointer overflow-hidden bg-gradient-to-br from-card to-muted/10 relative min-w-0">
-                    <CardHeader className="pb-3 px-4 pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-1.5 py-0.5">
-                          {feature.badge}
-                        </Badge>
-                      </div>
-                      <div className={`w-14 h-14 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                        <Icon className="h-7 w-7 lg:h-7 lg:w-7 text-white group-hover:scale-110 transition-transform" />
-                      </div>
-                      <CardTitle className="text-sm lg:text-base font-semibold group-hover:text-primary transition-colors leading-tight">
-                        {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 px-4 pb-4">
-                      <CardDescription className="text-xs lg:text-sm line-clamp-2 leading-snug text-muted-foreground">
-                        {feature.description}
-                      </CardDescription>
-                      <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs font-medium">Open</span>
-                        <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="grid gap-8 lg:gap-12 xl:grid-cols-4 items-start">
-        <div className="xl:col-span-3 space-y-8 lg:space-y-12">
-          {/* Enhanced Stats Cards */}
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
-              <StatCard
-                title="Receivables"
-                value={formatCurrency(totalReceivables)}
-                icon={IndianRupee}
-                loading={journalLoading || customersLoading}
-                trend={totalReceivables > 0 ? { value: 5.2, label: "vs last month" } : undefined}
-              />
-            </Link>
-            <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
-              <StatCard
-                title="Payables"
-                value={formatCurrency(totalPayables)}
-                icon={CreditCard}
-                loading={journalLoading || vendorsLoading}
-                trend={totalPayables > 0 ? { value: -2.1, label: "vs last month" } : undefined}
-              />
-            </Link>
-            <Link href="/accounting/ledgers?account=2110" className="transform hover:scale-[1.02] transition-transform">
-              <StatCard
-                title="GST Payable"
-                value={formatCurrency(gstPayable)}
-                icon={IndianRupee}
-                loading={journalLoading}
-                trend={gstPayable > 0 ? { value: 3.8, label: "vs last month" } : undefined}
-              />
-            </Link>
-          </div>
-
-          {/* Enhanced Financial Chart */}
-          <div className="bg-gradient-to-br from-card to-muted/20 rounded-xl p-6 lg:p-8 shadow-lg">
-            <FinancialSummaryChart />
-          </div>
-
-          {/* Enhanced Recent Activity */}
-          <Card className="shadow-xl border-2 border-muted/20 bg-gradient-to-br from-card to-muted/10">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-xl lg:text-2xl flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                </div>
-                Recent Activity
-              </CardTitle>
-              <CardDescription className="text-base">
-                A summary of your most recent sales invoices.
-              </CardDescription>
-              <div className="relative pt-6">
-                <Search className="absolute left-3 top-9 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search recent invoices..."
-                  className="pl-10 w-full lg:w-1/2 h-12 text-base border-2 focus:border-primary/50"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="px-6 lg:px-8">
-              <RecentActivity invoices={filteredInvoices} loading={journalLoading} />
-            </CardContent>
-          </Card>
+      {/* Financial Overview Section */}
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Financial Overview</h2>
+          <p className="text-lg text-muted-foreground">
+            Real-time insights into your business finances
+          </p>
         </div>
 
-        {/* Enhanced Sidebar */}
-        <div className="xl:col-span-1 space-y-8 lg:space-y-12">
-          {(displayRole === 'business' || displayRole === 'professional') && (
-            <div className="transform hover:scale-105 transition-transform">
-              <VaultStatistics />
-            </div>
-          )}
-          <div className="transform hover:scale-105 transition-transform">
-            <ShortcutGuide />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
+            <StatCard
+              title="Receivables"
+              value={formatCurrency(totalReceivables)}
+              icon={IndianRupee}
+              loading={journalLoading || customersLoading}
+              trend={totalReceivables > 0 ? { value: 5.2, label: "vs last month" } : undefined}
+            />
+          </Link>
+          <Link href="/accounting/ledgers" className="transform hover:scale-[1.02] transition-transform">
+            <StatCard
+              title="Payables"
+              value={formatCurrency(totalPayables)}
+              icon={CreditCard}
+              loading={journalLoading || vendorsLoading}
+              trend={totalPayables > 0 ? { value: -2.1, label: "vs last month" } : undefined}
+            />
+          </Link>
+          <Link href="/accounting/ledgers?account=2110" className="transform hover:scale-[1.02] transition-transform">
+            <StatCard
+              title="GST Payable"
+              value={formatCurrency(gstPayable)}
+              icon={IndianRupee}
+              loading={journalLoading}
+              trend={gstPayable > 0 ? { value: 3.8, label: "vs last month" } : undefined}
+            />
+          </Link>
+        </div>
+
+        {/* Charts and Activity - Two Column Layout */}
+        <div className="grid gap-8 lg:gap-12 xl:grid-cols-3 items-start">
+          <div className="xl:col-span-2 space-y-8">
+            {/* Enhanced Financial Chart */}
+            <Card className="shadow-lg border border-border/50">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">Financial Trends</CardTitle>
+                <CardDescription>Track your revenue and expenses over time</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 lg:p-8">
+                <FinancialSummaryChart />
+              </CardContent>
+            </Card>
+
+            {/* Enhanced Recent Activity */}
+            <Card className="shadow-lg border border-border/50">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                  Recent Activity
+                </CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Your most recent sales invoices and transactions
+                </CardDescription>
+                <div className="relative pt-6">
+                  <Search className="absolute left-3 top-[2.625rem] h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search recent invoices..."
+                    className="pl-10 w-full lg:w-2/3 h-12 text-base border-2 focus:border-primary/50"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 lg:px-8 pb-6">
+                <RecentActivity invoices={filteredInvoices} loading={journalLoading} />
+              </CardContent>
+            </Card>
           </div>
-          <div className="transform hover:scale-105 transition-transform">
-            <ComplianceCalendar />
+
+          {/* Sidebar - Quick Tools */}
+          <div className="xl:col-span-1 space-y-6">
+            {(displayRole === 'business' || displayRole === 'professional') && (
+              <div className="shadow-lg">
+                <VaultStatistics />
+              </div>
+            )}
+            <div className="shadow-lg">
+              <ShortcutGuide />
+            </div>
+            <div className="shadow-lg">
+              <ComplianceCalendar />
+            </div>
           </div>
         </div>
       </div>

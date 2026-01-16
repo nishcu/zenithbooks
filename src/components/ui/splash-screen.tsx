@@ -15,9 +15,16 @@ export function SplashScreen() {
     
     setMounted(true);
     
-    // Ensure classes are set (backup in case head script didn't run)
-    document.body.classList.add('splash-active');
-    document.documentElement.classList.add('splash-active');
+    // Use requestAnimationFrame to ensure DOM is ready and avoid hydration issues
+    requestAnimationFrame(() => {
+      // Ensure classes are set (backup in case head script didn't run)
+      if (document.body) {
+        document.body.classList.add('splash-active');
+      }
+      if (document.documentElement) {
+        document.documentElement.classList.add('splash-active');
+      }
+    });
     
     // Hide splash after 1.5 seconds
     const timer = setTimeout(() => {
@@ -25,16 +32,24 @@ export function SplashScreen() {
       
       // Remove classes after fade animation completes
       setTimeout(() => {
-        document.body.classList.remove('splash-active');
-        document.documentElement.classList.remove('splash-active');
+        if (document.body) {
+          document.body.classList.remove('splash-active');
+        }
+        if (document.documentElement) {
+          document.documentElement.classList.remove('splash-active');
+        }
       }, 450);
     }, 1500);
 
     return () => {
       clearTimeout(timer);
       // Cleanup on unmount
-      document.body.classList.remove('splash-active');
-      document.documentElement.classList.remove('splash-active');
+      if (document.body) {
+        document.body.classList.remove('splash-active');
+      }
+      if (document.documentElement) {
+        document.documentElement.classList.remove('splash-active');
+      }
     };
   }, []);
 

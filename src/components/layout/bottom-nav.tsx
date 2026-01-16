@@ -19,17 +19,17 @@ export function BottomNav() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-20 bg-background/95 backdrop-blur border-t shadow-lg">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-20 bg-white border-t border-gray-200 shadow-lg">
       <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 dark:hover:bg-gray-800 group active:bg-gray-100 dark:active:bg-gray-900",
-              pathname === item.href
-                ? "text-primary"
-                : "text-muted-foreground"
+              "inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 group active:bg-gray-100",
+              pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href))
+                ? "text-pink-600"
+                : "text-gray-600"
             )}
           >
             <item.icon className="w-6 h-6 sm:w-7 sm:h-7 mb-1" />
@@ -39,7 +39,7 @@ export function BottomNav() {
         <button
           onClick={toggleSidebar}
           type="button"
-          className="inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 dark:hover:bg-gray-800 group text-muted-foreground active:bg-gray-100 dark:active:bg-gray-900"
+          className="inline-flex flex-col items-center justify-center px-2 sm:px-4 hover:bg-gray-50 group text-gray-600 active:bg-gray-100"
         >
           <Menu className="w-6 h-6 sm:w-7 sm:h-7 mb-1" />
           <span className="text-sm font-medium leading-tight">Menu</span>

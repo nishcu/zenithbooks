@@ -122,6 +122,15 @@ const allMenuItems = [
       { href: "/income-tax/form-16", label: "Form 16", icon: FileSignature, roles: ['business', 'professional'] },
     ],
   },
+  { href: "/itr-filing", label: "ITR Filing", icon: FileSignature, roles: ['business', 'professional'] },
+  {
+    label: "ITR Management",
+    icon: FileSignature,
+    roles: ['professional'],
+    subItems: [
+      { href: "/professional/itr-applications", label: "My ITR Applications", icon: FileText, roles: ['professional'] },
+    ],
+  },
   {
     label: "Accounting",
     icon: Calculator,
@@ -242,6 +251,7 @@ const allMenuItems = [
         { href: "/admin/professionals", label: "Professionals", icon: UserSquare, roles: ['super_admin']},
         { href: "/admin/appointments", label: "Appointments", icon: CalendarClock, roles: ['super_admin']},
         { href: "/admin/notices", label: "Submitted Notices", icon: MailWarning, roles: ['super_admin']},
+        { href: "/admin/itr-applications", label: "ITR Applications", icon: FileSignature, roles: ['super_admin']},
         { href: "/admin/certification-requests", label: "Certification Requests", icon: FileSignature, roles: ['super_admin']},
         { href: "/admin/blog", label: "Manage Blog", icon: Newspaper, roles: ['super_admin'] },
     ]

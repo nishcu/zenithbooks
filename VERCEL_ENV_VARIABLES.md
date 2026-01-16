@@ -277,3 +277,127 @@ After adding environment variables, you need to redeploy:
 
 **Status**: ✅ **Now implemented** - Google Tag is automatically loaded when this variable is set
 
+---
+
+### 7. `ITR_ENCRYPTION_KEY` 🔐 **REQUIRED for ITR Filing**
+
+**Purpose**: AES-256 encryption key for securing ITR portal credentials (username/password)
+
+**Used For**:
+- Encrypting user credentials in ITR filing module
+- Storing sensitive Income Tax Portal login credentials securely
+- Only decryptable server-side by authorized CA team members
+
+**Security**: 
+- ⚠️ **CRITICAL**: This key must be kept secret and never exposed
+- Should be a 32-byte (256-bit) key for AES-256 encryption
+- Can be provided as a 64-character hex string or any string (will be derived using PBKDF2)
+
+**How to Generate**:
+
+**Option 1: Generate a random hex key (Recommended)**
+```bash
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Using OpenSSL
+openssl rand -hex 32
+
+# Using Python
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+**Option 2: Use any secure random string**
+- Minimum 32 characters recommended
+- Can be any string (will be derived using PBKDF2)
+
+**Example Key** (64-character hex):
+```
+a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890
+```
+
+**How to Add in Vercel**:
+1. Go to your Vercel dashboard: https://vercel.com/dashboard
+2. Select your project: `zenithbooks`
+3. Go to **Settings** → **Environment Variables**
+4. Click **Add New**
+5. Name: `ITR_ENCRYPTION_KEY`
+6. Value: Paste your generated encryption key
+7. Select environments: **Production**, **Preview**, and **Development**
+8. Click **Save**
+
+**For Local Development**:
+Create a `.env.local` file in the project root:
+```
+ITR_ENCRYPTION_KEY=your-generated-key-here
+```
+
+**Important Notes**:
+- ⚠️ **Never commit this key to version control**
+- ⚠️ **Use different keys for development and production**
+- ⚠️ **If the key is lost, encrypted credentials cannot be recovered**
+- ✅ **The key is only used server-side** (in API routes)
+
+**Status**: ⚠️ **REQUIRED** - ITR filing module will fail without this key
+
+---
+
+### 8. `WHATSAPP_API_KEY` & `WHATSAPP_API_URL` 📱 **OPTIONAL - For WhatsApp Notifications**
+
+**Purpose**: WhatsApp Business API credentials for sending ITR notifications via WhatsApp
+
+**Used For**:
+- ITR draft ready notifications
+- ITR filing status updates
+- Filing completion notifications
+- Refund status updates
+
+**How to Get**:
+
+**Option 1: Twilio WhatsApp API** (Recommended)
+1. Visit [Twilio](https://www.twilio.com/)
+2. Sign up for an account
+3. Get your Account SID and Auth Token
+4. Enable WhatsApp Sandbox or configure WhatsApp Business API
+5. Use your Account SID as `WHATSAPP_API_KEY` and Twilio API URL
+
+**Option 2: WhatsApp Business API**
+1. Register with Meta Business
+2. Set up WhatsApp Business Account
+3. Get API credentials from Meta
+4. Configure webhook and API endpoint
+
+**Option 3: Other Providers**
+- Use any WhatsApp Business API provider (Twilio, MessageBird, etc.)
+- Configure their API URL and key
+
+**How to Add in Vercel**:
+1. Settings → Environment Variables
+2. Add:
+   - `WHATSAPP_API_KEY` = Your WhatsApp API key
+   - `WHATSAPP_API_URL` = Your WhatsApp API endpoint URL (e.g., `https://api.twilio.com/2010-04-01/Accounts/{AccountSID}/Messages.json`)
+3. Select environments: **Production**, **Preview**, **Development**
+4. Save
+
+**For Local Development**:
+Add to `.env.local`:
+```env
+WHATSAPP_API_KEY=your-api-key
+WHATSAPP_API_URL=https://your-whatsapp-api-url.com/send
+```
+
+**Note**: 
+- If not configured, WhatsApp notifications will be logged but not sent (no errors)
+- Email notifications will still work independently
+- WhatsApp notifications require user's phone number in their profile
+
+**Example (Twilio)**:
+```env
+WHATSAPP_API_KEY=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+WHATSAPP_API_URL=https://api.twilio.com/2010-04-01/Accounts/{AccountSID}/Messages.json
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+```
+
+**Status**: ⚠️ **OPTIONAL** - WhatsApp notifications are optional. Email notifications work independently.
+

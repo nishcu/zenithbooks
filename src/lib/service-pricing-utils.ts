@@ -62,7 +62,7 @@ export async function getUserSubscriptionInfo(userId: string): Promise<UserSubsc
 export function isServiceFreeForUser(
   userType: "business" | "professional" | null,
   subscriptionPlan: "freemium" | "business" | "professional" | null,
-  serviceCategory: "ca_certs" | "legal_documents" | "notice_handling" | "reports" | "agreements" | "registration_deeds" | "founder_startup" | "hr_documents" | "company_documents" | "gst_documents" | "accounting_documents"
+  serviceCategory: "ca_certs" | "legal_documents" | "notice_handling" | "reports" | "agreements" | "registration_deeds" | "founder_startup" | "hr_documents" | "company_documents" | "gst_documents" | "accounting_documents" | "itr_filing"
 ): boolean {
   // Only professionals with professional subscription get free services
   if (userType === "professional" && subscriptionPlan === "professional") {
@@ -93,7 +93,7 @@ export function getEffectiveServicePrice(
   basePrice: number,
   userType: "business" | "professional" | null,
   subscriptionPlan: "freemium" | "business" | "professional" | null,
-  serviceCategory: "ca_certs" | "legal_documents" | "notice_handling" | "reports" | "agreements" | "registration_deeds" | "founder_startup" | "hr_documents" | "company_documents" | "gst_documents" | "accounting_documents"
+  serviceCategory: "ca_certs" | "legal_documents" | "notice_handling" | "reports" | "agreements" | "registration_deeds" | "founder_startup" | "hr_documents" | "company_documents" | "gst_documents" | "accounting_documents" | "itr_filing"
 ): number {
   if (isServiceFreeForUser(userType, subscriptionPlan, serviceCategory)) {
     return 0;

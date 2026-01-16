@@ -103,6 +103,7 @@ export default function RootLayout({
           fontInter.variable,
           fontSourceCodePro.variable
         )}
+        suppressHydrationWarning
       >
         {/* Google Tag (gtag.js) - Supports GA4 (G-*) and Google Ads (AW-*) */}
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

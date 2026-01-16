@@ -17,6 +17,18 @@ service firebase.storage {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // ITR Filing Storage
+    // Structure: itr/{userId}/{applicationId}/...
+    match /itr/{userId}/{applicationId}/{allPaths=**} {
+      // Users can read/write their own ITR documents
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Authenticated users can read ITR documents (for CA team access)
+      // Note: CA team members will be authenticated users
+      // Write access is restricted to document owners only
+      allow read: if request.auth != null;
+    }
+
     // Allow write access for authenticated users to all other folders (for future use)
     match /{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;

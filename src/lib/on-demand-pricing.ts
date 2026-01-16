@@ -19,6 +19,7 @@ export type ServicePricing = {
     gst_documents: Service[];
     accounting_documents: Service[];
     notice_handling: Service[];
+    itr_filing: Service[];
 };
 
 // We can still keep the initial default values here
@@ -83,6 +84,12 @@ export const servicePricing: ServicePricing = {
     ],
     accounting_documents: [
         { id: "accounting_engagement_letter", name: "Accounting Engagement Letter", price: 1499 },
+    ],
+    itr_filing: [
+        { id: "itr1", name: "ITR-1 (Salaried Individuals)", price: 999 },
+        { id: "itr2", name: "ITR-2 (Individuals with Capital Gains)", price: 1999 },
+        { id: "itr3", name: "ITR-3 (Business/Profession Income)", price: 2999 },
+        { id: "itr4", name: "ITR-4 (Presumptive Taxation)", price: 2499 },
     ],
 };
 
