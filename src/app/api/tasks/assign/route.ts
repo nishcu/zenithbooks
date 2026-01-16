@@ -84,13 +84,26 @@ export async function POST(request: NextRequest) {
     const userId = decodedToken.uid;
 
     // Get request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Invalid request body', message: 'Request body must be valid JSON' },
+        { status: 400 }
+      );
+    }
+
     const { taskId, applicantId } = body;
 
     // Validate required fields
     if (!taskId || !applicantId) {
       return NextResponse.json(
-        { error: 'Task ID and Applicant ID are required' },
+        { 
+          error: 'Task ID and Applicant ID are required',
+          message: `Missing required fields. taskId: ${taskId ? 'provided' : 'missing'}, applicantId: ${applicantId ? 'provided' : 'missing'}`,
+          received: { taskId, applicantId }
+        },
         { status: 400 }
       );
     }

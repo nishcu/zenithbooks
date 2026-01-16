@@ -89,7 +89,16 @@ export async function POST(request: NextRequest) {
     const userName = decodedToken.name || decodedToken.email || 'User';
 
     // Get request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Invalid request body', message: 'Request body must be valid JSON' },
+        { status: 400 }
+      );
+    }
+
     const { taskId, message, bidAmount } = body;
 
     // Validate required fields
