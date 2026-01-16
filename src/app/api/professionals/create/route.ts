@@ -4,22 +4,30 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase';
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { createOrUpdateProfessionalProfile } from '@/lib/professionals/firestore';
 import type { ProfessionalProfile } from '@/lib/professionals/types';
 
+// Ensure this route is included in the build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Initialize Firebase Admin if needed
 if (!getApps().length) {
   try {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
+      console.error('Firebase Admin credentials missing');
+    } else {
+      initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: privateKey,
+        }),
+      });
+    }
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
   }

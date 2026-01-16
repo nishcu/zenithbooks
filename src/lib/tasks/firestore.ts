@@ -20,7 +20,13 @@ import {
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
+// Ensure Firebase is initialized before using db
 import { db } from '@/lib/firebase';
+
+// Verify db is available
+if (!db) {
+  console.error('Firestore db is not initialized. Check Firebase configuration.');
+}
 import type {
   TaskPost,
   TaskApplication,

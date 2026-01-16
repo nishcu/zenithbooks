@@ -6,6 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listTasks } from '@/lib/tasks/firestore';
 
+// Ensure this route is included in the build
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
