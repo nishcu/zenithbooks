@@ -296,8 +296,8 @@ export async function updateTaskExecutionStatus(
 ): Promise<void> {
   // Get current task to check old status
   const taskRef = doc(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS, taskExecutionId);
-  const taskSnap = await getDoc(taskRef);
-  const oldStatus = taskSnap.exists() ? (taskSnap.data() as ComplianceTaskExecution).status : 'pending';
+  const currentTaskSnap = await getDoc(taskRef);
+  const oldStatus = currentTaskSnap.exists() ? (currentTaskSnap.data() as ComplianceTaskExecution).status : 'pending';
   
   const updateData: any = {
     status,
@@ -321,10 +321,10 @@ export async function updateTaskExecutionStatus(
   
   await updateDoc(taskRef, updateData);
   
-  // Get task execution for audit log and notification
-  const taskSnap = await getDoc(taskRef);
-  if (taskSnap.exists()) {
-    const taskData = taskSnap.data() as ComplianceTaskExecution;
+  // Get updated task execution for audit log and notification
+  const updatedTaskSnap = await getDoc(taskRef);
+  if (updatedTaskSnap.exists()) {
+    const taskData = updatedTaskSnap.data() as ComplianceTaskExecution;
     await createAuditLog({
       subscriptionId: taskData.subscriptionId,
       userId: taskData.userId,
