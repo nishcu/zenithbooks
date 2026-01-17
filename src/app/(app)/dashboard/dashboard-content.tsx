@@ -267,14 +267,6 @@ function DashboardContent() {
       color: "from-rose-500 to-pink-600",
       badge: "HR"
     },
-    {
-      title: "Reports",
-      description: "CMA reports, sales analysis, and business insights",
-      icon: BarChart3,
-      href: "/reports/cma-report",
-      color: "from-cyan-500 to-blue-600",
-      badge: "Analytics"
-    },
   ];
 
   // Tasks and Networking Features (for professionals)
