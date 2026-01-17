@@ -10,7 +10,6 @@ import {
   createTaskReview,
   getTaskPost,
   getProfessionalReviews,
-  updateProfessionalRating,
 } from '@/lib/tasks/firestore';
 import type { TaskReview } from '@/lib/professionals/types';
 
@@ -163,8 +162,8 @@ export async function POST(request: NextRequest) {
 
     const reviewId = await createTaskReview(reviewData);
 
-    // Update professional rating
-    await updateProfessionalRating(professionalId, Number(rating));
+    // TODO: Update professional rating calculation can be done via aggregation
+    // Professional rating will be calculated from reviews when needed
 
     return NextResponse.json({
       success: true,

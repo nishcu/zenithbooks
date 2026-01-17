@@ -1,0 +1,303 @@
+
+> nextn@0.1.0 build
+> npx next build
+
+   ▲ Next.js 15.5.9
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 23.8s
+
+./src/app/api/tasks/review/route.ts
+Attempted import error: 'updateProfessionalRating' is not exported from '@/lib/tasks/firestore' (imported as 'updateProfessionalRating').
+
+Import trace for requested module:
+./src/app/api/tasks/review/route.ts
+
+./node_modules/pdf-parse/dist/pdf-parse/cjs/index.cjs
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/pdf-parse/dist/pdf-parse/cjs/index.cjs
+./src/lib/bank-statement-parser.ts
+./src/app/api/bank-statement/parse/route.ts
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+Firebase Admin credentials missing
+Firebase Admin initialization error: Error: Service account object must contain a string "project_id" property.
+    at <unknown> (.next/server/app/api/itr/decrypt/route.js:1:3047) {
+  errorInfo: [Object],
+  codePrefix: 'app'
+}
+Firebase Admin credentials missing
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+Firebase Admin credentials missing: { hasProjectId: false, hasClientEmail: false, hasPrivateKey: false }
+   Generating static pages (0/196) ...
+   Generating static pages (49/196) 
+   Generating static pages (98/196) 
+   Generating static pages (147/196) 
+Firebase Admin initialization error: Error: Service account object must contain a string "project_id" property.
+    at <unknown> (.next/server/app/api/itr/decrypt/route.js:1:3047) {
+  errorInfo: [Object],
+  codePrefix: 'app'
+}
+ ✓ Generating static pages (196/196)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                              Size  First Load JS
+┌ ○ /                                                                 4.51 kB         342 kB
+├ ○ /_not-found                                                          1 kB         103 kB
+├ ○ /about                                                            4.05 kB         120 kB
+├ ○ /accounting                                                         387 B         102 kB
+├ ○ /accounting/bank-reconciliation                                    173 kB         477 kB
+├ ○ /accounting/books-of-account                                      16.1 kB         641 kB
+├ ○ /accounting/budgets                                                 10 kB         411 kB
+├ ○ /accounting/chart-of-accounts                                       12 kB         639 kB
+├ ○ /accounting/cost-centre-summary                                   8.88 kB         387 kB
+├ ○ /accounting/cost-centres                                          8.95 kB         274 kB
+├ ○ /accounting/financial-statements                                    290 B         102 kB
+├ ○ /accounting/financial-statements/balance-sheet                      13 kB         483 kB
+├ ○ /accounting/financial-statements/profit-and-loss                  4.51 kB         506 kB
+├ ○ /accounting/journal                                               10.5 kB         320 kB
+├ ○ /accounting/journal/bulk                                          18.4 kB         632 kB
+├ ○ /accounting/ledgers                                               20.1 kB         438 kB
+├ ○ /accounting/trial-balance                                         10.7 kB         641 kB
+├ ○ /accounting/vouchers                                              15.3 kB         318 kB
+├ ○ /accounting/vouchers/rapid                                        10.2 kB         313 kB
+├ ○ /admin                                                            4.66 kB         115 kB
+├ ○ /admin/appointments                                               8.79 kB         159 kB
+├ ○ /admin/blog                                                       7.24 kB         281 kB
+├ ƒ /admin/blog/edit/[id]                                             5.38 kB         274 kB
+├ ○ /admin/blog/new                                                   4.53 kB         273 kB
+├ ○ /admin/business-registrations                                     5.89 kB         276 kB
+├ ○ /admin/ca-workload                                                3.27 kB         237 kB
+├ ○ /admin/certification-requests                                     14.1 kB         477 kB
+├ ○ /admin/compliance-tasks                                           8.37 kB         273 kB
+├ ○ /admin/coupons                                                    11.9 kB         318 kB
+├ ○ /admin/dashboard                                                  2.52 kB         113 kB
+├ ○ /admin/itr-applications                                           6.89 kB         297 kB
+├ ƒ /admin/itr-applications/[id]                                       8.4 kB         415 kB
+├ ○ /admin/notices                                                    8.64 kB         286 kB
+├ ○ /admin/professionals                                              9.34 kB         281 kB
+├ ○ /admin/service-pricing                                            7.84 kB         238 kB
+├ ○ /admin/subscribers                                                8.81 kB         167 kB
+├ ○ /admin/users                                                      12.3 kB         291 kB
+├ ƒ /api/admin/professionals                                            290 B         102 kB
+├ ƒ /api/admin/users                                                    290 B         102 kB
+├ ƒ /api/bank-statement/generate-template                               290 B         102 kB
+├ ƒ /api/bank-statement/parse                                           290 B         102 kB
+├ ƒ /api/collaboration/requests                                         290 B         102 kB
+├ ƒ /api/compliance/cancel                                              290 B         102 kB
+├ ƒ /api/compliance/subscribe                                           290 B         102 kB
+├ ƒ /api/compliance/tasks/generate                                      290 B         102 kB
+├ ƒ /api/email/send                                                     290 B         102 kB
+├ ƒ /api/form-16/bulk-download                                          290 B         102 kB
+├ ƒ /api/form-16/bulk-generate                                          290 B         102 kB
+├ ƒ /api/form-16/bulk-upload                                            290 B         102 kB
+├ ƒ /api/form-16/generate                                               290 B         102 kB
+├ ƒ /api/form-16/sample-template                                        290 B         102 kB
+├ ƒ /api/import/tally                                                   290 B         102 kB
+├ ƒ /api/itr/cleanup-credentials                                        290 B         102 kB
+├ ƒ /api/itr/decrypt                                                    290 B         102 kB
+├ ƒ /api/itr/decrypt-credentials                                        290 B         102 kB
+├ ƒ /api/itr/download-draft-pdf                                         290 B         102 kB
+├ ƒ /api/itr/encrypt                                                    290 B         102 kB
+├ ƒ /api/itr/generate-draft                                             290 B         102 kB
+├ ƒ /api/itr/generate-health-report                                     290 B         102 kB
+├ ƒ /api/itr/predict-refund-date                                        290 B         102 kB
+├ ƒ /api/itr/send-notification                                          290 B         102 kB
+├ ƒ /api/payment                                                        290 B         102 kB
+├ ƒ /api/payment/verify                                                 290 B         102 kB
+├ ƒ /api/payment/webhook                                                290 B         102 kB
+├ ƒ /api/professionals/create                                           290 B         102 kB
+├ ƒ /api/professionals/list                                             290 B         102 kB
+├ ƒ /api/registrations/create                                           290 B         102 kB
+├ ƒ /api/tasks/all                                                      290 B         102 kB
+├ ƒ /api/tasks/apply                                                    290 B         102 kB
+├ ƒ /api/tasks/assign                                                   290 B         102 kB
+├ ƒ /api/tasks/chat                                                     290 B         102 kB
+├ ƒ /api/tasks/complete                                                 290 B         102 kB
+├ ƒ /api/tasks/create                                                   290 B         102 kB
+├ ƒ /api/tasks/review                                                   290 B         102 kB
+├ ƒ /api/upload                                                         290 B         102 kB
+├ ƒ /api/vault/download                                                 290 B         102 kB
+├ ƒ /api/vault/health                                                   290 B         102 kB
+├ ƒ /api/vault/log-access                                               290 B         102 kB
+├ ƒ /api/vault/shared-documents                                         290 B         102 kB
+├ ƒ /api/vault/validate-code                                            290 B         102 kB
+├ ƒ /api/vault/view                                                     290 B         102 kB
+├ ƒ /api/whatsapp/send                                                  290 B         102 kB
+├ ○ /app-shortcuts                                                     165 kB         284 kB
+├ ○ /billing                                                            290 B         102 kB
+├ ○ /billing/credit-notes                                             8.14 kB         279 kB
+├ ○ /billing/credit-notes/new                                         8.92 kB         280 kB
+├ ○ /billing/debit-notes                                              8.13 kB         279 kB
+├ ○ /billing/debit-notes/new                                          8.91 kB         280 kB
+├ ○ /billing/invoices                                                 19.4 kB         509 kB
+├ ○ /billing/invoices/bulk                                            14.4 kB         591 kB
+├ ○ /billing/invoices/new                                             8.14 kB         321 kB
+├ ○ /billing/invoices/rapid                                           8.77 kB         305 kB
+├ ○ /billing/invoices/templates                                        4.1 kB         124 kB
+├ ○ /billing/invoices/voice                                           12.8 kB         309 kB
+├ ○ /billing/sales-orders                                             7.66 kB         282 kB
+├ ○ /billing/sales-orders/new                                         2.71 kB         315 kB
+├ ○ /blog                                                             3.98 kB         247 kB
+├ ƒ /blog/[id]                                                        7.13 kB         246 kB
+├ ○ /book-appointment                                                 7.46 kB         179 kB
+├ ○ /business-registrations                                           10.5 kB         127 kB
+├ ƒ /business-registrations/[id]                                       4.4 kB         248 kB
+├ ○ /business-registrations/apply                                     4.47 kB         241 kB
+├ ○ /ca-certificates                                                  6.66 kB         240 kB
+├ ○ /ca-certificates/capital-contribution                             8.94 kB         519 kB
+├ ○ /ca-certificates/foreign-remittance                                7.6 kB         504 kB
+├ ○ /ca-certificates/general-attestation                              6.92 kB         503 kB
+├ ○ /ca-certificates/net-worth                                        9.01 kB         511 kB
+├ ○ /ca-certificates/turnover                                         7.83 kB         504 kB
+├ ○ /ca-certificates/visa-immigration                                 9.18 kB         505 kB
+├ ○ /compliance-plans                                                 6.22 kB         244 kB
+├ ○ /compliance-plans/my-subscription                                 3.62 kB         248 kB
+├ ○ /contact                                                          7.99 kB         143 kB
+├ ○ /dashboard                                                        36.4 kB         410 kB
+├ ○ /gst-filings                                                      8.18 kB         273 kB
+├ ○ /gst-filings/gstr-1-wizard                                          316 B         495 kB
+├ ○ /gst-filings/gstr-3b-wizard                                       11.3 kB         492 kB
+├ ○ /gst-filings/gstr-9-wizard                                        7.48 kB         480 kB
+├ ○ /gst-filings/gstr-9c-reconciliation                               7.88 kB         484 kB
+├ ○ /gst-filings/gstr1-wizard                                           317 B         495 kB
+├ ○ /import-export                                                    15.2 kB         587 kB
+├ ○ /income-tax                                                         382 B         102 kB
+├ ○ /income-tax/advance-tax                                           10.6 kB         487 kB
+├ ○ /income-tax/form-16                                               24.7 kB         294 kB
+├ ○ /income-tax/tds-returns                                           8.52 kB         479 kB
+├ ○ /income-tax/tds-tcs-reports                                       8.05 kB         478 kB
+├ ○ /items                                                            2.99 kB         314 kB
+├ ○ /items/bulk                                                       7.75 kB         382 kB
+├ ○ /items/godowns                                                    6.54 kB         150 kB
+├ ○ /items/stock-groups                                               6.15 kB         150 kB
+├ ○ /items/suggest-hsn                                                 7.2 kB         146 kB
+├ ○ /items/units                                                      6.16 kB         150 kB
+├ ○ /itr-filing                                                        4.9 kB         242 kB
+├ ƒ /itr-filing/[id]                                                  12.4 kB         252 kB
+├ ƒ /itr-filing/[id]/refund                                           6.08 kB         243 kB
+├ ƒ /itr-filing/[id]/review                                           8.02 kB         437 kB
+├ ○ /itr-filing/new                                                     11 kB         374 kB
+├ ○ /legal-documents                                                  7.78 kB         241 kB
+├ ○ /legal-documents/accounting-engagement-letter                       16 kB         519 kB
+├ ○ /legal-documents/appointment-letter                               8.39 kB         504 kB
+├ ○ /legal-documents/board-resolutions                                3.16 kB         117 kB
+├ ○ /legal-documents/board-resolutions/appointment-of-auditor         9.41 kB         505 kB
+├ ○ /legal-documents/board-resolutions/appointment-of-director        9.27 kB         505 kB
+├ ○ /legal-documents/board-resolutions/approval-of-annual-accounts    9.29 kB         505 kB
+├ ○ /legal-documents/board-resolutions/approval-of-loan               9.43 kB         505 kB
+├ ○ /legal-documents/board-resolutions/borrowing-powers               10.5 kB         514 kB
+├ ○ /legal-documents/board-resolutions/issue-of-share-certificates    9.45 kB         505 kB
+├ ○ /legal-documents/board-resolutions/opening-of-bank-account         9.7 kB         506 kB
+├ ○ /legal-documents/board-resolutions/shifting-of-registered-office   9.3 kB         505 kB
+├ ○ /legal-documents/consultant-agreement                             8.39 kB         504 kB
+├ ○ /legal-documents/esop-policy                                      9.37 kB         472 kB
+├ ○ /legal-documents/founders-agreement                               14.6 kB         511 kB
+├ ○ /legal-documents/franchise-agreement                              12.4 kB         508 kB
+├ ○ /legal-documents/gst-engagement-letter                            15.1 kB         511 kB
+├ ○ /legal-documents/internship-agreement                             8.29 kB         504 kB
+├ ○ /legal-documents/lease-deed                                       16.1 kB         519 kB
+├ ○ /legal-documents/llp-agreement                                    14.1 kB         538 kB
+├ ○ /legal-documents/loan-agreement                                   11.8 kB         508 kB
+├ ○ /legal-documents/moa-aoa                                          5.94 kB         502 kB
+├ ○ /legal-documents/nda                                              9.02 kB         505 kB
+├ ○ /legal-documents/offer-letter                                     7.08 kB         503 kB
+├ ○ /legal-documents/partnership-deed                                 20.6 kB         506 kB
+├ ○ /legal-documents/rental-deed                                      11.7 kB         515 kB
+├ ○ /legal-documents/rental-receipt                                   11.3 kB         478 kB
+├ ○ /legal-documents/rental-receipts                                  6.05 kB         502 kB
+├ ○ /legal-documents/safe-agreement                                   11.6 kB         276 kB
+├ ○ /legal-documents/self-affidavit-gst                               4.28 kB         500 kB
+├ ○ /legal-documents/service-agreement                                8.12 kB         504 kB
+├ ○ /legal-documents/shareholders-agreement                           13.7 kB         476 kB
+├ ○ /legal-documents/society-registration-deed                        10.7 kB         507 kB
+├ ○ /legal-documents/statutory-registers                              39.4 kB         419 kB
+├ ○ /legal-documents/trust-deed                                       10.8 kB         507 kB
+├ ○ /legal-documents/vendor-agreement                                 8.11 kB         504 kB
+├ ○ /login                                                            3.55 kB         328 kB
+├ ○ /my-documents                                                     13.7 kB         476 kB
+├ ○ /notices                                                          7.72 kB         305 kB
+├ ○ /parties                                                          6.29 kB         457 kB
+├ ○ /parties/bulk                                                     15.2 kB         392 kB
+├ ○ /payment                                                          6.61 kB         238 kB
+├ ○ /payment/success                                                  6.26 kB         238 kB
+├ ○ /payroll                                                          5.96 kB         241 kB
+├ ○ /payroll/employees                                                9.45 kB         274 kB
+├ ○ /payroll/reports                                                  5.75 kB         622 kB
+├ ○ /payroll/run-payroll                                                11 kB         243 kB
+├ ○ /payroll/settings                                                 8.71 kB         253 kB
+├ ○ /pricing                                                          14.9 kB         250 kB
+├ ○ /professional-services                                            8.77 kB         274 kB
+├ ○ /professional/itr-applications                                    7.59 kB         281 kB
+├ ƒ /professional/itr-applications/[id]                               16.4 kB         283 kB
+├ ƒ /professional/itr-applications/[id]/draft                         14.9 kB         255 kB
+├ ○ /professionals                                                      490 B         102 kB
+├ ○ /professionals/create-profile                                     5.92 kB         238 kB
+├ ○ /professionals/list                                               7.43 kB         151 kB
+├ ƒ /professionals/view/[id]                                          5.88 kB         242 kB
+├ ○ /purchases                                                        10.1 kB         281 kB
+├ ○ /purchases/new                                                    4.11 kB         321 kB
+├ ○ /purchases/purchase-orders                                        7.63 kB         282 kB
+├ ○ /purchases/purchase-orders/new                                    2.71 kB         315 kB
+├ ○ /purchases/rapid                                                  9.54 kB         299 kB
+├ ○ /reconciliation                                                   2.43 kB         117 kB
+├ ○ /reconciliation/books-vs-gstr1                                    6.28 kB         615 kB
+├ ○ /reconciliation/gstr-comparison                                   4.84 kB         382 kB
+├ ○ /reconciliation/itc-reconciliation                                4.67 kB         381 kB
+├ ○ /reports                                                          2.17 kB         116 kB
+├ ○ /reports/cma-report                                               22.1 kB         646 kB
+├ ○ /reports/purchase-analysis                                        3.82 kB         565 kB
+├ ○ /reports/sales-analysis                                           4.66 kB         565 kB
+├ ○ /resources                                                          290 B         102 kB
+├ ○ /resources/knowledge-base                                         2.56 kB         117 kB
+├ ○ /resources/knowledge-base/accounting                              4.78 kB         119 kB
+├ ○ /resources/knowledge-base/billing                                 4.21 kB         118 kB
+├ ○ /resources/knowledge-base/ca-certificates                         4.16 kB         118 kB
+├ ○ /resources/knowledge-base/dashboard                               2.97 kB         117 kB
+├ ○ /resources/knowledge-base/gst-filings                             4.19 kB         118 kB
+├ ○ /resources/knowledge-base/legal-documents                          4.1 kB         124 kB
+├ ○ /settings                                                         6.96 kB         242 kB
+├ ○ /settings/branding                                                14.8 kB         185 kB
+├ ○ /settings/professional-profile                                    11.3 kB         252 kB
+├ ○ /settings/users                                                   8.25 kB         280 kB
+├ ○ /signup                                                           1.56 kB         334 kB
+├ ○ /tasks                                                              489 B         102 kB
+├ ○ /tasks/browse                                                     6.98 kB         278 kB
+├ ○ /tasks/chat                                                         290 B         102 kB
+├ ƒ /tasks/chat/[taskId]                                              5.79 kB         250 kB
+├ ○ /tasks/manage                                                       290 B         102 kB
+├ ƒ /tasks/manage/[id]                                                4.73 kB         256 kB
+├ ○ /tasks/my-applications                                             2.7 kB         240 kB
+├ ○ /tasks/my-tasks                                                   3.47 kB         248 kB
+├ ○ /tasks/post                                                       7.57 kB         269 kB
+├ ○ /tasks/view                                                         290 B         102 kB
+├ ƒ /tasks/view/[id]                                                  4.98 kB         262 kB
+├ ○ /transactions                                                     5.88 kB         274 kB
+├ ○ /vault                                                            16.9 kB         309 kB
+├ ○ /vault/access                                                     7.31 kB         122 kB
+├ ○ /vault/logs                                                       7.08 kB         288 kB
+├ ○ /vault/settings                                                   9.32 kB         244 kB
+└ ○ /vault/sharing                                                    11.1 kB         286 kB
++ First Load JS shared by all                                          102 kB
+  ├ chunks/1255-de0c1abd22c7cccd.js                                   45.2 kB
+  ├ chunks/4bd1b696-182b6b13bdad92e3.js                               54.2 kB
+  └ other shared chunks (total)                                       2.42 kB
+
+
+ƒ Middleware                                                          46.9 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
