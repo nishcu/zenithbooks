@@ -181,6 +181,12 @@ const allMenuItems = [
     roles: ['business', 'professional']
   },
   {
+    href: "/compliance-plans",
+    label: "Monthly Compliance Services",
+    icon: Shield,
+    roles: ['business', 'professional']
+  },
+  {
     href: "/legal-documents",
     label: "Legal Documents",
     icon: Shield,

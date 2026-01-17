@@ -1,0 +1,378 @@
+/**
+ * Monthly Compliance Services - Firestore Service
+ * ICAI-Compliant: Platform-managed delivery
+ */
+
+import {
+  doc,
+  collection,
+  setDoc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+  onSnapshot,
+  Unsubscribe,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type {
+  ComplianceSubscription,
+  ComplianceTaskExecution,
+  ComplianceAuditLog,
+  CompliancePlanTier,
+} from './types';
+import { getCompliancePlan } from './constants';
+
+const COLLECTIONS = {
+  COMPLIANCE_SUBSCRIPTIONS: 'compliance_subscriptions',
+  COMPLIANCE_TASK_EXECUTIONS: 'compliance_task_executions',
+  COMPLIANCE_AUDIT_LOGS: 'compliance_audit_logs',
+};
+
+// ==================== Compliance Subscriptions ====================
+
+/**
+ * Create or update compliance subscription
+ */
+export async function createOrUpdateComplianceSubscription(
+  subscriptionData: Omit<ComplianceSubscription, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  const subscriptionsRef = collection(db, COLLECTIONS.COMPLIANCE_SUBSCRIPTIONS);
+  
+  // Check if subscription exists for this user
+  const existingQuery = query(
+    subscriptionsRef,
+    where('userId', '==', subscriptionData.userId),
+    where('status', 'in', ['active', 'paused'])
+  );
+  const existingDocs = await getDocs(existingQuery);
+  
+  if (!existingDocs.empty) {
+    // Update existing subscription
+    const existingDoc = existingDocs.docs[0];
+    await updateDoc(doc(db, COLLECTIONS.COMPLIANCE_SUBSCRIPTIONS, existingDoc.id), {
+      ...subscriptionData,
+      updatedAt: serverTimestamp(),
+    });
+    
+    // Create audit log
+    await createAuditLog({
+      subscriptionId: existingDoc.id,
+      userId: subscriptionData.userId,
+      firmId: subscriptionData.firmId,
+      action: 'plan_updated',
+      details: { planTier: subscriptionData.planTier, status: subscriptionData.status },
+      performedBy: subscriptionData.userId,
+    });
+    
+    return existingDoc.id;
+  } else {
+    // Create new subscription
+    const docRef = await addDoc(subscriptionsRef, {
+      ...subscriptionData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    
+    // Create audit log
+    await createAuditLog({
+      subscriptionId: docRef.id,
+      userId: subscriptionData.userId,
+      firmId: subscriptionData.firmId,
+      action: 'plan_subscribed',
+      details: { planTier: subscriptionData.planTier },
+      performedBy: subscriptionData.userId,
+    });
+    
+    return docRef.id;
+  }
+}
+
+/**
+ * Get compliance subscription by user ID
+ */
+export async function getComplianceSubscriptionByUserId(userId: string): Promise<ComplianceSubscription | null> {
+  const q = query(
+    collection(db, COLLECTIONS.COMPLIANCE_SUBSCRIPTIONS),
+    where('userId', '==', userId),
+    where('status', 'in', ['active', 'paused']),
+    orderBy('createdAt', 'desc'),
+    limit(1)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  
+  const docData = snapshot.docs[0].data();
+  return {
+    id: snapshot.docs[0].id,
+    ...docData,
+    startDate: docData.startDate?.toDate() || new Date(),
+    renewalDate: docData.renewalDate?.toDate() || new Date(),
+    lastTaskGeneration: docData.lastTaskGeneration?.toDate() || undefined,
+    createdAt: docData.createdAt?.toDate() || new Date(),
+    updatedAt: docData.updatedAt?.toDate() || new Date(),
+  } as ComplianceSubscription;
+}
+
+/**
+ * Cancel compliance subscription
+ */
+export async function cancelComplianceSubscription(
+  subscriptionId: string,
+  userId: string
+): Promise<void> {
+  const subscriptionRef = doc(db, COLLECTIONS.COMPLIANCE_SUBSCRIPTIONS, subscriptionId);
+  const subscriptionSnap = await getDoc(subscriptionRef);
+  
+  if (!subscriptionSnap.exists()) {
+    throw new Error('Subscription not found');
+  }
+  
+  const subscriptionData = subscriptionSnap.data() as ComplianceSubscription;
+  if (subscriptionData.userId !== userId) {
+    throw new Error('Unauthorized');
+  }
+  
+  await updateDoc(subscriptionRef, {
+    status: 'cancelled',
+    updatedAt: serverTimestamp(),
+  });
+  
+  // Create audit log
+  await createAuditLog({
+    subscriptionId,
+    userId,
+    firmId: subscriptionData.firmId,
+    action: 'plan_cancelled',
+    details: { planTier: subscriptionData.planTier },
+    performedBy: userId,
+  });
+}
+
+// ==================== Task Executions ====================
+
+/**
+ * Generate monthly compliance tasks for a subscription
+ */
+export async function generateMonthlyComplianceTasks(
+  subscriptionId: string,
+  subscription: ComplianceSubscription
+): Promise<string[]> {
+  const plan = getCompliancePlan(subscription.planTier);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  const taskExecutionIds: string[] = [];
+  
+  // Generate monthly tasks
+  for (const task of plan.tasks) {
+    if (!task.autoGenerated && task.frequency !== 'monthly') continue;
+    
+    // Check if task already exists for this month
+    const existingQuery = query(
+      collection(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS),
+      where('subscriptionId', '==', subscriptionId),
+      where('taskId', '==', task.id),
+      where('status', 'in', ['pending', 'in_progress'])
+    );
+    const existing = await getDocs(existingQuery);
+    
+    if (!existing.empty) continue; // Task already exists
+    
+    // Check dependencies
+    if (task.dependencies && task.dependencies.length > 0) {
+      const depQuery = query(
+        collection(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS),
+        where('subscriptionId', '==', subscriptionId),
+        where('taskId', 'in', task.dependencies),
+        where('status', '==', 'completed')
+      );
+      const deps = await getDocs(depQuery);
+      if (deps.size < task.dependencies.length) continue; // Dependencies not met
+    }
+    
+    // Calculate due date based on frequency
+    let dueDate = monthEnd;
+    if (task.frequency === 'quarterly') {
+      const quarterEnd = new Date(now.getFullYear(), now.getMonth() - (now.getMonth() % 3) + 3, 0);
+      dueDate = quarterEnd;
+    } else if (task.frequency === 'annual') {
+      dueDate = new Date(now.getFullYear(), 11, 31); // End of year
+    }
+    
+    // Create task execution
+    const taskExecutionData: Omit<ComplianceTaskExecution, 'id' | 'createdAt' | 'updatedAt'> = {
+      subscriptionId,
+      userId: subscription.userId,
+      firmId: subscription.firmId,
+      taskId: task.id,
+      taskName: task.name,
+      status: 'pending',
+      assignedToInternalTeam: true, // Always true - ICAI compliance
+      dueDate: Timestamp.fromDate(dueDate),
+      platformOwned: true, // Always true - ZenithBooks as principal
+    };
+    
+    const taskExecRef = await addDoc(
+      collection(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS),
+      {
+        ...taskExecutionData,
+        dueDate: Timestamp.fromDate(dueDate),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+    );
+    
+    taskExecutionIds.push(taskExecRef.id);
+    
+    // Create audit log
+    await createAuditLog({
+      subscriptionId,
+      userId: subscription.userId,
+      firmId: subscription.firmId,
+      action: 'task_generated',
+      details: { taskId: task.id, taskName: task.name },
+      performedBy: 'system',
+    });
+  }
+  
+  // Update subscription last task generation date
+  if (taskExecutionIds.length > 0) {
+    await updateDoc(doc(db, COLLECTIONS.COMPLIANCE_SUBSCRIPTIONS, subscriptionId), {
+      lastTaskGeneration: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+  
+  return taskExecutionIds;
+}
+
+/**
+ * Get task executions for a subscription
+ */
+export async function getTaskExecutionsBySubscription(
+  subscriptionId: string
+): Promise<ComplianceTaskExecution[]> {
+  const q = query(
+    collection(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS),
+    where('subscriptionId', '==', subscriptionId),
+    orderBy('dueDate', 'asc')
+  );
+  
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      dueDate: data.dueDate?.toDate() || new Date(),
+      completedAt: data.completedAt?.toDate() || undefined,
+      filedAt: data.filedAt?.toDate() || undefined,
+      filingDetails: data.filingDetails ? {
+        ...data.filingDetails,
+        filingDate: data.filingDetails.filingDate?.toDate() || undefined,
+      } : undefined,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+    } as ComplianceTaskExecution;
+  });
+}
+
+/**
+ * Update task execution status
+ */
+export async function updateTaskExecutionStatus(
+  taskExecutionId: string,
+  status: ComplianceTaskExecution['status'],
+  updates?: Partial<ComplianceTaskExecution>
+): Promise<void> {
+  const taskRef = doc(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS, taskExecutionId);
+  const updateData: any = {
+    status,
+    updatedAt: serverTimestamp(),
+  };
+  
+  if (status === 'completed' || status === 'filed') {
+    updateData.completedAt = serverTimestamp();
+  }
+  
+  if (status === 'filed' && updates?.filingDetails) {
+    updateData.filingDetails = {
+      ...updates.filingDetails,
+      filingDate: serverTimestamp(),
+    };
+  }
+  
+  if (updates?.internalNotes) {
+    updateData.internalNotes = updates.internalNotes;
+  }
+  
+  await updateDoc(taskRef, updateData);
+  
+  // Get task execution for audit log
+  const taskSnap = await getDoc(taskRef);
+  if (taskSnap.exists()) {
+    const taskData = taskSnap.data() as ComplianceTaskExecution;
+    await createAuditLog({
+      subscriptionId: taskData.subscriptionId,
+      userId: taskData.userId,
+      firmId: taskData.firmId,
+      action: status === 'filed' ? 'filing_completed' : 'task_completed',
+      details: { taskExecutionId, taskId: taskData.taskId, status },
+      performedBy: 'system', // Internal team actions
+    });
+  }
+}
+
+// ==================== Audit Logs ====================
+
+/**
+ * Create audit log entry
+ */
+export async function createAuditLog(
+  logData: Omit<ComplianceAuditLog, 'id' | 'performedAt'>
+): Promise<string> {
+  const logsRef = collection(db, COLLECTIONS.COMPLIANCE_AUDIT_LOGS);
+  const docRef = await addDoc(logsRef, {
+    ...logData,
+    performedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Get audit logs for a subscription
+ */
+export async function getAuditLogsBySubscription(
+  subscriptionId: string,
+  limitCount?: number
+): Promise<ComplianceAuditLog[]> {
+  let q = query(
+    collection(db, COLLECTIONS.COMPLIANCE_AUDIT_LOGS),
+    where('subscriptionId', '==', subscriptionId),
+    orderBy('performedAt', 'desc')
+  );
+  
+  if (limitCount) {
+    q = query(q, limit(limitCount));
+  }
+  
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      performedAt: data.performedAt?.toDate() || new Date(),
+    } as ComplianceAuditLog;
+  });
+}
+

@@ -228,6 +228,14 @@ function DashboardContent() {
       badge: "Platform"
     },
     {
+      title: "Monthly Compliance Services",
+      description: "Platform-managed compliance services - GST, Tax, Payroll, MCA",
+      icon: Shield,
+      href: "/compliance-plans",
+      color: "from-indigo-500 to-blue-600",
+      badge: "Subscription"
+    },
+    {
       title: "Legal Documents",
       description: "Access and generate legal documents",
       icon: Scale,
