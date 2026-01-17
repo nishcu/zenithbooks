@@ -144,7 +144,7 @@ export default function SignupPage() {
                 Sign in
               </Link>
             </p>
-            <p className="mt-2">&copy; {new Date().getFullYear()} ZenithBooks. All rights reserved.</p>
+            <p className="mt-2">&copy; 2025 ZenithBooks. All rights reserved.</p>
           </motion.div>
         </div>
       </div>

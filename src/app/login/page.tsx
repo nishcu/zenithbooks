@@ -138,7 +138,7 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
           >
-            <p>&copy; {new Date().getFullYear()} ZenithBooks. All rights reserved.</p>
+            <p>&copy; 2025 ZenithBooks. All rights reserved.</p>
           </motion.div>
         </div>
       </div>
