@@ -194,40 +194,38 @@ export function SignupForm() {
                 render={({ field }) => (
                   <FormItem className="space-y-4">
                     <FormLabel className="text-base">I am signing up as:</FormLabel>
-                    <FormControl>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="contents"
-                        >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="contents"
+                      >
                         <FormItem>
-                           <RadioGroupItem value="business" id="business" className="peer sr-only" />
-                            <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
-                                <span className="text-base font-semibold">Business Owner</span>
-                                <p className="text-xs text-muted-foreground text-center">
-                                  For companies & firms
-                                </p>
-                            </Label>
+                          <RadioGroupItem value="business" id="business" className="peer sr-only" />
+                          <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
+                            <span className="text-base font-semibold">Business Owner</span>
+                            <p className="text-xs text-muted-foreground text-center">
+                              For companies & firms
+                            </p>
+                          </Label>
                         </FormItem>
-                         <FormItem>
-                           <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
-                            <Label htmlFor="professional" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
-                                <span className="text-base font-semibold">Professional</span>
-                                <p className="text-xs text-muted-foreground text-center">
-                                  For CA, CS, CMA & consultants
-                                </p>
-                            </Label>
+                        <FormItem>
+                          <RadioGroupItem value="professional" id="professional" className="peer sr-only" />
+                          <Label htmlFor="professional" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
+                            <span className="text-base font-semibold">Professional</span>
+                            <p className="text-xs text-muted-foreground text-center">
+                              For CA, CS, CMA & consultants
+                            </p>
+                          </Label>
                         </FormItem>
-                        </RadioGroup>
-                      </div>
-                    </FormControl>
+                      </RadioGroup>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               {/* Mobile-optimized spacing and visual separator */}
-              <div className="relative py-8 md:py-10">
+              <div className="relative py-4">
                 <div className="absolute inset-x-0 top-1/2 border-t border-border/30 md:border-border/50"></div>
                 <div className="relative bg-background px-4 md:px-0">
                   <span className="text-xs text-muted-foreground bg-background px-2">Business Details</span>
