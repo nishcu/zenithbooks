@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { ZenithBooksLogo, Receipt, TrendingUp, Shield, Zap, CheckCircle, Calendar, FileCheck } from "@/components/icons";
+import { ZenithBooksLogo, Receipt, TrendingUp, Shield, Zap, CheckCircle, Calendar, FileCheck, Building } from "@/components/icons";
 import { AnimatePresence, motion } from "framer-motion";
 import { ClientOnly } from "@/components/client-only";
 import { Button } from "@/components/ui/button";

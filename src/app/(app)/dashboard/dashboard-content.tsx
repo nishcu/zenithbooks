@@ -236,6 +236,14 @@ function DashboardContent() {
       badge: "Subscription"
     },
     {
+      title: "Business Registrations",
+      description: "GST, Company Incorporation, LLP, MSME registration by ZenithBooks Compliance Team",
+      icon: Building,
+      href: "/business-registrations",
+      color: "from-amber-500 to-orange-600",
+      badge: "Registration"
+    },
+    {
       title: "Legal Documents",
       description: "Access and generate legal documents",
       icon: Scale,
