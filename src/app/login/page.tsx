@@ -62,7 +62,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
-                  <p className="text-white/80 text-sm">Beyond Books</p>
+                  <p className="text-white/80 text-sm">AI-Driven. CA-Approved.</p>
                 </div>
               </motion.div>
 

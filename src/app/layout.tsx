@@ -21,7 +21,7 @@ const fontSourceCodePro = Source_Code_Pro({
 
 export const metadata: Metadata = {
   title: 'ZenithBooks',
-  description: 'Your Business at its Peak.',
+  description: 'AI-Driven. CA-Approved.',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',

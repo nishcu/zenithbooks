@@ -133,7 +133,7 @@ export function SplashScreen() {
                 ZenithBooks
               </h1>
               <p className="text-lg sm:text-xl text-white/90 font-light">
-                Your Business at its Peak
+                AI-Driven. CA-Approved.
               </p>
             </motion.div>
           </motion.div>
