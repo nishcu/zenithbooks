@@ -503,60 +503,6 @@ function DashboardContent() {
                     </CardContent>
                   </Card>
 
-                  {/* Quick Access Features Section */}
-                  <Card className="border-2 border-primary/20 shadow-lg">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-2xl flex items-center gap-2">
-                            <Building className="h-6 w-6 text-primary" />
-                            Quick Access
-                          </CardTitle>
-                          <CardDescription className="mt-2">
-                            Navigate to key modules and features quickly
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
-                      {/* Mobile: tile-by-tile (one per row). Desktop: 3x3 uniform grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                        {quickAccessFeatures.map((feature) => {
-                          const Icon = feature.icon;
-                          return (
-                            <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
-                                <CardHeader className="pb-3 px-4 pt-4">
-                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                                    <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
-                                  </div>
-                                  <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
-                                      {feature.title}
-                                    </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
-                                      {feature.badge}
-                                    </Badge>
-                                  </div>
-                                </CardHeader>
-                                <CardContent className="pt-0 px-4 pb-4">
-                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
-                                    {feature.description}
-                                  </CardDescription>
-                                  {/* Arrow icon on hover */}
-                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <span className="text-xs font-medium">Open</span>
-                                    <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-
                   {/* Mobile Apps & Version Section */}
                   <AppDownloads />
 
