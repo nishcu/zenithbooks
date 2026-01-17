@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Award, Landmark, TrendingUp, HandCoins, Building, FileSignature, FileText } from "lucide-react";
+import { Award, Landmark, TrendingUp, HandCoins, Building, FileSignature, FileText, Users, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/on-demand-pricing";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,95 @@ const certificateTools = [
     description: "A flexible tool to draft and request certification for any general-purpose document or statement.",
     icon: FileText,
     href: "/ca-certificates/general-attestation",
+    status: "active",
+  },
+  // New certificates
+  {
+    id: "projected_financials",
+    title: "Projected Financial Statement Certificate",
+    description: "Generate projected financial statements for bank loans, tenders, and new business proposals.",
+    icon: TrendingUp,
+    href: "/ca-certificates/projected-financials",
+    status: "active",
+  },
+  {
+    id: "projected_turnover",
+    title: "Projected Turnover Certificate",
+    description: "Certify projected/expected turnover for upcoming financial year based on past data or orders.",
+    icon: TrendingUp,
+    href: "/ca-certificates/projected-turnover",
+    status: "active",
+  },
+  {
+    id: "net_profit",
+    title: "Net Profit Certificate",
+    description: "Certify the net profit of a business entity as per books of accounts after adjustments.",
+    icon: TrendingUp,
+    href: "/ca-certificates/net-profit",
+    status: "active",
+  },
+  {
+    id: "shareholding",
+    title: "Shareholding Certificate",
+    description: "Certify the shareholding pattern, capital structure, and share distribution of a company.",
+    icon: Users,
+    href: "/ca-certificates/shareholding",
+    status: "active",
+  },
+  {
+    id: "sources_of_funds",
+    title: "Certificate of Sources of Funds",
+    description: "Certify the source of funds for capital introduction, investment, or other financial transactions.",
+    icon: Wallet,
+    href: "/ca-certificates/sources-of-funds",
+    status: "active",
+  },
+  {
+    id: "utilisation_of_funds",
+    title: "Certificate of Utilisation of Funds",
+    description: "Certify the utilisation of sanctioned funds for specific purposes with supporting documentation.",
+    icon: Wallet,
+    href: "/ca-certificates/utilisation-of-funds",
+    status: "active",
+  },
+  {
+    id: "working_capital",
+    title: "Working Capital Certificate",
+    description: "Certify the working capital position of a business based on current assets and liabilities.",
+    icon: TrendingUp,
+    href: "/ca-certificates/working-capital",
+    status: "active",
+  },
+  {
+    id: "turnover_reconciliation",
+    title: "Turnover Reconciliation Certificate",
+    description: "Reconcile and certify turnover figures across GSTR-1, GSTR-3B, and books of accounts.",
+    icon: FileText,
+    href: "/ca-certificates/turnover-reconciliation",
+    status: "active",
+  },
+  {
+    id: "income_certificate",
+    title: "Income Certificate (CA Issued)",
+    description: "Issue a CA-certified income certificate for individuals or families for various official purposes.",
+    icon: FileSignature,
+    href: "/ca-certificates/income-certificate",
+    status: "active",
+  },
+  {
+    id: "msme_investment_turnover",
+    title: "MSME Investment & Turnover Certificate",
+    description: "Certify investment in plant/machinery and turnover for MSME classification and benefits.",
+    icon: Building,
+    href: "/ca-certificates/msme-investment-turnover",
+    status: "active",
+  },
+  {
+    id: "iecode_financials",
+    title: "Import-Export (IE Code) Financial Certificate",
+    description: "Certify financial standing, turnover, and forex earnings for import-export businesses.",
+    icon: Building,
+    href: "/ca-certificates/iecode-financials",
     status: "active",
   },
 ];

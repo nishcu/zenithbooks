@@ -40,6 +40,18 @@ export const servicePricing: ServicePricing = {
         { id: "visa_immigration", name: "Certificate for Visa/Immigration", price: 3499 },
         { id: "foreign_remittance", name: "Foreign Remittance (Form 15CA/CB)", price: 3999 },
         { id: "general_attestation", name: "General Attestation", price: 1499 },
+        // New certificates - all default to ₹999
+        { id: "projected_financials", name: "Projected Financial Statement Certificate", price: 999 },
+        { id: "projected_turnover", name: "Projected Turnover Certificate", price: 999 },
+        { id: "net_profit", name: "Net Profit Certificate", price: 999 },
+        { id: "shareholding", name: "Shareholding Certificate", price: 999 },
+        { id: "sources_of_funds", name: "Certificate of Sources of Funds", price: 999 },
+        { id: "utilisation_of_funds", name: "Certificate of Utilisation of Funds", price: 999 },
+        { id: "working_capital", name: "Working Capital Certificate", price: 999 },
+        { id: "turnover_reconciliation", name: "Turnover Reconciliation Certificate", price: 999 },
+        { id: "income_certificate", name: "Income Certificate (CA Issued)", price: 999 },
+        { id: "msme_investment_turnover", name: "MSME Investment & Turnover Certificate", price: 999 },
+        { id: "iecode_financials", name: "Import-Export (IE Code) Financial Certificate", price: 999 },
     ],
     notice_handling: [
         { id: "income_tax_notice", name: "Income Tax Notice Reply", price: 2999 },
