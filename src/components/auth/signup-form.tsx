@@ -205,7 +205,7 @@ export function SignupForm() {
                           <Label htmlFor="business" className="flex flex-col items-center justify-center space-y-1 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer min-h-[60px] md:min-h-[80px]">
                             <span className="text-base font-semibold">Business Owner</span>
                             <p className="text-xs text-muted-foreground text-center">
-                              For companies & firms
+                              For MSME, Firms, Companies Employees
                             </p>
                           </Label>
                         </FormItem>
