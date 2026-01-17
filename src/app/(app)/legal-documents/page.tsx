@@ -4,10 +4,88 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { FileText, Users, Handshake, Briefcase, Landmark, Shield, BookOpen, Library, Building, FileSignature, Wallet, BadgeCheck, FileArchive, Loader2 } from "lucide-react";
+import { FileText, Users, Handshake, Briefcase, Landmark, Shield, BookOpen, Library, Building, FileSignature, Wallet, BadgeCheck, FileArchive, Loader2, ClipboardList, TrendingUp, Receipt, GraduationCap, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { getServicePricing, onPricingUpdate, ServicePricing } from "@/lib/pricing-service";
 
+// Document categories for the new dashboard
+const documentCategories = [
+  {
+    id: "agreements",
+    title: "Agreements",
+    description: "Employee & HR agreements, Business & Commercial agreements",
+    icon: Handshake,
+    count: 25,
+    href: "/legal-documents/category/agreements",
+    color: "bg-blue-500/10 text-blue-600",
+  },
+  {
+    id: "registration",
+    title: "Registration Documents",
+    description: "GST, Shop & Establishment, Udyam, IEC, FSSAI, and more",
+    icon: FileSignature,
+    count: 10,
+    href: "/legal-documents/category/registration",
+    color: "bg-green-500/10 text-green-600",
+  },
+  {
+    id: "company-law",
+    title: "Company Law Documents",
+    description: "Incorporation documents, Board resolutions, Statutory filings",
+    icon: Building,
+    count: 25,
+    href: "/legal-documents/category/company-law",
+    color: "bg-purple-500/10 text-purple-600",
+  },
+  {
+    id: "tax",
+    title: "Tax Documents",
+    description: "GST, Income Tax, Professional Tax documents and forms",
+    icon: Receipt,
+    count: 10,
+    href: "/legal-documents/category/tax",
+    color: "bg-red-500/10 text-red-600",
+  },
+  {
+    id: "startup-funding",
+    title: "Startup & Funding Documents",
+    description: "Term sheets, Investment agreements, ESOP, Due diligence",
+    icon: TrendingUp,
+    count: 10,
+    href: "/legal-documents/category/startup-funding",
+    color: "bg-orange-500/10 text-orange-600",
+  },
+  {
+    id: "finance-banking",
+    title: "Finance & Banking Documents",
+    description: "Loan applications, CMA data, Projections, Bank documents",
+    icon: Wallet,
+    count: 10,
+    href: "/legal-documents/category/finance-banking",
+    color: "bg-indigo-500/10 text-indigo-600",
+  },
+  {
+    id: "hr-policies",
+    title: "HR Policies",
+    description: "Employee handbooks, Policies, Code of conduct",
+    icon: GraduationCap,
+    count: 12,
+    href: "/legal-documents/category/hr-policies",
+    color: "bg-pink-500/10 text-pink-600",
+  },
+  {
+    id: "others",
+    title: "Others",
+    description: "Affidavits, POA, Undertakings, Invoices, Purchase Orders",
+    icon: FolderOpen,
+    count: 15,
+    href: "/legal-documents/category/others",
+    color: "bg-gray-500/10 text-gray-600",
+  },
+];
+
+// Legacy document tools (existing documents)
 const documentTools = [
     { id: "partnership_deed", category: "registration_deeds", title: "Partnership Deed", description: "Create a legal document to form a business partnership.", href: "/legal-documents/partnership-deed", icon: Handshake },
     { id: "rental_deed", category: "agreements", title: "Rental Deed", description: "Draft a legal agreement for property rental.", href: "/legal-documents/rental-deed", icon: Landmark },
@@ -75,33 +153,65 @@ export default function LegalDocumentsPage() {
         </div>
         <h1 className="text-3xl font-bold">Legal & Business Document Generators</h1>
         <p className="mt-2 max-w-2xl mx-auto text-muted-foreground">
-          Quickly create essential legal and business documents using our guided wizards.
+          Quickly create essential legal and business documents using our guided wizards. Draft provided for general business use.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {documentTools.map((tool) => {
-          const price = getPrice(tool.id, tool.category);
-          return (
-          <Card key={tool.title} className="flex flex-col">
-            <CardHeader>
-              <div className="flex items-center gap-4 mb-2">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <tool.icon className="h-6 w-6 text-primary" />
+      {/* Category Cards */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">Browse by Category</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {documentCategories.map((category) => (
+            <Card key={category.id} className="flex flex-col hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className={`inline-flex p-3 rounded-full mb-3 ${category.color}`}>
+                  <category.icon className="h-6 w-6" />
                 </div>
-                <CardTitle>{tool.title}</CardTitle>
-              </div>
-              <CardDescription>{tool.description}</CardDescription>
-            </CardHeader>
-            <CardFooter className="mt-auto">
-              <Link href={tool.href} passHref className="w-full">
-                <Button className="w-full">
-                    Start Drafting {price > 0 ? `- ₹${price}` : ''}
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        )})}
+                <CardTitle className="text-lg">{category.title}</CardTitle>
+                <CardDescription className="text-sm">{category.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <Badge variant="secondary" className="mt-2">{category.count}+ Templates</Badge>
+              </CardContent>
+              <CardFooter>
+                <Link href={category.href} passHref className="w-full">
+                  <Button className="w-full">
+                    View Documents
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Existing Documents Section */}
+      <div className="space-y-4 border-t pt-8">
+        <h2 className="text-2xl font-semibold">All Documents</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {documentTools.map((tool) => {
+            const price = getPrice(tool.id, tool.category);
+            return (
+            <Card key={tool.title} className="flex flex-col">
+              <CardHeader>
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <tool.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>{tool.title}</CardTitle>
+                </div>
+                <CardDescription>{tool.description}</CardDescription>
+              </CardHeader>
+              <CardFooter className="mt-auto">
+                <Link href={tool.href} passHref className="w-full">
+                  <Button className="w-full">
+                      Start Drafting {price > 0 ? `- ₹${price}` : ''}
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          )})}
+        </div>
       </div>
     </div>
   );
