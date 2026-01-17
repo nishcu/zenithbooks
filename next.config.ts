@@ -21,6 +21,20 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
   },
   webpack: (config, { isServer }) => {
+    // Suppress webpack warnings for pdf-parse dynamic requires
+    // This is a known issue with pdf-parse using dynamic requires internally
+    // The library works correctly, but webpack warns about it
+    if (config.ignoreWarnings === undefined) {
+      config.ignoreWarnings = [];
+    }
+    
+    // Add regex patterns to ignore pdf-parse warnings
+    config.ignoreWarnings.push(
+      /pdf-parse/,
+      /pdfjs-dist/,
+      /Critical dependency: the request of a dependency is an expression/
+    );
+
     // Ensure jsPDF and jspdf-autotable work in server-side
     if (isServer) {
       config.resolve.alias = {
@@ -40,6 +54,11 @@ const nextConfig: NextConfig = {
         // Prevent pdf-parse from trying to load worker files in Node.js
         'pdfjs-dist/build/pdf.worker': false,
       };
+      
+      // Suppress pdf-parse dynamic require warnings via module rules
+      config.module = config.module || {};
+      config.module.exprContextCritical = false;
+      config.module.unknownContextCritical = false;
     }
     return config;
   },
