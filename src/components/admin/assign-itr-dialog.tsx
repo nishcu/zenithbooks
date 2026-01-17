@@ -105,7 +105,7 @@ export function AssignITRDialog({
       await onAssign(selectedProfessionalId);
       toast({
         title: "Application Assigned",
-        description: `ITR application has been assigned to ${selectedProfessional?.name}.`,
+        description: `ITR application has been assigned to ZenithBooks' internal professional team.`,
       });
       onOpenChange(false);
       setSelectedProfessionalId("");
@@ -136,8 +136,7 @@ export function AssignITRDialog({
         <DialogHeader>
           <DialogTitle>Assign ITR Application</DialogTitle>
           <DialogDescription>
-            Select a professional to assign this ITR application. They will be
-            notified and can start processing the application.
+            This application will be handled by ZenithBooks' internal professional team.
           </DialogDescription>
         </DialogHeader>
 
@@ -166,7 +165,10 @@ export function AssignITRDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Select Professional *</Label>
+            <Label>Select Internal Professional Resource *</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              This task will be handled by ZenithBooks' platform-managed professional team.
+            </p>
             {prosLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -207,23 +209,10 @@ export function AssignITRDialog({
 
           {selectedProfessional && (
             <div className="rounded-lg border p-3 space-y-2">
-              <p className="text-sm font-medium">Selected Professional</p>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name:</span>
-                  <span className="font-medium">{selectedProfessional.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
-                  <span className="font-medium">{selectedProfessional.email}</span>
-                </div>
-                {selectedProfessional.firm && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Firm:</span>
-                    <span className="font-medium">{selectedProfessional.firm}</span>
-                  </div>
-                )}
-              </div>
+              <p className="text-sm font-medium">Internal Resource Selected</p>
+              <p className="text-xs text-muted-foreground">
+                This application will be processed by ZenithBooks' internal professional team.
+              </p>
             </div>
           )}
         </div>

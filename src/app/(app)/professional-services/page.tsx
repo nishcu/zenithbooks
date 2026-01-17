@@ -52,7 +52,7 @@ type ProfessionalDoc = {
   status?: "pending" | "approved" | "rejected";
 };
 
-export default function FindProfessionalPage() {
+export default function KnowledgeSharingPage() {
     const router = useRouter();
     const [selectedService, setSelectedService] = useState<string | null>(null);
     const [selectedType, setSelectedType] = useState<string>("all");
@@ -146,20 +146,20 @@ export default function FindProfessionalPage() {
         });
     }, [professionals, selectedService, selectedType, selectedCity, searchTerm]);
 
-    const handleBookAppointment = (proName: string, proType: string) => {
-        const serviceQuery = selectedService ? `&service=${selectedService}` : '';
-        router.push(`/book-appointment?proName=${encodeURIComponent(proName)}&proType=${encodeURIComponent(proType)}${serviceQuery}`);
-    }
+    // Removed: handleBookAppointment - No direct client-professional engagement allowed
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Find a Professional
+          Knowledge Sharing Network
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Search our network of verified professionals to find the right expert for your business needs.
+          Platform-managed professional team. All services are handled by ZenithBooks' internal professional resources.
+        </p>
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          This directory is for internal knowledge sharing and reference only. No direct client-professional engagement or work allocation occurs through this platform.
         </p>
       </div>
 
@@ -326,11 +326,7 @@ export default function FindProfessionalPage() {
                     <Badge variant="secondary" className="text-xs">{pro.title}</Badge>
                   </div>
                   <div className="flex items-center gap-3 mt-2">
-                    <div className="flex items-center gap-1">
-                      <Star className="text-yellow-500 fill-yellow-500 h-4 w-4"/>
-                      <span className="font-semibold text-sm">{(pro.rating ?? 0).toFixed ? (pro.rating ?? 0).toFixed(1) : (pro.rating ?? 0)}</span>
-                      <span className="text-xs text-muted-foreground">({pro.reviews ?? 0})</span>
-                    </div>
+                    {/* Removed: Public ratings - ICAI compliance */}
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />
                       {pro.location || "—"}
@@ -375,13 +371,11 @@ export default function FindProfessionalPage() {
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/30">
-                <Button 
-                  className="w-full group/btn" 
-                  onClick={() => handleBookAppointment(pro.name, pro.title)}
-                >
-                  <Briefcase className="mr-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                  Book an Appointment
-                </Button>
+                <div className="w-full text-center">
+                  <p className="text-xs text-muted-foreground">
+                    This is an internal resource managed by ZenithBooks' platform-managed professional team.
+                  </p>
+                </div>
               </CardFooter>
             </Card>
           ))}

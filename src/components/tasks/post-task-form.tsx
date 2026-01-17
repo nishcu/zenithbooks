@@ -33,8 +33,8 @@ export function PostTaskForm() {
     state: "",
     city: "",
     onSite: false,
-    budget: "",
     deadline: "",
+    visibility: "invite-only" as "invite-only" | "firm-network",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +44,7 @@ export function PostTaskForm() {
       toast({
         variant: "destructive",
         title: "Authentication required",
-        description: "Please sign in to post tasks",
+        description: "Please sign in to create collaboration requests",
       });
       return;
     }
@@ -77,7 +77,7 @@ export function PostTaskForm() {
           state: formData.state || undefined,
           city: formData.city || undefined,
           onSite: formData.onSite,
-          budget: formData.budget ? Number(formData.budget) : undefined,
+          visibility: formData.visibility,
           deadline: new Date(formData.deadline).toISOString(),
         }),
       });
@@ -89,8 +89,8 @@ export function PostTaskForm() {
       }
 
       toast({
-        title: "Task posted",
-        description: "Your task has been posted successfully",
+        title: "Collaboration request created",
+        description: "Your collaboration request has been created successfully",
       });
 
       router.push(`/tasks/view/${data.taskId}`);
@@ -128,7 +128,7 @@ export function PostTaskForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="title">Task Title *</Label>
+        <Label htmlFor="title">Request Title *</Label>
         <Input
           id="title"
           value={formData.title}
@@ -144,7 +144,7 @@ export function PostTaskForm() {
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Describe your task requirements in detail..."
+          placeholder="Describe your collaboration requirements in detail..."
           rows={6}
           required
         />
@@ -204,18 +204,6 @@ export function PostTaskForm() {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="budget">Budget (₹)</Label>
-        <Input
-          id="budget"
-          type="number"
-          value={formData.budget}
-          onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-          placeholder="Enter budget amount"
-          min="0"
-        />
-      </div>
-
       <div className="flex items-center space-x-2">
         <Switch
           id="onSite"
@@ -225,9 +213,13 @@ export function PostTaskForm() {
         <Label htmlFor="onSite">On-site work required</Label>
       </div>
 
+      <p className="text-xs text-muted-foreground">
+        This collaboration request will be handled by ZenithBooks' internal professional team.
+      </p>
+      
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Post Task
+        Create Collaboration Request
       </Button>
     </form>
   );

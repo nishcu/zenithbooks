@@ -1,6 +1,6 @@
 /**
- * Apply Modal Component
- * Modal for professionals to apply for tasks
+ * Invitation Response Modal Component
+ * Modal for firms to respond to collaboration invitations
  */
 
 "use client";
@@ -17,31 +17,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 
-interface ApplyModalProps {
+interface InviteResponseModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  taskId: string;
-  taskTitle: string;
+  requestId: string;
+  requestTitle: string;
   onSuccess?: () => void;
 }
 
-export function ApplyModal({
+export function InviteResponseModal({
   open,
   onOpenChange,
-  taskId,
-  taskTitle,
+  requestId,
+  requestTitle,
   onSuccess,
-}: ApplyModalProps) {
+}: InviteResponseModalProps) {
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const [message, setMessage] = useState("");
-  const [bidAmount, setBidAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +49,7 @@ export function ApplyModal({
       toast({
         variant: "destructive",
         title: "Authentication required",
-        description: "Please sign in to apply for tasks",
+        description: "Please sign in to respond to collaboration invitations",
       });
       return;
     }
@@ -60,39 +58,37 @@ export function ApplyModal({
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/tasks/apply", {
+      const response = await fetch("/api/collaboration/accept-invite", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          taskId,
+          requestId,
           message: message.trim() || undefined,
-          bidAmount: bidAmount ? Number(bidAmount) : undefined,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to apply");
+        throw new Error(data.error || "Failed to accept invitation");
       }
 
       toast({
-        title: "Application submitted",
-        description: "Your application has been sent successfully",
+        title: "Invitation accepted",
+        description: "You have accepted the collaboration invitation",
       });
 
       setMessage("");
-      setBidAmount("");
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to submit application",
+        description: error.message || "Failed to accept invitation",
       });
     } finally {
       setIsSubmitting(false);
@@ -103,31 +99,20 @@ export function ApplyModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Apply for Task</DialogTitle>
+          <DialogTitle>Accept Collaboration Invitation</DialogTitle>
           <DialogDescription>
-            Apply for: <strong>{taskTitle}</strong>
+            Accept invitation for: <strong>{requestTitle}</strong>
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="message">Message (Optional)</Label>
+            <Label htmlFor="message">Response Message (Optional)</Label>
             <Textarea
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell the client why you're the right fit for this task..."
+              placeholder="Add any notes or confirmations for this collaboration..."
               rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="bidAmount">Bid Amount (Optional)</Label>
-            <Input
-              id="bidAmount"
-              type="number"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              placeholder="Enter your bid amount"
-              min="0"
             />
           </div>
           <DialogFooter>
@@ -141,7 +126,7 @@ export function ApplyModal({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit Application
+              Accept Invitation
             </Button>
           </DialogFooter>
         </form>
@@ -149,4 +134,7 @@ export function ApplyModal({
     </Dialog>
   );
 }
+
+// Legacy export for backward compatibility
+export const ApplyModal = InviteResponseModal;
 

@@ -57,9 +57,12 @@ export default function ProfessionalsListPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Find Professionals</h1>
+        <h1 className="text-3xl font-bold mb-2">Firm Network</h1>
         <p className="text-muted-foreground">
-          Browse verified professionals across India
+          View verified professionals in your firm network
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Internal reference directory for platform-managed professional resources.
         </p>
       </div>
 

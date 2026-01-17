@@ -85,7 +85,7 @@ export function VaultSpotlight() {
               Trusted by 10,000+ Indian businesses & CAs
             </p>
             <p className="text-xs text-muted-foreground">
-              Enterprise-grade security • GDPR compliant • CA-approved workflow
+              Enterprise-grade security • GDPR compliant • Professional workflow
             </p>
           </div>
           <Button asChild size="lg" className="shadow-lg">

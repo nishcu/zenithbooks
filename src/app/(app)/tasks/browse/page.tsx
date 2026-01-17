@@ -1,5 +1,6 @@
 /**
- * Browse Tasks Page
+ * Collaboration Requests Page
+ * Invite-only: Shows only requests where user's firm is invited or requested
  */
 
 "use client";
@@ -9,10 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TaskCard } from "@/components/tasks/task-card";
 import { TaskFilters } from "@/components/tasks/task-filters";
 import { Loader2 } from "lucide-react";
-import type { TaskPost } from "@/lib/professionals/types";
+import { auth } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
+import type { CollaborationRequest, TaskPost } from "@/lib/professionals/types";
 
-export default function BrowseTasksPage() {
-  const [tasks, setTasks] = useState<TaskPost[]>([]);
+export default function CollaborationRequestsPage() {
+  const [user] = useAuthState(auth);
+  const [requests, setRequests] = useState<(CollaborationRequest | TaskPost)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<{
     category?: string;
@@ -22,38 +26,60 @@ export default function BrowseTasksPage() {
   }>({});
 
   useEffect(() => {
-    loadTasks();
-  }, [filters]);
+    if (user) {
+      loadRequests();
+    }
+  }, [filters, user]);
 
-  const loadTasks = async () => {
+  const loadRequests = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
+      params.append("userId", user.uid); // Filter by user's firm
       if (filters.category) params.append("category", filters.category);
       if (filters.state) params.append("state", filters.state);
       if (filters.city) params.append("city", filters.city);
       if (filters.status) params.append("status", filters.status);
       else params.append("status", "open");
 
-      const response = await fetch(`/api/tasks/all?${params.toString()}`);
+      const response = await fetch(`/api/collaboration/requests?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
-        setTasks(data.tasks);
+        setRequests(data.requests || []);
       }
     } catch (error) {
-      console.error("Error loading tasks:", error);
+      console.error("Error loading collaboration requests:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground py-8">
+              Please sign in to view collaboration requests
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Browse Tasks</h1>
+        <h1 className="text-3xl font-bold mb-2">Collaboration Requests</h1>
         <p className="text-muted-foreground">
-          Find tasks that match your skills and location
+          View collaboration requests where your firm has been invited or has requested
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          This task is handled by ZenithBooks' internal professional team.
         </p>
       </div>
 
@@ -66,18 +92,21 @@ export default function BrowseTasksPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : tasks.length === 0 ? (
+          ) : requests.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <p className="text-center text-muted-foreground py-8">
-                  No tasks found
+                  No collaboration requests found
+                </p>
+                <p className="text-center text-xs text-muted-foreground mt-2">
+                  You will only see requests where your firm has been explicitly invited
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
+              {requests.map((request) => (
+                <TaskCard key={request.id} task={request} />
               ))}
             </div>
           )}

@@ -271,7 +271,7 @@ export default function CapitalContributionCertificatePage() {
              <Card>
                 <CardHeader>
                     <CardTitle>Final Preview</CardTitle>
-                    <CardDescription>Review the generated certificate. You can print it or send it for certification.</CardDescription>
+                    <CardDescription>Review the generated certificate. Certificates are issued by ZenithBooks' authorized professional team as per applicable regulations.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <div ref={printRef} className="prose dark:prose-invert max-w-none border rounded-lg p-8 bg-card text-card-foreground">

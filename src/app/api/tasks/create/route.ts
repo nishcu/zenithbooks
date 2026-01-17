@@ -7,8 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { createTaskPost } from '@/lib/tasks/firestore';
-import { Timestamp } from 'firebase/firestore';
-import type { TaskPost } from '@/lib/professionals/types';
+import { Timestamp, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { TaskPost, CollaborationRequest } from '@/lib/professionals/types';
 
 // Ensure this route is included in the build
 export const runtime = 'nodejs';
@@ -120,10 +121,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create task data
+    // Get user data to extract firmId
+    // For principal model: Task ownership is always ZenithBooks platform
+    // User's firm is stored as requesting firm
+    const userDoc = await getDoc(doc(db, 'users', userId)).catch(() => null);
+    const userData = userDoc?.data();
+    const firmId = userData?.firmId || userId; // Use userId as firmId if not set (backward compatibility)
+    const firmName = userData?.companyName || userData?.firmName || userName;
+
+    // Create collaboration request data (principal model - always owned by platform)
     const taskData: Omit<TaskPost, 'id' | 'createdAt' | 'updatedAt' | 'status'> = {
+      // Legacy fields for backward compatibility
       postedBy: userId,
       postedByName: userName,
+      // New firm-based fields (principal model)
+      requestedByFirmId: firmId,
+      requestedByFirmName: firmName,
+      requestedByUserId: userId,
       category,
       title,
       description,
@@ -131,8 +145,12 @@ export async function POST(request: NextRequest) {
       state: state || undefined,
       city: city || undefined,
       onSite: Boolean(onSite),
-      budget: budget ? Number(budget) : undefined,
+      // REMOVED: budget (price discovery violates ICAI)
+      visibility: body.visibility || 'invite-only',
+      invitedFirmIds: body.invitedFirmIds || [],
       deadline: Timestamp.fromDate(deadlineDate),
+      professionalResponsibility: 'requesting_firm', // ICAI compliance
+      feeSettlement: 'off-platform', // ICAI compliance
     };
 
     // Create task - wrap in try-catch to get detailed error

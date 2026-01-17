@@ -220,12 +220,12 @@ function DashboardContent() {
       badge: "Finance"
     },
     {
-      title: "CA Certificates",
-      description: "Generate various CA attested certificates",
+      title: "Certificates",
+      description: "Generate certificates through platform-managed professional resources",
       icon: Award,
       href: "/ca-certificates",
       color: "from-violet-500 to-purple-600",
-      badge: "Certification"
+      badge: "Platform"
     },
     {
       title: "Legal Documents",
@@ -236,64 +236,64 @@ function DashboardContent() {
       badge: "Legal"
     },
     {
-      title: "Find a Professional",
-      description: "Connect with accounting and tax professionals",
+      title: "Knowledge Sharing Network",
+      description: "Platform-managed professional team resources",
       icon: ConciergeBell,
       href: "/professional-services",
       color: "from-blue-500 to-cyan-600",
-      badge: "Network"
+      badge: "Internal"
     },
   ];
 
   // Tasks and Networking Features (for professionals)
   const tasksNetworkingFeatures = [
     {
-      title: "Browse Tasks",
-      description: "Discover available tasks and assignments from businesses",
+      title: "View Collaboration Requests",
+      description: "View collaboration requests where your firm is invited",
       icon: ClipboardList,
       href: "/tasks/browse",
       color: "from-blue-500 to-indigo-600",
-      badge: "Explore"
+      badge: "Invites"
     },
     {
-      title: "Post Tasks",
-      description: "Post tasks and find professionals to complete them",
+      title: "Create Collaboration Request",
+      description: "Create collaboration requests handled by platform-managed team",
       icon: Briefcase,
       href: "/tasks/post",
       color: "from-purple-500 to-pink-600",
-      badge: "Post"
+      badge: "Request"
     },
     {
-      title: "My Tasks",
-      description: "View and manage your assigned tasks and applications",
+      title: "My Collaboration Requests",
+      description: "View and manage your collaboration requests",
       icon: FileText,
       href: "/tasks/my-tasks",
       color: "from-emerald-500 to-teal-600",
       badge: "Manage"
     },
     {
-      title: "My Applications",
-      description: "Track your applications for various tasks",
+      title: "My Invitations",
+      description: "Track collaboration invitations received by your firm",
       icon: MessageSquare,
       href: "/tasks/my-applications",
       color: "from-amber-500 to-orange-600",
-      badge: "Track"
+      badge: "Invites"
     },
     {
       title: "Create Profile",
-      description: "Create or update your professional profile for networking",
+      description: "Create or update your professional profile for internal network",
       icon: UserPlus,
       href: "/professionals/create-profile",
       color: "from-rose-500 to-red-600",
       badge: "Setup"
     },
     {
-      title: "Browse Professionals",
-      description: "Connect with other professionals in the network",
+      title: "Firm Network",
+      description: "View internal firm network directory (knowledge sharing only)",
       icon: Users,
       href: "/professionals/list",
       color: "from-cyan-500 to-blue-600",
-      badge: "Network"
+      badge: "Internal"
     },
   ];
 

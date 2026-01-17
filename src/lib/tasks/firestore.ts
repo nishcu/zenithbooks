@@ -1,6 +1,7 @@
 /**
- * Task Assignment System - Firestore Service
- * Isolated module - new collections only
+ * Professional Collaboration System - Firestore Service
+ * ICAI-Compliant: Firm-to-firm collaboration only
+ * Uses new collection names with backward compatibility for legacy collections
  */
 
 import {
@@ -30,16 +31,24 @@ if (!db) {
 }
 import type {
   TaskPost,
+  CollaborationRequest,
   TaskApplication,
+  CollaborationInvite,
   TaskChat,
+  CollaborationChat,
   TaskReview,
+  InternalQualityFeedback,
 } from '../professionals/types';
 
 const COLLECTIONS = {
-  TASKS_POSTS: 'tasks_posts',
-  TASKS_APPLICATIONS: 'tasks_applications',
-  TASKS_CHATS: 'tasks_chats',
-  TASKS_REVIEWS: 'tasks_reviews',
+  COLLABORATION_REQUESTS: 'collaboration_requests', // Renamed from tasks_posts
+  TASKS_POSTS: 'tasks_posts', // Legacy alias for backward compatibility
+  COLLABORATION_INVITES: 'collaboration_invites', // Renamed from tasks_applications
+  TASKS_APPLICATIONS: 'tasks_applications', // Legacy alias for backward compatibility
+  COLLABORATION_CHATS: 'collaboration_chats', // Renamed from tasks_chats
+  TASKS_CHATS: 'tasks_chats', // Legacy alias for backward compatibility
+  INTERNAL_QUALITY_FEEDBACK: 'internal_quality_feedback', // Renamed from tasks_reviews
+  TASKS_REVIEWS: 'tasks_reviews', // Legacy alias for backward compatibility
 };
 
 // ==================== Task Posts ====================
@@ -215,14 +224,32 @@ export function subscribeToTasks(
   });
 }
 
-// ==================== Task Applications ====================
+// ==================== Collaboration Invites ====================
 
 /**
- * Apply for a task
+ * Create collaboration invite (invitation-only system)
+ */
+export async function createCollaborationInvite(
+  inviteData: Omit<CollaborationInvite, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+): Promise<string> {
+  const invitesRef = collection(db, COLLECTIONS.COLLABORATION_INVITES);
+  const docRef = await addDoc(invitesRef, {
+    ...inviteData,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Apply for a task (LEGACY - for backward compatibility)
+ * @deprecated Use createCollaborationInvite instead
  */
 export async function applyForTask(
   applicationData: Omit<TaskApplication, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 ): Promise<string> {
+  // Use legacy collection for backward compatibility
   const applicationsRef = collection(db, COLLECTIONS.TASKS_APPLICATIONS);
   const docRef = await addDoc(applicationsRef, {
     ...applicationData,
@@ -234,7 +261,37 @@ export async function applyForTask(
 }
 
 /**
- * Get applications for a task
+ * Get collaboration invites for a request
+ */
+export async function getCollaborationInvites(requestId: string): Promise<CollaborationInvite[]> {
+  // Try new collection first
+  let q = query(
+    collection(db, COLLECTIONS.COLLABORATION_INVITES),
+    where('requestId', '==', requestId),
+    orderBy('createdAt', 'desc')
+  );
+  
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        respondedAt: data.respondedAt?.toDate() || undefined,
+      } as CollaborationInvite;
+    });
+  } catch (error) {
+    // Fallback to legacy collection
+    return getTaskApplications(requestId);
+  }
+}
+
+/**
+ * Get applications for a task (LEGACY - for backward compatibility)
+ * @deprecated Use getCollaborationInvites instead
  */
 export async function getTaskApplications(taskId: string): Promise<TaskApplication[]> {
   const q = query(
@@ -256,7 +313,37 @@ export async function getTaskApplications(taskId: string): Promise<TaskApplicati
 }
 
 /**
- * Get applications by applicant
+ * Get collaboration invites by invited firm
+ */
+export async function getInvitesByFirm(invitedFirmId: string): Promise<CollaborationInvite[]> {
+  // Try new collection first
+  let q = query(
+    collection(db, COLLECTIONS.COLLABORATION_INVITES),
+    where('invitedFirmId', '==', invitedFirmId),
+    orderBy('createdAt', 'desc')
+  );
+  
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        respondedAt: data.respondedAt?.toDate() || undefined,
+      } as CollaborationInvite;
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return [];
+  }
+}
+
+/**
+ * Get applications by applicant (LEGACY - for backward compatibility)
+ * @deprecated Use getInvitesByFirm instead
  */
 export async function getApplicationsByApplicant(applicantId: string): Promise<TaskApplication[]> {
   const q = query(
@@ -278,7 +365,33 @@ export async function getApplicationsByApplicant(applicantId: string): Promise<T
 }
 
 /**
- * Update application status
+ * Update collaboration invite status
+ */
+export async function updateCollaborationInviteStatus(
+  inviteId: string,
+  status: CollaborationInvite['status']
+): Promise<void> {
+  // Try new collection first
+  try {
+    const inviteRef = doc(db, COLLECTIONS.COLLABORATION_INVITES, inviteId);
+    await updateDoc(inviteRef, {
+      status,
+      respondedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    // Fallback to legacy collection
+    const appRef = doc(db, COLLECTIONS.TASKS_APPLICATIONS, inviteId);
+    await updateDoc(appRef, {
+      status,
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
+/**
+ * Update application status (LEGACY - for backward compatibility)
+ * @deprecated Use updateCollaborationInviteStatus instead
  */
 export async function updateApplicationStatus(
   applicationId: string,
@@ -292,7 +405,42 @@ export async function updateApplicationStatus(
 }
 
 /**
- * Subscribe to realtime applications for a task
+ * Subscribe to realtime collaboration invites for a request
+ */
+export function subscribeToCollaborationInvites(
+  requestId: string,
+  callback: (invites: CollaborationInvite[]) => void
+): Unsubscribe {
+  // Try new collection first
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.COLLABORATION_INVITES),
+      where('requestId', '==', requestId),
+      orderBy('createdAt', 'desc')
+    );
+    
+    return onSnapshot(q, (snapshot) => {
+      const invites = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          respondedAt: data.respondedAt?.toDate() || undefined,
+        } as CollaborationInvite;
+      });
+      callback(invites);
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return subscribeToTaskApplications(requestId, callback as any);
+  }
+}
+
+/**
+ * Subscribe to realtime applications for a task (LEGACY - for backward compatibility)
+ * @deprecated Use subscribeToCollaborationInvites instead
  */
 export function subscribeToTaskApplications(
   taskId: string,
@@ -318,14 +466,31 @@ export function subscribeToTaskApplications(
   });
 }
 
-// ==================== Task Chats ====================
+// ==================== Collaboration Chats ====================
 
 /**
- * Send a chat message
+ * Send a collaboration chat message
+ */
+export async function sendCollaborationChatMessage(
+  chatData: Omit<CollaborationChat, 'id' | 'createdAt'>
+): Promise<string> {
+  // Use new collection name
+  const chatsRef = collection(db, COLLECTIONS.COLLABORATION_CHATS);
+  const docRef = await addDoc(chatsRef, {
+    ...chatData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Send a task chat message (LEGACY - for backward compatibility)
+ * @deprecated Use sendCollaborationChatMessage instead
  */
 export async function sendTaskChatMessage(
   chatData: Omit<TaskChat, 'id' | 'createdAt'>
 ): Promise<string> {
+  // Fallback to legacy collection
   const chatsRef = collection(db, COLLECTIONS.TASKS_CHATS);
   const docRef = await addDoc(chatsRef, {
     ...chatData,
@@ -335,7 +500,35 @@ export async function sendTaskChatMessage(
 }
 
 /**
- * Get chat messages for a task
+ * Get collaboration chat messages for a request
+ */
+export async function getCollaborationChatMessages(requestId: string): Promise<CollaborationChat[]> {
+  // Try new collection first
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.COLLABORATION_CHATS),
+      where('requestId', '==', requestId),
+      orderBy('createdAt', 'asc')
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as CollaborationChat;
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return getTaskChatMessages(requestId);
+  }
+}
+
+/**
+ * Get chat messages for a task (LEGACY - for backward compatibility)
+ * @deprecated Use getCollaborationChatMessages instead
  */
 export async function getTaskChatMessages(taskId: string): Promise<TaskChat[]> {
   const q = query(
@@ -356,7 +549,40 @@ export async function getTaskChatMessages(taskId: string): Promise<TaskChat[]> {
 }
 
 /**
- * Subscribe to realtime chat messages
+ * Subscribe to realtime collaboration chat messages
+ */
+export function subscribeToCollaborationChat(
+  requestId: string,
+  callback: (messages: CollaborationChat[]) => void
+): Unsubscribe {
+  // Try new collection first
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.COLLABORATION_CHATS),
+      where('requestId', '==', requestId),
+      orderBy('createdAt', 'asc')
+    );
+    
+    return onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        } as CollaborationChat;
+      });
+      callback(messages);
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return subscribeToTaskChat(requestId, callback as any);
+  }
+}
+
+/**
+ * Subscribe to realtime chat messages (LEGACY - for backward compatibility)
+ * @deprecated Use subscribeToCollaborationChat instead
  */
 export function subscribeToTaskChat(
   taskId: string,
@@ -381,14 +607,32 @@ export function subscribeToTaskChat(
   });
 }
 
-// ==================== Task Reviews ====================
+// ==================== Internal Quality Feedback ====================
 
 /**
- * Create a review
+ * Create internal quality feedback (ICAI-Compliant - private only)
+ */
+export async function createInternalQualityFeedback(
+  feedbackData: Omit<InternalQualityFeedback, 'id' | 'createdAt'>
+): Promise<string> {
+  // Use new collection name
+  const feedbackRef = collection(db, COLLECTIONS.INTERNAL_QUALITY_FEEDBACK);
+  const docRef = await addDoc(feedbackRef, {
+    ...feedbackData,
+    visibility: 'private', // Always private for ICAI compliance
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Create a review (LEGACY - for backward compatibility)
+ * @deprecated Use createInternalQualityFeedback instead
  */
 export async function createTaskReview(
   reviewData: Omit<TaskReview, 'id' | 'createdAt'>
 ): Promise<string> {
+  // Fallback to legacy collection
   const reviewsRef = collection(db, COLLECTIONS.TASKS_REVIEWS);
   const docRef = await addDoc(reviewsRef, {
     ...reviewData,
@@ -398,7 +642,36 @@ export async function createTaskReview(
 }
 
 /**
- * Get reviews for a professional
+ * Get internal quality feedback for a firm (private only - never displayed publicly)
+ */
+export async function getInternalFeedbackForFirm(receivedByFirmId: string): Promise<InternalQualityFeedback[]> {
+  // Internal feedback is private - only for requesting firm and admin
+  const q = query(
+    collection(db, COLLECTIONS.INTERNAL_QUALITY_FEEDBACK),
+    where('receivedByFirmId', '==', receivedByFirmId),
+    where('visibility', '==', 'private'),
+    orderBy('createdAt', 'desc')
+  );
+  
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as InternalQualityFeedback;
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return [];
+  }
+}
+
+/**
+ * Get reviews for a professional (LEGACY - for backward compatibility)
+ * @deprecated Use getInternalFeedbackForFirm instead - note: internal feedback is never displayed publicly
  */
 export async function getProfessionalReviews(professionalId: string): Promise<TaskReview[]> {
   const q = query(
@@ -419,7 +692,36 @@ export async function getProfessionalReviews(professionalId: string): Promise<Ta
 }
 
 /**
- * Get reviews for a task
+ * Get internal quality feedback for a request (private only)
+ */
+export async function getInternalFeedbackForRequest(requestId: string): Promise<InternalQualityFeedback[]> {
+  // Internal feedback is private - only for requesting firm and admin
+  const q = query(
+    collection(db, COLLECTIONS.INTERNAL_QUALITY_FEEDBACK),
+    where('requestId', '==', requestId),
+    where('visibility', '==', 'private'),
+    orderBy('createdAt', 'desc')
+  );
+  
+  try {
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as InternalQualityFeedback;
+    });
+  } catch (error) {
+    // Fallback to legacy
+    return getTaskReviews(requestId);
+  }
+}
+
+/**
+ * Get reviews for a task (LEGACY - for backward compatibility)
+ * @deprecated Use getInternalFeedbackForRequest instead
  */
 export async function getTaskReviews(taskId: string): Promise<TaskReview[]> {
   const q = query(

@@ -62,7 +62,7 @@ export default function SignupPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
-                  <p className="text-white/80 text-sm">AI-Driven. CA-Approved.</p>
+                  <p className="text-white/80 text-sm">AI-Driven. Professional-Grade.</p>
                 </div>
               </motion.div>
 

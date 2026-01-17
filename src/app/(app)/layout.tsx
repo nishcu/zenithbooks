@@ -428,7 +428,7 @@ function MainLayout({
               <h2 className="text-lg sm:text-xl font-bold">
                 <span className="font-bold">Zenith</span><span className="font-bold">Books</span>
               </h2>
-              <span className="text-xs sm:text-sm text-sidebar-foreground/50">AI-Driven. CA-Approved.</span>
+              <span className="text-xs sm:text-sm text-sidebar-foreground/50">AI-Driven. Professional-Grade.</span>
             </div>
           </SidebarHeader>
           <SidebarContent>

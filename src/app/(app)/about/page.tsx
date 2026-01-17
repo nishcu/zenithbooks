@@ -20,7 +20,7 @@ export default function AboutPage() {
                 <div className="absolute inset-0 bg-primary/70 flex items-center justify-center">
                     <div className="text-center text-primary-foreground p-4">
                         <h1 className="text-4xl md:text-6xl font-bold">About ZenithBooks</h1>
-                        <p className="mt-2 text-lg md:text-xl">AI-Driven. CA-Approved.</p>
+                        <p className="mt-2 text-lg md:text-xl">AI-Driven. Professional-Grade.</p>
                     </div>
                 </div>
             </div>

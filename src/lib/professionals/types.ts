@@ -1,6 +1,6 @@
 /**
- * Professional Networking & Task Assignment System - Types
- * Isolated module - does not modify existing code
+ * Professional Collaboration & Workflow System - Types
+ * ICAI-Compliant: Firm-to-firm collaboration only
  */
 
 import { Timestamp } from 'firebase/firestore';
@@ -8,8 +8,9 @@ import { Timestamp } from 'firebase/firestore';
 export interface ProfessionalProfile {
   id: string;
   userId: string;
-  fullName: string;
+  firmId?: string; // Firm identifier
   firmName?: string;
+  fullName: string;
   qualifications: string[];
   skills: string[];
   experience: number; // years
@@ -19,16 +20,16 @@ export interface ProfessionalProfile {
   phone?: string;
   email?: string;
   website?: string;
-  rating?: number;
-  totalReviews?: number;
+  // REMOVED: rating, totalReviews (public ratings violate ICAI)
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
 
-export interface TaskPost {
+export interface CollaborationRequest {
   id: string;
-  postedBy: string; // userId
-  postedByName?: string;
+  requestedByFirmId: string; // Firm ID of requesting firm
+  requestedByFirmName: string;
+  requestedByUserId: string; // User ID who created the request
   category: string;
   title: string;
   description: string;
@@ -36,47 +37,70 @@ export interface TaskPost {
   state?: string;
   city?: string;
   onSite: boolean;
-  budget?: number;
+  // REMOVED: budget (price discovery violates ICAI)
   deadline: Timestamp | Date;
+  visibility: 'invite-only' | 'firm-network';
+  invitedFirmIds: string[]; // Explicitly invited firms
   status: 'open' | 'assigned' | 'completed' | 'cancelled';
-  assignedTo?: string; // professional userId
-  assignedToName?: string;
+  executingFirmId?: string; // Firm ID assigned to execute
+  executingFirmName?: string;
+  executingUserId?: string; // User ID assigned to execute
+  professionalResponsibility: 'requesting_firm'; // ICAI compliance statement
+  feeSettlement: 'off-platform'; // ICAI compliance: no platform intermediation
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
 
-export interface TaskApplication {
+// Legacy alias for backward compatibility during migration
+export type TaskPost = CollaborationRequest;
+
+export interface CollaborationInvite {
   id: string;
-  taskId: string;
-  applicantId: string;
-  applicantName?: string;
-  message?: string;
-  bidAmount?: number;
-  status: 'pending' | 'accepted' | 'rejected';
+  requestId: string; // Reference to CollaborationRequest
+  invitedFirmId: string; // Firm being invited
+  invitedFirmName?: string;
+  invitedByFirmId: string; // Firm sending invite
+  invitedByFirmName?: string;
+  message?: string; // Optional invitation message
+  status: 'pending' | 'accepted' | 'declined';
   createdAt: Timestamp | Date;
+  respondedAt?: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
 
-export interface TaskChat {
+// Legacy alias for backward compatibility during migration
+export type TaskApplication = CollaborationInvite;
+
+export interface CollaborationChat {
   id: string;
-  taskId: string;
-  senderId: string;
+  requestId: string; // Reference to CollaborationRequest
+  senderId: string; // User ID
   senderName?: string;
+  senderFirmId?: string;
   message: string;
   createdAt: Timestamp | Date;
 }
 
-export interface TaskReview {
+// Legacy alias for backward compatibility during migration
+export type TaskChat = CollaborationChat;
+
+export interface InternalQualityFeedback {
   id: string;
-  taskId: string;
-  reviewerId: string; // who is reviewing
-  reviewerName?: string;
-  professionalId: string; // who is being reviewed
-  professionalName?: string;
-  rating: number; // 1-5
-  comment: string;
+  requestId: string; // Reference to completed CollaborationRequest
+  givenByFirmId: string; // Firm providing feedback
+  givenByFirmName?: string;
+  receivedByFirmId: string; // Firm receiving feedback
+  receivedByFirmName?: string;
+  professionalismScore: number; // 1-5
+  timelinessScore: number; // 1-5
+  complianceScore: number; // 1-5
+  internalNotes?: string; // Private notes
+  visibility: 'private'; // Never displayed publicly
   createdAt: Timestamp | Date;
 }
+
+// Legacy alias for backward compatibility during migration
+export type TaskReview = InternalQualityFeedback;
 
 // Task categories
 export const TASK_CATEGORIES = [

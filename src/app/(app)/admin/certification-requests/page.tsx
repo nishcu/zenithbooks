@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CA_FIRM } from "@/lib/ca-firm";
 import { format } from "date-fns";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, updateDoc, doc, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -126,6 +126,23 @@ export default function AdminCertificationRequests() {
         variant: "destructive",
         title: "Approval Failed",
         description: "Invalid request data. User information is missing.",
+      });
+      return;
+    }
+
+    // Certificate issuance safeguard: Only authorized internal resources can issue
+    // Check if user is authorized internal resource (admin or platform-managed professional)
+    const userDoc = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
+    const userData = userDoc?.data();
+    const userType = userData?.userType;
+    const isAdmin = userData?.role === 'admin' || userData?.isAdmin === true;
+    const isAuthorizedInternal = isAdmin || (userType === 'professional' && userData?.isInternal === true);
+
+    if (!isAuthorizedInternal) {
+      toast({
+        variant: "destructive",
+        title: "Authorization Failed",
+        description: "Certificate issuance is restricted to authorized internal professional resources only.",
       });
       return;
     }

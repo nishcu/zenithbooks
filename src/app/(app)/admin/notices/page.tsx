@@ -261,15 +261,15 @@ export default function AdminNotices() {
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Assign to Professional</DialogTitle>
-            <DialogDescription>Select a professional to assign this notice</DialogDescription>
+            <DialogTitle>Assign to Platform-Managed Professional Resource</DialogTitle>
+            <DialogDescription>This notice will be handled by ZenithBooks' internal professional team</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="assign-professional">Professional</Label>
+              <Label htmlFor="assign-professional">Internal Professional Resource</Label>
               <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
                 <SelectTrigger id="assign-professional">
-                  <SelectValue placeholder="Select a professional" />
+                  <SelectValue placeholder="Select internal resource" />
                 </SelectTrigger>
                 <SelectContent>
                   {professionals.map((pro) => (
@@ -277,6 +277,9 @@ export default function AdminNotices() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                This task will be handled by ZenithBooks' internal professional resources.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -288,7 +291,7 @@ export default function AdminNotices() {
                   Assigning...
                 </>
               ) : (
-                'Assign Notice'
+                'Assign to Internal Team'
               )}
             </Button>
           </DialogFooter>

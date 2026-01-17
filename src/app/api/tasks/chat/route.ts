@@ -100,10 +100,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is authorized (task poster or assigned professional)
-    if (task.postedBy !== userId && task.assignedTo !== userId) {
+    // Check if user is authorized
+    // For principal model: Only requesting firm and executing firm can chat
+    // No direct client-professional engagement
+    const isRequestingFirm = (task as any).requestedByFirmId === userId || (task as any).requestedByUserId === userId || task.postedBy === userId;
+    const isExecutingFirm = (task as any).executingFirmId === userId || (task as any).executingUserId === userId || task.assignedTo === userId;
+    const isAssigned = task.status === 'assigned'; // Only chat after assignment
+    
+    if (!isAssigned) {
       return NextResponse.json(
-        { error: 'You are not authorized to chat on this task' },
+        { error: 'Chat is only available after task assignment' },
+        { status: 403 }
+      );
+    }
+    
+    if (!isRequestingFirm && !isExecutingFirm) {
+      return NextResponse.json(
+        { error: 'You are not authorized to chat on this collaboration request' },
         { status: 403 }
       );
     }

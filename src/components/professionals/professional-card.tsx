@@ -52,18 +52,12 @@ export function ProfessionalCard({ professional }: ProfessionalCardProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Rating */}
-          {professional.rating && professional.rating > 0 && (
+          {/* Verification Status - No public ratings for ICAI compliance */}
+          {professional.isVerified && (
             <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium">
-                {professional.rating.toFixed(1)}
-              </span>
-              {professional.totalReviews && (
-                <span className="text-xs text-muted-foreground">
-                  ({professional.totalReviews} reviews)
-                </span>
-              )}
+              <Badge variant="secondary" className="text-xs">
+                Verified Professional
+              </Badge>
             </div>
           )}
 

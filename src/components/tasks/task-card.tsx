@@ -1,6 +1,6 @@
 /**
- * Task Card Component
- * Displays task post information
+ * Collaboration Request Card Component
+ * Displays collaboration request information
  */
 
 "use client";
@@ -8,12 +8,12 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, IndianRupee, Building2, Clock } from "lucide-react";
+import { MapPin, Calendar, Building2, Clock } from "lucide-react";
 import { format } from "date-fns";
-import type { TaskPost } from "@/lib/professionals/types";
+import type { CollaborationRequest, TaskPost } from "@/lib/professionals/types";
 
 interface TaskCardProps {
-  task: TaskPost;
+  task: CollaborationRequest | TaskPost;
 }
 
 const statusColors = {
@@ -66,27 +66,26 @@ export function TaskCard({ task }: TaskCardProps) {
             <span className="truncate">{task.location}</span>
           </div>
 
-          {/* Budget & Deadline */}
+          {/* Deadline */}
           <div className="flex items-center justify-between text-sm">
-            {task.budget ? (
-              <div className="flex items-center gap-1 text-green-700 font-medium">
-                <IndianRupee className="h-4 w-4" />
-                <span>{task.budget.toLocaleString('en-IN')}</span>
-              </div>
-            ) : (
-              <span className="text-muted-foreground">Budget not specified</span>
-            )}
             <div className="flex items-center gap-1 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>{format(deadlineDate, "MMM dd, yyyy")}</span>
+              <span>Deadline: {format(deadlineDate, "MMM dd, yyyy")}</span>
             </div>
           </div>
 
-          {/* Posted by */}
-          {task.postedByName && (
+          {/* Requested by */}
+          {(task as any).requestedByFirmName && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
               <Clock className="h-3 w-3" />
-              <span>Posted by {task.postedByName}</span>
+              <span>Requested by {(task as any).requestedByFirmName}</span>
+            </div>
+          )}
+          {/* Legacy support */}
+          {(task as any).postedByName && !(task as any).requestedByFirmName && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
+              <Clock className="h-3 w-3" />
+              <span>Requested by {(task as any).postedByName}</span>
             </div>
           )}
         </CardContent>

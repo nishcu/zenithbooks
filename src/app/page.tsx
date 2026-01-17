@@ -54,7 +54,7 @@ export default function LandingPage() {
               </motion.div>
               <h1 className="text-3xl font-bold tracking-tight">ZenithBooks</h1>
             </motion.div>
-            <p className="text-xl text-muted-foreground">AI-Driven. CA-Approved.</p>
+            <p className="text-xl text-muted-foreground">AI-Driven. Professional-Grade.</p>
         </motion.div>
           </ClientOnly>
 

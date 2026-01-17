@@ -1,6 +1,6 @@
 /**
- * Review Modal Component
- * Modal for posting reviews after task completion
+ * Internal Quality Feedback Modal Component
+ * Private feedback after collaboration completion (ICAI-Compliant)
  */
 
 "use client";
@@ -17,32 +17,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Star } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { Input } from "@/components/ui/input";
 
-interface ReviewModalProps {
+interface InternalQualityFeedbackModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  taskId: string;
-  professionalId: string;
-  professionalName: string;
+  requestId: string;
+  executingFirmId: string;
+  executingFirmName: string;
   onSuccess?: () => void;
 }
 
-export function ReviewModal({
+export function InternalQualityFeedbackModal({
   open,
   onOpenChange,
-  taskId,
-  professionalId,
-  professionalName,
+  requestId,
+  executingFirmId,
+  executingFirmName,
   onSuccess,
-}: ReviewModalProps) {
+}: InternalQualityFeedbackModalProps) {
   const [user] = useAuthState(auth);
   const { toast } = useToast();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [professionalismScore, setProfessionalismScore] = useState(0);
+  const [timelinessScore, setTimelinessScore] = useState(0);
+  const [complianceScore, setComplianceScore] = useState(0);
+  const [internalNotes, setInternalNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,25 +55,16 @@ export function ReviewModal({
       toast({
         variant: "destructive",
         title: "Authentication required",
-        description: "Please sign in to post reviews",
+        description: "Please sign in to submit internal feedback",
       });
       return;
     }
 
-    if (rating === 0) {
+    if (professionalismScore === 0 || timelinessScore === 0 || complianceScore === 0) {
       toast({
         variant: "destructive",
-        title: "Rating required",
-        description: "Please select a rating",
-      });
-      return;
-    }
-
-    if (!comment.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Comment required",
-        description: "Please write a review comment",
+        title: "Scores required",
+        description: "Please provide all quality scores (1-5)",
       });
       return;
     }
@@ -79,40 +73,44 @@ export function ReviewModal({
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/tasks/review", {
+      const response = await fetch("/api/collaboration/feedback", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          taskId,
-          professionalId,
-          rating,
-          comment: comment.trim(),
+          requestId,
+          executingFirmId,
+          professionalismScore: Number(professionalismScore),
+          timelinessScore: Number(timelinessScore),
+          complianceScore: Number(complianceScore),
+          internalNotes: internalNotes.trim() || undefined,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit review");
+        throw new Error(data.error || "Failed to submit internal feedback");
       }
 
       toast({
-        title: "Review submitted",
-        description: "Thank you for your feedback!",
+        title: "Internal feedback submitted",
+        description: "Thank you for your private feedback",
       });
 
-      setRating(0);
-      setComment("");
+      setProfessionalismScore(0);
+      setTimelinessScore(0);
+      setComplianceScore(0);
+      setInternalNotes("");
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to submit review",
+        description: error.message || "Failed to submit feedback",
       });
     } finally {
       setIsSubmitting(false);
@@ -121,44 +119,66 @@ export function ReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Review Professional</DialogTitle>
+          <DialogTitle>Internal Quality Feedback</DialogTitle>
           <DialogDescription>
-            Rate your experience with <strong>{professionalName}</strong>
+            Provide private internal feedback for <strong>{executingFirmName}</strong>
+            <p className="text-xs text-muted-foreground mt-2">
+              This feedback is private and internal only. It will never be displayed publicly.
+            </p>
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Rating *</Label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  className="focus:outline-none"
-                >
-                  <Star
-                    className={`h-8 w-8 ${
-                      star <= rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                </button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="professionalismScore">Professionalism Score * (1-5)</Label>
+              <Input
+                id="professionalismScore"
+                type="number"
+                min="1"
+                max="5"
+                value={professionalismScore || ""}
+                onChange={(e) => setProfessionalismScore(Number(e.target.value))}
+                placeholder="1-5"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="timelinessScore">Timeliness Score * (1-5)</Label>
+              <Input
+                id="timelinessScore"
+                type="number"
+                min="1"
+                max="5"
+                value={timelinessScore || ""}
+                onChange={(e) => setTimelinessScore(Number(e.target.value))}
+                placeholder="1-5"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="complianceScore">Compliance Score * (1-5)</Label>
+              <Input
+                id="complianceScore"
+                type="number"
+                min="1"
+                max="5"
+                value={complianceScore || ""}
+                onChange={(e) => setComplianceScore(Number(e.target.value))}
+                placeholder="1-5"
+                required
+              />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="comment">Review Comment *</Label>
+            <Label htmlFor="internalNotes">Internal Notes (Optional)</Label>
             <Textarea
-              id="comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Share your experience..."
+              id="internalNotes"
+              value={internalNotes}
+              onChange={(e) => setInternalNotes(e.target.value)}
+              placeholder="Private internal notes (not shared publicly)..."
               rows={4}
-              required
             />
           </div>
           <DialogFooter>
@@ -170,9 +190,9 @@ export function ReviewModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || rating === 0}>
+            <Button type="submit" disabled={isSubmitting || professionalismScore === 0 || timelinessScore === 0 || complianceScore === 0}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit Review
+              Submit Internal Feedback
             </Button>
           </DialogFooter>
         </form>
@@ -180,4 +200,7 @@ export function ReviewModal({
     </Dialog>
   );
 }
+
+// Legacy export for backward compatibility
+export const ReviewModal = InternalQualityFeedbackModal;
 
