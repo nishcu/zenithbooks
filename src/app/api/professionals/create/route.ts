@@ -63,26 +63,40 @@ export async function POST(request: NextRequest) {
       website,
     } = body;
 
-    // Validate required fields
-    if (!fullName || !qualifications || !skills || experience === undefined || !locations) {
+    // Validate required fields - check for empty strings, empty arrays, and invalid numbers
+    if (
+      !fullName || 
+      typeof fullName !== 'string' || 
+      !fullName.trim() ||
+      !Array.isArray(qualifications) || 
+      qualifications.length === 0 ||
+      !Array.isArray(skills) || 
+      skills.length === 0 ||
+      experience === undefined || 
+      experience === null || 
+      isNaN(Number(experience)) ||
+      Number(experience) < 0 ||
+      !Array.isArray(locations) || 
+      locations.length === 0
+    ) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Please enter all required fields' },
         { status: 400 }
       );
     }
 
-    // Create profile data
+    // Create profile data - trim all string fields
     const profileData: Omit<ProfessionalProfile, 'id' | 'userId' | 'createdAt' | 'updatedAt'> = {
-      fullName,
-      firmName: firmName || undefined,
+      fullName: fullName.trim(),
+      firmName: firmName?.trim() || undefined,
       qualifications: Array.isArray(qualifications) ? qualifications : [qualifications],
       skills: Array.isArray(skills) ? skills : [skills],
       experience: Number(experience),
       locations: Array.isArray(locations) ? locations : [locations],
-      bio: bio || undefined,
-      phone: phone || undefined,
-      email: email || undefined,
-      website: website || undefined,
+      bio: bio?.trim() || undefined,
+      phone: phone?.trim() || undefined,
+      email: email?.trim() || undefined,
+      website: website?.trim() || undefined,
       isVerified: false,
     };
 

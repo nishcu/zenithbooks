@@ -103,11 +103,19 @@ export default function CreateProfilePage() {
       return;
     }
 
+    // Trim fullName to check for whitespace-only strings
+    const trimmedFullName = formData.fullName?.trim();
+    
+    // Validate experience - check if it's a valid number (not empty string)
+    const experienceNum = formData.experience ? Number(formData.experience) : null;
+    
     if (
-      !formData.fullName ||
+      !trimmedFullName ||
       formData.qualifications.length === 0 ||
       formData.skills.length === 0 ||
-      !formData.experience ||
+      experienceNum === null ||
+      isNaN(experienceNum) ||
+      experienceNum < 0 ||
       formData.locations.length === 0
     ) {
       toast({
@@ -129,16 +137,16 @@ export default function CreateProfilePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          fullName: formData.fullName,
-          firmName: formData.firmName || undefined,
+          fullName: trimmedFullName,
+          firmName: formData.firmName?.trim() || undefined,
           qualifications: formData.qualifications,
           skills: formData.skills,
-          experience: Number(formData.experience),
+          experience: experienceNum,
           locations: formData.locations,
-          bio: formData.bio || undefined,
-          phone: formData.phone || undefined,
-          email: formData.email || undefined,
-          website: formData.website || undefined,
+          bio: formData.bio?.trim() || undefined,
+          phone: formData.phone?.trim() || undefined,
+          email: formData.email?.trim() || undefined,
+          website: formData.website?.trim() || undefined,
         }),
       });
 
