@@ -213,6 +213,22 @@ function PaymentSuccessContent() {
             console.error("Post-payment ITR handling failed:", e);
           }
 
+          // If this payment came from compliance plan subscription
+          try {
+            const complianceRaw = localStorage.getItem("pending_compliance_subscription");
+            if (complianceRaw && orderIdParam) {
+              const compliancePending = JSON.parse(complianceRaw);
+              if (compliancePending?.type === "compliance_plan") {
+                // Subscription activation handled by webhook
+                // Just redirect to compliance subscription page
+                localStorage.removeItem("pending_compliance_subscription");
+                redirectTo = "/compliance-plans/my-subscription";
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment compliance subscription handling failed:", e);
+          }
+
           // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
           try {
             const raw = localStorage.getItem("pending_on_demand_action");

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
 try {
+const requestBody = await req.json();
 const {
 amount,
 userId,
@@ -10,7 +11,10 @@ planId,
 customerEmail,
 customerPhone,
 customerName,
-} = await req.json();
+paymentType,
+compliancePlanTier,
+billingPeriod,
+} = requestBody;
 
 // --- VALIDATIONS ---
 if (!amount || amount <= 0) {
@@ -66,28 +70,31 @@ console.log('APP URL:', process.env.NEXT_PUBLIC_APP_URL);
 // --- BUILD CASHFREE REQUEST BODY ---
 const orderId = `order_${Date.now()}`;
 
-const cashfreeBody = {
-  order_id: orderId,
-  order_amount: Number(amount),
-  order_currency: currency,
-  customer_details: {
-    customer_id: userId,
-    customer_email: customerEmail || 'test@example.com',
-    customer_phone: customerPhone || '9999999999',
-    customer_name: customerName || 'User',
-  },
-  order_meta: {
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/payment/success?order_id={order_id}`,
-    notify_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/api/payment/webhook`,
-    payment_methods: 'cc,dc,nb,upi',
-  },
-  order_tags: planId
-    ? {
-        userId: userId,
-        planId: planId,
-      }
-    : undefined,
-};
+  const cashfreeBody = {
+    order_id: orderId,
+    order_amount: Number(amount),
+    order_currency: currency,
+    customer_details: {
+      customer_id: userId,
+      customer_email: customerEmail || 'test@example.com',
+      customer_phone: customerPhone || '9999999999',
+      customer_name: customerName || 'User',
+    },
+    order_meta: {
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/payment/success?order_id={order_id}`,
+      notify_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.zenithbooks.in'}/api/payment/webhook`,
+      payment_methods: 'cc,dc,nb,upi',
+    },
+    order_tags: {
+      userId: userId,
+      ...(planId ? { planId } : {}),
+      ...(paymentType === 'compliance_plan' && compliancePlanTier ? {
+        paymentType: 'compliance_plan',
+        compliancePlanTier,
+        billingPeriod: billingPeriod || 'monthly',
+      } : {}),
+    },
+  };
 
 // --- MAKE CASHFREE API CALL ---
 const response = await fetch(`${baseUrl}/orders`, {

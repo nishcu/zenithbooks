@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
     // Extract user information from order tags
     const userId = body.order?.order_tags?.userId || body.order_tags?.userId;
     const planId = body.order?.order_tags?.planId || body.order_tags?.planId;
+    const paymentType = body.order?.order_tags?.paymentType || body.order_tags?.paymentType || 'subscription'; // 'subscription' or 'compliance_plan'
+    const compliancePlanTier = body.order?.order_tags?.compliancePlanTier || body.order_tags?.compliancePlanTier;
+    const billingPeriod = body.order?.order_tags?.billingPeriod || body.order_tags?.billingPeriod;
 
     // Verify webhook signature if provided
     const signature = request.headers.get('x-cashfree-signature');
@@ -55,24 +58,74 @@ export async function POST(request: NextRequest) {
     if (paymentStatus === 'SUCCESS' || orderStatus === 'PAID') {
       if (userId) {
         try {
-          const userRef = doc(db, 'users', userId);
-          await updateDoc(userRef, {
-            subscriptionStatus: 'active',
-            subscriptionPlan: planId || null,
-            lastPaymentDate: serverTimestamp(),
-            cashfreePaymentId: paymentId,
-            cashfreeOrderId: orderId,
-            paymentAmount: amount,
-            paymentStatus: paymentStatus || orderStatus || 'SUCCESS',
-            webhookReceivedAt: serverTimestamp(),
-          });
-          
-          console.log('User subscription updated via webhook:', {
-            userId,
-            planId,
-            orderId,
-            paymentId,
-          });
+          // Handle compliance plan subscription
+          if (paymentType === 'compliance_plan' && compliancePlanTier) {
+            const { createOrUpdateComplianceSubscription, generateMonthlyComplianceTasks } = await import('@/lib/compliance-plans/firestore');
+            const { getDoc, Timestamp } = await import('firebase/firestore');
+            
+            // Get user data to extract firmId
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const firmId = userData?.firmId || userId;
+            
+            // Calculate dates
+            const now = new Date();
+            const renewalDate = new Date(now);
+            if (billingPeriod === 'annual') {
+              renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+            } else {
+              renewalDate.setMonth(renewalDate.getMonth() + 1);
+            }
+            
+            // Create or activate compliance subscription
+            const subscriptionId = await createOrUpdateComplianceSubscription({
+              userId,
+              firmId,
+              planTier: compliancePlanTier as any,
+              status: 'active',
+              startDate: Timestamp.fromDate(now),
+              renewalDate: Timestamp.fromDate(renewalDate),
+              autoRenew: true,
+              paymentMethodId: paymentId,
+            });
+            
+            // Get subscription to pass to generateMonthlyComplianceTasks
+            const { getComplianceSubscriptionByUserId } = await import('@/lib/compliance-plans/firestore');
+            const subscription = await getComplianceSubscriptionByUserId(userId);
+            
+            if (subscription) {
+              await generateMonthlyComplianceTasks(subscriptionId, subscription);
+            }
+            
+            console.log('Compliance subscription activated via webhook:', {
+              userId,
+              subscriptionId,
+              planTier: compliancePlanTier,
+              orderId,
+              paymentId,
+            });
+          } else {
+            // Handle regular subscription (existing logic)
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+              subscriptionStatus: 'active',
+              subscriptionPlan: planId || null,
+              lastPaymentDate: serverTimestamp(),
+              cashfreePaymentId: paymentId,
+              cashfreeOrderId: orderId,
+              paymentAmount: amount,
+              paymentStatus: paymentStatus || orderStatus || 'SUCCESS',
+              webhookReceivedAt: serverTimestamp(),
+            });
+            
+            console.log('User subscription updated via webhook:', {
+              userId,
+              planId,
+              orderId,
+              paymentId,
+            });
+          }
         } catch (firestoreError) {
           console.error('Firestore update error in webhook:', firestoreError);
           // Don't fail the webhook - Cashfree expects 200 response

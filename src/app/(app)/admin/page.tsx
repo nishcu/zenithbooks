@@ -67,6 +67,13 @@ export default function AdminPage() {
       badge: "Certificates"
     },
     {
+      title: "Compliance Tasks",
+      description: "Manage compliance task executions",
+      icon: FileText,
+      path: "/admin/compliance-tasks",
+      badge: "Compliance"
+    },
+    {
       title: "Service Pricing",
       description: "Configure service rates",
       icon: DollarSign,

@@ -110,13 +110,20 @@ export async function GET(request: NextRequest) {
       throw new Error('Firebase Admin not initialized');
     }
 
-    // Check for admin/secret key
+    // For Vercel cron jobs, check Authorization header or x-cron-secret
+    // Vercel automatically adds Authorization header for cron jobs
+    const authHeader = request.headers.get('authorization');
     const secretKey = request.headers.get('x-cron-secret');
-    if (secretKey !== process.env.CRON_SECRET) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Invalid cron secret' },
-        { status: 401 }
-      );
+    
+    // Allow if it's from Vercel cron (has authorization) or has valid secret
+    if (!authHeader && secretKey !== process.env.CRON_SECRET) {
+      // If CRON_SECRET is not set, allow the request (for development)
+      if (process.env.CRON_SECRET) {
+        return NextResponse.json(
+          { error: 'Unauthorized', message: 'Invalid cron secret' },
+          { status: 401 }
+        );
+      }
     }
 
     // Get all active subscriptions

@@ -117,19 +117,36 @@ export function CashfreeCheckout({
       console.log('DEBUG - userEmail value:', userEmail);
       console.log('DEBUG - userName value:', userName);
 
+      // Extract compliance plan details from postPaymentContext
+      let paymentType = 'subscription';
+      let compliancePlanTier: string | undefined;
+      let billingPeriod: string | undefined;
+
+      if (postPaymentContext?.key === 'pending_compliance_subscription') {
+        const complianceData = postPaymentContext.payload;
+        if (complianceData?.type === 'compliance_plan') {
+          paymentType = 'compliance_plan';
+          compliancePlanTier = complianceData.planTier;
+          billingPeriod = complianceData.billingPeriod;
+        }
+      }
+
       const requestBody = {
         amount,
         currency: 'INR',
         userId,
         planId,
         customerDetails: customerDetailsPayload,
-          orderMeta: {
-            return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
-            notify_url: `${window.location.origin}/api/payment/webhook`,
-            payment_methods: 'cc,dc,nb,upi', // Cashfree payment methods
-          },
+        orderMeta: {
+          return_url: `${window.location.origin}/payment/success?order_id={order_id}`,
+          notify_url: `${window.location.origin}/api/payment/webhook`,
+          payment_methods: 'cc,dc,nb,upi', // Cashfree payment methods
+        },
         userEmail: userEmail, // Pass as fallback
         userName: userName,   // Pass as fallback
+        paymentType,
+        ...(compliancePlanTier ? { compliancePlanTier } : {}),
+        ...(billingPeriod ? { billingPeriod } : {}),
       };
 
       console.log('DEBUG - Full request body:', requestBody);
