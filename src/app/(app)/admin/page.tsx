@@ -74,6 +74,13 @@ export default function AdminPage() {
       badge: "Compliance"
     },
     {
+      title: "Business Registrations",
+      description: "Manage business registration requests",
+      icon: FileText,
+      path: "/admin/business-registrations",
+      badge: "Registrations"
+    },
+    {
       title: "Service Pricing",
       description: "Configure service rates",
       icon: DollarSign,
