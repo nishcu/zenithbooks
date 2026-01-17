@@ -123,7 +123,7 @@ export function MobileDashboard() {
     { icon: FileCheck, label: "ITR Filing", href: "/itr-filing" },
     { icon: Award, label: "CA Certificates", href: "/ca-certificates" },
     { icon: Shield, label: "Legal Documents", href: "/legal-documents" },
-    { icon: Users, label: "Find Professional", href: "/professional-services" },
+    { icon: Users, label: "Knowledge Network", href: "/professional-services" },
     { icon: FilePenLine, label: "Form 16", href: "/income-tax/form-16" },
     { icon: BarChart3, label: "Reports", href: "/reports" },
     { icon: Archive, label: "Document Vault", href: "/vault" },
