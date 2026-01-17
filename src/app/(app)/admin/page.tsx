@@ -74,6 +74,13 @@ export default function AdminPage() {
       badge: "Compliance"
     },
     {
+      title: "Compliance Associates",
+      description: "Manage associate registrations and approvals",
+      icon: UserCheck,
+      path: "/admin/compliance-associates",
+      badge: "Staff"
+    },
+    {
       title: "Business Registrations",
       description: "Manage business registration requests",
       icon: FileText,

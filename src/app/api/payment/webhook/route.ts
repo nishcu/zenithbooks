@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
     // Extract user information from order tags
     const userId = body.order?.order_tags?.userId || body.order_tags?.userId;
     const planId = body.order?.order_tags?.planId || body.order_tags?.planId;
-    const paymentType = body.order?.order_tags?.paymentType || body.order_tags?.paymentType || 'subscription'; // 'subscription' or 'compliance_plan'
+    const paymentType = body.order?.order_tags?.paymentType || body.order_tags?.paymentType || 'subscription'; // 'subscription', 'compliance_plan', or 'associate_registration'
     const compliancePlanTier = body.order?.order_tags?.compliancePlanTier || body.order_tags?.compliancePlanTier;
     const billingPeriod = body.order?.order_tags?.billingPeriod || body.order_tags?.billingPeriod;
+    const associateId = body.order?.order_tags?.associateId || body.order_tags?.associateId;
 
     // Verify webhook signature if provided
     const signature = request.headers.get('x-cashfree-signature');
@@ -58,8 +59,20 @@ export async function POST(request: NextRequest) {
     if (paymentStatus === 'SUCCESS' || orderStatus === 'PAID') {
       if (userId) {
         try {
+          // Handle associate registration payment
+          if (paymentType === 'associate_registration' && associateId) {
+            const { updateAssociatePaymentStatus } = await import('@/lib/compliance-associates/firestore');
+            
+            await updateAssociatePaymentStatus(associateId, paymentId, orderId);
+            
+            console.log('Associate registration payment processed via webhook:', {
+              associateId,
+              orderId,
+              paymentId,
+            });
+          }
           // Handle compliance plan subscription
-          if (paymentType === 'compliance_plan' && compliancePlanTier) {
+          else if (paymentType === 'compliance_plan' && compliancePlanTier) {
             const { createOrUpdateComplianceSubscription, generateMonthlyComplianceTasks } = await import('@/lib/compliance-plans/firestore');
             const { getDoc, Timestamp } = await import('firebase/firestore');
             

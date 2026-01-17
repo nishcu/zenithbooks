@@ -4,16 +4,17 @@ export async function POST(req: NextRequest) {
 try {
 const requestBody = await req.json();
 const {
-amount,
-userId,
-currency = 'INR',
-planId,
-customerEmail,
-customerPhone,
-customerName,
-paymentType,
-compliancePlanTier,
-billingPeriod,
+  amount,
+  userId,
+  currency = 'INR',
+  planId,
+  customerEmail,
+  customerPhone,
+  customerName,
+  paymentType,
+  compliancePlanTier,
+  billingPeriod,
+  associateId,
 } = requestBody;
 
 // --- VALIDATIONS ---
@@ -92,6 +93,10 @@ const orderId = `order_${Date.now()}`;
         paymentType: 'compliance_plan',
         compliancePlanTier,
         billingPeriod: billingPeriod || 'monthly',
+      } : {}),
+      ...(paymentType === 'associate_registration' ? {
+        paymentType: 'associate_registration',
+        ...(associateId ? { associateId } : {}),
       } : {}),
     },
   };

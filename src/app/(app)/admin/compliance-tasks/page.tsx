@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { getActiveAssociates } from '@/lib/compliance-associates/firestore';
+import type { ComplianceAssociate } from '@/lib/compliance-associates/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,12 +70,27 @@ export default function AdminComplianceTasks() {
   const [assignedTo, setAssignedTo] = useState('');
   const [caReviewer, setCaReviewer] = useState('');
   const [sopReference, setSopReference] = useState('');
+  const [activeAssociates, setActiveAssociates] = useState<ComplianceAssociate[]>([]);
+  const [loadingAssociates, setLoadingAssociates] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadTasks();
+      loadAssociates();
     }
   }, [user, statusFilter]);
+
+  const loadAssociates = async () => {
+    setLoadingAssociates(true);
+    try {
+      const associates = await getActiveAssociates();
+      setActiveAssociates(associates);
+    } catch (error) {
+      console.error('Error loading associates:', error);
+    } finally {
+      setLoadingAssociates(false);
+    }
+  };
 
   const loadTasks = async () => {
     if (!user) return;
@@ -464,15 +481,57 @@ export default function AdminComplianceTasks() {
               </h4>
               <div>
                 <Label htmlFor="assigned-to">Assigned To (Compliance Associate)</Label>
-                <Input
-                  id="assigned-to"
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                  placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
-                  className="mt-1"
-                />
+                {loadingAssociates ? (
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading associates...
+                  </div>
+                ) : activeAssociates.length > 0 ? (
+                  <>
+                    <Select
+                      value={assignedTo === "__manual__" ? "" : assignedTo}
+                      onValueChange={(value) => {
+                        if (value === "__manual__") {
+                          setAssignedTo("");
+                        } else {
+                          setAssignedTo(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="assigned-to" className="mt-1">
+                        <SelectValue placeholder="Select associate (or enter code manually)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None (Unassigned)</SelectItem>
+                        {activeAssociates.map((associate) => (
+                          <SelectItem key={associate.id} value={associate.associateCode}>
+                            {associate.associateCode} - {associate.name} ({associate.qualification})
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__manual__">Enter code manually...</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!assignedTo || (!activeAssociates.find(a => a.associateCode === assignedTo) && assignedTo !== "") ? (
+                      <Input
+                        id="assigned-to-manual"
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                        placeholder="Enter associate code manually"
+                        className="mt-2"
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <Input
+                    id="assigned-to"
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
+                    className="mt-1"
+                  />
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Assign to internal compliance associate. Use associate code, not client name.
+                  Assign to internal compliance associate. Select from active associates or enter code manually.
                 </p>
               </div>
               <div>

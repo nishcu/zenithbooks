@@ -121,6 +121,7 @@ export function CashfreeCheckout({
       let paymentType = 'subscription';
       let compliancePlanTier: string | undefined;
       let billingPeriod: string | undefined;
+      let associateId: string | undefined;
 
       if (postPaymentContext?.key === 'pending_compliance_subscription') {
         const complianceData = postPaymentContext.payload;
@@ -128,6 +129,12 @@ export function CashfreeCheckout({
           paymentType = 'compliance_plan';
           compliancePlanTier = complianceData.planTier;
           billingPeriod = complianceData.billingPeriod;
+        }
+      } else if (postPaymentContext?.key === 'pending_associate_registration') {
+        const associateData = postPaymentContext.payload;
+        if (associateData?.paymentType === 'associate_registration') {
+          paymentType = 'associate_registration';
+          associateId = associateData.associateId;
         }
       }
 
@@ -147,6 +154,7 @@ export function CashfreeCheckout({
         paymentType,
         ...(compliancePlanTier ? { compliancePlanTier } : {}),
         ...(billingPeriod ? { billingPeriod } : {}),
+        ...(associateId ? { associateId } : {}),
       };
 
       console.log('DEBUG - Full request body:', requestBody);
