@@ -65,6 +65,9 @@ export interface ComplianceTaskExecution {
     acknowledgmentNumber?: string;
   };
   internalNotes?: string;
+  assignedTo?: string; // Compliance Associate code (no client names - ICAI compliant)
+  caReviewer?: string; // CA reviewer code for Enterprise plan tasks
+  sopReference?: string; // SOP reference for task execution
   platformOwned: true; // Always true - ZenithBooks as principal
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;

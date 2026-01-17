@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CheckCircle2, Clock, FileText, AlertCircle, Filter, Search } from 'lucide-react';
+import { Loader2, CheckCircle2, Clock, FileText, AlertCircle, Filter, Search, UserCog, BookOpen, Calendar, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,9 @@ interface ComplianceTask {
     acknowledgmentNumber?: string;
   };
   internalNotes?: string;
+  assignedTo?: string;
+  caReviewer?: string;
+  sopReference?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +65,9 @@ export default function AdminComplianceTasks() {
     period: '',
     acknowledgmentNumber: '',
   });
+  const [assignedTo, setAssignedTo] = useState('');
+  const [caReviewer, setCaReviewer] = useState('');
+  const [sopReference, setSopReference] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -127,6 +134,19 @@ export default function AdminComplianceTasks() {
         updateData.internalNotes = internalNotes;
       }
       
+      if (assignedTo) {
+        updateData.assignedTo = assignedTo;
+        updateData.assignedToInternalTeam = true;
+      }
+      
+      if (caReviewer) {
+        updateData.caReviewer = caReviewer;
+      }
+      
+      if (sopReference) {
+        updateData.sopReference = sopReference;
+      }
+      
       if (newStatus === 'completed' || newStatus === 'filed') {
         updateData.completedAt = Timestamp.now();
       }
@@ -154,6 +174,9 @@ export default function AdminComplianceTasks() {
       setSelectedTask(null);
       setInternalNotes('');
       setFilingDetails({ formType: '', period: '', acknowledgmentNumber: '' });
+      setAssignedTo('');
+      setCaReviewer('');
+      setSopReference('');
       loadTasks();
     } catch (error) {
       console.error('Error updating task:', error);
@@ -170,6 +193,9 @@ export default function AdminComplianceTasks() {
     setNewStatus(task.status);
     setInternalNotes(task.internalNotes || '');
     setFilingDetails(task.filingDetails || { formType: '', period: '', acknowledgmentNumber: '' });
+    setAssignedTo(task.assignedTo || '');
+    setCaReviewer(task.caReviewer || '');
+    setSopReference(task.sopReference || '');
     setIsDialogOpen(true);
   };
 
@@ -283,24 +309,66 @@ export default function AdminComplianceTasks() {
                         <h3 className="font-semibold">{task.taskName}</h3>
                         {getStatusBadge(task.status)}
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                        <div>
-                          <span className="font-medium">Due Date:</span>{' '}
-                          {task.dueDate.toLocaleDateString()}
-                        </div>
-                        <div>
-                          <span className="font-medium">Task ID:</span> {task.taskId}
-                        </div>
-                        <div>
-                          <span className="font-medium">Firm ID:</span> {task.firmId.substring(0, 8)}...
-                        </div>
-                        {task.filedAt && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-2">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <span className="font-medium">Filed:</span>{' '}
-                            {task.filedAt.toLocaleDateString()}
+                            <span className="font-medium text-muted-foreground">Due Date:</span>{' '}
+                            <span className={(() => {
+                              const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+                              return dueDate < new Date() && task.status !== 'completed' && task.status !== 'filed';
+                            })() ? 'text-red-600 font-semibold' : ''}>
+                              {task.dueDate.toLocaleDateString()}
+                            </span>
+                            {(() => {
+                              const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+                              return dueDate < new Date() && task.status !== 'completed' && task.status !== 'filed';
+                            })() && (
+                              <Badge variant="destructive" className="ml-2 text-xs">Overdue</Badge>
+                            )}
                           </div>
-                        )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span className="font-medium text-muted-foreground">Task ID:</span>{' '}
+                            <span className="font-mono text-xs">{task.taskId}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span className="font-medium text-muted-foreground">Client Code:</span>{' '}
+                            <span className="font-mono text-xs">{task.firmId.substring(0, 8)}...</span>
+                            <span className="text-xs text-muted-foreground ml-1">(No client name shown - ICAI compliant)</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <UserCog className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <span className="font-medium text-muted-foreground">Assigned To:</span>{' '}
+                            <span className="text-xs">
+                              {task.assignedTo || 'Internal Team (Unassigned)'}
+                            </span>
+                            {task.caReviewer && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                | CA Reviewer: {task.caReviewer}
+                              </span>
+                            )}
+                            {task.sopReference && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                | SOP: {task.sopReference}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
+                      {task.filedAt && (
+                        <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                          <span className="font-medium text-green-800 text-sm">Filed:</span>{' '}
+                          <span className="text-green-700 text-sm">{task.filedAt.toLocaleDateString()}</span>
+                        </div>
+                      )}
                       {task.filingDetails && (
                         <div className="mt-2 text-sm">
                           <span className="font-medium">Filing Details:</span>{' '}
@@ -388,13 +456,63 @@ export default function AdminComplianceTasks() {
               </div>
             )}
             
+            {/* Task Assignment Fields */}
+            <div className="space-y-4 border-t pt-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <UserCog className="h-4 w-4" />
+                Task Assignment (Internal)
+              </h4>
+              <div>
+                <Label htmlFor="assigned-to">Assigned To (Compliance Associate)</Label>
+                <Input
+                  id="assigned-to"
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Assign to internal compliance associate. Use associate code, not client name.
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="sop-reference">SOP Reference</Label>
+                <Input
+                  id="sop-reference"
+                  value={sopReference}
+                  onChange={(e) => setSopReference(e.target.value)}
+                  placeholder="e.g., SOP-GSTR-001, SOP-TDS-002"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reference to Standard Operating Procedure for this task type.
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="ca-reviewer">CA Reviewer (Enterprise Plan Only)</Label>
+                <Input
+                  id="ca-reviewer"
+                  value={caReviewer}
+                  onChange={(e) => setCaReviewer(e.target.value)}
+                  placeholder="e.g., CA Code: CA-001 (For Enterprise plan tasks)"
+                  className="mt-1"
+                  disabled={!selectedTask || !selectedTask.subscriptionId?.includes('complete')}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  CA reviewer for verification (only for Enterprise plan tasks).
+                </p>
+              </div>
+            </div>
+            
             <div>
-              <label className="text-sm font-medium">Internal Notes</label>
+              <Label htmlFor="internal-notes">Internal Notes</Label>
               <Textarea
+                id="internal-notes"
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
-                placeholder="Add internal notes for this task..."
+                placeholder="Add internal notes for this task (SOP steps, deadlines, etc.)..."
                 rows={4}
+                className="mt-1"
               />
             </div>
           </div>

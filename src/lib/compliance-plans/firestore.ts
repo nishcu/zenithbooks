@@ -294,7 +294,11 @@ export async function updateTaskExecutionStatus(
   status: ComplianceTaskExecution['status'],
   updates?: Partial<ComplianceTaskExecution>
 ): Promise<void> {
+  // Get current task to check old status
   const taskRef = doc(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS, taskExecutionId);
+  const taskSnap = await getDoc(taskRef);
+  const oldStatus = taskSnap.exists() ? (taskSnap.data() as ComplianceTaskExecution).status : 'pending';
+  
   const updateData: any = {
     status,
     updatedAt: serverTimestamp(),
@@ -317,7 +321,7 @@ export async function updateTaskExecutionStatus(
   
   await updateDoc(taskRef, updateData);
   
-  // Get task execution for audit log
+  // Get task execution for audit log and notification
   const taskSnap = await getDoc(taskRef);
   if (taskSnap.exists()) {
     const taskData = taskSnap.data() as ComplianceTaskExecution;
@@ -329,6 +333,15 @@ export async function updateTaskExecutionStatus(
       details: { taskExecutionId, taskId: taskData.taskId, status },
       performedBy: 'system', // Internal team actions
     });
+    
+    // Trigger notification asynchronously (don't await - non-critical)
+    if (oldStatus !== status) {
+      import('@/lib/compliance-plans/notifications').then(({ notifyTaskStatusChange }) => {
+        notifyTaskStatusChange(taskData, oldStatus, status).catch(err => {
+          console.error('Notification failed:', err);
+        });
+      });
+    }
   }
 }
 

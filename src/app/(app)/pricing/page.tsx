@@ -1,6 +1,7 @@
 
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +25,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, Shield, CheckCircle2, ArrowRight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const initialTiers = [
   {
@@ -426,6 +428,108 @@ export default function PricingPage() {
           </Card>
         </div>
       )}
+
+      {/* Monthly Compliance Services Section */}
+      <div className="mt-12">
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <Shield className="h-8 w-8 text-primary" />
+              <CardTitle className="text-2xl">Monthly Compliance Services</CardTitle>
+            </div>
+            <CardDescription className="text-base">
+              Automated GST, Income Tax, Payroll & MCA compliance handled by ZenithBooks Compliance Team. 
+              Focus on your business while we handle the paperwork.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-6 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <h4 className="font-semibold">Starter Plan</h4>
+                </div>
+                <p className="text-sm text-muted-foreground pl-7">
+                  GST Returns + Basic Accounting + Monthly Reports
+                </p>
+                <p className="text-lg font-bold pl-7">
+                  ₹2,999/month or ₹29,990/year
+                </p>
+                <Button asChild variant="outline" className="w-full mt-4">
+                  <Link href="/compliance-plans">View Details</Link>
+                </Button>
+              </div>
+              
+              <div className="space-y-3 border-l pl-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <h4 className="font-semibold">Growth Plan</h4>
+                  <Badge className="ml-2 bg-primary">Popular</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground pl-7">
+                  GST + Accounting + TDS/TCS + Payroll (PF/ESI) + Compliance Calendar
+                </p>
+                <p className="text-lg font-bold pl-7">
+                  ₹5,999/month or ₹59,990/year
+                </p>
+                <Button asChild className="w-full mt-4">
+                  <Link href="/compliance-plans">View Details</Link>
+                </Button>
+              </div>
+              
+              <div className="space-y-3 border-l pl-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <h4 className="font-semibold">Enterprise Plan</h4>
+                </div>
+                <p className="text-sm text-muted-foreground pl-7">
+                  Everything in Growth + MCA Compliances + CA Review + Dedicated Account Manager
+                </p>
+                <p className="text-lg font-bold pl-7">
+                  ₹9,999/month or ₹99,990/year
+                </p>
+                <Button asChild variant="outline" className="w-full mt-4">
+                  <Link href="/compliance-plans">View Details</Link>
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm mb-1">Platform-Managed Service</p>
+                  <p className="text-xs text-muted-foreground">
+                    All compliance work is executed by ZenithBooks' internally engaged or contracted professional resources. 
+                    Tasks are auto-generated monthly and handled by ZenithBooks Compliance Team.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm mb-1">No Marketplace</p>
+                  <p className="text-xs text-muted-foreground">
+                    No CA marketplace, referrals, or professional selection by clients. 
+                    All professional services are delivered in accordance with applicable Indian laws and professional regulations.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Button asChild size="lg" className="w-full">
+                <Link href="/compliance-plans">
+                  View All Compliance Plans
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -246,38 +246,110 @@ export default function MyComplianceSubscriptionPage() {
         </CardContent>
       </Card>
 
-      {/* Task Statistics */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <Card>
+      {/* Compliance Status Dashboard */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Tasks</p>
-                <p className="text-2xl font-bold">{tasks.length}</p>
+                <p className="text-sm text-muted-foreground">Compliance Status</p>
+                <p className="text-2xl font-bold">
+                  {tasks.length > 0 
+                    ? Math.round((completedTasks.length / tasks.length) * 100)
+                    : 0}%
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {completedTasks.length} of {tasks.length} tasks completed
+                </p>
               </div>
-              <FileText className="h-8 w-8 text-muted-foreground" />
+              <div className={`p-3 rounded-full ${
+                tasks.length > 0 && completedTasks.length === tasks.length 
+                  ? 'bg-green-100' 
+                  : tasks.length > 0 && completedTasks.length > tasks.length / 2
+                  ? 'bg-blue-100'
+                  : 'bg-yellow-100'
+              }`}>
+                <CheckCircle2 className={`h-6 w-6 ${
+                  tasks.length > 0 && completedTasks.length === tasks.length 
+                    ? 'text-green-600' 
+                    : tasks.length > 0 && completedTasks.length > tasks.length / 2
+                    ? 'text-blue-600'
+                    : 'text-yellow-600'
+                }`} />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        
+        <Card className="border-l-4 border-l-yellow-500">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">Pending Tasks</p>
                 <p className="text-2xl font-bold">{pendingTasks.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {pendingTasks.filter(t => {
+                    const dueDate = t.dueDate instanceof Date ? t.dueDate : new Date(t.dueDate);
+                    return dueDate < new Date();
+                  }).length} overdue
+                </p>
               </div>
               <Clock className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
-        <Card>
+        
+        <Card className="border-l-4 border-l-green-500">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold">{completedTasks.length}</p>
+                <p className="text-sm text-muted-foreground">Filed Returns</p>
+                <p className="text-2xl font-bold">
+                  {tasks.filter(t => t.status === 'filed').length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This month
+                </p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
+              <FileText className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-purple-500">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Next Due Date</p>
+                <p className="text-lg font-bold">
+                  {pendingTasks.length > 0 
+                    ? format(
+                        (() => {
+                          const sorted = [...pendingTasks].sort((a, b) => {
+                            const dateA = a.dueDate instanceof Date ? a.dueDate : new Date(a.dueDate);
+                            const dateB = b.dueDate instanceof Date ? b.dueDate : new Date(b.dueDate);
+                            return dateA.getTime() - dateB.getTime();
+                          });
+                          return sorted[0]?.dueDate;
+                        })() instanceof Date
+                          ? (() => {
+                              const sorted = [...pendingTasks].sort((a, b) => {
+                                const dateA = a.dueDate instanceof Date ? a.dueDate : new Date(a.dueDate);
+                                const dateB = b.dueDate instanceof Date ? b.dueDate : new Date(b.dueDate);
+                                return dateA.getTime() - dateB.getTime();
+                              });
+                              return sorted[0]?.dueDate;
+                            })()
+                          : new Date(),
+                        "MMM dd"
+                      )
+                    : 'N/A'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upcoming deadline
+                </p>
+              </div>
+              <Calendar className="h-8 w-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
@@ -302,49 +374,133 @@ export default function MyComplianceSubscriptionPage() {
         )}
       </div>
 
-      {/* Tasks List */}
+      {/* Compliance Tasks - Enhanced View */}
       <Card>
         <CardHeader>
           <CardTitle>Compliance Tasks</CardTitle>
           <CardDescription>
-            Tasks managed by ZenithBooks' internal professional team
+            All tasks are handled by ZenithBooks Compliance Team. You can view status updates and receive notifications.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {tasks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No tasks found. Click "Generate Monthly Tasks" to create tasks for this month.</p>
+              <p className="mb-2">No tasks found for this month.</p>
+              <p className="text-sm">Tasks are automatically generated monthly based on your plan.</p>
+              <Button onClick={handleGenerateTasks} className="mt-4" variant="outline">
+                Generate Monthly Tasks
+              </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {tasks.map((task) => {
+            <div className="space-y-3">
+              {/* Pending Tasks First */}
+              {pendingTasks.map((task) => {
                 const StatusIcon = statusIcons[task.status];
+                const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+                const isOverdue = dueDate < new Date() && task.status !== 'completed' && task.status !== 'filed';
+                
                 return (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                    className={`flex items-center justify-between p-4 border-2 rounded-lg hover:bg-muted/50 transition-colors ${
+                      isOverdue ? 'border-red-200 bg-red-50/50' : 'border-border'
+                    }`}
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <StatusIcon className="h-5 w-5 text-muted-foreground" />
+                      <div className={`p-2 rounded-lg ${
+                        task.status === 'filed' ? 'bg-green-100' :
+                        task.status === 'completed' ? 'bg-blue-100' :
+                        task.status === 'in_progress' ? 'bg-yellow-100' :
+                        'bg-gray-100'
+                      }`}>
+                        <StatusIcon className={`h-5 w-5 ${
+                          task.status === 'filed' ? 'text-green-600' :
+                          task.status === 'completed' ? 'text-blue-600' :
+                          task.status === 'in_progress' ? 'text-yellow-600' :
+                          'text-gray-600'
+                        }`} />
+                      </div>
                       <div className="flex-1">
-                        <p className="font-medium">{task.taskName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Due: {format(task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate), "PPP")}
-                        </p>
-                        {task.completedAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Completed: {format(task.completedAt instanceof Date ? task.completedAt : new Date(task.completedAt), "PPP")}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{task.taskName}</p>
+                          {isOverdue && (
+                            <Badge variant="destructive" className="text-xs">Overdue</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Due: {format(dueDate, "MMM dd, yyyy")}
+                          </span>
+                          <span className="text-xs bg-muted px-2 py-0.5 rounded">
+                            Handled by ZenithBooks Compliance Team
+                          </span>
+                        </div>
                         {task.filingDetails && (
-                          <p className="text-xs text-green-600 mt-1">
-                            Filed: {task.filingDetails.acknowledgmentNumber || "Filed"}
-                          </p>
+                          <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                            <p className="text-xs font-semibold text-green-800 mb-1">Filing Details:</p>
+                            <p className="text-xs text-green-700">
+                              <span className="font-medium">Form:</span> {task.filingDetails.formType} | 
+                              <span className="font-medium"> Period:</span> {task.filingDetails.period}
+                              {task.filingDetails.acknowledgmentNumber && (
+                                <> | <span className="font-medium">Ack No:</span> {task.filingDetails.acknowledgmentNumber}</>
+                              )}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
-                    <Badge className={statusColors[task.status]}>
+                    <Badge className={`${statusColors[task.status]} whitespace-nowrap`}>
+                      {task.status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </Badge>
+                  </div>
+                );
+              })}
+              
+              {/* Completed Tasks */}
+              {completedTasks.map((task) => {
+                const StatusIcon = statusIcons[task.status];
+                const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+                
+                return (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 bg-muted/20 opacity-75"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`p-2 rounded-lg ${
+                        task.status === 'filed' ? 'bg-green-100' : 'bg-blue-100'
+                      }`}>
+                        <StatusIcon className={`h-5 w-5 ${
+                          task.status === 'filed' ? 'text-green-600' : 'text-blue-600'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{task.taskName}</p>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Completed: {task.completedAt 
+                              ? format(task.completedAt instanceof Date ? task.completedAt : new Date(task.completedAt), "MMM dd, yyyy")
+                              : format(dueDate, "MMM dd, yyyy")
+                            }
+                          </span>
+                        </div>
+                        {task.filingDetails && (
+                          <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                            <p className="text-xs font-semibold text-green-800 mb-1">Filed:</p>
+                            <p className="text-xs text-green-700">
+                              {task.filingDetails.formType} - {task.filingDetails.period}
+                              {task.filingDetails.acknowledgmentNumber && (
+                                <> (Ack: {task.filingDetails.acknowledgmentNumber})</>
+                              )}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Badge className={`${statusColors[task.status]} whitespace-nowrap`}>
                       {task.status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                     </Badge>
                   </div>

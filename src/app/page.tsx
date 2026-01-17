@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { ZenithBooksLogo, Receipt, TrendingUp, Shield, Zap, CheckCircle } from "@/components/icons";
+import { ZenithBooksLogo, Receipt, TrendingUp, Shield, Zap, CheckCircle, Calendar, FileCheck } from "@/components/icons";
 import { AnimatePresence, motion } from "framer-motion";
 import { ClientOnly } from "@/components/client-only";
 import { Button } from "@/components/ui/button";
@@ -342,6 +342,86 @@ export default function LandingPage() {
               </CardContent>
             </Card>
             </motion.div>
+            </motion.div>
+          </ClientOnly>
+
+          {/* Monthly Compliance Services Section */}
+          <ClientOnly>
+            <motion.div
+              className="mt-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+            >
+              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <Shield className="h-10 w-10 text-primary" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2">Monthly Compliance Services</h3>
+                      <p className="text-muted-foreground">
+                        Automated GST, Income Tax, Payroll & MCA compliance handled by ZenithBooks Compliance Team
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <strong className="text-sm">Starter Plan</strong>
+                      </div>
+                      <p className="text-xs text-muted-foreground ml-7">
+                        GST Returns + Basic Accounting + Monthly Reports
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <strong className="text-sm">Growth Plan</strong>
+                      </div>
+                      <p className="text-xs text-muted-foreground ml-7">
+                        GST + Accounting + TDS/TCS + Payroll (PF/ESI) + Compliance Calendar
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <strong className="text-sm">Enterprise Plan</strong>
+                      </div>
+                      <p className="text-xs text-muted-foreground ml-7">
+                        Everything in Growth + MCA Compliances + CA Review + Dedicated Account Manager
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-4 border-t">
+                    <Button asChild size="lg" className="flex-1">
+                      <Link href="/compliance-plans">Subscribe Now</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg">
+                      <Link href="/pricing">View Pricing</Link>
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mt-4 text-center">
+                    All professional services are delivered in accordance with applicable Indian laws and professional regulations. 
+                    Handled by ZenithBooks Compliance Team.
+                  </p>
+                </CardContent>
+              </Card>
             </motion.div>
           </ClientOnly>
 
