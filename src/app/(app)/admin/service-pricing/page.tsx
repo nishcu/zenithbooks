@@ -101,6 +101,8 @@ export default function ServicePricingPage() {
         gst_documents: [],
         accounting_documents: [],
         notice_handling: [],
+        itr_filing: [],
+        compliance_plans: [],
     };
 
     for (const category in services) {
@@ -195,6 +197,7 @@ export default function ServicePricingPage() {
             {renderServiceCategory("CA Certificates", "ca_certs")}
             {renderServiceCategory("Notice Handling & Resolution", "notice_handling")}
             {renderServiceCategory("ITR Filing", "itr_filing")}
+            {renderServiceCategory("Monthly Compliance Services", "compliance_plans")}
             <Separator />
             {renderServiceCategory("Registration Deeds", "registration_deeds")}
             {renderServiceCategory("Founder & Startup Docs", "founder_startup")}

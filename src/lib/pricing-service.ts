@@ -56,6 +56,7 @@ function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing>
     accounting_documents: mergeServiceLists(defaults.accounting_documents, s.accounting_documents as any),
     notice_handling: mergeServiceLists(defaults.notice_handling, s.notice_handling as any),
     itr_filing: mergeServiceLists(defaults.itr_filing, s.itr_filing as any),
+    compliance_plans: mergeServiceLists(defaults.compliance_plans, s.compliance_plans as any),
   };
 }
 

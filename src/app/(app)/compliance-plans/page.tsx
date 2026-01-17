@@ -14,19 +14,35 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter } from "next/navigation";
-import { getAllCompliancePlans, type CompliancePlan } from "@/lib/compliance-plans/constants";
+import { getAllCompliancePlans, getAllCompliancePlansWithPricing, type CompliancePlan } from "@/lib/compliance-plans/constants";
 import { getComplianceSubscriptionByUserId } from "@/lib/compliance-plans/firestore";
+import { getServicePricing } from "@/lib/pricing-service";
 
 export default function CompliancePlansPage() {
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const router = useRouter();
-  const [plans] = useState<CompliancePlan[]>(getAllCompliancePlans());
+  const [plans, setPlans] = useState<CompliancePlan[]>(getAllCompliancePlans());
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<"monthly" | "annual">("annual");
   const [loading, setLoading] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
 
   useEffect(() => {
+    // Load pricing from pricing service
+    const loadPricing = async () => {
+      try {
+        const pricing = await getServicePricing();
+        const plansWithPricing = await getAllCompliancePlansWithPricing(pricing);
+        setPlans(plansWithPricing);
+      } catch (error) {
+        console.error("Error loading pricing:", error);
+        // Fallback to default pricing
+        setPlans(getAllCompliancePlans());
+      }
+    };
+    
+    loadPricing();
+    
     if (user) {
       loadCurrentSubscription();
     }

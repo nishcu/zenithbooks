@@ -316,3 +316,56 @@ export function getAllCompliancePlans(): CompliancePlan[] {
   return Object.values(COMPLIANCE_PLANS);
 }
 
+/**
+ * Get compliance plan with pricing from pricing service
+ * Falls back to default pricing if not found in pricing service
+ */
+export async function getCompliancePlanWithPricing(tier: CompliancePlanTier, pricingService?: any): Promise<CompliancePlan> {
+  const plan = COMPLIANCE_PLANS[tier];
+  
+  if (pricingService?.compliance_plans) {
+    const pricingMap: Record<string, number> = {};
+    pricingService.compliance_plans.forEach((p: { id: string; price: number }) => {
+      pricingMap[p.id] = p.price;
+    });
+    
+    const monthlyKey = `${tier}_monthly`;
+    const annualKey = `${tier}_annual`;
+    
+    return {
+      ...plan,
+      monthlyPrice: pricingMap[monthlyKey] ?? plan.monthlyPrice,
+      annualPrice: pricingMap[annualKey] ?? plan.annualPrice,
+    };
+  }
+  
+  return plan;
+}
+
+/**
+ * Get all compliance plans with pricing from pricing service
+ */
+export async function getAllCompliancePlansWithPricing(pricingService?: any): Promise<CompliancePlan[]> {
+  const plans = getAllCompliancePlans();
+  
+  if (pricingService?.compliance_plans) {
+    const pricingMap: Record<string, number> = {};
+    pricingService.compliance_plans.forEach((p: { id: string; price: number }) => {
+      pricingMap[p.id] = p.price;
+    });
+    
+    return plans.map(plan => {
+      const monthlyKey = `${plan.id}_monthly`;
+      const annualKey = `${plan.id}_annual`;
+      
+      return {
+        ...plan,
+        monthlyPrice: pricingMap[monthlyKey] ?? plan.monthlyPrice,
+        annualPrice: pricingMap[annualKey] ?? plan.annualPrice,
+      };
+    });
+  }
+  
+  return plans;
+}
+

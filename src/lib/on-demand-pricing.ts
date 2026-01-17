@@ -20,6 +20,7 @@ export type ServicePricing = {
     accounting_documents: Service[];
     notice_handling: Service[];
     itr_filing: Service[];
+    compliance_plans: Service[];
 };
 
 // We can still keep the initial default values here
@@ -90,6 +91,14 @@ export const servicePricing: ServicePricing = {
         { id: "itr2", name: "ITR-2 (Individuals with Capital Gains)", price: 1999 },
         { id: "itr3", name: "ITR-3 (Business/Profession Income)", price: 2999 },
         { id: "itr4", name: "ITR-4 (Presumptive Taxation)", price: 2499 },
+    ],
+    compliance_plans: [
+        { id: "core_monthly", name: "Core Compliance (Monthly)", price: 2999 },
+        { id: "core_annual", name: "Core Compliance (Annual)", price: 29990 },
+        { id: "statutory_monthly", name: "Statutory Compliance (Monthly)", price: 5999 },
+        { id: "statutory_annual", name: "Statutory Compliance (Annual)", price: 59990 },
+        { id: "complete_monthly", name: "Complete Compliance (Monthly)", price: 9999 },
+        { id: "complete_annual", name: "Complete Compliance (Annual)", price: 99990 },
     ],
 };
 
