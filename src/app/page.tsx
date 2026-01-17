@@ -171,7 +171,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Select your professional (CA/CS/CWA/Auditor/Accountant/etc)
+                    Access platform-managed professional resources
                   </li>
                 </ul>
               </CardContent>
