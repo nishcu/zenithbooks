@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useContext, memo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -251,6 +251,22 @@ function DashboardContent() {
       color: "from-blue-500 to-cyan-600",
       badge: "Internal"
     },
+    {
+      title: "Payroll",
+      description: "Manage employee payroll, PF, ESI, and compliance",
+      icon: UserCog,
+      href: "/payroll",
+      color: "from-rose-500 to-pink-600",
+      badge: "HR"
+    },
+    {
+      title: "Reports",
+      description: "CMA reports, sales analysis, and business insights",
+      icon: BarChart3,
+      href: "/reports/cma-report",
+      color: "from-cyan-500 to-blue-600",
+      badge: "Analytics"
+    },
   ];
 
   // Tasks and Networking Features (for professionals)
@@ -450,8 +466,8 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
-                      {/* Mobile: tile-by-tile (one per row). Desktop: multi-column */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full">
+                      {/* Mobile: tile-by-tile (one per row). Desktop: 3x3 uniform grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
@@ -503,8 +519,8 @@ function DashboardContent() {
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden">
-                      {/* Mobile: tile-by-tile (one per row). Desktop: multi-column */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full">
+                      {/* Mobile: tile-by-tile (one per row). Desktop: 3x3 uniform grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                         {quickAccessFeatures.map((feature) => {
                           const Icon = feature.icon;
                           return (
