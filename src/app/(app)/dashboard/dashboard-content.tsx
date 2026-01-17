@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useContext, memo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -246,6 +246,58 @@ function DashboardContent() {
     },
   ];
 
+  // Tasks and Networking Features (for professionals)
+  const tasksNetworkingFeatures = [
+    {
+      title: "Browse Tasks",
+      description: "Discover available tasks and assignments from businesses",
+      icon: ClipboardList,
+      href: "/tasks/browse",
+      color: "from-blue-500 to-indigo-600",
+      badge: "Explore"
+    },
+    {
+      title: "Post Tasks",
+      description: "Post tasks and find professionals to complete them",
+      icon: Briefcase,
+      href: "/tasks/post",
+      color: "from-purple-500 to-pink-600",
+      badge: "Post"
+    },
+    {
+      title: "My Tasks",
+      description: "View and manage your assigned tasks and applications",
+      icon: FileText,
+      href: "/tasks/my-tasks",
+      color: "from-emerald-500 to-teal-600",
+      badge: "Manage"
+    },
+    {
+      title: "My Applications",
+      description: "Track your applications for various tasks",
+      icon: MessageSquare,
+      href: "/tasks/my-applications",
+      color: "from-amber-500 to-orange-600",
+      badge: "Track"
+    },
+    {
+      title: "Create Profile",
+      description: "Create or update your professional profile for networking",
+      icon: UserPlus,
+      href: "/professionals/create-profile",
+      color: "from-rose-500 to-red-600",
+      badge: "Setup"
+    },
+    {
+      title: "Browse Professionals",
+      description: "Connect with other professionals in the network",
+      icon: Users,
+      href: "/professionals/list",
+      color: "from-cyan-500 to-blue-600",
+      badge: "Network"
+    },
+  ];
+
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
           <div className="space-y-8 w-full max-w-full overflow-x-hidden min-w-0">
@@ -265,6 +317,58 @@ function DashboardContent() {
                     </CardContent>
                  </Card>
                )}
+
+              {/* Tasks and Networking Section - Highlighted for Professionals */}
+              <Card className="border-2 border-primary/30 shadow-xl bg-gradient-to-br from-primary/5 to-primary/10">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <Network className="h-6 w-6 text-primary" />
+                        Tasks & Networking
+                      </CardTitle>
+                      <CardDescription className="mt-2 text-base">
+                        Connect with businesses, find assignments, and grow your professional network
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden min-w-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6 gap-4 w-full min-w-0">
+                    {tasksNetworkingFeatures.map((feature) => {
+                      const Icon = feature.icon;
+                      return (
+                        <Link key={feature.href} href={feature.href}>
+                          <Card className="h-full hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 border-2 hover:border-primary/60 group cursor-pointer min-w-0 bg-card hover:-translate-y-1">
+                            <CardHeader className="pb-3 px-4 pt-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20">
+                                  {feature.badge}
+                                </Badge>
+                              </div>
+                              <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-md`}>
+                                <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
+                                {feature.title}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0 px-4 pb-4">
+                              <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                {feature.description}
+                              </CardDescription>
+                              <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span className="text-xs font-medium">Explore</span>
+                                <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Render the main business dashboard below the client manager */}
                <div className="space-y-8 mt-8">
