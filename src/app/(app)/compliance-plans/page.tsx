@@ -146,31 +146,40 @@ export default function CompliancePlansPage() {
         </div>
       </div>
 
-      {/* Billing Toggle - Compact */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <Button
-            variant={selectedBillingPeriod === "monthly" ? "default" : "outline"}
-            size="lg"
-            onClick={() => setSelectedBillingPeriod("monthly")}
-            className="min-w-[120px]"
-          >
-            Monthly
-          </Button>
-          <Button
-            variant={selectedBillingPeriod === "annual" ? "default" : "outline"}
-            size="lg"
-            onClick={() => setSelectedBillingPeriod("annual")}
-            className="min-w-[120px] relative"
-          >
-            Annual
-            <Badge className="ml-2 bg-green-600 hover:bg-green-700">Save ~16%</Badge>
-          </Button>
+      {/* Billing Toggle - Sticky Header */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b shadow-sm">
+        <div className="container mx-auto px-6 py-5">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Billing Period:</span>
+            <div className="inline-flex rounded-lg border-2 bg-muted p-1 shadow-inner">
+              <Button
+                variant={selectedBillingPeriod === "monthly" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedBillingPeriod("monthly")}
+                className="min-w-[110px] font-medium"
+              >
+                Monthly
+              </Button>
+              <Button
+                variant={selectedBillingPeriod === "annual" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedBillingPeriod("annual")}
+                className="min-w-[110px] font-medium"
+              >
+                Annual
+              </Button>
+            </div>
+            {selectedBillingPeriod === "annual" && (
+              <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1">
+                Save ~16%
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Products Grid */}
-      <div className="container mx-auto px-6 pb-16">
+      <div className="container mx-auto px-6 py-12 pb-16">
         <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan) => {
             const config = planConfigs[plan.id];
@@ -184,7 +193,7 @@ export default function CompliancePlansPage() {
                 key={plan.id}
                 className={`relative flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl ${
                   plan.id === "statutory"
-                    ? "border-2 border-primary shadow-xl scale-105 lg:scale-110"
+                    ? "border-2 border-primary shadow-xl"
                     : "border hover:border-primary/50"
                 }`}
               >
