@@ -249,16 +249,17 @@ export function LoginForm() {
                                         Forgot your password?
                                     </Button>
                                 </div>
-                                <FormControl>
-                                <div className="relative flex">
-                                    <Input 
-                                        id="password"
-                                        type={showPassword ? "text" : "password"} 
-                                        aria-label="Password"
-                                        aria-required="true"
-                                        className="pr-12"
-                                        {...field} 
-                                    />
+                                <div className="relative">
+                                    <FormControl>
+                                        <Input 
+                                            id="password"
+                                            type={showPassword ? "text" : "password"} 
+                                            aria-label="Password"
+                                            aria-required="true"
+                                            className="pr-12"
+                                            {...field} 
+                                        />
+                                    </FormControl>
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -274,7 +275,6 @@ export function LoginForm() {
                                         )}
                                     </Button>
                                 </div>
-                                </FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
