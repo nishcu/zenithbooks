@@ -77,12 +77,12 @@ export function MobileDashboard() {
   const createActions = [
     { icon: FileText, label: "Invoice", href: "/billing/invoices/new" },
     { icon: ShoppingCart, label: "Purchase", href: "/purchases/new" },
-    { icon: Truck, label: "Delivery Challan", href: "/billing/delivery-challan" },
     { icon: FileCheck, label: "Purchase Order", href: "/purchases/purchase-orders/new" },
     { icon: FilePlus, label: "Credit Note", href: "/billing/credit-notes/new" },
     { icon: FileMinus, label: "Debit Note", href: "/billing/debit-notes/new" },
     { icon: ShoppingBag, label: "Sales Order", href: "/billing/sales-orders/new" },
-    { icon: Package, label: "Items", href: "/billing/items" },
+    { icon: Package, label: "Items", href: "/items" },
+    { icon: Truck, label: "Delivery Challan", href: "/billing/invoices/new" }, // Temporary redirect to invoices until delivery challan page is created
   ];
 
   // Core Features

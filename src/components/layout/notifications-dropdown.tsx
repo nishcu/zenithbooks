@@ -156,10 +156,8 @@ export function NotificationsDropdown() {
                 {notifications.length > 10 && (
                     <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/notifications" className="w-full text-center">
-                                View all notifications
-                            </Link>
+                        <DropdownMenuItem disabled className="w-full text-center text-muted-foreground">
+                            Showing 10 most recent notifications
                         </DropdownMenuItem>
                     </>
                 )}

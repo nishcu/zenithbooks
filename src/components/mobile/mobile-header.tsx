@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
 import {
   Select,
   SelectContent,
@@ -54,12 +55,8 @@ export function MobileHeader({ financialYear = "2025-26", onFinancialYearChange 
             </SelectContent>
           </Select>
 
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-            <Link href="/notifications">
-              <Bell className="h-5 w-5 text-gray-700" />
-            </Link>
-          </Button>
+          {/* Notifications - Using dropdown instead of link */}
+          <NotificationsDropdown />
 
           {/* Profile Avatar */}
           <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
