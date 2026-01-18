@@ -56,8 +56,17 @@ export default function TerminationLetterPage() {
     defaultValues: {
       companyName: "",
       companyAddress: "",
+      employeeName: "",
+      employeeAddress: "",
       terminationDate: "",
+      jobTitle: "",
+      joiningDate: "",
       lastWorkingDate: "",
+      terminationReason: "",
+      noticePeriodMonths: 2,
+      severanceDetails: "",
+      signerName: "",
+      signerTitle: "",
     },
   });
 

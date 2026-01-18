@@ -74,7 +74,19 @@ export default function AppointmentLetterPage() {
     defaultValues: {
       companyName: "GSTEase Solutions Pvt. Ltd.",
       companyAddress: "123 Business Avenue, Commerce City, Maharashtra - 400001",
-      // Default dates will be set in useEffect to avoid hydration issues
+      employeeName: "",
+      employeeAddress: "",
+      appointmentDate: "",
+      jobTitle: "",
+      joiningDate: "",
+      probationMonths: 6,
+      annualCtc: 0,
+      compensationDetails: "Your detailed compensation and benefits structure is outlined in Annexure A.",
+      workingHours: "The standard working hours are from 10:00 AM to 7:00 PM, Monday to Friday.",
+      terminationNoticeMonths: 2,
+      jurisdictionCity: "Mumbai",
+      signerName: "",
+      signerTitle: "",
     },
   });
 

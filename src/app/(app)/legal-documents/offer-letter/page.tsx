@@ -66,8 +66,16 @@ export default function OfferLetterPage() {
     defaultValues: {
       companyName: "ZenithBooks Solutions Pvt. Ltd.",
       companyAddress: "123 Business Avenue, Commerce City, Maharashtra - 400001",
+      candidateName: "",
+      candidateAddress: "",
       offerDate: "",
+      jobTitle: "",
+      reportingManager: "",
+      joiningDate: "",
+      annualCtc: 0,
       acceptanceDeadline: "",
+      signerName: "",
+      signerTitle: "",
     },
   });
 
