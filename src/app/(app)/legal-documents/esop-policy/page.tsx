@@ -21,8 +21,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const formSchema = z.object({
@@ -48,6 +50,8 @@ export default function EsopPolicy() {
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("esop_policy_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,

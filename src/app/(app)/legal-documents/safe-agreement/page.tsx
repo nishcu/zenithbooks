@@ -15,8 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useReactToPrint } from "react-to-print";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@/components/payment/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -40,6 +42,8 @@ export default function SafeAgreement() {
   const [user] = useAuthState(auth);
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("safe_agreement_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -158,7 +162,29 @@ export default function SafeAgreement() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={handlePrint}><Printer className="mr-2"/> Print/Save Summary</Button>
+              {(() => {
+                const basePrice = pricing?.founder_startup?.find(s => s.id === 'safe_agreement')?.price || 0;
+                const effectivePrice = userSubscriptionInfo
+                  ? getEffectiveServicePrice(basePrice, userSubscriptionInfo.userType, userSubscriptionInfo.subscriptionPlan, "founder_startup")
+                  : basePrice;
+                return (
+                  <OnDemandPayAndUseActions
+                    userId={user?.uid || ''}
+                    userEmail={user?.email || ''}
+                    userName={user?.displayName || ''}
+                    planId="safe_agreement_download"
+                    planName="SAFE Agreement Download"
+                    amount={effectivePrice}
+                    fileName={`SAFE_Agreement_${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}`}
+                    contentRef={printRef}
+                    documentType="safe_agreement"
+                    documentName={`SAFE Agreement - ${formData.companyName}`}
+                    metadata={{ source: "legal-documents" }}
+                    showDocument={showDocument}
+                    setShowDocument={setShowDocument}
+                  />
+                );
+              })()}
             </CardFooter>
           </Card>
         );

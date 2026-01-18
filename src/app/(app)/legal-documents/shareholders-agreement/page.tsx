@@ -23,8 +23,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { ShareButtons } from "@/components/documents/share-buttons";
 import { CashfreeCheckout } from "@\/components\/payment\/cashfree-checkout";
+import { OnDemandPayAndUseActions } from "@/components/payment/on-demand-pay-and-use-actions";
 import { getServicePricing, onPricingUpdate } from "@/lib/pricing-service";
 import { useCertificationRequest } from "@/hooks/use-certification-request";
+import { useOnDemandUnlock } from "@/hooks/use-on-demand-unlock";
 import { getUserSubscriptionInfo, getEffectiveServicePrice } from "@/lib/service-pricing-utils";
 
 const shareholderSchema = z.object({
@@ -56,6 +58,8 @@ export default function ShareholdersAgreement() {
   const [isLoading, setIsLoading] = useState(!!docId);
   const [pricing, setPricing] = useState(null);
   const [userSubscriptionInfo, setUserSubscriptionInfo] = useState<{ userType: "business" | "professional" | null; subscriptionPlan: "freemium" | "business" | "professional" | null } | null>(null);
+  const [showDocument, setShowDocument] = useState(false);
+  useOnDemandUnlock("shareholders_agreement_download", () => setShowDocument(true));
 
   const { handleCertificationRequest, handlePaymentSuccess, isSubmitting: isCertifying } = useCertificationRequest({
     pricing,
@@ -252,27 +256,29 @@ export default function ShareholdersAgreement() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={async () => {
-                try {
-                  if (!documentRef.current) {
-                    toast({ variant: "destructive", title: "Error", description: "Could not find document content." });
-                    return;
-                  }
-                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
-                  const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: `Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}.pdf`,
-                    image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
-                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-                  };
-                  await html2pdf().set(opt).from(documentRef.current).save();
-                  toast({ title: "PDF Generated", description: "Your Shareholders' Agreement has been downloaded successfully." });
-                } catch (error: any) {
-                  toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
-                }
-              }}><FileDown className="mr-2"/> Download Full Agreement</Button>
+              {(() => {
+                const basePrice = pricing?.founder_startup?.find(s => s.id === 'shareholders_agreement')?.price || 0;
+                const effectivePrice = userSubscriptionInfo
+                  ? getEffectiveServicePrice(basePrice, userSubscriptionInfo.userType, userSubscriptionInfo.subscriptionPlan, "founder_startup")
+                  : basePrice;
+                return (
+                  <OnDemandPayAndUseActions
+                    userId={user?.uid || ''}
+                    userEmail={user?.email || ''}
+                    userName={user?.displayName || ''}
+                    planId="shareholders_agreement_download"
+                    planName="Shareholders' Agreement Download"
+                    amount={effectivePrice}
+                    fileName={`Shareholders-Agreement-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(formData.agreementDate), "yyyy-MM-dd")}`}
+                    contentRef={documentRef}
+                    documentType="shareholders_agreement"
+                    documentName={`Shareholders' Agreement - ${formData.companyName}`}
+                    metadata={{ source: "legal-documents" }}
+                    showDocument={showDocument}
+                    setShowDocument={setShowDocument}
+                  />
+                );
+              })()}
             </CardFooter>
           </Card>
         );
