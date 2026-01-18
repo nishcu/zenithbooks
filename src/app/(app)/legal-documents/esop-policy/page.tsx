@@ -218,27 +218,30 @@ export default function EsopPolicy() {
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button>
-              <Button type="button" onClick={async () => {
-                try {
-                  if (!documentRef.current) {
-                    toast({ variant: "destructive", title: "Error", description: "Could not find document content." });
-                    return;
-                  }
-                  toast({ title: "Generating PDF...", description: "Your document is being prepared." });
-                  const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: `ESOP-Policy-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(), "yyyy-MM-dd")}.pdf`,
-                    image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } },
-                    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-                  };
-                  await html2pdf().set(opt).from(documentRef.current).save();
-                  toast({ title: "PDF Generated", description: "Your ESOP Policy has been downloaded successfully." });
-                } catch (error: any) {
-                  toast({ variant: "destructive", title: "Generation Failed", description: error.message || "An error occurred while generating the PDF." });
-                }
-              }}><FileDown className="mr-2"/> Download Full Policy</Button>
+              {(() => {
+                const basePrice = pricing?.founder_startup?.find(s => s.id === 'esop_policy')?.price || 0;
+                const effectivePrice = userSubscriptionInfo
+                  ? getEffectiveServicePrice(basePrice, userSubscriptionInfo.userType, userSubscriptionInfo.subscriptionPlan, "founder_startup")
+                  : basePrice;
+                const formData = form.getValues();
+                return (
+                  <OnDemandPayAndUseActions
+                    userId={user?.uid || ''}
+                    userEmail={user?.email || ''}
+                    userName={user?.displayName || ''}
+                    planId="esop_policy_download"
+                    planName="ESOP Policy Download"
+                    amount={effectivePrice}
+                    fileName={`ESOP-Policy-${formData.companyName.replace(/\s+/g, '-')}-${format(new Date(), "yyyy-MM-dd")}`}
+                    contentRef={documentRef}
+                    documentType="esop_policy"
+                    documentName={`ESOP Policy - ${formData.companyName}`}
+                    metadata={{ source: "legal-documents" }}
+                    showDocument={showDocument}
+                    setShowDocument={setShowDocument}
+                  />
+                );
+              })()}
             </CardFooter>
           </Card>
         );
