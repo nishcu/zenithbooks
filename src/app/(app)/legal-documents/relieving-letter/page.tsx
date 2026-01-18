@@ -56,8 +56,17 @@ export default function RelievingLetterPage() {
     defaultValues: {
       companyName: "",
       companyAddress: "",
+      employeeName: "",
+      employeeAddress: "",
       letterDate: "",
+      jobTitle: "",
+      department: "",
+      employeeId: "",
+      joiningDate: "",
       lastWorkingDate: "",
+      handoverStatus: "All company property, documents, and access credentials have been duly handed over.",
+      signerName: "",
+      signerTitle: "",
     },
   });
 

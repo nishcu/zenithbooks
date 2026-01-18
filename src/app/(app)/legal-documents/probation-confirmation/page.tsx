@@ -56,8 +56,17 @@ export default function ProbationConfirmationPage() {
     defaultValues: {
       companyName: "",
       companyAddress: "",
+      employeeName: "",
+      employeeAddress: "",
       letterDate: "",
+      jobTitle: "",
+      department: "",
+      joiningDate: "",
+      probationEndDate: "",
+      performanceAssessment: "",
       confirmationDate: "",
+      signerName: "",
+      signerTitle: "",
     },
   });
 
