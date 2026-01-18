@@ -448,7 +448,7 @@ export default function AdminComplianceTasks() {
                   <div>
                     <label className="text-sm font-medium">Form Type</label>
                     <Input
-                      value={filingDetails.formType}
+                      value={filingDetails.formType || ""}
                       onChange={(e) => setFilingDetails({ ...filingDetails, formType: e.target.value })}
                       placeholder="e.g., GSTR-1, GSTR-3B"
                     />
@@ -456,7 +456,7 @@ export default function AdminComplianceTasks() {
                   <div>
                     <label className="text-sm font-medium">Period</label>
                     <Input
-                      value={filingDetails.period}
+                      value={filingDetails.period || ""}
                       onChange={(e) => setFilingDetails({ ...filingDetails, period: e.target.value })}
                       placeholder="e.g., Jan 2024"
                     />
@@ -465,7 +465,7 @@ export default function AdminComplianceTasks() {
                 <div>
                   <label className="text-sm font-medium">Acknowledgment Number</label>
                   <Input
-                    value={filingDetails.acknowledgmentNumber}
+                    value={filingDetails.acknowledgmentNumber || ""}
                     onChange={(e) => setFilingDetails({ ...filingDetails, acknowledgmentNumber: e.target.value })}
                     placeholder="Optional"
                   />
@@ -489,7 +489,7 @@ export default function AdminComplianceTasks() {
                 ) : activeAssociates.length > 0 ? (
                   <>
                     <Select
-                      value={assignedTo === "__manual__" ? "" : assignedTo}
+                      value={assignedTo === "__manual__" ? "" : (assignedTo || "")}
                       onValueChange={(value) => {
                         if (value === "__manual__") {
                           setAssignedTo("");
@@ -514,7 +514,7 @@ export default function AdminComplianceTasks() {
                     {!assignedTo || (!activeAssociates.find(a => a.associateCode === assignedTo) && assignedTo !== "") ? (
                       <Input
                         id="assigned-to-manual"
-                        value={assignedTo}
+                        value={assignedTo || ""}
                         onChange={(e) => setAssignedTo(e.target.value)}
                         placeholder="Enter associate code manually"
                         className="mt-2"
@@ -524,7 +524,7 @@ export default function AdminComplianceTasks() {
                 ) : (
                   <Input
                     id="assigned-to"
-                    value={assignedTo}
+                    value={assignedTo || ""}
                     onChange={(e) => setAssignedTo(e.target.value)}
                     placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
                     className="mt-1"
@@ -538,7 +538,7 @@ export default function AdminComplianceTasks() {
                 <Label htmlFor="sop-reference">SOP Reference</Label>
                 <Input
                   id="sop-reference"
-                  value={sopReference}
+                  value={sopReference || ""}
                   onChange={(e) => setSopReference(e.target.value)}
                   placeholder="e.g., SOP-GSTR-001, SOP-TDS-002"
                   className="mt-1"
@@ -551,7 +551,7 @@ export default function AdminComplianceTasks() {
                 <Label htmlFor="ca-reviewer">CA Reviewer (Enterprise Plan Only)</Label>
                 <Input
                   id="ca-reviewer"
-                  value={caReviewer}
+                  value={caReviewer || ""}
                   onChange={(e) => setCaReviewer(e.target.value)}
                   placeholder="e.g., CA Code: CA-001 (For Enterprise plan tasks)"
                   className="mt-1"
@@ -567,7 +567,7 @@ export default function AdminComplianceTasks() {
               <Label htmlFor="internal-notes">Internal Notes</Label>
               <Textarea
                 id="internal-notes"
-                value={internalNotes}
+                value={internalNotes || ""}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 placeholder="Add internal notes for this task (SOP steps, deadlines, etc.)..."
                 rows={4}

@@ -66,7 +66,23 @@ export default function EmploymentAgreementPage() {
     defaultValues: {
       companyName: "",
       companyAddress: "",
+      employeeName: "",
+      employeeAddress: "",
       agreementDate: "",
+      jobTitle: "",
+      department: "",
+      joiningDate: "",
+      probationMonths: 6,
+      annualCtc: 0,
+      jobDescription: "",
+      workingHours: "9:00 AM to 6:00 PM, Monday to Friday",
+      leavePolicy: "As per company policy",
+      terminationNoticeMonths: 2,
+      confidentialityClause: "Employee agrees to maintain confidentiality of all company information during and after employment.",
+      nonCompeteClause: "",
+      jurisdictionCity: "Mumbai",
+      signerName: "",
+      signerTitle: "",
     },
   });
 
@@ -138,9 +154,9 @@ export default function EmploymentAgreementPage() {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="joiningDate" render={({ field }) => ( <FormItem><FormLabel>Joining Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                    <FormField control={form.control} name="probationMonths" render={({ field }) => ( <FormItem><FormLabel>Probation Period (Months)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                    <FormField control={form.control} name="probationMonths" render={({ field }) => ( <FormItem><FormLabel>Probation Period (Months)</FormLabel><FormControl><Input type="number" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)} /></FormControl><FormMessage /></FormItem> )}/>
                 </div>
-                <FormField control={form.control} name="annualCtc" render={({ field }) => ( <FormItem><FormLabel>Annual CTC (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name="annualCtc" render={({ field }) => ( <FormItem><FormLabel>Annual CTC (₹)</FormLabel><FormControl><Input type="number" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name="jobDescription" render={({ field }) => ( <FormItem><FormLabel>Job Description & Responsibilities</FormLabel><FormControl><Textarea className="min-h-24" {...field} /></FormControl><FormMessage /></FormItem> )}/>
             </CardContent>
             <CardFooter className="justify-between"><Button type="button" variant="outline" onClick={handleBack}><ArrowLeft className="mr-2"/> Back</Button><Button type="button" onClick={processStep}>Next <ArrowRight className="ml-2"/></Button></CardFooter>
@@ -153,7 +169,7 @@ export default function EmploymentAgreementPage() {
             <CardContent className="space-y-4">
                 <FormField control={form.control} name="workingHours" render={({ field }) => ( <FormItem><FormLabel>Working Hours</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name="leavePolicy" render={({ field }) => ( <FormItem><FormLabel>Leave Policy</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
-                <FormField control={form.control} name="terminationNoticeMonths" render={({ field }) => ( <FormItem className="max-w-xs"><FormLabel>Termination Notice Period (Months)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )}/>
+                <FormField control={form.control} name="terminationNoticeMonths" render={({ field }) => ( <FormItem className="max-w-xs"><FormLabel>Termination Notice Period (Months)</FormLabel><FormControl><Input type="number" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name="confidentialityClause" render={({ field }) => ( <FormItem><FormLabel>Confidentiality Clause</FormLabel><FormControl><Textarea className="min-h-24" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name="nonCompeteClause" render={({ field }) => ( <FormItem><FormLabel>Non-Compete Clause (Optional)</FormLabel><FormControl><Textarea className="min-h-24" placeholder="Optional non-compete restrictions..." {...field} /></FormControl><FormMessage /></FormItem> )}/>
                 <FormField control={form.control} name="jurisdictionCity" render={({ field }) => ( <FormItem className="max-w-xs"><FormLabel>Jurisdiction City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
@@ -187,10 +203,10 @@ export default function EmploymentAgreementPage() {
                         <p>The Employee's duties and responsibilities include: {formData.jobDescription}</p>
 
                         <h4 className="font-bold mt-4">2. Probation Period</h4>
-                        <p>The Employee will be on probation for a period of {formData.probationMonths} months from the date of joining. Upon successful completion, employment will be confirmed in writing.</p>
+                        <p>The Employee will be on probation for a period of {formData.probationMonths || 6} months from the date of joining. Upon successful completion, employment will be confirmed in writing.</p>
 
                         <h4 className="font-bold mt-4">3. Compensation</h4>
-                        <p>The Employee will receive an annual Cost to Company (CTC) of ₹{formData.annualCtc.toLocaleString('en-IN')}, payable in accordance with the Employer's payroll schedule.</p>
+                        <p>The Employee will receive an annual Cost to Company (CTC) of ₹{formData.annualCtc ? formData.annualCtc.toLocaleString('en-IN') : '[CTC Amount]'}, payable in accordance with the Employer's payroll schedule.</p>
 
                         <h4 className="font-bold mt-4">4. Working Hours</h4>
                         <p>{formData.workingHours}</p>
@@ -199,7 +215,7 @@ export default function EmploymentAgreementPage() {
                         <p>{formData.leavePolicy}</p>
 
                         <h4 className="font-bold mt-4">6. Termination</h4>
-                        <p>This Agreement may be terminated by either party by giving {formData.terminationNoticeMonths} month(s) written notice or salary in lieu thereof.</p>
+                        <p>This Agreement may be terminated by either party by giving {formData.terminationNoticeMonths || 2} month(s) written notice or salary in lieu thereof.</p>
 
                         <h4 className="font-bold mt-4">7. Confidentiality</h4>
                         <p>{formData.confidentialityClause}</p>

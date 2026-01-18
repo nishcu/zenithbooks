@@ -1,0 +1,335 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-15",
+  "rules": [
+    {
+      "id": "gst_gstr1_monthly",
+      "name": "GSTR-1 Monthly Filing",
+      "description": "Monthly filing of outward supplies (GSTR-1)",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited", "one_person_company"],
+      "triggerEvent": "month_end",
+      "triggerConditions": {
+        "gstRegistered": true,
+        "turnoverThreshold": 0
+      },
+      "complianceType": "gst",
+      "frequency": "monthly",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 11,
+        "monthOffset": 1
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 200,
+        "penaltyFormula": "200 + (days_overdue * 50)",
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "gstr1_filing",
+          "description": "GSTR-1 Return File",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 2,
+        "autoAssign": true,
+        "requiresCAReview": false,
+        "reviewStage": "after_filing"
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "gst_gstr3b_monthly",
+      "name": "GSTR-3B Monthly Filing",
+      "description": "Monthly summary return (GSTR-3B)",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited", "one_person_company"],
+      "triggerEvent": "month_end",
+      "triggerConditions": {
+        "gstRegistered": true
+      },
+      "complianceType": "gst",
+      "frequency": "monthly",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 20,
+        "monthOffset": 1
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 200,
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "gstr3b_filing",
+          "description": "GSTR-3B Return File",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": ["gst_gstr1_monthly"],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 3,
+        "autoAssign": true,
+        "requiresCAReview": true,
+        "reviewStage": "before_filing"
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "pf_monthly",
+      "name": "PF Monthly Payment",
+      "description": "Employees' Provident Fund monthly contribution",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited"],
+      "triggerEvent": "employee_count_threshold",
+      "triggerConditions": {
+        "employeeCount": { "gte": 20 },
+        "pfApplicable": true
+      },
+      "complianceType": "pf",
+      "frequency": "monthly",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 15,
+        "monthOffset": 1
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 1000,
+        "gracePeriodDays": 5
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "pf_challan",
+          "description": "PF Payment Challan",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 1,
+        "autoAssign": true,
+        "requiresCAReview": false
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "esi_monthly",
+      "name": "ESI Monthly Payment",
+      "description": "Employees' State Insurance monthly contribution",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited"],
+      "triggerEvent": "employee_count_threshold",
+      "triggerConditions": {
+        "employeeCount": { "gte": 10 },
+        "esiApplicable": true
+      },
+      "complianceType": "esi",
+      "frequency": "monthly",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 21,
+        "monthOffset": 1
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 500,
+        "gracePeriodDays": 5
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "esi_challan",
+          "description": "ESI Payment Challan",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 1,
+        "autoAssign": true,
+        "requiresCAReview": false
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "tds_quarterly",
+      "name": "TDS Quarterly Return",
+      "description": "TDS return filing (Form 24Q/26Q)",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited", "one_person_company"],
+      "triggerEvent": "quarter_end",
+      "triggerConditions": {
+        "tdsRegistered": true
+      },
+      "complianceType": "tds",
+      "frequency": "quarterly",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 31,
+        "monthOffset": 1
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 200,
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "tds_return",
+          "description": "TDS Return File (24Q/26Q)",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 4,
+        "autoAssign": true,
+        "requiresCAReview": true,
+        "reviewStage": "before_filing"
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "mca_annual_return",
+      "name": "MCA Annual Return",
+      "description": "Annual return filing (Form AOC-4 and MGT-7)",
+      "entityTypes": ["private_limited", "public_limited", "one_person_company"],
+      "triggerEvent": "financial_year_end",
+      "triggerConditions": {
+        "companyIncorporated": true
+      },
+      "complianceType": "mca",
+      "frequency": "annual",
+      "dueDateLogic": {
+        "type": "days_after_event",
+        "daysAfter": 60
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 5000,
+        "penaltyFormula": "5000 + (days_overdue * 100)",
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "aoc4_filing",
+          "description": "Annual Financial Statements (AOC-4)",
+          "mandatory": true,
+          "uploadBeforeDue": true
+        },
+        {
+          "documentType": "mgt7_filing",
+          "description": "Annual Return (MGT-7)",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 8,
+        "autoAssign": true,
+        "requiresCAReview": true,
+        "reviewStage": "before_filing"
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "gst_annual_return",
+      "name": "GSTR-9 Annual Return",
+      "description": "Annual GST return filing",
+      "entityTypes": ["sole_proprietorship", "partnership", "llp", "private_limited", "public_limited", "one_person_company"],
+      "triggerEvent": "financial_year_end",
+      "triggerConditions": {
+        "gstRegistered": true,
+        "turnoverThreshold": 2000000
+      },
+      "complianceType": "gst",
+      "frequency": "annual",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 31,
+        "monthOffset": 3
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 200,
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "gstr9_filing",
+          "description": "Annual GST Return (GSTR-9)",
+          "mandatory": true,
+          "uploadBeforeDue": false
+        }
+      ],
+      "dependencies": ["gst_gstr1_monthly", "gst_gstr3b_monthly"],
+      "taskConfiguration": {
+        "priority": "medium",
+        "estimatedDuration": 6,
+        "autoAssign": true,
+        "requiresCAReview": true,
+        "reviewStage": "before_filing"
+      },
+      "active": true,
+      "version": 1
+    },
+    {
+      "id": "director_kyc_annual",
+      "name": "Director KYC Annual",
+      "description": "Director KYC annual filing",
+      "entityTypes": ["private_limited", "public_limited"],
+      "triggerEvent": "annual",
+      "triggerConditions": {
+        "hasDirectors": true
+      },
+      "complianceType": "mca",
+      "frequency": "annual",
+      "dueDateLogic": {
+        "type": "fixed_day",
+        "dayOfMonth": 30,
+        "monthOffset": 3
+      },
+      "penaltyLogic": {
+        "enabled": true,
+        "penaltyAmount": 5000,
+        "gracePeriodDays": 0
+      },
+      "requiredDocuments": [
+        {
+          "documentType": "director_kyc_form",
+          "description": "Director KYC Form",
+          "mandatory": true,
+          "uploadBeforeDue": true
+        }
+      ],
+      "dependencies": [],
+      "taskConfiguration": {
+        "priority": "high",
+        "estimatedDuration": 2,
+        "autoAssign": true,
+        "requiresCAReview": false
+      },
+      "active": true,
+      "version": 1
+    }
+  ]
+}
+
