@@ -71,7 +71,6 @@ export default function HRPolicyHandbookPage() {
       policyReview: "This policy will be reviewed annually and may be modified at company's discretion",
       signerName: "",
       signerTitle: "",
-    ,
   });
 
   useEffect(() => {
