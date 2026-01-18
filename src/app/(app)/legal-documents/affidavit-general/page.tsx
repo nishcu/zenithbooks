@@ -245,7 +245,7 @@ export default function AffidavitGeneralPage() {
                 </CardContent>
             <CardFooter>
                 {(() => {
-                  const basePrice = pricing?.agreements?.find(s => s.id === 'warning_letter')?.price || 0;
+                  const basePrice = pricing?.agreements?.find(s => s.id === 'affidavit_general')?.price || 0;
                   const effectivePrice = userSubscriptionInfo
                     ? getEffectiveServicePrice(basePrice, userSubscriptionInfo.userType, userSubscriptionInfo.subscriptionPlan, "agreements")
                     : basePrice;
@@ -255,7 +255,7 @@ export default function AffidavitGeneralPage() {
                         userEmail={user?.email || ''}
                         userName={user?.displayName || ''}
                         planId="affidavit_general_download"
-                        planName="Warning Letter Download"
+                        planName="Affidavit General Download"
                         amount={effectivePrice}
                         fileName={`Affidavit_General_${formData.employeeName}`}
                         contentRef={printRef}
