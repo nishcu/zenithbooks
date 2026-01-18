@@ -60,7 +60,18 @@ export default function ITSecurityPolicyPage() {
       companyAddress: "",
       policyDate: "",
       effectiveDate: "",
-    },
+      eligibilityCriteria: "",
+      workingHours: "Standard working hours as per employment agreement",
+      attendanceTracking: "Employees must log in to company systems and maintain regular communication with supervisors",
+      communicationRequirements: "Employees must be available during core business hours and respond to communications within 2 hours",
+      equipmentAndInfrastructure: "Company will provide necessary equipment; employee must maintain secure internet connection",
+      dataSecurity: "Employees must follow all company data security protocols and use approved software/tools",
+      performanceExpectations: "Performance standards remain the same as in-office work",
+      expenseReimbursement: "",
+      policyReview: "This policy will be reviewed annually and may be modified at company's discretion",
+      signerName: "",
+      signerTitle: "",
+    ,
   });
 
   useEffect(() => {
