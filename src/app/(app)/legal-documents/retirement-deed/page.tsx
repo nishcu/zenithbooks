@@ -88,6 +88,8 @@ export default function RetirementDeedPage() {
       servicesDescription: "",
       paymentAmount: 10000,
       paymentTerms: "On a monthly basis, upon receipt of invoice.",
+      term: "This Agreement will commence on the effective date and will remain in full force and effect until the completion of the Services, unless terminated earlier as provided in this Agreement.",
+      confidentiality: "Both parties agree to keep confidential all non-public information obtained from the other party.",
       jurisdictionCity: "Delhi",
     },
   });

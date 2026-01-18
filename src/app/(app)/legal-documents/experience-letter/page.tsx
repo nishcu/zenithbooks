@@ -56,8 +56,17 @@ export default function ExperienceLetterPage() {
     defaultValues: {
       companyName: "",
       companyAddress: "",
+      employeeName: "",
+      employeeAddress: "",
       letterDate: "",
+      jobTitle: "",
+      department: "",
+      joiningDate: "",
       lastWorkingDate: "",
+      experienceDetails: "",
+      responsibilities: "",
+      signerName: "",
+      signerTitle: "",
     },
   });
 
