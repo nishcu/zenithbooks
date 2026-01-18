@@ -71,6 +71,7 @@ export default function PowerOfAttorneyGeneralPage() {
       consequences: "Failure to improve may result in further disciplinary action, including termination of employment.",
       signerName: "",
       signerTitle: "",
+    },
   });
 
   useEffect(() => {
