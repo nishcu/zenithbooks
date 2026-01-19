@@ -248,9 +248,11 @@ export default function KnowledgePage() {
               Educational content for professional awareness and compliance updates
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />
-            Share Knowledge
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/knowledge/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Share Knowledge
+            </Link>
           </Button>
         </div>
 
