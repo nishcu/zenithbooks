@@ -266,22 +266,21 @@ export default function CreateKnowledgePostPage() {
   const sourceReference = form.watch("sourceReference");
   const complianceAccepted = form.watch("complianceDeclarationAccepted");
   const category = form.watch("category");
-  
-  const professionalName = form.watch("professionalName");
-  const category = form.watch("category");
   const categoryOther = form.watch("categoryOther");
+  const professionalName = form.watch("professionalName");
   const firmName = form.watch("firmName");
   const qualification = form.watch("qualification");
   
   const isFormValid = 
     title.length >= 10 && 
     title.length <= 200 &&
-    caName.length >= 2 &&
+    professionalName.length >= 2 &&
     firmName.length >= 2 &&
     qualification.length >= 2 &&
     sourceReference.length >= 5 &&
     complianceAccepted &&
     category &&
+    (category !== "Others" || (categoryOther && categoryOther.trim().length >= 2)) &&
     validationErrors.length === 0;
 
   if (isLoading) {
