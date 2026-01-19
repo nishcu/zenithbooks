@@ -31,9 +31,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, HelpCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipHelp } from "@/components/vault/tooltip-help";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -363,19 +363,10 @@ export function CreateKnowledgePostModal({
                             <FormLabel className="text-sm font-medium cursor-pointer m-0 leading-normal">
                               Compliance Declaration *
                             </FormLabel>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <p className="text-xs">
-                                    This declaration is required per ICAI guidelines to ensure all shared content 
-                                    is educational and non-promotional in nature.
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <TooltipHelp 
+                              content="This declaration is required per ICAI guidelines to ensure all shared content is educational and non-promotional in nature."
+                              side="top"
+                            />
                           </div>
                           <FormDescription className="text-xs text-muted-foreground leading-relaxed m-0">
                             I confirm this content is educational, non-promotional, and does not solicit professional work,
