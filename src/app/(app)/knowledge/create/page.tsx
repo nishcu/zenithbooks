@@ -293,8 +293,14 @@ export default function CreateKnowledgePostPage() {
     );
   }
 
-  if (!isAuthorized) {
-    return null; // Already redirected
+  if (!isAuthorized && !isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Access Denied</p>
+        </div>
+      </div>
+    );
   }
 
   return (
