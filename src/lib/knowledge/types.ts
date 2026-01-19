@@ -23,6 +23,7 @@ export interface KnowledgePost {
   title: string;
   content: string; // Rich text, no embeds
   category: KnowledgeCategory;
+  categoryOther?: string; // Used when category is "Others"
   authorId: string;
   authorName?: string;
   authorFirmName?: string;
