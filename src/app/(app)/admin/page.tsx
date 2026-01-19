@@ -121,6 +121,13 @@ export default function AdminPage() {
       icon: Calendar,
       path: "/admin/appointments",
       badge: "Scheduling"
+    },
+    {
+      title: "Knowledge Moderation",
+      description: "Review and moderate knowledge posts",
+      icon: BookOpen,
+      path: "/admin/knowledge-moderation",
+      badge: "Content"
     }
   ];
 

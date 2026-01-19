@@ -198,6 +198,7 @@ const allMenuItems = [
     icon: ConciergeBell,
     roles: ['business', 'professional', 'super_admin']
   },
+  { href: "/knowledge", label: "Knowledge", icon: BookOpen, roles: ['professional'] },
   {
     label: "Tasks & Networking",
     icon: ClipboardList,
