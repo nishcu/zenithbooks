@@ -81,6 +81,32 @@ export default function CreateKnowledgePostPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      category: "GST",
+      categoryOther: "",
+      professionalName: "",
+      firmName: "",
+      qualification: "",
+      sourceReference: "",
+      complianceDeclarationAccepted: false,
+    },
+  });
+
+  // Watch form values - must be called unconditionally on every render
+  const title = form.watch("title");
+  const sourceReference = form.watch("sourceReference");
+  const complianceAccepted = form.watch("complianceDeclarationAccepted");
+  const category = form.watch("category");
+  const categoryOther = form.watch("categoryOther");
+  const professionalName = form.watch("professionalName");
+  const firmName = form.watch("firmName");
+  const qualification = form.watch("qualification");
+
   // Ensure component only renders on client
   useEffect(() => {
     setMounted(true);
@@ -141,32 +167,6 @@ export default function CreateKnowledgePostPage() {
 
     checkAuthorization();
   }, [user, router, toast, mounted, userLoading]);
-
-  // Show loading state until mounted
-  if (!mounted || userLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      category: "GST",
-      categoryOther: "",
-      professionalName: "",
-      firmName: "",
-      qualification: "",
-      sourceReference: "",
-      complianceDeclarationAccepted: false,
-    },
-  });
 
   // Pre-populate CA Name, Firm Name, and Qualification from user profile
   useEffect(() => {
@@ -282,16 +282,7 @@ export default function CreateKnowledgePostPage() {
     }
   };
 
-  // Watch form values for button disable logic
-  const title = form.watch("title");
-  const sourceReference = form.watch("sourceReference");
-  const complianceAccepted = form.watch("complianceDeclarationAccepted");
-  const category = form.watch("category");
-  const categoryOther = form.watch("categoryOther");
-  const professionalName = form.watch("professionalName");
-  const firmName = form.watch("firmName");
-  const qualification = form.watch("qualification");
-  
+  // Form validation - calculated after all hooks
   const isFormValid = 
     title.length >= 10 && 
     title.length <= 200 &&
