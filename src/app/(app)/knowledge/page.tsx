@@ -240,22 +240,31 @@ export default function KnowledgePage() {
   return (
     <div className="container mx-auto p-6 max-w-5xl">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-6 space-y-4">
+        {/* Title and Action Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">Knowledge Exchange</h1>
             <p className="text-muted-foreground">
               Educational content for professional awareness and compliance updates
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Share Knowledge
           </Button>
         </div>
 
+        {/* Compliance Notice - Full Width */}
+        <Alert className="w-full">
+          <AlertDescription className="text-xs leading-relaxed">
+            <strong>ICAI Compliance:</strong> ZenithBooks Knowledge Exchange is an educational, non-commercial feature
+            intended solely for professional awareness and compliance updates. No solicitation or professional marketing is permitted.
+          </AlertDescription>
+        </Alert>
+
         {/* Filters */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -268,7 +277,7 @@ export default function KnowledgePage() {
             </div>
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
@@ -281,14 +290,6 @@ export default function KnowledgePage() {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Compliance Notice */}
-        <Alert className="mb-4">
-          <AlertDescription className="text-xs">
-            <strong>ICAI Compliance:</strong> ZenithBooks Knowledge Exchange is an educational, non-commercial feature
-            intended solely for professional awareness and compliance updates. No solicitation or professional marketing is permitted.
-          </AlertDescription>
-        </Alert>
       </div>
 
       {/* Posts Feed */}
