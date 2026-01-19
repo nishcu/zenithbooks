@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -12,27 +12,54 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, ArrowRightLeft, FileArchive, LogIn, Users, Inbox } from "lucide-react";
+import { PlusCircle, ArrowRightLeft, FileArchive, LogIn, Users, Inbox, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import { useCollection } from "react-firebase-hooks/firestore";
 
 interface ClientListProps {
   onSwitchWorkspace: (client: { id: string, name: string } | null) => void;
   activeClientId: string | null;
 }
 
+interface Client {
+  id: string;
+  name: string;
+  gstin: string;
+  email: string;
+  createdAt?: any;
+}
+
 export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProps) {
   const { toast } = useToast();
-  const [clients, setClients] = useState<Array<{ id: string; name: string; gstin: string; email: string }>>([]);
+  const [user] = useAuthState(auth);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [newClientName, setNewClientName] = useState("");
   const [newClientGstin, setNewClientGstin] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
 
+  // Load clients from Firestore
+  const clientsQuery = user 
+    ? query(
+        collection(db, "professional_clients"),
+        where("professionalId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      )
+    : null;
+  
+  const [clientsSnapshot, clientsLoading] = useCollection(clientsQuery);
+  const clients: Client[] = clientsSnapshot?.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as Client)) || [];
 
   const handleSwitchWorkspace = (client: {id: string, name: string} | null) => {
     if (client && client.id === activeClientId) {
@@ -52,24 +79,50 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
     }
   };
   
-  const handleAddNewClient = () => {
+  const handleAddNewClient = async () => {
+    if (!user) {
+      toast({ variant: "destructive", title: "Not authenticated", description: "Please sign in to add clients."});
+      return;
+    }
+
     if (!newClientName || !newClientGstin || !newClientEmail) {
         toast({ variant: "destructive", title: "Missing fields", description: "Please fill out all client details."});
         return;
     }
-    const newClient = {
-        id: `CL-${String(clients.length + 1).padStart(3, '0')}`,
-        name: newClientName,
-        gstin: newClientGstin,
-        email: newClientEmail,
-    };
-    setClients(prev => [...prev, newClient]);
-    toast({ title: "Client Added", description: `${newClient.name} has been added to your client list.`});
-    
-    setNewClientName("");
-    setNewClientGstin("");
-    setNewClientEmail("");
-    setIsDialogOpen(false);
+
+    setIsSaving(true);
+    try {
+      // Save client to Firestore
+      const clientData = {
+        professionalId: user.uid,
+        name: newClientName.trim(),
+        gstin: newClientGstin.trim(),
+        email: newClientEmail.trim(),
+        createdAt: Timestamp.now(),
+      };
+
+      await addDoc(collection(db, "professional_clients"), clientData);
+
+      toast({ 
+        title: "Client Added", 
+        description: `${newClientName.trim()} has been added to your client list.` 
+      });
+      
+      // Clear form
+      setNewClientName("");
+      setNewClientGstin("");
+      setNewClientEmail("");
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error adding client:", error);
+      toast({ 
+        variant: "destructive", 
+        title: "Error", 
+        description: error.message || "Failed to add client. Please try again." 
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -107,13 +160,29 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleAddNewClient}>Add Client</Button>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+                            <Button onClick={handleAddNewClient} disabled={isSaving}>
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Adding...
+                                </>
+                              ) : (
+                                "Add Client"
+                              )}
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
-            {clients.length === 0 ? (
+            {clientsLoading ? (
+              <div className="border rounded-md p-12 text-center">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Loading clients...</p>
+                </div>
+              </div>
+            ) : clients.length === 0 ? (
               <div className="border rounded-md p-12 text-center">
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <div className="rounded-full bg-primary/10 p-4">

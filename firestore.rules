@@ -136,5 +136,14 @@ service cloud.firestore {
                        request.resource.data.reportedByUserId == request.auth.uid;
       allow update: if request.auth.uid == 'SUPER_ADMIN_UID'; // Only admin can review reports
     }
+
+    // Professional Clients Collection
+    // Professionals can manage their own clients
+    match /professional_clients/{clientId} {
+      allow read, update, delete: if request.auth != null && 
+                                     resource.data.professionalId == request.auth.uid;
+      allow create: if request.auth != null && 
+                       request.resource.data.professionalId == request.auth.uid;
+    }
   }
 }
