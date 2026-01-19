@@ -31,8 +31,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -186,125 +187,146 @@ export function CreateKnowledgePostModal({
     }
   };
 
+  // Watch form values for button disable logic
+  const title = form.watch("title");
+  const sourceReference = form.watch("sourceReference");
+  const complianceAccepted = form.watch("complianceDeclarationAccepted");
+  const category = form.watch("category");
+  
+  const isFormValid = 
+    title.length >= 10 && 
+    title.length <= 200 &&
+    sourceReference.length >= 5 &&
+    complianceAccepted &&
+    category &&
+    validationErrors.length === 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader className="pb-4 border-b">
-          <DialogTitle className="text-2xl">Share Knowledge</DialogTitle>
-          <DialogDescription className="mt-2">
+      <DialogContent className="max-w-[720px] max-h-[90vh] overflow-y-auto p-8">
+        <DialogHeader className="pb-5 mb-0">
+          <DialogTitle className="text-2xl font-semibold">Share Knowledge</DialogTitle>
+          <DialogDescription className="mt-2 text-sm text-muted-foreground">
             Share educational content for professional awareness. All content must comply with ICAI guidelines.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 mt-6">
-            {/* Category */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Category *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+            {/* Section 1: Post Content */}
+            <div className="space-y-5">
+              <h3 className="text-sm font-medium text-foreground mb-4">Post Content</h3>
+              
+              {/* Category */}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Category *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {KNOWLEDGE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Title */}
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Title *</FormLabel>
                     <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
+                      <Input
+                        placeholder="Enter a clear, descriptive title"
+                        className="h-10"
+                        {...field}
+                        onChange={(e) => handleContentChange("title", e.target.value)}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {KNOWLEDGE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <div className="flex justify-end">
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {field.value.length}/200 characters
+                      </span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Title */}
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Title *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter a clear, descriptive title (10-200 characters)"
-                      className="h-11"
-                      {...field}
-                      onChange={(e) => handleContentChange("title", e.target.value)}
-                    />
-                  </FormControl>
-                  <div className="flex justify-between items-center">
-                    <FormDescription className="text-xs mt-1">
-                      Minimum 10 characters required
+              {/* Content */}
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Content *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter educational content. Avoid promotional language, contact information, or pricing."
+                        className="min-h-[160px] resize-y"
+                        {...field}
+                        onChange={(e) => handleContentChange("content", e.target.value)}
+                      />
+                    </FormControl>
+                    <div className="flex justify-end">
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {field.value.length} characters
+                      </span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-border"></div>
+
+            {/* Section 2: Source Reference */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="sourceReference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Source Reference (Mandatory) *</FormLabel>
+                    <FormDescription className="text-xs text-muted-foreground mt-1 mb-2">
+                      Government circular, Act section, notification, or court case citation
                     </FormDescription>
-                    <span className="text-xs text-muted-foreground">
-                      {field.value.length}/200 characters
-                    </span>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Circular No. 123/2024, Section 43B of Income Tax Act, Supreme Court Case XYZ vs ABC"
+                        className="h-10"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            {/* Content */}
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Content *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter educational content (minimum 50 characters). Avoid promotional language, contact information, or pricing."
-                      className="min-h-[200px] resize-y"
-                      {...field}
-                      onChange={(e) => handleContentChange("content", e.target.value)}
-                    />
-                  </FormControl>
-                  <div className="flex justify-between items-center">
-                    <FormDescription className="text-xs mt-1">
-                      Minimum 50 characters required
-                    </FormDescription>
-                    <span className="text-xs text-muted-foreground">
-                      {field.value.length} characters
-                    </span>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Source Reference */}
-            <FormField
-              control={form.control}
-              name="sourceReference"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Source Reference *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., Circular No. 123/2024, Section 43B of Income Tax Act, Supreme Court Case XYZ vs ABC"
-                      className="h-11"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs mt-1">
-                    Mandatory: Reference to government circular, Act, or case citation
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Divider */}
+            <div className="border-t border-border"></div>
 
             {/* Validation Errors */}
             {validationErrors.length > 0 && (
-              <Alert variant="destructive" className="my-4">
+              <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="mt-2">
                   <strong className="text-sm font-semibold">Content Issues Detected:</strong>
@@ -320,38 +342,57 @@ export function CreateKnowledgePostModal({
               </Alert>
             )}
 
-            {/* Compliance Declaration */}
-            <FormField
-              control={form.control}
-              name="complianceDeclarationAccepted"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border-2 bg-muted/50 p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-1"
-                      />
-                    </FormControl>
-                    <div className="flex-1 space-y-1 leading-relaxed">
-                      <FormLabel className="text-sm font-semibold cursor-pointer">
-                        Compliance Declaration *
-                      </FormLabel>
-                      <FormDescription className="text-xs leading-relaxed">
-                        I confirm this content is educational, non-promotional, and does not solicit professional work,
-                        as per ICAI guidelines. I understand that promotional content, contact information, or pricing
-                        terms are prohibited.
-                      </FormDescription>
+            {/* Section 3: Compliance Declaration */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="complianceDeclarationAccepted"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="rounded-lg border border-border bg-muted/30 p-4">
+                      <div className="flex items-start space-x-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="mt-0.5"
+                          />
+                        </FormControl>
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <FormLabel className="text-sm font-medium cursor-pointer m-0 leading-normal">
+                              Compliance Declaration *
+                            </FormLabel>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p className="text-xs">
+                                    This declaration is required per ICAI guidelines to ensure all shared content 
+                                    is educational and non-promotional in nature.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <FormDescription className="text-xs text-muted-foreground leading-relaxed m-0">
+                            I confirm this content is educational, non-promotional, and does not solicit professional work,
+                            as per ICAI guidelines. I understand that promotional content, contact information, or pricing
+                            terms are prohibited.
+                          </FormDescription>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <FormMessage className="ml-7 mt-1" />
-                </FormItem>
-              )}
-            />
+                    <FormMessage className="ml-7 mt-1.5" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Submission Buttons */}
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
@@ -361,14 +402,12 @@ export function CreateKnowledgePostModal({
                   onOpenChange(false);
                 }}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                disabled={isSubmitting || validationErrors.length > 0}
-                className="w-full sm:w-auto"
+                disabled={isSubmitting || !isFormValid}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Post
