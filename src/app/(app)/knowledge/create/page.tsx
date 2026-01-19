@@ -127,10 +127,49 @@ export default function CreateKnowledgePostPage() {
       title: "",
       content: "",
       category: "GST",
+      caName: "",
+      firmName: "",
+      qualification: "",
       sourceReference: "",
       complianceDeclarationAccepted: false,
     },
   });
+
+  // Pre-populate CA Name, Firm Name, and Qualification from user profile
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user || !isAuthorized) return;
+
+      try {
+        // Try to get professional profile first
+        try {
+          const profileDoc = await getDoc(doc(db, "professionals_profiles", user.uid));
+          if (profileDoc.exists()) {
+            const profileData = profileDoc.data();
+            form.setValue("caName", profileData?.fullName || "");
+            form.setValue("firmName", profileData?.firmName || "");
+            form.setValue("qualification", profileData?.qualification || "CA");
+            return;
+          }
+        } catch (error) {
+          // Profile not found, continue to user data
+        }
+
+        // Fallback to user document
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          form.setValue("caName", userData?.name || userData?.displayName || "");
+          form.setValue("firmName", userData?.companyName || userData?.firmName || "");
+          form.setValue("qualification", userData?.qualification || "CA");
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error);
+      }
+    };
+
+    loadUserProfile();
+  }, [user, isAuthorized, form]);
 
   const onSubmit = async (data: FormData) => {
     if (!user) {
