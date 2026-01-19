@@ -188,26 +188,26 @@ export function CreateKnowledgePostModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Share Knowledge</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="text-2xl">Share Knowledge</DialogTitle>
+          <DialogDescription className="mt-2">
             Share educational content for professional awareness. All content must comply with ICAI guidelines.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 mt-6">
             {/* Category */}
             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category *</FormLabel>
+                  <FormLabel className="text-base font-medium">Category *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
@@ -230,17 +230,23 @@ export function CreateKnowledgePostModal({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title *</FormLabel>
+                  <FormLabel className="text-base font-medium">Title *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter a clear, descriptive title (10-200 characters)"
+                      className="h-11"
                       {...field}
                       onChange={(e) => handleContentChange("title", e.target.value)}
                     />
                   </FormControl>
-                  <FormDescription>
-                    {field.value.length}/200 characters
-                  </FormDescription>
+                  <div className="flex justify-between items-center">
+                    <FormDescription className="text-xs mt-1">
+                      Minimum 10 characters required
+                    </FormDescription>
+                    <span className="text-xs text-muted-foreground">
+                      {field.value.length}/200 characters
+                    </span>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -252,18 +258,23 @@ export function CreateKnowledgePostModal({
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content *</FormLabel>
+                  <FormLabel className="text-base font-medium">Content *</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Enter educational content (minimum 50 characters). Avoid promotional language, contact information, or pricing."
-                      className="min-h-[200px]"
+                      className="min-h-[200px] resize-y"
                       {...field}
                       onChange={(e) => handleContentChange("content", e.target.value)}
                     />
                   </FormControl>
-                  <FormDescription>
-                    {field.value.length} characters (minimum 50)
-                  </FormDescription>
+                  <div className="flex justify-between items-center">
+                    <FormDescription className="text-xs mt-1">
+                      Minimum 50 characters required
+                    </FormDescription>
+                    <span className="text-xs text-muted-foreground">
+                      {field.value.length} characters
+                    </span>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -275,14 +286,15 @@ export function CreateKnowledgePostModal({
               name="sourceReference"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Source Reference *</FormLabel>
+                  <FormLabel className="text-base font-medium">Source Reference *</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., Circular No. 123/2024, Section 43B of Income Tax Act, Supreme Court Case XYZ vs ABC"
+                      className="h-11"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs mt-1">
                     Mandatory: Reference to government circular, Act, or case citation
                   </FormDescription>
                   <FormMessage />
@@ -292,16 +304,16 @@ export function CreateKnowledgePostModal({
 
             {/* Validation Errors */}
             {validationErrors.length > 0 && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="my-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Content Issues Detected:</strong>
-                  <ul className="list-disc list-inside mt-2">
+                <AlertDescription className="mt-2">
+                  <strong className="text-sm font-semibold">Content Issues Detected:</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                     {validationErrors.map((error, idx) => (
                       <li key={idx}>{error}</li>
                     ))}
                   </ul>
-                  <p className="mt-2 text-sm">
+                  <p className="mt-3 text-sm font-medium">
                     Please remove promotional content, contact information, or pricing terms.
                   </p>
                 </AlertDescription>
@@ -313,30 +325,33 @@ export function CreateKnowledgePostModal({
               control={form.control}
               name="complianceDeclarationAccepted"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-normal">
-                      Compliance Declaration *
-                    </FormLabel>
-                    <FormDescription className="text-xs">
-                      I confirm this content is educational, non-promotional, and does not solicit professional work,
-                      as per ICAI guidelines. I understand that promotional content, contact information, or pricing
-                      terms are prohibited.
-                    </FormDescription>
+                <FormItem>
+                  <div className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border-2 bg-muted/50 p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-1"
+                      />
+                    </FormControl>
+                    <div className="flex-1 space-y-1 leading-relaxed">
+                      <FormLabel className="text-sm font-semibold cursor-pointer">
+                        Compliance Declaration *
+                      </FormLabel>
+                      <FormDescription className="text-xs leading-relaxed">
+                        I confirm this content is educational, non-promotional, and does not solicit professional work,
+                        as per ICAI guidelines. I understand that promotional content, contact information, or pricing
+                        terms are prohibited.
+                      </FormDescription>
+                    </div>
                   </div>
-                  <FormMessage />
+                  <FormMessage className="ml-7 mt-1" />
                 </FormItem>
               )}
             />
 
             {/* Submission Buttons */}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
@@ -346,10 +361,15 @@ export function CreateKnowledgePostModal({
                   onOpenChange(false);
                 }}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || validationErrors.length > 0}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || validationErrors.length > 0}
+                className="w-full sm:w-auto"
+              >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Post
               </Button>
