@@ -417,7 +417,7 @@ export default function CreateKnowledgePostPage() {
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
-                              className="mt-1"
+                              className="mt-0.5 h-4 w-4"
                             />
                           </FormControl>
                           <p className="text-xs text-gray-700 leading-relaxed flex-1">
