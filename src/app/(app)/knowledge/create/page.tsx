@@ -162,29 +162,15 @@ export default function CreateKnowledgePostPage() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
       
-      // Get professional profile if exists
-      let authorName = userData?.name || userData?.displayName || "";
-      let authorFirmName = userData?.companyName || userData?.firmName || "";
-
-      try {
-        const profileDoc = await getDoc(doc(db, "professionals_profiles", user.uid));
-        if (profileDoc.exists()) {
-          const profileData = profileDoc.data();
-          authorName = profileData?.fullName || authorName;
-          authorFirmName = profileData?.firmName || authorFirmName;
-        }
-      } catch (error) {
-        // Profile not found, use user data
-      }
-
-      // Create post
+      // Use form data for author information (CA Name, Firm Name, Qualification)
       const postId = await createKnowledgePost({
         title: data.title.trim(),
         content: data.content.trim(),
         category: data.category as KnowledgeCategory,
         authorId: user.uid,
-        authorName,
-        authorFirmName,
+        authorName: data.caName.trim(),
+        authorFirmName: data.firmName.trim(),
+        authorQualification: data.qualification.trim(),
         sourceReference: data.sourceReference.trim(),
         complianceDeclarationAccepted: data.complianceDeclarationAccepted,
       });
