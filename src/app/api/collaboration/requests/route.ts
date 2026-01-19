@@ -61,9 +61,21 @@ export async function GET(request: NextRequest) {
       limitCount: undefined, // Don't limit yet, we need to filter by firm
     });
 
+    // Get user type to determine if they can see firm-network tasks
+    let userType: string | null = null;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        userType = userDoc.data()?.userType || null;
+      }
+    } catch (error) {
+      console.error('Error fetching user type:', error);
+    }
+
     // Filter tasks where user's firm is:
     // 1. The requesting firm (requestedByFirmId or postedBy for backward compatibility)
-    // 2. OR in the invitedFirmIds array
+    // 2. OR in the invitedFirmIds array (for invite-only tasks)
+    // 3. OR visibility is 'firm-network' and user is a professional (for firm-network tasks)
     const filteredTasks = allTasks.filter((task) => {
       const taskData = task as any;
       
@@ -73,12 +85,23 @@ export async function GET(request: NextRequest) {
         taskData.requestedByUserId === userId ||
         task.postedBy === userId; // Backward compatibility
       
-      // Check if user's firm is in invitedFirmIds
-      const isInvitedFirm = 
-        Array.isArray(taskData.invitedFirmIds) &&
-        taskData.invitedFirmIds.includes(userFirmId);
+      if (isRequestingFirm) {
+        return true; // Always show tasks you created
+      }
+
+      // Check visibility
+      const visibility = taskData.visibility || 'invite-only';
       
-      return isRequestingFirm || isInvitedFirm;
+      if (visibility === 'firm-network') {
+        // Firm-network tasks are visible to all professionals
+        return userType === 'professional';
+      } else {
+        // Invite-only tasks: check if user's firm is in invitedFirmIds
+        const isInvitedFirm = 
+          Array.isArray(taskData.invitedFirmIds) &&
+          taskData.invitedFirmIds.includes(userFirmId);
+        return isInvitedFirm;
+      }
     });
 
     // Apply limit after filtering

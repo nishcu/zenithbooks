@@ -76,10 +76,12 @@ export default function CollaborationRequestsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Collaboration Requests</h1>
         <p className="text-muted-foreground">
-          View collaboration requests where your firm has been invited or has requested
+          View collaboration requests available to your firm
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          This task is handled by ZenithBooks' internal professional team.
+          You can see: (1) Requests you posted, (2) Requests where you were invited, (3) Public requests in the firm network.
+          <br />
+          All tasks are handled by ZenithBooks' internal professional team.
         </p>
       </div>
 
@@ -99,7 +101,7 @@ export default function CollaborationRequestsPage() {
                   No collaboration requests found
                 </p>
                 <p className="text-center text-xs text-muted-foreground mt-2">
-                  You will only see requests where your firm has been explicitly invited
+                  No collaboration requests available. You will see requests you posted, were invited to, or public network requests.
                 </p>
               </CardContent>
             </Card>

@@ -10,6 +10,7 @@ import { createTaskPost } from '@/lib/tasks/firestore';
 import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { TaskPost, CollaborationRequest } from '@/lib/professionals/types';
+import { notifyTaskInvitation, notifyFirmNetworkTask } from '@/lib/tasks/notifications';
 
 // Ensure this route is included in the build
 export const runtime = 'nodejs';
@@ -162,6 +163,30 @@ export async function POST(request: NextRequest) {
       console.error('Error stack:', createError?.stack);
       console.error('Error code:', createError?.code);
       throw createError; // Re-throw to be caught by outer catch
+    }
+
+    // Send notifications based on visibility
+    try {
+      if (taskData.visibility === 'invite-only' && taskData.invitedFirmIds && taskData.invitedFirmIds.length > 0) {
+        // Notify invited firms
+        await notifyTaskInvitation(
+          taskId,
+          taskData.title,
+          firmName,
+          taskData.invitedFirmIds
+        );
+      } else if (taskData.visibility === 'firm-network') {
+        // Notify all professionals in the network
+        await notifyFirmNetworkTask(
+          taskId,
+          taskData.title,
+          firmName,
+          taskData.category
+        );
+      }
+    } catch (notifyError) {
+      console.error('Error sending notifications (non-critical):', notifyError);
+      // Don't fail the request if notifications fail
     }
 
     return NextResponse.json({

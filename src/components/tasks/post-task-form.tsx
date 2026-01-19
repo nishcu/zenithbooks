@@ -5,25 +5,51 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
 import { TASK_CATEGORIES, INDIA_STATES } from "@/lib/professionals/types";
+import { ProfessionalSelector } from "./professional-selector";
 
 export function PostTaskForm() {
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFirmIds, setSelectedFirmIds] = useState<string[]>([]);
+  const [currentUserFirmId, setCurrentUserFirmId] = useState<string | undefined>();
+
+  // Get current user's firmId
+  useEffect(() => {
+    const fetchUserFirmId = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setCurrentUserFirmId(userData?.firmId || user.uid);
+          } else {
+            setCurrentUserFirmId(user.uid);
+          }
+        } catch (error) {
+          console.error("Error fetching user firmId:", error);
+          setCurrentUserFirmId(user.uid);
+        }
+      }
+    };
+    fetchUserFirmId();
+  }, [user]);
 
   const [formData, setFormData] = useState({
     category: "",
@@ -59,6 +85,16 @@ export function PostTaskForm() {
       return;
     }
 
+    // Validate invitations for invite-only visibility
+    if (formData.visibility === "invite-only" && selectedFirmIds.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No professionals selected",
+        description: "Please select at least one professional to invite, or change visibility to 'Firm Network'",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -78,6 +114,7 @@ export function PostTaskForm() {
           city: formData.city || undefined,
           onSite: formData.onSite,
           visibility: formData.visibility,
+          invitedFirmIds: formData.visibility === "invite-only" ? selectedFirmIds : [],
           deadline: new Date(formData.deadline).toISOString(),
         }),
       });
@@ -212,6 +249,38 @@ export function PostTaskForm() {
         />
         <Label htmlFor="onSite">On-site work required</Label>
       </div>
+
+      <div className="space-y-3">
+        <Label>Visibility *</Label>
+        <RadioGroup
+          value={formData.visibility}
+          onValueChange={(value) => setFormData({ ...formData, visibility: value as "invite-only" | "firm-network" })}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="invite-only" id="invite-only" />
+            <Label htmlFor="invite-only" className="font-normal cursor-pointer">
+              Invite Only - Only selected professionals can see this request
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="firm-network" id="firm-network" />
+            <Label htmlFor="firm-network" className="font-normal cursor-pointer">
+              Firm Network - All professionals in the network can see this request
+            </Label>
+          </div>
+        </RadioGroup>
+        <p className="text-xs text-muted-foreground">
+          Choose who can discover and view this collaboration request.
+        </p>
+      </div>
+
+      {formData.visibility === "invite-only" && (
+        <ProfessionalSelector
+          selectedFirmIds={selectedFirmIds}
+          onSelectionChange={setSelectedFirmIds}
+          excludeFirmId={currentUserFirmId}
+        />
+      )}
 
       <p className="text-xs text-muted-foreground">
         This collaboration request will be handled by ZenithBooks' internal professional team.
