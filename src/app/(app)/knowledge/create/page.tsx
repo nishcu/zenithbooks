@@ -353,6 +353,30 @@ export default function CreateKnowledgePostPage() {
                     )}
                   />
 
+                  {/* Category Other - Show only if "Others" is selected */}
+                  {category === "Others" && (
+                    <FormField
+                      control={form.control}
+                      name="categoryOther"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Specify Category *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Please mention the category name"
+                              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Please specify the category name for this knowledge post
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
                   {/* Title */}
                   <FormField
                     control={form.control}
