@@ -417,7 +417,7 @@ export default function CreateKnowledgePostPage() {
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
-                              className="mt-0.5 h-4 w-4"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0"
                             />
                           </FormControl>
                           <p className="text-xs text-gray-700 leading-relaxed flex-1">
@@ -425,7 +425,7 @@ export default function CreateKnowledgePostPage() {
                             professional work, pricing, or contact information, as per ICAI guidelines.
                           </p>
                         </div>
-                        <FormMessage className="ml-7 mt-1.5" />
+                        <FormMessage className="ml-6 mt-1.5" />
                       </FormItem>
                     )}
                   />
