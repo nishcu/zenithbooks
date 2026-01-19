@@ -72,16 +72,26 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function CreateKnowledgePostPage() {
-  const [user] = useAuthState(auth);
+  const [user, userLoading] = useAuthState(auth);
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only renders on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check authorization (verified professionals only)
   useEffect(() => {
+    if (!mounted || userLoading) {
+      return;
+    }
+
     const checkAuthorization = async () => {
       if (!user) {
         setIsAuthorized(false);
@@ -130,7 +140,18 @@ export default function CreateKnowledgePostPage() {
     };
 
     checkAuthorization();
-  }, [user, router, toast]);
+  }, [user, router, toast, mounted, userLoading]);
+
+  // Show loading state until mounted
+  if (!mounted || userLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
