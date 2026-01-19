@@ -47,19 +47,40 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
   const [newClientEmail, setNewClientEmail] = useState("");
 
   // Load clients from Firestore
+  // Note: Removing orderBy to avoid composite index requirement
+  // We'll sort client-side instead
   const clientsQuery = user 
     ? query(
         collection(db, "professional_clients"),
-        where("professionalId", "==", user.uid),
-        orderBy("createdAt", "desc")
+        where("professionalId", "==", user.uid)
       )
     : null;
   
-  const [clientsSnapshot, clientsLoading] = useCollection(clientsQuery);
-  const clients: Client[] = clientsSnapshot?.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as Client)) || [];
+  const [clientsSnapshot, clientsLoading, clientsError] = useCollection(clientsQuery);
+  
+  // Handle errors
+  useEffect(() => {
+    if (clientsError) {
+      console.error("Error loading clients:", clientsError);
+      toast({
+        variant: "destructive",
+        title: "Error loading clients",
+        description: clientsError.message || "Failed to load clients. Please refresh the page.",
+      });
+    }
+  }, [clientsError, toast]);
+
+  const clients: Client[] = clientsSnapshot?.docs
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Client))
+    .sort((a, b) => {
+      // Sort by createdAt descending (newest first)
+      const aTime = a.createdAt?.toMillis?.() || 0;
+      const bTime = b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    }) || [];
 
   const handleSwitchWorkspace = (client: {id: string, name: string} | null) => {
     if (client && client.id === activeClientId) {
