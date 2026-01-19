@@ -203,8 +203,8 @@ export function CreateKnowledgePostModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[720px] max-h-[90vh] overflow-y-auto p-8">
-        <DialogHeader className="pb-5 mb-0">
+      <DialogContent className="max-w-[720px] w-full max-h-[90vh] overflow-y-auto p-6 rounded-xl shadow-xl">
+        <DialogHeader className="pb-4 mb-0">
           <DialogTitle className="text-2xl font-semibold">Share Knowledge</DialogTitle>
           <DialogDescription className="mt-2 text-sm text-muted-foreground">
             Share educational content for professional awareness. All content must comply with ICAI guidelines.
@@ -212,178 +212,168 @@ export function CreateKnowledgePostModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            {/* Section 1: Post Content */}
-            <div className="space-y-5">
-              <h3 className="text-sm font-medium text-foreground mb-4">Post Content</h3>
-              
-              {/* Category */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4">
+            <div className="space-y-6">
+              {/* SECTION 1: Knowledge Content */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-800">Knowledge Content</h3>
+                
+                {/* Category */}
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Category *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {KNOWLEDGE_CATEGORIES.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Title */}
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Title *</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
+                        <Input
+                          placeholder="Enter a clear, descriptive title"
+                          className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                          {...field}
+                          onChange={(e) => handleContentChange("title", e.target.value)}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {KNOWLEDGE_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <div className="flex justify-end mt-1">
+                        <span className="text-xs text-gray-400">
+                          {field.value.length}/200 characters
+                        </span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Title */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Title *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter a clear, descriptive title"
-                        className="h-10"
-                        {...field}
-                        onChange={(e) => handleContentChange("title", e.target.value)}
-                      />
-                    </FormControl>
-                    <div className="flex justify-end">
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {field.value.length}/200 characters
-                      </span>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Content */}
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Content *</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter educational content. Avoid promotional language, contact information, or pricing."
+                          className="w-full min-h-[160px] resize-y text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                          {...field}
+                          onChange={(e) => handleContentChange("content", e.target.value)}
+                        />
+                      </FormControl>
+                      <div className="flex justify-end mt-1">
+                        <span className="text-xs text-gray-400">
+                          {field.value.length} characters
+                        </span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
 
-              {/* Content */}
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Content *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter educational content. Avoid promotional language, contact information, or pricing."
-                        className="min-h-[160px] resize-y"
-                        {...field}
-                        onChange={(e) => handleContentChange("content", e.target.value)}
-                      />
-                    </FormControl>
-                    <div className="flex justify-end">
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {field.value.length} characters
-                      </span>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              <hr className="border-gray-200" />
 
-            {/* Divider */}
-            <div className="border-t border-border"></div>
+              {/* SECTION 2: Source Reference */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-800">Source Reference</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="sourceReference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Source Reference (Mandatory) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Circular No. 123/2024, Section 43B of Income Tax Act, Supreme Court Case XYZ vs ABC"
+                          className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Mandatory: Government circular, Act section, notification, or court case citation
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
 
-            {/* Section 2: Source Reference */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="sourceReference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Source Reference (Mandatory) *</FormLabel>
-                    <FormDescription className="text-xs text-muted-foreground mt-1 mb-2">
-                      Government circular, Act section, notification, or court case citation
-                    </FormDescription>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Circular No. 123/2024, Section 43B of Income Tax Act, Supreme Court Case XYZ vs ABC"
-                        className="h-10"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              <hr className="border-gray-200" />
 
-            {/* Divider */}
-            <div className="border-t border-border"></div>
+              {/* Validation Errors */}
+              {validationErrors.length > 0 && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="mt-2">
+                    <strong className="text-sm font-semibold">Content Issues Detected:</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                      {validationErrors.map((error, idx) => (
+                        <li key={idx}>{error}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-sm font-medium">
+                      Please remove promotional content, contact information, or pricing terms.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            {/* Validation Errors */}
-            {validationErrors.length > 0 && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="mt-2">
-                  <strong className="text-sm font-semibold">Content Issues Detected:</strong>
-                  <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                    {validationErrors.map((error, idx) => (
-                      <li key={idx}>{error}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-sm font-medium">
-                    Please remove promotional content, contact information, or pricing terms.
-                  </p>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Section 3: Compliance Declaration */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="complianceDeclarationAccepted"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="rounded-lg border border-border bg-muted/30 p-4">
-                      <div className="flex items-start space-x-3">
+              {/* SECTION 3: Compliance Declaration */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-800">Compliance Declaration</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="complianceDeclarationAccepted"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="rounded-md border border-gray-200 bg-gray-50 p-4 flex items-start gap-3">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            className="mt-0.5"
+                            className="mt-1"
                           />
                         </FormControl>
-                        <div className="flex-1 space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <FormLabel className="text-sm font-medium cursor-pointer m-0 leading-normal">
-                              Compliance Declaration *
-                            </FormLabel>
-                            <TooltipHelp 
-                              content="This declaration is required per ICAI guidelines to ensure all shared content is educational and non-promotional in nature."
-                              side="top"
-                            />
-                          </div>
-                          <FormDescription className="text-xs text-muted-foreground leading-relaxed m-0">
-                            I confirm this content is educational, non-promotional, and does not solicit professional work,
-                            as per ICAI guidelines. I understand that promotional content, contact information, or pricing
-                            terms are prohibited.
-                          </FormDescription>
-                        </div>
+                        <p className="text-xs text-gray-700 leading-relaxed flex-1">
+                          I confirm this content is purely educational, non-promotional, and does not solicit
+                          professional work, pricing, or contact information, as per ICAI guidelines.
+                        </p>
                       </div>
-                    </div>
-                    <FormMessage className="ml-7 mt-1.5" />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage className="ml-7 mt-1.5" />
+                    </FormItem>
+                  )}
+                />
+              </section>
             </div>
 
-            {/* Submission Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            {/* Footer Buttons */}
+            <div className="border-t border-gray-200 pt-4 mt-6 flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
