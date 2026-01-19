@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ThumbsUp, Bookmark, Flag, Plus, Filter, Search } from "lucide-react";
+import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -21,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 import { listKnowledgePosts, addHelpfulReaction, removeHelpfulReaction, saveKnowledgePost, unsaveKnowledgePost, reportKnowledgePost, hasUserReacted, hasUserSaved } from "@/lib/knowledge/firestore";
 import type { KnowledgePost, KnowledgeCategory } from "@/lib/knowledge/types";
 import { KNOWLEDGE_CATEGORIES } from "@/lib/knowledge/types";
-import { CreateKnowledgePostModal } from "@/components/knowledge/create-post-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function KnowledgePage() {
@@ -33,7 +33,6 @@ export default function KnowledgePage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
   const [userSaves, setUserSaves] = useState<Set<string>>(new Set());
 
@@ -398,13 +397,6 @@ export default function KnowledgePage() {
           No solicitation or professional marketing is permitted.
         </p>
       </div>
-
-      {/* Create Post Modal */}
-      <CreateKnowledgePostModal
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        onPostCreated={loadPosts}
-      />
     </div>
   );
 }
