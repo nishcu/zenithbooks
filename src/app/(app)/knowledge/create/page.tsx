@@ -49,6 +49,9 @@ const formSchema = z.object({
     "Circular / Notification",
     "Templates & Checklists",
   ] as const),
+  caName: z.string().min(2, "CA Name is required.").max(100, "Name must be less than 100 characters."),
+  firmName: z.string().min(2, "Firm Name is required.").max(200, "Firm name must be less than 200 characters."),
+  qualification: z.string().min(2, "Qualification is required.").max(100, "Qualification must be less than 100 characters."),
   sourceReference: z.string().min(5, "Source reference is mandatory (e.g., Govt circular, Act, Case citation)."),
   complianceDeclarationAccepted: z.boolean().refine((val) => val === true, {
     message: "You must accept the compliance declaration.",
@@ -226,9 +229,16 @@ export default function CreateKnowledgePostPage() {
   const complianceAccepted = form.watch("complianceDeclarationAccepted");
   const category = form.watch("category");
   
+  const caName = form.watch("caName");
+  const firmName = form.watch("firmName");
+  const qualification = form.watch("qualification");
+  
   const isFormValid = 
     title.length >= 10 && 
     title.length <= 200 &&
+    caName.length >= 2 &&
+    firmName.length >= 2 &&
+    qualification.length >= 2 &&
     sourceReference.length >= 5 &&
     complianceAccepted &&
     category &&
@@ -357,7 +367,74 @@ export default function CreateKnowledgePostPage() {
 
                 <hr className="border-gray-200" />
 
-                {/* SECTION 2: Source Reference */}
+                {/* SECTION 2: Author Information */}
+                <section className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-800">Author Information</h3>
+                  
+                  {/* CA Name */}
+                  <FormField
+                    control={form.control}
+                    name="caName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Name of the CA *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your full name"
+                            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Firm Name */}
+                  <FormField
+                    control={form.control}
+                    name="firmName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Firm Name *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your firm name"
+                            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Qualification */}
+                  <FormField
+                    control={form.control}
+                    name="qualification"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Qualification *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., CA, CMA, CS, etc."
+                            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Your professional qualification (e.g., CA, CMA, CS)
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </section>
+
+                <hr className="border-gray-200" />
+
+                {/* SECTION 3: Source Reference */}
                 <section className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-800">Source Reference</h3>
                   

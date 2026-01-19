@@ -25,6 +25,7 @@ export interface KnowledgePost {
   authorId: string;
   authorName?: string;
   authorFirmName?: string;
+  authorQualification?: string; // CA, CMA, CS, etc.
   sourceReference: string; // Mandatory - Govt circular / Act / Case citation
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
