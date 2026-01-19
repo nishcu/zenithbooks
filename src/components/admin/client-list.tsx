@@ -71,16 +71,35 @@ export function ClientList({ onSwitchWorkspace, activeClientId }: ClientListProp
   }, [clientsError, toast]);
 
   const clients: Client[] = clientsSnapshot?.docs
-    .map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Client))
+    .map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || "",
+        gstin: data.gstin || "",
+        email: data.email || "",
+        createdAt: data.createdAt
+      } as Client;
+    })
     .sort((a, b) => {
       // Sort by createdAt descending (newest first)
       const aTime = a.createdAt?.toMillis?.() || 0;
       const bTime = b.createdAt?.toMillis?.() || 0;
       return bTime - aTime;
     }) || [];
+
+  // Debug logging
+  useEffect(() => {
+    if (user && !clientsLoading) {
+      console.log("Client List Debug:", {
+        userId: user.uid,
+        clientsCount: clients.length,
+        clients: clients,
+        hasSnapshot: !!clientsSnapshot,
+        snapshotSize: clientsSnapshot?.size || 0
+      });
+    }
+  }, [user, clients, clientsLoading, clientsSnapshot]);
 
   const handleSwitchWorkspace = (client: {id: string, name: string} | null) => {
     if (client && client.id === activeClientId) {
