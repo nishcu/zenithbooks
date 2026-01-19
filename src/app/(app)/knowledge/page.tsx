@@ -310,15 +310,15 @@ export default function KnowledgePage() {
           {filteredPosts.map((post) => (
             <Card key={post.id} className="border-l-4 border-l-primary">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-3">
                       <Badge variant="outline">{post.category}</Badge>
                       {post.status === "UNDER_REVIEW" && (
                         <Badge variant="secondary">Under Review</Badge>
                       )}
                     </div>
-                    <CardTitle className="text-xl mb-2">{post.title}</CardTitle>
+                    <CardTitle className="text-xl mb-2 break-words">{post.title}</CardTitle>
                     <CardDescription className="text-sm">
                       By {post.authorFirmName || post.authorName || "Anonymous"}
                       {post.authorFirmName && post.authorName && ` (${post.authorName})`}
@@ -329,20 +329,20 @@ export default function KnowledgePage() {
               <CardContent>
                 <div className="prose prose-sm max-w-none mb-4">
                   <div
-                    className="whitespace-pre-wrap text-sm"
+                    className="whitespace-pre-wrap text-sm text-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, "<br />") }}
                   />
                 </div>
                 
                 {post.sourceReference && (
-                  <div className="mt-4 p-3 bg-muted rounded-md">
-                    <p className="text-xs font-semibold mb-1">Source Reference:</p>
-                    <p className="text-xs text-muted-foreground">{post.sourceReference}</p>
+                  <div className="mt-4 p-3 bg-muted rounded-md border">
+                    <p className="text-xs font-semibold mb-1 text-foreground">Source Reference:</p>
+                    <p className="text-xs text-muted-foreground break-words">{post.sourceReference}</p>
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
                   <Button
                     variant="ghost"
                     size="sm"
