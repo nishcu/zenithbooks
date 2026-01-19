@@ -13,7 +13,8 @@ export type KnowledgeCategory =
   | "Labour Law"
   | "Case Law"
   | "Circular / Notification"
-  | "Templates & Checklists";
+  | "Templates & Checklists"
+  | "Others";
 
 export type KnowledgePostStatus = "PUBLISHED" | "UNDER_REVIEW" | "REMOVED";
 
@@ -91,5 +92,6 @@ export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
   "Case Law",
   "Circular / Notification",
   "Templates & Checklists",
+  "Others",
 ];
 

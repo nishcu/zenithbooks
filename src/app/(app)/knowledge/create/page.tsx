@@ -48,14 +48,25 @@ const formSchema = z.object({
     "Case Law",
     "Circular / Notification",
     "Templates & Checklists",
+    "Others",
   ] as const),
-  caName: z.string().min(2, "CA Name is required.").max(100, "Name must be less than 100 characters."),
+  categoryOther: z.string().optional(),
+  professionalName: z.string().min(2, "Professional Name is required.").max(100, "Name must be less than 100 characters."),
   firmName: z.string().min(2, "Firm Name is required.").max(200, "Firm name must be less than 200 characters."),
   qualification: z.string().min(2, "Qualification is required.").max(100, "Qualification must be less than 100 characters."),
   sourceReference: z.string().min(5, "Source reference is mandatory (e.g., Govt circular, Act, Case citation)."),
   complianceDeclarationAccepted: z.boolean().refine((val) => val === true, {
     message: "You must accept the compliance declaration.",
   }),
+}).refine((data) => {
+  // If category is "Others", categoryOther must be provided
+  if (data.category === "Others") {
+    return data.categoryOther && data.categoryOther.trim().length >= 2;
+  }
+  return true;
+}, {
+  message: "Please specify the category name.",
+  path: ["categoryOther"],
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -127,7 +138,8 @@ export default function CreateKnowledgePostPage() {
       title: "",
       content: "",
       category: "GST",
-      caName: "",
+      categoryOther: "",
+      professionalName: "",
       firmName: "",
       qualification: "",
       sourceReference: "",
@@ -146,7 +158,7 @@ export default function CreateKnowledgePostPage() {
           const profileDoc = await getDoc(doc(db, "professionals_profiles", user.uid));
           if (profileDoc.exists()) {
             const profileData = profileDoc.data();
-            form.setValue("caName", profileData?.fullName || "");
+            form.setValue("professionalName", profileData?.fullName || "");
             form.setValue("firmName", profileData?.firmName || "");
             form.setValue("qualification", profileData?.qualification || "CA");
             return;
@@ -159,7 +171,7 @@ export default function CreateKnowledgePostPage() {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          form.setValue("caName", userData?.name || userData?.displayName || "");
+          form.setValue("professionalName", userData?.name || userData?.displayName || "");
           form.setValue("firmName", userData?.companyName || userData?.firmName || "");
           form.setValue("qualification", userData?.qualification || "CA");
         }
@@ -206,8 +218,9 @@ export default function CreateKnowledgePostPage() {
         title: data.title.trim(),
         content: data.content.trim(),
         category: data.category as KnowledgeCategory,
+        categoryOther: data.category === "Others" ? data.categoryOther?.trim() : undefined,
         authorId: user.uid,
-        authorName: data.caName.trim(),
+        authorName: data.professionalName.trim(),
         authorFirmName: data.firmName.trim(),
         authorQualification: data.qualification.trim(),
         sourceReference: data.sourceReference.trim(),
@@ -254,7 +267,9 @@ export default function CreateKnowledgePostPage() {
   const complianceAccepted = form.watch("complianceDeclarationAccepted");
   const category = form.watch("category");
   
-  const caName = form.watch("caName");
+  const professionalName = form.watch("professionalName");
+  const category = form.watch("category");
+  const categoryOther = form.watch("categoryOther");
   const firmName = form.watch("firmName");
   const qualification = form.watch("qualification");
   
@@ -396,13 +411,13 @@ export default function CreateKnowledgePostPage() {
                 <section className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-800">Author Information</h3>
                   
-                  {/* CA Name */}
+                  {/* Professional Name */}
                   <FormField
                     control={form.control}
-                    name="caName"
+                    name="professionalName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Name of the CA *</FormLabel>
+                        <FormLabel className="text-sm font-medium">Name of the Professional *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter your full name"
