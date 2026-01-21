@@ -145,5 +145,108 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                        request.resource.data.professionalId == request.auth.uid;
     }
+
+    // Tasks & Collaboration Collections
+    // Tasks Posts - users can read their own tasks and tasks they're assigned to
+    match /tasks_posts/{taskId} {
+      allow read: if request.auth != null && 
+                     (resource.data.postedBy == request.auth.uid ||
+                      resource.data.assignedTo == request.auth.uid ||
+                      resource.data.status == 'open'); // Anyone can read open tasks
+      allow create: if request.auth != null && 
+                       request.resource.data.postedBy == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (resource.data.postedBy == request.auth.uid ||
+                        resource.data.assignedTo == request.auth.uid);
+      allow delete: if request.auth != null && 
+                       resource.data.postedBy == request.auth.uid;
+    }
+
+    // Collaboration Requests (new collection name)
+    match /collaboration_requests/{requestId} {
+      allow read: if request.auth != null && 
+                     (resource.data.requestedByFirmId == request.auth.uid ||
+                      resource.data.visibility == 'firm-network' ||
+                      resource.data.status == 'open');
+      allow create: if request.auth != null && 
+                       request.resource.data.requestedByFirmId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (resource.data.requestedByFirmId == request.auth.uid ||
+                        resource.data.assignedToFirmId == request.auth.uid);
+      allow delete: if request.auth != null && 
+                       resource.data.requestedByFirmId == request.auth.uid;
+    }
+
+    // Tasks Applications - users can read their own applications
+    match /tasks_applications/{applicationId} {
+      allow read: if request.auth != null && 
+                     (resource.data.applicantId == request.auth.uid ||
+                      resource.data.taskPostedBy == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.applicantId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (resource.data.applicantId == request.auth.uid ||
+                        resource.data.taskPostedBy == request.auth.uid);
+      allow delete: if request.auth != null && 
+                       resource.data.applicantId == request.auth.uid;
+    }
+
+    // Collaboration Invites (new collection name)
+    match /collaboration_invites/{inviteId} {
+      allow read: if request.auth != null && 
+                     (resource.data.invitedFirmId == request.auth.uid ||
+                      resource.data.requestedByFirmId == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.requestedByFirmId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (resource.data.invitedFirmId == request.auth.uid ||
+                        resource.data.requestedByFirmId == request.auth.uid);
+      allow delete: if request.auth != null && 
+                       (resource.data.invitedFirmId == request.auth.uid ||
+                        resource.data.requestedByFirmId == request.auth.uid);
+    }
+
+    // Tasks Chats - users can read chats for tasks they're involved in
+    match /tasks_chats/{chatId} {
+      allow read: if request.auth != null && 
+                     (resource.data.fromUserId == request.auth.uid ||
+                      resource.data.toUserId == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.fromUserId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                                resource.data.fromUserId == request.auth.uid;
+    }
+
+    // Collaboration Chats (new collection name)
+    match /collaboration_chats/{chatId} {
+      allow read: if request.auth != null && 
+                     (resource.data.fromFirmId == request.auth.uid ||
+                      resource.data.toFirmId == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.fromFirmId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                                resource.data.fromFirmId == request.auth.uid;
+    }
+
+    // Tasks Reviews / Internal Quality Feedback
+    match /tasks_reviews/{reviewId} {
+      allow read: if request.auth != null && 
+                     (resource.data.reviewerId == request.auth.uid ||
+                      resource.data.professionalId == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.reviewerId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                                resource.data.reviewerId == request.auth.uid;
+    }
+
+    match /internal_quality_feedback/{feedbackId} {
+      allow read: if request.auth != null && 
+                     (resource.data.givenByFirmId == request.auth.uid ||
+                      resource.data.receivedByFirmId == request.auth.uid);
+      allow create: if request.auth != null && 
+                       request.resource.data.givenByFirmId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                                resource.data.givenByFirmId == request.auth.uid;
+    }
   }
 }
