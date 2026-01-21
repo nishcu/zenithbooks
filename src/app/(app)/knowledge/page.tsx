@@ -360,6 +360,18 @@ export default function KnowledgePage() {
                       {post.authorFirmName && post.authorName && ` (${post.authorName})`}
                     </CardDescription>
                   </div>
+                  {/* Delete button in header - only visible to author */}
+                  {user && post.authorId === user.uid && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(post.id)}
+                      className="text-destructive hover:text-destructive shrink-0"
+                      title="Delete this post"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="overflow-hidden">
