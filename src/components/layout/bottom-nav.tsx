@@ -3,20 +3,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gauge, Receipt, ShoppingCart, AreaChart, Menu } from "lucide-react";
+import { Gauge, Receipt, ShoppingCart, AreaChart, Menu, BookOpen, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
-const navItems = [
+const businessNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/billing/invoices", label: "Sales", icon: Receipt },
   { href: "/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/reports", label: "Reports", icon: AreaChart },
 ];
 
+const professionalNavItems = [
+  { href: "/dashboard", label: "Dashboard", icon: Gauge },
+  { href: "/knowledge", label: "Knowledge", icon: BookOpen },
+  { href: "/tasks/browse", label: "Networking", icon: Network },
+  { href: "/billing/invoices", label: "Sales", icon: Receipt },
+];
+
 export function BottomNav() {
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
+  const [user] = useAuthState(auth);
+  const userDocRef = user ? doc(db, 'users', user.uid) : null;
+  const [userData] = useDocumentData(userDocRef);
+
+  const getRole = () => {
+    if (!user) return 'business';
+    if (user.uid === SUPER_ADMIN_UID) return 'super_admin';
+    return userData?.userType || 'business';
+  };
+
+  const userRole = getRole();
+  const isProfessional = userRole === 'professional' || userRole === 'super_admin';
+  const navItems = isProfessional ? professionalNavItems : businessNavItems;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full h-20 bg-white border-t border-gray-200 shadow-lg">
