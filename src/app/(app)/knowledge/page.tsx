@@ -309,7 +309,7 @@ export default function KnowledgePage() {
       ) : (
         <div className="space-y-4">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="border-l-4 border-l-primary">
+            <Card key={post.id} className="border-l-4 border-l-primary overflow-hidden">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -327,13 +327,41 @@ export default function KnowledgePage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm max-w-none mb-4">
+              <CardContent className="overflow-hidden">
+                <article className="prose prose-sm max-w-none mb-4">
                   <div
-                    className="whitespace-pre-wrap text-sm text-foreground leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, "<br />") }}
+                    className="text-base text-foreground leading-7"
+                    style={{
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      wordWrap: 'break-word',
+                      hyphens: 'auto',
+                    }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: (() => {
+                        const content = post.content.trim();
+                        if (!content) return '<p></p>';
+                        
+                        // Split by double newlines for paragraphs
+                        const paragraphs = content.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 0);
+                        
+                        if (paragraphs.length === 0) {
+                          // If no paragraphs found, treat entire content as one paragraph
+                          return `<p class="mb-4">${content.replace(/\n/g, '<br />')}</p>`;
+                        }
+                        
+                        // Format each paragraph
+                        return paragraphs
+                          .map(para => {
+                            // Replace single newlines within paragraph with <br />
+                            const formatted = para.replace(/\n/g, '<br />');
+                            return `<p class="mb-4 last:mb-0">${formatted}</p>`;
+                          })
+                          .join('');
+                      })()
+                    }}
                   />
-                </div>
+                </article>
                 
                 {post.sourceReference && (
                   <div className="mt-4 p-3 bg-muted rounded-md border">
