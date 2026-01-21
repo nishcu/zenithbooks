@@ -37,19 +37,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user data to extract firmId
+    // Get user data to extract firmId and userType (combine into one fetch)
     let userFirmId: string | null = null;
+    let userType: string | null = null;
     try {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         const userData = userDoc.data();
         userFirmId = userData?.firmId || userId; // Use userId as firmId if not set (backward compatibility)
+        userType = userData?.userType || null;
       } else {
         userFirmId = userId; // Fallback to userId if user doc doesn't exist
       }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+    } catch (error: any) {
+      // Permission errors are expected in server-side API routes
+      // The client SDK doesn't have user auth context server-side
+      if (error?.code === 'permission-denied') {
+        console.warn('Permission denied fetching user data (expected in server-side API). Using fallback values.');
+      } else {
+        console.error('Error fetching user data:', error);
+      }
       userFirmId = userId; // Fallback to userId on error
+      userType = null; // Default to null if we can't fetch
     }
 
     // Fetch all tasks with filters
@@ -90,16 +99,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get user type to determine if they can see firm-network tasks
-    let userType: string | null = null;
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        userType = userDoc.data()?.userType || null;
-      }
-    } catch (error) {
-      console.error('Error fetching user type:', error);
-    }
+    // userType is already fetched above, no need to fetch again
 
     // Filter tasks where user's firm is:
     // 1. The requesting firm (requestedByFirmId or postedBy for backward compatibility)
