@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ThumbsUp, Bookmark, Flag, Plus, Filter, Search, Trash2 } from "lucide-react";
+import { Loader2, ThumbsUp, Bookmark, Flag, Plus, Filter, Search, Trash2, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
@@ -248,6 +248,38 @@ export default function KnowledgePage() {
     }
   };
 
+  const handleShare = (post: KnowledgePost) => {
+    const postUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/knowledge#post-${post.id}` 
+      : '';
+    
+    const authorName = post.authorFirmName || post.authorName || "Anonymous";
+    const authorInfo = post.authorFirmName && post.authorName 
+      ? `${post.authorName} (${post.authorFirmName})`
+      : authorName;
+    
+    // Format share message with title and author name
+    const shareText = `📚 ${post.title}\n\nBy: ${authorInfo}\n\nCategory: ${post.category}\n\n${postUrl}`;
+    
+    // Check if Web Share API is available (mobile devices)
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: shareText,
+        url: postUrl,
+      }).catch((error) => {
+        // User cancelled or error occurred
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      });
+    } else {
+      // Fallback: Open WhatsApp share
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+      window.open(whatsappUrl, '_blank');
+    }
+  };
+
   const handleDeleteClick = (postId: string) => {
     setPostToDelete(postId);
     setDeleteDialogOpen(true);
@@ -469,6 +501,16 @@ export default function KnowledgePage() {
                   >
                     <Bookmark className={`mr-2 h-4 w-4 ${userSaves.has(post.id) ? "fill-current" : ""}`} />
                     {userSaves.has(post.id) ? "Saved" : "Save"}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleShare(post)}
+                    title="Share this post"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
                   </Button>
 
                   <Button
