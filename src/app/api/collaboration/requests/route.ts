@@ -133,11 +133,22 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error listing collaboration requests:', error);
+    console.error('Error stack:', error?.stack);
+    console.error('Error code:', error?.code);
+    console.error('Error name:', error?.name);
+    
+    // Return more detailed error information in development
+    const errorMessage = error?.message || 'Unknown error';
+    const errorCode = error?.code || 'UNKNOWN';
+    
     return NextResponse.json(
       { 
         error: 'Failed to list collaboration requests', 
-        message: error.message,
-        success: false 
+        message: errorMessage,
+        code: errorCode,
+        success: false,
+        // Include stack trace in development only
+        ...(process.env.NODE_ENV === 'development' && { stack: error?.stack })
       },
       { status: 500 }
     );

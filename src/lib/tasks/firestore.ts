@@ -144,14 +144,35 @@ export async function listTasks(filters?: {
     
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        deadline: data.deadline?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as TaskPost;
+      try {
+        const data = doc.data();
+        // Safely convert Firestore Timestamps to Dates
+        const convertTimestamp = (ts: any): Date => {
+          if (!ts) return new Date();
+          if (ts instanceof Date) return ts;
+          if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
+          if (typeof ts === 'string' || typeof ts === 'number') return new Date(ts);
+          return new Date();
+        };
+        
+        return {
+          id: doc.id,
+          ...data,
+          deadline: convertTimestamp(data.deadline),
+          createdAt: convertTimestamp(data.createdAt),
+          updatedAt: convertTimestamp(data.updatedAt),
+        } as TaskPost;
+      } catch (error) {
+        console.error('Error converting task document:', error, doc.id);
+        // Return a minimal valid task object
+        return {
+          id: doc.id,
+          ...doc.data(),
+          deadline: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as TaskPost;
+      }
     });
   } catch (error: any) {
     // If composite index is missing, try without orderBy and sort client-side
@@ -190,14 +211,35 @@ export async function listTasks(filters?: {
       
       const snapshot = await getDocs(fallbackQuery);
       let tasks = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          deadline: data.deadline?.toDate() || new Date(),
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as TaskPost;
+        try {
+          const data = doc.data();
+          // Safely convert Firestore Timestamps to Dates
+          const convertTimestamp = (ts: any): Date => {
+            if (!ts) return new Date();
+            if (ts instanceof Date) return ts;
+            if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
+            if (typeof ts === 'string' || typeof ts === 'number') return new Date(ts);
+            return new Date();
+          };
+          
+          return {
+            id: doc.id,
+            ...data,
+            deadline: convertTimestamp(data.deadline),
+            createdAt: convertTimestamp(data.createdAt),
+            updatedAt: convertTimestamp(data.updatedAt),
+          } as TaskPost;
+        } catch (error) {
+          console.error('Error converting task document:', error, doc.id);
+          // Return a minimal valid task object
+          return {
+            id: doc.id,
+            ...doc.data(),
+            deadline: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as TaskPost;
+        }
       });
       
       // Sort client-side by createdAt (newest first)
