@@ -209,52 +209,64 @@ export async function listTasks(filters?: {
         fallbackQuery = query(fallbackQuery, where('assignedTo', '==', filters.assignedTo));
       }
       
-      const snapshot = await getDocs(fallbackQuery);
-      let tasks = snapshot.docs.map((doc) => {
-        try {
-          const data = doc.data();
-          // Safely convert Firestore Timestamps to Dates
-          const convertTimestamp = (ts: any): Date => {
-            if (!ts) return new Date();
-            if (ts instanceof Date) return ts;
-            if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
-            if (typeof ts === 'string' || typeof ts === 'number') return new Date(ts);
-            return new Date();
-          };
-          
-          return {
-            id: doc.id,
-            ...data,
-            deadline: convertTimestamp(data.deadline),
-            createdAt: convertTimestamp(data.createdAt),
-            updatedAt: convertTimestamp(data.updatedAt),
-          } as TaskPost;
-        } catch (error) {
-          console.error('Error converting task document:', error, doc.id);
-          // Return a minimal valid task object
-          return {
-            id: doc.id,
-            ...doc.data(),
-            deadline: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          } as TaskPost;
+      try {
+        const snapshot = await getDocs(fallbackQuery);
+        let tasks = snapshot.docs.map((doc) => {
+          try {
+            const data = doc.data();
+            // Safely convert Firestore Timestamps to Dates
+            const convertTimestamp = (ts: any): Date => {
+              if (!ts) return new Date();
+              if (ts instanceof Date) return ts;
+              if (ts?.toDate && typeof ts.toDate === 'function') return ts.toDate();
+              if (typeof ts === 'string' || typeof ts === 'number') return new Date(ts);
+              return new Date();
+            };
+            
+            return {
+              id: doc.id,
+              ...data,
+              deadline: convertTimestamp(data.deadline),
+              createdAt: convertTimestamp(data.createdAt),
+              updatedAt: convertTimestamp(data.updatedAt),
+            } as TaskPost;
+          } catch (error) {
+            console.error('Error converting task document:', error, doc.id);
+            // Return a minimal valid task object
+            return {
+              id: doc.id,
+              ...doc.data(),
+              deadline: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            } as TaskPost;
+          }
+        });
+        
+        // Sort client-side by createdAt (newest first)
+        tasks.sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+          const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+        
+        // Apply limit client-side if needed
+        if (filters?.limitCount) {
+          tasks = tasks.slice(0, filters.limitCount);
         }
-      });
-      
-      // Sort client-side by createdAt (newest first)
-      tasks.sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
-        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-      
-      // Apply limit client-side if needed
-      if (filters?.limitCount) {
-        tasks = tasks.slice(0, filters.limitCount);
+        
+        return tasks;
+      } catch (fallbackError: any) {
+        // If fallback query also fails, log and return empty array
+        console.error('Fallback query also failed:', fallbackError);
+        console.error('Fallback error code:', fallbackError?.code);
+        return [];
       }
-      
-      return tasks;
+    } else {
+      // For other errors (not index errors), log and return empty array
+      console.error('Error in listTasks (non-index error):', error);
+      console.error('Error code:', error?.code);
+      return [];
     }
     
     // Re-throw if it's a different error

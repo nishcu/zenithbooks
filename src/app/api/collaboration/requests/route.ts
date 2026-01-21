@@ -64,12 +64,29 @@ export async function GET(request: NextRequest) {
       });
     } catch (error: any) {
       console.error('Error fetching tasks in collaboration requests API:', error);
-      // If it's an index error, return empty array instead of failing
+      console.error('Error code:', error?.code);
+      console.error('Error message:', error?.message);
+      
+      // Handle all FirebaseErrors gracefully
+      // Common Firebase error codes:
+      // - 'failed-precondition': Missing index
+      // - 'permission-denied': Security rules blocking access
+      // - 'unavailable': Service temporarily unavailable
+      // - 'unauthenticated': User not authenticated
+      
       if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
         console.warn('Firestore index missing, returning empty results. Please create the required index.');
         allTasks = [];
+      } else if (error?.code === 'permission-denied') {
+        console.warn('Permission denied accessing tasks. Check Firestore security rules.');
+        allTasks = [];
+      } else if (error?.code === 'unavailable' || error?.code === 'deadline-exceeded') {
+        console.warn('Firestore service temporarily unavailable, returning empty results.');
+        allTasks = [];
       } else {
-        throw error; // Re-throw other errors
+        // For other errors, log but don't crash - return empty array
+        console.warn('Unknown error fetching tasks, returning empty results:', error?.code || error?.message);
+        allTasks = [];
       }
     }
 
