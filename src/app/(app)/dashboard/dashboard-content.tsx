@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useContext, memo } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -321,6 +321,26 @@ function DashboardContent() {
     },
   ];
 
+  // Knowledge Exchange Features (for professionals)
+  const knowledgeFeatures = [
+    {
+      title: "Knowledge Feed",
+      description: "Browse educational content shared by professionals",
+      icon: BookOpen,
+      href: "/knowledge",
+      color: "from-indigo-500 to-purple-600",
+      badge: "Browse"
+    },
+    {
+      title: "Share Knowledge",
+      description: "Share educational content and compliance updates",
+      icon: Plus,
+      href: "/knowledge/create",
+      color: "from-blue-500 to-cyan-600",
+      badge: "Share"
+    },
+  ];
+
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
           <div className="space-y-8 w-full max-w-full overflow-x-hidden min-w-0">
@@ -340,6 +360,58 @@ function DashboardContent() {
                     </CardContent>
                  </Card>
                )}
+
+              {/* Knowledge Exchange Section - Highlighted for Professionals */}
+              <Card className="border-2 border-indigo-300 shadow-xl bg-gradient-to-br from-indigo-5 to-purple-10">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <GraduationCap className="h-6 w-6 text-indigo-600" />
+                        Knowledge Exchange
+                      </CardTitle>
+                      <CardDescription className="mt-2 text-base">
+                        Educational content for professional awareness and compliance updates (ICAI-Compliant)
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6 w-full max-w-full overflow-x-hidden min-w-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-4 w-full min-w-0">
+                    {knowledgeFeatures.map((feature) => {
+                      const Icon = feature.icon;
+                      return (
+                        <Link key={feature.href} href={feature.href}>
+                          <Card className="h-full hover:shadow-xl hover:shadow-indigo/20 transition-all duration-300 border-2 hover:border-indigo/60 group cursor-pointer min-w-0 bg-card hover:-translate-y-1">
+                            <CardHeader className="pb-3 px-4 pt-4">
+                              <div className="flex items-start justify-between mb-2">
+                                <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5 bg-indigo/10 text-indigo-600 border-indigo/20">
+                                  {feature.badge}
+                                </Badge>
+                              </div>
+                              <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-md`}>
+                                <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <CardTitle className="text-sm font-semibold group-hover:text-indigo-600 transition-colors leading-tight">
+                                {feature.title}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0 px-4 pb-4">
+                              <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                {feature.description}
+                              </CardDescription>
+                              <div className="mt-2 flex items-center text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span className="text-xs font-medium">Explore</span>
+                                <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Tasks and Networking Section - Highlighted for Professionals */}
               <Card className="border-2 border-primary/30 shadow-xl bg-gradient-to-br from-primary/5 to-primary/10">
