@@ -319,15 +319,22 @@ export async function reportKnowledgePost(
   reason: "Promotional" | "Misleading" | "Incorrect" | "Other",
   details?: string
 ): Promise<void> {
-  // Create report
-  await addDoc(collection(db, COLLECTIONS.KNOWLEDGE_REPORTS), {
+  // Prepare report data, filtering out undefined fields
+  const reportData: any = {
     postId,
     reportedByUserId: userId,
     reason,
-    details,
     status: 'pending',
     createdAt: serverTimestamp(),
-  });
+  };
+  
+  // Only include details if provided
+  if (details !== undefined && details !== null && details.trim() !== '') {
+    reportData.details = details.trim();
+  }
+  
+  // Create report
+  await addDoc(collection(db, COLLECTIONS.KNOWLEDGE_REPORTS), reportData);
   
   // Update post reportedByUsers array
   const postRef = doc(db, COLLECTIONS.KNOWLEDGE_POSTS, postId);
