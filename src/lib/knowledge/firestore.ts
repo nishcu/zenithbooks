@@ -52,9 +52,18 @@ export async function createKnowledgePost(
     postData.sourceReference
   );
   
+  // Remove undefined fields (Firestore doesn't accept undefined)
+  const cleanedPostData: any = {};
+  Object.keys(postData).forEach((key) => {
+    const value = (postData as any)[key];
+    if (value !== undefined) {
+      cleanedPostData[key] = value;
+    }
+  });
+
   const postsRef = collection(db, COLLECTIONS.KNOWLEDGE_POSTS);
   const docRef = await addDoc(postsRef, {
-    ...postData,
+    ...cleanedPostData,
     status: (shouldFlag ? 'UNDER_REVIEW' : 'PUBLISHED') as KnowledgePostStatus,
     helpfulCount: 0,
     savedByUsers: [],
