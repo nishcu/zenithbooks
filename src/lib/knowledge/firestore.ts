@@ -10,6 +10,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   addDoc,
   query,
   where,
@@ -172,6 +173,14 @@ export async function updateKnowledgePostStatus(
   }
   
   await updateDoc(postRef, updateData);
+}
+
+/**
+ * Delete knowledge post (only by author or admin)
+ */
+export async function deleteKnowledgePost(postId: string): Promise<void> {
+  const postRef = doc(db, COLLECTIONS.KNOWLEDGE_POSTS, postId);
+  await deleteDoc(postRef);
 }
 
 /**

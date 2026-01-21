@@ -13,16 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ThumbsUp, Bookmark, Flag, Plus, Filter, Search } from "lucide-react";
+import { Loader2, ThumbsUp, Bookmark, Flag, Plus, Filter, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { listKnowledgePosts, addHelpfulReaction, removeHelpfulReaction, saveKnowledgePost, unsaveKnowledgePost, reportKnowledgePost, hasUserReacted, hasUserSaved } from "@/lib/knowledge/firestore";
+import { listKnowledgePosts, addHelpfulReaction, removeHelpfulReaction, saveKnowledgePost, unsaveKnowledgePost, reportKnowledgePost, deleteKnowledgePost, hasUserReacted, hasUserSaved } from "@/lib/knowledge/firestore";
 import type { KnowledgePost, KnowledgeCategory } from "@/lib/knowledge/types";
 import { KNOWLEDGE_CATEGORIES } from "@/lib/knowledge/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function KnowledgePage() {
   const [user] = useAuthState(auth);
@@ -35,6 +36,9 @@ export default function KnowledgePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
   const [userSaves, setUserSaves] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check authorization (verified professionals only)
   useEffect(() => {
@@ -209,6 +213,37 @@ export default function KnowledgePage() {
         title: "Error",
         description: "Failed to submit report.",
       });
+    }
+  };
+
+  const handleDeleteClick = (postId: string) => {
+    setPostToDelete(postId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete || !user) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteKnowledgePost(postToDelete);
+      toast({
+        title: "Post Deleted",
+        description: "Your knowledge post has been deleted successfully.",
+      });
+      // Reload posts
+      await loadPosts();
+      setDeleteDialogOpen(false);
+      setPostToDelete(null);
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -412,6 +447,19 @@ export default function KnowledgePage() {
                     <Flag className="mr-2 h-4 w-4" />
                     Report
                   </Button>
+
+                  {/* Delete button - only visible to author */}
+                  {user && post.authorId === user.uid && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(post.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -427,6 +475,38 @@ export default function KnowledgePage() {
           No solicitation or professional marketing is permitted.
         </p>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Knowledge Post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this knowledge post? This action cannot be undone and the post will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Post
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
