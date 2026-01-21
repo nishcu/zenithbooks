@@ -343,7 +343,102 @@ function DashboardContent() {
 
   if (displayRole === 'professional' || displayRole === 'super_admin') {
       return (
-          <div className="space-y-8 w-full max-w-full overflow-x-hidden min-w-0">
+          <div className="space-y-6 md:space-y-8 w-full max-w-full overflow-x-hidden min-w-0 pb-20 md:pb-0">
+               {/* Mobile: Show Knowledge & Networking First, Desktop: After Client List */}
+               <div className="md:hidden space-y-4">
+                 {/* Knowledge Exchange Section - Mobile First */}
+                 <Card className="border-2 border-indigo-300 shadow-xl bg-gradient-to-br from-indigo-5 to-purple-10">
+                   <CardHeader className="pb-3">
+                     <CardTitle className="text-xl flex items-center gap-2">
+                       <GraduationCap className="h-5 w-5 text-indigo-600" />
+                       Knowledge Exchange
+                     </CardTitle>
+                     <CardDescription className="text-sm mt-1">
+                       Educational content for professionals (ICAI-Compliant)
+                     </CardDescription>
+                   </CardHeader>
+                   <CardContent className="px-4 pb-4">
+                     <div className="grid grid-cols-1 gap-3">
+                       {knowledgeFeatures.map((feature) => {
+                         const Icon = feature.icon;
+                         return (
+                           <Link key={feature.href} href={feature.href}>
+                             <Card className="h-full border-2 hover:border-indigo/60 group cursor-pointer bg-card">
+                               <CardHeader className="pb-2 px-4 pt-4">
+                                 <div className="flex items-center gap-3">
+                                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                                     <Icon className="h-6 w-6 text-white" />
+                                   </div>
+                                   <div className="flex-1 min-w-0">
+                                     <CardTitle className="text-base font-semibold group-hover:text-indigo-600 transition-colors">
+                                       {feature.title}
+                                     </CardTitle>
+                                     <CardDescription className="text-xs mt-1 line-clamp-1">
+                                       {feature.description}
+                                     </CardDescription>
+                                   </div>
+                                   <ArrowRight className="h-5 w-5 text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                 </div>
+                               </CardHeader>
+                             </Card>
+                           </Link>
+                         );
+                       })}
+                     </div>
+                   </CardContent>
+                 </Card>
+
+                 {/* Tasks and Networking Section - Mobile */}
+                 <Card className="border-2 border-primary/30 shadow-xl bg-gradient-to-br from-primary/5 to-primary/10">
+                   <CardHeader className="pb-3">
+                     <CardTitle className="text-xl flex items-center gap-2">
+                       <Network className="h-5 w-5 text-primary" />
+                       Tasks & Networking
+                     </CardTitle>
+                     <CardDescription className="text-sm mt-1">
+                       Connect with businesses and grow your network
+                     </CardDescription>
+                   </CardHeader>
+                   <CardContent className="px-4 pb-4">
+                     <div className="grid grid-cols-1 gap-3">
+                       {tasksNetworkingFeatures.slice(0, 4).map((feature) => {
+                         const Icon = feature.icon;
+                         return (
+                           <Link key={feature.href} href={feature.href}>
+                             <Card className="h-full border-2 hover:border-primary/60 group cursor-pointer bg-card">
+                               <CardHeader className="pb-2 px-4 pt-4">
+                                 <div className="flex items-center gap-3">
+                                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-md flex-shrink-0`}>
+                                     <Icon className="h-6 w-6 text-white" />
+                                   </div>
+                                   <div className="flex-1 min-w-0">
+                                     <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors">
+                                       {feature.title}
+                                     </CardTitle>
+                                     <CardDescription className="text-xs mt-1 line-clamp-1">
+                                       {feature.description}
+                                     </CardDescription>
+                                   </div>
+                                   <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                 </div>
+                               </CardHeader>
+                             </Card>
+                           </Link>
+                         );
+                       })}
+                     </div>
+                     {tasksNetworkingFeatures.length > 4 && (
+                       <Link href="/tasks/browse">
+                         <Button variant="outline" className="w-full mt-3">
+                           View All Networking Options
+                           <ArrowRight className="ml-2 h-4 w-4" />
+                         </Button>
+                       </Link>
+                     )}
+                   </CardContent>
+                 </Card>
+               </div>
+
                <ClientList onSwitchWorkspace={setActiveClient} activeClientId={activeClient?.id || null} />
                 
                {activeClient && (
@@ -361,8 +456,8 @@ function DashboardContent() {
                  </Card>
                )}
 
-              {/* Knowledge Exchange Section - Highlighted for Professionals */}
-              <Card className="border-2 border-indigo-300 shadow-xl bg-gradient-to-br from-indigo-5 to-purple-10">
+              {/* Knowledge Exchange Section - Desktop View */}
+              <Card className="hidden md:block border-2 border-indigo-300 shadow-xl bg-gradient-to-br from-indigo-5 to-purple-10">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -413,8 +508,8 @@ function DashboardContent() {
                 </CardContent>
               </Card>
 
-              {/* Tasks and Networking Section - Highlighted for Professionals */}
-              <Card className="border-2 border-primary/30 shadow-xl bg-gradient-to-br from-primary/5 to-primary/10">
+              {/* Tasks and Networking Section - Desktop View */}
+              <Card className="hidden md:block border-2 border-primary/30 shadow-xl bg-gradient-to-br from-primary/5 to-primary/10">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
