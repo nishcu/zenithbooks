@@ -97,6 +97,7 @@ export default function KnowledgePage() {
     
     setIsLoading(true);
     try {
+      // Load published posts
       const filters: any = {
         status: "PUBLISHED" as const,
         sortBy: "latest" as const,
@@ -106,7 +107,38 @@ export default function KnowledgePage() {
         filters.category = selectedCategory as KnowledgeCategory;
       }
       
-      const fetchedPosts = await listKnowledgePosts(filters);
+      const publishedPosts = await listKnowledgePosts(filters);
+      
+      // Also load user's own posts (including UNDER_REVIEW) so they can see their own posts
+      const myPostsFilters: any = {
+        authorId: user.uid,
+        sortBy: "latest" as const,
+      };
+      
+      if (selectedCategory !== "all") {
+        myPostsFilters.category = selectedCategory as KnowledgeCategory;
+      }
+      
+      const myPosts = await listKnowledgePosts(myPostsFilters);
+      
+      // Combine and deduplicate (user's posts might already be in publishedPosts)
+      const allPostsMap = new Map<string, KnowledgePost>();
+      
+      // Add published posts
+      publishedPosts.forEach(post => allPostsMap.set(post.id, post));
+      
+      // Add user's own posts (this will include UNDER_REVIEW posts)
+      myPosts.forEach(post => allPostsMap.set(post.id, post));
+      
+      const fetchedPosts = Array.from(allPostsMap.values());
+      
+      // Sort by createdAt (newest first)
+      fetchedPosts.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
+      
       setPosts(fetchedPosts);
       
       // Load user reactions and saves
