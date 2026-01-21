@@ -89,30 +89,35 @@ export async function GET(request: NextRequest) {
     // 2. OR in the invitedFirmIds array (for invite-only tasks)
     // 3. OR visibility is 'firm-network' and user is a professional (for firm-network tasks)
     const filteredTasks = allTasks.filter((task) => {
-      const taskData = task as any;
-      
-      // Check if user's firm is the requesting firm
-      const isRequestingFirm = 
-        taskData.requestedByFirmId === userFirmId ||
-        taskData.requestedByUserId === userId ||
-        task.postedBy === userId; // Backward compatibility
-      
-      if (isRequestingFirm) {
-        return true; // Always show tasks you created
-      }
+      try {
+        const taskData = task as any;
+        
+        // Check if user's firm is the requesting firm
+        const isRequestingFirm = 
+          taskData.requestedByFirmId === userFirmId ||
+          taskData.requestedByUserId === userId ||
+          (task.postedBy && task.postedBy === userId); // Backward compatibility
+        
+        if (isRequestingFirm) {
+          return true; // Always show tasks you created
+        }
 
-      // Check visibility
-      const visibility = taskData.visibility || 'invite-only';
-      
-      if (visibility === 'firm-network') {
-        // Firm-network tasks are visible to all professionals
-        return userType === 'professional';
-      } else {
-        // Invite-only tasks: check if user's firm is in invitedFirmIds
-        const isInvitedFirm = 
-          Array.isArray(taskData.invitedFirmIds) &&
-          taskData.invitedFirmIds.includes(userFirmId);
-        return isInvitedFirm;
+        // Check visibility
+        const visibility = taskData.visibility || 'invite-only';
+        
+        if (visibility === 'firm-network') {
+          // Firm-network tasks are visible to all professionals
+          return userType === 'professional';
+        } else {
+          // Invite-only tasks: check if user's firm is in invitedFirmIds
+          const isInvitedFirm = 
+            Array.isArray(taskData.invitedFirmIds) &&
+            taskData.invitedFirmIds.includes(userFirmId);
+          return isInvitedFirm;
+        }
+      } catch (error) {
+        console.error('Error filtering task:', error, task);
+        return false; // Skip tasks that cause errors
       }
     });
 
