@@ -20,12 +20,12 @@ export function middleware(request: NextRequest) {
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://vercel.live; " + // Added vercel.live for Next.js
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://vercel.live https://www.googletagmanager.com https://www.google-analytics.com; " + // Added Google Tag Manager and Analytics
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "img-src 'self' data: https:; " +
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; " +
     "frame-src 'self' https://sdk.cashfree.com; " +
-    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com https://sdk.cashfree.com;"
+    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com https://sdk.cashfree.com https://www.google-analytics.com https://www.googletagmanager.com;"
   );
 
   // Rate limiting for API routes
