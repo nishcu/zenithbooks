@@ -74,14 +74,20 @@ export interface KnowledgeReport {
 }
 
 // Content validation patterns
+// Note: These patterns are designed to catch promotional content, not educational references
 export const BLOCKED_PATTERNS = [
   /\b\d{10}\b/, // Phone numbers (10 digits)
   /\b[\w\.-]+@[\w\.-]+\.\w+\b/, // Email addresses
   /whatsapp|wa\.me|wa.me/gi, // WhatsApp links
-  /₹|rs\.|rupees|pricing|fee|cost|charge/gi, // Pricing terms
-  /contact me|contact us|reach out|hire|engage/gi, // Contact CTAs
-  /we provide|our services|best ca|top ca|experienced ca/gi, // Promotional language
-  /call now|book now|get quote|free consultation/gi, // Sales CTAs
+  // Pricing terms - only block if used in promotional context
+  // Allow: "GST rate", "tax rate", "government fee", "statutory fee"
+  // Block: "our fee", "contact for pricing", "competitive pricing", "affordable fee"
+  /\b(our|my|we|our firm|my firm|contact.*for|call.*for|reach.*for).*(?:₹|rs\.|rupees|pricing|fee|cost|charge|rate)/gi,
+  /\b(₹|rs\.|rupees).*(?:contact|call|reach|hire|engage|book|quote)/gi,
+  /\b(competitive|affordable|cheap|best|lowest).*(?:pricing|fee|cost|charge|rate)/gi,
+  /contact me|contact us|reach out|hire me|hire us|engage me|engage us/gi, // Contact CTAs
+  /we provide|our services|best ca|top ca|experienced ca|expert ca/gi, // Promotional language
+  /call now|book now|get quote|free consultation|consultation free|avail.*service/gi, // Sales CTAs
 ];
 
 export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
