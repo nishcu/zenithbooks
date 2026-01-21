@@ -133,23 +133,91 @@ export async function listTasks(filters?: {
   }
   
   // Order by createdAt (newest first)
-  q = query(q, orderBy('createdAt', 'desc'));
-  
-  if (filters?.limitCount) {
-    q = query(q, limit(filters.limitCount));
+  // Note: This requires a composite index if used with where clauses
+  // If index is missing, we'll sort client-side as fallback
+  try {
+    q = query(q, orderBy('createdAt', 'desc'));
+    
+    if (filters?.limitCount) {
+      q = query(q, limit(filters.limitCount));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        deadline: data.deadline?.toDate() || new Date(),
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+      } as TaskPost;
+    });
+  } catch (error: any) {
+    // If composite index is missing, try without orderBy and sort client-side
+    if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+      console.warn('Composite index missing, sorting client-side:', error.message);
+      
+      // Remove orderBy and limit, fetch all and sort client-side
+      let fallbackQuery = query(collection(db, COLLECTIONS.TASKS_POSTS));
+      
+      // Re-apply all where clauses
+      if (filters?.status) {
+        fallbackQuery = query(fallbackQuery, where('status', '==', filters.status));
+      } else {
+        fallbackQuery = query(fallbackQuery, where('status', '==', 'open'));
+      }
+      
+      if (filters?.category) {
+        fallbackQuery = query(fallbackQuery, where('category', '==', filters.category));
+      }
+      
+      if (filters?.state) {
+        fallbackQuery = query(fallbackQuery, where('state', '==', filters.state));
+      }
+      
+      if (filters?.city) {
+        fallbackQuery = query(fallbackQuery, where('city', '==', filters.city));
+      }
+      
+      if (filters?.postedBy) {
+        fallbackQuery = query(fallbackQuery, where('postedBy', '==', filters.postedBy));
+      }
+      
+      if (filters?.assignedTo) {
+        fallbackQuery = query(fallbackQuery, where('assignedTo', '==', filters.assignedTo));
+      }
+      
+      const snapshot = await getDocs(fallbackQuery);
+      let tasks = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          deadline: data.deadline?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as TaskPost;
+      });
+      
+      // Sort client-side by createdAt (newest first)
+      tasks.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
+      
+      // Apply limit client-side if needed
+      if (filters?.limitCount) {
+        tasks = tasks.slice(0, filters.limitCount);
+      }
+      
+      return tasks;
+    }
+    
+    // Re-throw if it's a different error
+    throw error;
   }
-  
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      ...data,
-      deadline: data.deadline?.toDate() || new Date(),
-      createdAt: data.createdAt?.toDate() || new Date(),
-      updatedAt: data.updatedAt?.toDate() || new Date(),
-    } as TaskPost;
-  });
 }
 
 /**

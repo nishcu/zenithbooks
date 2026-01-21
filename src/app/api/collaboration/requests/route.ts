@@ -53,13 +53,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all tasks with filters
-    const allTasks = await listTasks({
-      status,
-      category,
-      state,
-      city,
-      limitCount: undefined, // Don't limit yet, we need to filter by firm
-    });
+    let allTasks: any[] = [];
+    try {
+      allTasks = await listTasks({
+        status,
+        category,
+        state,
+        city,
+        limitCount: undefined, // Don't limit yet, we need to filter by firm
+      });
+    } catch (error: any) {
+      console.error('Error fetching tasks in collaboration requests API:', error);
+      // If it's an index error, return empty array instead of failing
+      if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+        console.warn('Firestore index missing, returning empty results. Please create the required index.');
+        allTasks = [];
+      } else {
+        throw error; // Re-throw other errors
+      }
+    }
 
     // Get user type to determine if they can see firm-network tasks
     let userType: string | null = null;
