@@ -14,6 +14,7 @@ export type KnowledgeCategory =
   | "Case Law"
   | "Circular / Notification"
   | "Templates & Checklists"
+  | "Professional Growth"
   | "Others";
 
 export type KnowledgePostStatus = "PUBLISHED" | "UNDER_REVIEW" | "REMOVED";
@@ -99,6 +100,7 @@ export const KNOWLEDGE_CATEGORIES: KnowledgeCategory[] = [
   "Case Law",
   "Circular / Notification",
   "Templates & Checklists",
+  "Professional Growth",
   "Others",
 ];
 
