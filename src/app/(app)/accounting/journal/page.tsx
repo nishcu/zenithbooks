@@ -70,6 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { allAccounts, costCentres } from "@/lib/accounts";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
+import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
 
 export default function JournalVoucherPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -111,7 +112,6 @@ export default function JournalVoucherPage() {
     if (orgData === null) {
       return query(collection(db, "customers"), where("userId", "==", user.uid));
     }
-    const { buildOrganizationQuery } = require("@/lib/organization-utils");
     const orgQuery = buildOrganizationQuery('customers', user, orgData);
     return orgQuery || query(collection(db, "customers"), where("userId", "==", user.uid));
   }, [user, orgData]);
@@ -132,7 +132,6 @@ export default function JournalVoucherPage() {
     if (orgData === null) {
       return query(collection(db, "vendors"), where("userId", "==", user.uid));
     }
-    const { buildOrganizationQuery } = require("@/lib/organization-utils");
     const orgQuery = buildOrganizationQuery('vendors', user, orgData);
     return orgQuery || query(collection(db, "vendors"), where("userId", "==", user.uid));
   }, [user, orgData]);
