@@ -248,5 +248,18 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && 
                                 resource.data.givenByFirmId == request.auth.uid;
     }
+
+    // User Invites Collection
+    // Users can create invites where they are the inviter
+    // Users can read invites they created
+    // Users can update/delete invites they created
+    match /userInvites/{inviteId} {
+      allow read: if request.auth != null && 
+                     resource.data.invitedBy == request.auth.uid;
+      allow create: if request.auth != null && 
+                       request.resource.data.invitedBy == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                                resource.data.invitedBy == request.auth.uid;
+    }
   }
 }
