@@ -85,7 +85,7 @@ export default function PartiesPage() {
   const { toast } = useToast();
   const [user] = useAuthState(auth);
   const router = useRouter();
-  const { canDelete } = useRolePermissions();
+  const { canDelete, canCreate, canUpdate, isViewer } = useRolePermissions();
 
   const [activeTab, setActiveTab] = useState("customers");
   const [isPartyDialogOpen, setIsPartyDialogOpen] = useState(false);
@@ -290,7 +290,9 @@ export default function PartiesPage() {
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewLedger(party)}><FileText className="mr-2"/> View Ledger</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenDialog(party)}><Edit className="mr-2"/> Edit</DropdownMenuItem>
+                        {canUpdate && (
+                          <DropdownMenuItem onClick={() => handleOpenDialog(party)}><Edit className="mr-2"/> Edit</DropdownMenuItem>
+                        )}
                         {type === 'Customer' && <DropdownMenuItem onClick={() => handleAssignCode(party)} disabled={!!party.accountCode}><PlusSquare className="mr-2"/> Assign Account Code</DropdownMenuItem>}
                         {canDelete && (
                           <>
@@ -311,11 +313,21 @@ export default function PartiesPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Parties</h1>
-          <p className="text-muted-foreground">
-            Manage your customers and vendors from one central place.
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">Parties</h1>
+              {isViewer && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  <span>Read-Only</span>
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground">
+              Manage your customers and vendors from one central place.
+            </p>
+          </div>
         </div>
         <div className="flex gap-2 flex-wrap">
             <DropdownMenu>
@@ -333,7 +345,9 @@ export default function PartiesPage() {
                 <Button variant="outline"><UploadCloud className="mr-2"/>Bulk Upload</Button>
             </Link>
             <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}><Upload className="mr-2"/> Import</Button>
-            <Button onClick={() => handleOpenDialog()}><PlusCircle className="mr-2"/>Add New {activeTab === 'customers' ? 'Customer' : 'Vendor'}</Button>
+            {canCreate && (
+              <Button onClick={() => handleOpenDialog()}><PlusCircle className="mr-2"/>Add New {activeTab === 'customers' ? 'Customer' : 'Vendor'}</Button>
+            )}
         </div>
       </div>
       

@@ -71,6 +71,9 @@ import { AccountingContext, type JournalVoucher } from "@/context/accounting-con
 import { allAccounts, costCentres } from "@/lib/accounts";
 import { generateAutoNarration, shouldAutoGenerateNarration } from "@/lib/narration-generator";
 import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
+import { useRolePermissions } from "@/hooks/use-role-permissions";
+import { Badge } from "@/components/ui/badge";
+import { Eye } from "lucide-react";
 
 export default function JournalVoucherPage() {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -81,6 +84,20 @@ export default function JournalVoucherPage() {
   const isFreemium = subscriptionPlan === 'freemium';
 
   const accountingContext = useContext(AccountingContext);
+  const { canAccessAccounting, canCreate, canUpdate, canDelete, isViewer } = useRolePermissions();
+  
+  // Redirect sales role away from accounting pages
+  useEffect(() => {
+    if (!canAccessAccounting && user) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You don't have permission to access accounting features.",
+      });
+      window.location.href = "/dashboard";
+    }
+  }, [canAccessAccounting, user, toast]);
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<JournalVoucher | null>(null);
   const [narration, setNarration] = useState("");
@@ -397,24 +414,36 @@ export default function JournalVoucherPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Journal Vouchers</h1>
-          <p className="text-muted-foreground">Create manual journal entries to adjust ledger accounts.</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">Journal Vouchers</h1>
+              {isViewer && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  <span>Read-Only</span>
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground">Create manual journal entries to adjust ledger accounts.</p>
+          </div>
         </div>
         <div className="flex gap-2">
-          <Link href="/accounting/journal/bulk">
-            <Button variant="outline">
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Bulk Upload
-            </Button>
-          </Link>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2" />
-                New Journal Voucher
-              </Button>
-            </DialogTrigger>
+          {canCreate && (
+            <>
+              <Link href="/accounting/journal/bulk">
+                <Button variant="outline">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Bulk Upload
+                </Button>
+              </Link>
+              <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2" />
+                    New Journal Voucher
+                  </Button>
+                </DialogTrigger>
             <DialogContent className="max-w-4xl overflow-visible">
               <DialogHeader>
                 <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
@@ -632,14 +661,18 @@ export default function JournalVoucherPage() {
                           <FileText className="mr-2 h-4 w-4" />
                           View Voucher
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleVoucherAction("Edit", voucher)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onSelect={() => handleVoucherAction("Delete", voucher)}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Reverse / Delete
-                        </DropdownMenuItem>
+                        {canUpdate && (
+                          <DropdownMenuItem onSelect={() => handleVoucherAction("Edit", voucher)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <DropdownMenuItem className="text-destructive" onSelect={() => handleVoucherAction("Delete", voucher)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Reverse / Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

@@ -43,6 +43,7 @@ export async function getUserOrganizationData(user: User | null): Promise<UserOr
 /**
  * Build a query that filters by userId OR organizationId
  * Supports backward compatibility (userId) and organization access (organizationId)
+ * Also supports client-specific filtering when clientId is set
  */
 export function buildOrganizationQuery(
   collectionName: string,
@@ -58,12 +59,15 @@ export function buildOrganizationQuery(
   if (orgData?.organizationId) {
     // If user has clientId restriction, add that filter too
     if (orgData.clientId) {
+      // Client-specific: only show data for this specific client
       return query(
         collectionRef,
         where("organizationId", "==", orgData.organizationId),
         where("clientId", "==", orgData.clientId)
       );
     } else {
+      // Organization-wide: show all organization data (no clientId filter)
+      // This includes data with clientId (for other clients) and data without clientId (organization-wide)
       return query(
         collectionRef,
         where("organizationId", "==", orgData.organizationId)

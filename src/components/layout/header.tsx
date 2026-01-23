@@ -26,12 +26,14 @@ import { db, auth as firebaseAuth } from "@/lib/firebase";
 import { readBrandingSettings } from "@/lib/branding";
 import { useState, useEffect } from "react";
 import { ZENITH_BOOKS_VERSION } from "@/lib/constants";
+import { useRolePermissions } from "@/hooks/use-role-permissions";
 
 export function Header() {
   const pathname = usePathname();
   const [user] = useAuthState(firebaseAuth);
   const userDocRef = user ? doc(db, 'users', user.uid) : null;
   const [userData] = useDocumentData(userDocRef);
+  const { canAccessSettings } = useRolePermissions();
   const [companyInfo, setCompanyInfo] = useState({
     name: "ZenithBooks Solutions",
     gstin: "27ABCDE1234F1Z5",
@@ -115,13 +117,15 @@ export function Header() {
             <NotificationsDropdown />
           </div>
 
-          {/* Settings Quick Access */}
-          <Button variant="ghost" size="icon" asChild className="hidden sm:flex px-2">
-            <Link href="/settings">
-              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="sr-only">Settings</span>
-            </Link>
-          </Button>
+          {/* Settings Quick Access - Only for admins */}
+          {canAccessSettings && (
+            <Button variant="ghost" size="icon" asChild className="hidden sm:flex px-2">
+              <Link href="/settings">
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="sr-only">Settings</span>
+              </Link>
+            </Button>
+          )}
 
           {/* Theme Toggle */}
           <div className="flex items-center px-1">

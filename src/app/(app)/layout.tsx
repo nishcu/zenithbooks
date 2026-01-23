@@ -49,7 +49,9 @@ import { ClientOnly } from "@/components/client-only";
 import { AccountingProvider } from "@/context/accounting-context";
 import { NotificationsProvider } from "@/context/notifications-context";
 import { Suspense, useEffect } from "react";
+import { useRolePermissions } from "@/hooks/use-role-permissions";
 import { useHotkeys } from "@/hooks/use-hotkeys";
+import { ClientContextBanner } from "@/components/organization/client-context-banner";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Fab } from "@/components/layout/fab";
 import { RoleSimulatorProvider, useRoleSimulator } from "@/context/role-simulator-context";
@@ -400,17 +402,42 @@ function MainLayout({
     );
   }
   
+  // Get role permissions for UI checks
+  const { canAccessSettings, canAccessAccounting, isViewer, role } = useRolePermissions();
+  
   const filteredMenuItems = allMenuItems
     .map(item => {
       if (!item.roles.includes(displayRole)) {
           return null;
       }
+      
+      // Hide Settings menu for non-admins
+      if (item.label === "Settings" && !canAccessSettings) {
+        return null;
+      }
+      
+      // Hide Accounting menu for sales role
+      if (item.label === "Accounting" && !canAccessAccounting) {
+        return null;
+      }
+      
       if (item.subItems) {
           const filteredSubItems = item.subItems
               .map(subItem => {
                   if (!subItem.roles.includes(displayRole)) {
                       return null;
                   }
+                  
+                  // Hide settings sub-items for non-admins
+                  if ((subItem.href?.includes('/settings') || subItem.label?.toLowerCase().includes('settings')) && !canAccessSettings) {
+                    return null;
+                  }
+                  
+                  // Hide accounting sub-items for sales role
+                  if ((subItem.href?.includes('/accounting') || subItem.label?.toLowerCase().includes('accounting')) && !canAccessAccounting) {
+                    return null;
+                  }
+                  
                   if (subItem.subItems) {
                         const filteredNestedSubItems = subItem.subItems.filter(nested => nested.roles.includes(displayRole));
                         if (filteredNestedSubItems.length === 0) return null;
@@ -497,6 +524,7 @@ function MainLayout({
         </Sidebar>
         <SidebarInset className="overflow-x-hidden">
           <Header />
+          <ClientContextBanner />
           <main className="flex flex-1 flex-col gap-4 p-3 sm:p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6 w-full max-w-full overflow-x-hidden min-w-0" role="main" aria-label="Main content">
             <Suspense fallback={<Loader2 className="animate-spin" aria-label="Loading content" />}>
               {children}
