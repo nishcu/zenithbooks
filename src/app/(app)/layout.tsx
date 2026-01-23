@@ -384,6 +384,9 @@ function MainLayout({
   ]);
   useHotkeys(hotkeys);
 
+  // Get role permissions for UI checks - MUST be called before any conditional returns
+  const { canAccessSettings, canAccessAccounting, isViewer, role } = useRolePermissions();
+
   useEffect(() => {
     // Temporarily disable auth for payment gateway testing
     // Remove this check after payment gateway verification is complete
@@ -401,9 +404,6 @@ function MainLayout({
       </div>
     );
   }
-  
-  // Get role permissions for UI checks
-  const { canAccessSettings, canAccessAccounting, isViewer, role } = useRolePermissions();
   
   const filteredMenuItems = allMenuItems
     .map(item => {
