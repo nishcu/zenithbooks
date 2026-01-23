@@ -39,7 +39,7 @@ import {
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { VALIDATION_MESSAGES, TOAST_MESSAGES } from "@/lib/constants";
@@ -92,14 +92,61 @@ export function SignupForm() {
           const userDoc = await getDoc(userDocRef);
           
           if (!userDoc.exists()) {
-            // Create user document with default values
-            await setDoc(userDocRef, {
+            // Check for pending invitations
+            let invitationData: any = null;
+            try {
+              const invitesQuery = query(
+                collection(db, "userInvites"),
+                where("email", "==", user.email),
+                where("status", "==", "Invited")
+              );
+              const invitesSnapshot = await getDocs(invitesQuery);
+              
+              if (!invitesSnapshot.empty) {
+                const inviteDoc = invitesSnapshot.docs[0];
+                invitationData = inviteDoc.data();
+                
+                // Update invitation status to Active
+                await updateDoc(doc(db, "userInvites", inviteDoc.id), {
+                  status: "Active",
+                  acceptedAt: new Date(),
+                  acceptedBy: user.uid,
+                });
+              }
+            } catch (error) {
+              console.error("Error checking for invitations:", error);
+            }
+
+            // Create user document
+            const userData: any = {
               uid: user.uid,
               email: user.email,
               userType: "business", // Default to business
               companyName: user.displayName || "My Company",
               createdAt: new Date(),
-            });
+            };
+
+            // If user was invited, add invitation details
+            if (invitationData) {
+              userData.invitedBy = invitationData.invitedBy;
+              userData.role = invitationData.role;
+              userData.organizationId = invitationData.invitedBy;
+              if (invitationData.clientId) {
+                userData.clientId = invitationData.clientId;
+              }
+              userData.inviteType = invitationData.inviteType || 'organization-wide';
+            }
+
+            await setDoc(userDocRef, userData);
+
+            if (invitationData) {
+              toast({ 
+                title: "Account Created & Invitation Accepted", 
+                description: `You've been added to the organization as ${invitationData.role}.` 
+              });
+            } else {
+              toast({ title: "Signup Successful", description: "Welcome to ZenithBooks!" });
+            }
           }
           
           toast({ title: "Signup Successful", description: "Welcome to ZenithBooks!" });
@@ -149,18 +196,65 @@ export function SignupForm() {
       );
       const user = userCredential.user;
 
-      // 2. Create user document in Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      // 2. Check for pending invitations
+      let invitationData: any = null;
+      try {
+        const invitesQuery = query(
+          collection(db, "userInvites"),
+          where("email", "==", sanitizedEmail),
+          where("status", "==", "Invited")
+        );
+        const invitesSnapshot = await getDocs(invitesQuery);
+        
+        if (!invitesSnapshot.empty) {
+          // Get the first pending invitation
+          const inviteDoc = invitesSnapshot.docs[0];
+          invitationData = inviteDoc.data();
+          
+          // Update invitation status to Active
+          await updateDoc(doc(db, "userInvites", inviteDoc.id), {
+            status: "Active",
+            acceptedAt: new Date(),
+            acceptedBy: user.uid,
+          });
+        }
+      } catch (error) {
+        console.error("Error checking for invitations:", error);
+        // Continue with signup even if invitation check fails
+      }
+
+      // 3. Create user document in Firestore
+      const userData: any = {
         uid: user.uid,
         email: user.email,
         userType: values.userType,
         companyName: values.companyName,
         createdAt: new Date(),
-      });
+      };
 
-      showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
+      // If user was invited, add invitation details
+      if (invitationData) {
+        userData.invitedBy = invitationData.invitedBy;
+        userData.role = invitationData.role;
+        userData.organizationId = invitationData.invitedBy; // Link to the organization
+        if (invitationData.clientId) {
+          userData.clientId = invitationData.clientId;
+        }
+        userData.inviteType = invitationData.inviteType || 'organization-wide';
+      }
 
-      // 3. Redirect to dashboard, user is now logged in.
+      await setDoc(doc(db, "users", user.uid), userData);
+
+      if (invitationData) {
+        showSuccessToast(
+          "Account Created & Invitation Accepted",
+          `You've been added to the organization as ${invitationData.role}.`
+        );
+      } else {
+        showSuccessToast(TOAST_MESSAGES.SUCCESS.SIGNUP.title, TOAST_MESSAGES.SUCCESS.SIGNUP.description);
+      }
+
+      // 4. Redirect to dashboard, user is now logged in.
       router.push("/dashboard");
 
     } catch (error: any) {
