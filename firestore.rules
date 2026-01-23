@@ -92,6 +92,18 @@ service cloud.firestore {
     match /professionals/{docId} {
       allow read: if request.auth != null;
     }
+    
+    // Professional Profiles Collection (new collection for professional profiles)
+    match /professionals_profiles/{docId} {
+      // All authenticated users can read professional profiles (for browsing)
+      allow read: if request.auth != null;
+      // Users can create/update their own profile
+      allow create, update: if request.auth != null && 
+                               request.resource.data.userId == request.auth.uid;
+      // Only admins can delete profiles
+      allow delete: if request.auth != null && 
+                       (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
+    }
     match /blog/{docId} {
         allow read: if request.auth != null;
     }
