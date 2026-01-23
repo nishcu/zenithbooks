@@ -85,6 +85,7 @@ export default function JournalVoucherPage() {
 
   const accountingContext = useContext(AccountingContext);
   const { canAccessAccounting, canCreate, canUpdate, canDelete, isViewer } = useRolePermissions();
+  const { toast } = useToast();
   
   // Redirect sales role away from accounting pages
   useEffect(() => {
@@ -106,7 +107,6 @@ export default function JournalVoucherPage() {
     { account: "", debit: "0", credit: "0", costCentre: "" },
     { account: "", debit: "0", credit: "0", costCentre: "" },
   ]);
-  const { toast } = useToast();
   const [selectedVoucher, setSelectedVoucher] = useState<JournalVoucher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
