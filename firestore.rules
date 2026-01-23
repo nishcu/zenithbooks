@@ -276,6 +276,19 @@ service cloud.firestore {
       allow create: if request.resource.data.userId != null;
     }
 
+    // General Notifications Collection
+    // Users can read/update/delete their own notifications
+    // Any authenticated user can create notifications (system notifications, vault access alerts, etc.)
+    match /notifications/{notificationId} {
+      allow read, update, delete: if request.auth != null && 
+                                     isOwner(resource.data.userId);
+      // Allow any authenticated user to create notifications
+      // This is needed for system notifications, vault access alerts, etc.
+      // The userId in the notification determines who receives it
+      allow create: if request.auth != null && 
+                       request.resource.data.userId != null;
+    }
+
     match /vaultSettings/{userId} {
       allow read, update: if isOwner(userId);
       allow create: if isOwner(userId);
