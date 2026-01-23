@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   Paintbrush,
   User,
-  BadgeCheck
+  BadgeCheck,
+  Mail
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -44,6 +45,7 @@ export default function SettingsPage() {
   const settingsCards = [
     { title: "Company Branding", description: "Manage your logo, company details, and invoice templates.", icon: Paintbrush, href: "/settings/branding", roles: ['business', 'professional', 'super_admin'] },
     { title: "User Management", description: "Invite and manage user access to your organization.", icon: Users, href: "/settings/users", roles: ['business', 'professional', 'super_admin'] },
+    { title: "Pending Invitations", description: "View and accept invitations to join organizations.", icon: Mail, href: "/settings/invitations", roles: ['business', 'professional', 'super_admin'] },
     { title: "Subscription & Billing", description: "View your current plan and manage billing details.", icon: CreditCard, href: "/pricing", roles: ['business', 'professional', 'super_admin'] },
     { title: "Transaction History", description: "View all your payments, subscriptions, and service orders.", icon: CreditCard, href: "/transactions", roles: ['business', 'professional', 'super_admin'] },
     { title: "Professional Profile", description: "Set up your public profile for clients to see.", icon: Briefcase, href: "/settings/professional-profile", roles: ['professional'] },
