@@ -208,13 +208,13 @@ export default function UserManagementPage() {
                         }
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-4" style={{ position: 'relative', zIndex: 1 }}>
                      <div className="space-y-2">
                         <Label htmlFor="user-email">Email Address</Label>
                         <Input id="user-email" type="email" placeholder="name@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
                      </div>
                      {isProfessional && clients.length > 0 && (
-                       <div className="space-y-2">
+                       <div className="space-y-2" style={{ position: 'relative', zIndex: 999999 }}>
                          <Label htmlFor="invite-scope">Invite For</Label>
                          <Select value={selectedClientId || "organization"} onValueChange={(value) => setSelectedClientId(value === "organization" ? null : value)}>
                              <SelectTrigger>
@@ -237,7 +237,7 @@ export default function UserManagementPage() {
                          </p>
                        </div>
                      )}
-                      <div className="space-y-2">
+                      <div className="space-y-2" style={{ position: 'relative', zIndex: 999999 }}>
                         <Label htmlFor="user-role">Role</Label>
                         <Select value={newUserRole} onValueChange={setNewUserRole}>
                             <SelectTrigger>
