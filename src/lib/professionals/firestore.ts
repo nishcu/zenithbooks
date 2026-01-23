@@ -115,9 +115,19 @@ export async function listProfessionals(filters?: {
     q = query(q, where('experience', '>=', filters.minExperience));
   }
   
-  // Order by createdAt (newest first)
-  // Note: Rating ordering is done client-side to avoid index requirements
-  q = query(q, orderBy('createdAt', 'desc'));
+  // Only add orderBy if we don't have where clauses that might conflict
+  // If we have filters, we'll sort client-side to avoid index requirements
+  const hasWhereClauses = filters?.state || filters?.city || filters?.isVerified !== undefined || filters?.minExperience;
+  
+  if (!hasWhereClauses) {
+    // Only order by createdAt if no where clauses (avoids index requirement)
+    try {
+      q = query(q, orderBy('createdAt', 'desc'));
+    } catch (error) {
+      // If orderBy fails (missing index), continue without it
+      console.warn('Could not order by createdAt, will sort client-side:', error);
+    }
+  }
   
   if (filters?.limitCount) {
     q = query(q, limit(filters.limitCount));
@@ -126,15 +136,27 @@ export async function listProfessionals(filters?: {
   const snapshot = await getDocs(q);
   let professionals = snapshot.docs.map((doc) => {
     const data = doc.data();
+    // Handle missing createdAt gracefully
+    let createdAt: Date;
+    let updatedAt: Date;
+    try {
+      createdAt = data.createdAt?.toDate() || new Date();
+      updatedAt = data.updatedAt?.toDate() || new Date();
+    } catch (error) {
+      // Fallback if date conversion fails
+      createdAt = new Date();
+      updatedAt = new Date();
+    }
     return {
       id: doc.id,
       ...data,
-      createdAt: data.createdAt?.toDate() || new Date(),
-      updatedAt: data.updatedAt?.toDate() || new Date(),
+      createdAt,
+      updatedAt,
     } as ProfessionalProfile;
   });
   
   // Sort by rating (client-side) after fetching
+  // Also sort by createdAt if we didn't use orderBy in the query
   professionals.sort((a, b) => {
     const ratingA = a.rating || 0;
     const ratingB = b.rating || 0;
@@ -142,7 +164,9 @@ export async function listProfessionals(filters?: {
       return ratingB - ratingA;
     }
     // If ratings are equal, sort by createdAt (newest first)
-    return b.createdAt.getTime() - a.createdAt.getTime();
+    const timeA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+    const timeB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+    return timeB - timeA;
   });
   
   // Filter by skills if provided (client-side as Firestore doesn't support array-contains-any easily)
