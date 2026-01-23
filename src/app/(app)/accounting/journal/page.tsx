@@ -579,9 +579,11 @@ export default function JournalVoucherPage() {
                       })}
                     </TableBody>
                   </Table>
-                  <Button variant="outline" size="sm" className="mt-4" onClick={handleAddLine}>
-                    <PlusCircle className="mr-2" /> Add Line
-                  </Button>
+                  {canCreate && (
+                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddLine}>
+                      <PlusCircle className="mr-2" /> Add Line
+                    </Button>
+                  )}
                 </div>
                 <Separator />
                 <div className="flex justify-end">
