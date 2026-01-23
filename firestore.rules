@@ -440,5 +440,65 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && 
                                 resource.data.invitedBy == request.auth.uid;
     }
+
+    // Employees Collection
+    // Users can read/create/update/delete employees where they are the employer
+    // Organization members with appropriate permissions can also access
+    match /employees/{employeeId} {
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.employerId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.employerId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.employerId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.employerId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
+    }
+
+    // Configuration Collection (for service pricing and other config)
+    // All authenticated users can read configuration
+    // Only admins can write (if needed in future)
+    match /configuration/{configId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Configuration is managed server-side only
+    }
+
+    // Form 16 Documents Collection
+    // Users can read/create/update/delete Form 16 documents they created
+    // Organization members with appropriate permissions can also access
+    match /form16Documents/{docId} {
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
+    }
   }
 }
