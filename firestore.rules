@@ -94,9 +94,11 @@ service cloud.firestore {
     }
     
     // Professional Profiles Collection (new collection for professional profiles)
+    // Public read access for browsing professionals (server-side API routes don't have auth context)
     match /professionals_profiles/{docId} {
-      // All authenticated users can read professional profiles (for browsing)
-      allow read: if request.auth != null;
+      // Allow public read access (for API routes and client-side browsing)
+      // Server-side API routes don't have request.auth context
+      allow read: if true;
       // Users can create/update their own profile
       allow create, update: if request.auth != null && 
                                request.resource.data.userId == request.auth.uid;
