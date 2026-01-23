@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useContext, memo } from "react";
+import { useState, useMemo, useContext, memo, useEffect } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
@@ -30,6 +30,7 @@ import { SUPER_ADMIN_UID } from "@/lib/constants";
 import { VaultStatistics } from "@/components/dashboard/vault-statistics";
 import { AppDownloads } from "@/components/dashboard/app-downloads";
 import { VaultSpotlight } from "@/components/dashboard/vault-spotlight";
+import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
 
 
 function DashboardContent() {
@@ -68,11 +69,30 @@ function DashboardContent() {
 
   const { journalVouchers, loading: journalLoading } = accountingContext;
 
-  const customersQuery = queryUserId ? query(collection(db, 'customers'), where("userId", "==", queryUserId)) : null;
+  // Get organization data for queries
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof import("@/lib/organization-utils").getUserOrganizationData>>>(null);
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const { getUserOrganizationData } = await import("@/lib/organization-utils");
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
+  const customersQuery = queryUserId && orgData !== null ? (async () => {
+    const { buildOrganizationQuery } = await import("@/lib/organization-utils");
+    return buildOrganizationQuery('customers', user, orgData);
+  })() : (queryUserId ? query(collection(db, 'customers'), where("userId", "==", queryUserId)) : null);
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
-  const vendorsQuery = queryUserId ? query(collection(db, 'vendors'), where("userId", "==", queryUserId)) : null;
+  const vendorsQuery = queryUserId && orgData !== null ? (async () => {
+    const { buildOrganizationQuery } = await import("@/lib/organization-utils");
+    return buildOrganizationQuery('vendors', user, orgData);
+  })() : (queryUserId ? query(collection(db, 'vendors'), where("userId", "==", queryUserId)) : null);
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
   const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
 

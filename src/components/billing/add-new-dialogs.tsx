@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { collection, addDoc, doc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { getUserOrganizationData, getDocumentData } from "@/lib/organization-utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -156,6 +157,10 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
         }
         const collectionName = type === 'Customer' ? 'customers' : 'vendors';
         try {
+            // Get user organization data
+            const orgData = await getUserOrganizationData(user);
+            const docData = getDocumentData(user, orgData);
+
             if (party) {
                 // Update existing party
                 const partyDocRef = doc(db, collectionName, party.id);
@@ -177,11 +182,16 @@ export function PartyDialog({ open, onOpenChange, type, party }: { open: boolean
                     name: values.name,
                     type: "Current Asset",
                     userId: user.uid,
+                    organizationId: docData.organizationId,
                 });
 
-                // 2. Add new party with the account code
+                // 2. Add new party with the account code and organization data
                 const newPartyRef = doc(collection(db, collectionName));
-                batch.set(newPartyRef, { ...values, userId: user.uid, accountCode: nextCode });
+                batch.set(newPartyRef, { 
+                    ...values, 
+                    ...docData, // Includes userId, organizationId, clientId
+                    accountCode: nextCode 
+                });
                 
                 await batch.commit();
 

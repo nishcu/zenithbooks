@@ -57,6 +57,9 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useEffect, useState } from "react";
+import { getUserOrganizationData, getDocumentData, buildOrganizationQuery } from "@/lib/organization-utils";
+import { useRolePermissions } from "@/hooks/use-role-permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PartyDialog, assignAccountCode } from "@/components/billing/add-new-dialogs";
 import { useRouter } from "next/navigation";
@@ -82,6 +85,7 @@ export default function PartiesPage() {
   const { toast } = useToast();
   const [user] = useAuthState(auth);
   const router = useRouter();
+  const { canDelete } = useRolePermissions();
 
   const [activeTab, setActiveTab] = useState("customers");
   const [isPartyDialogOpen, setIsPartyDialogOpen] = useState(false);
@@ -89,14 +93,26 @@ export default function PartiesPage() {
   const [selectedParty, setSelectedParty] = useState<Party | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof getUserOrganizationData>>>(null);
 
-  // Fetch Customers
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  // Get user organization data
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
+  // Fetch Customers - using organization query
+  const customersQuery = user && orgData !== null ? buildOrganizationQuery('customers', user, orgData) : null;
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers: Party[] = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Party)) || [], [customersSnapshot]);
 
-  // Fetch Vendors
-  const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
+  // Fetch Vendors - using organization query
+  const vendorsQuery = user && orgData !== null ? buildOrganizationQuery('vendors', user, orgData) : null;
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
   const vendors: Party[] = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Party)) || [], [vendorsSnapshot]);
   
@@ -106,6 +122,10 @@ export default function PartiesPage() {
   }
 
   const handleDeleteParty = async (party: Party) => {
+    if (!canDelete) {
+      toast({ variant: "destructive", title: "Permission Denied", description: "You don't have permission to delete parties." });
+      return;
+    }
     const collectionName = activeTab === 'customers' ? 'customers' : 'vendors';
     const partyDocRef = doc(db, collectionName, party.id);
     try {
@@ -189,6 +209,10 @@ export default function PartiesPage() {
         return;
     }
     
+    // Get organization data
+    const userOrgData = await getUserOrganizationData(user);
+    const docData = getDocumentData(user, userOrgData);
+    
     const reader = new FileReader();
     reader.onload = async (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -203,7 +227,7 @@ export default function PartiesPage() {
         for (const row of json) {
             const newDocRef = doc(collection(db, collectionName));
             const partyData = {
-                userId: user.uid,
+                ...docData, // Includes userId, organizationId, clientId
                 name: row.Name || '',
                 gstin: row.GSTIN || '',
                 email: row.Email || '',
@@ -268,8 +292,12 @@ export default function PartiesPage() {
                         <DropdownMenuItem onClick={() => handleViewLedger(party)}><FileText className="mr-2"/> View Ledger</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenDialog(party)}><Edit className="mr-2"/> Edit</DropdownMenuItem>
                         {type === 'Customer' && <DropdownMenuItem onClick={() => handleAssignCode(party)} disabled={!!party.accountCode}><PlusSquare className="mr-2"/> Assign Account Code</DropdownMenuItem>}
-                        <DropdownMenuSeparator/>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteParty(party)}><Trash2 className="mr-2"/> Delete</DropdownMenuItem>
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator/>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteParty(party)}><Trash2 className="mr-2"/> Delete</DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </TableCell>
