@@ -92,8 +92,29 @@ export default function JournalVoucherPage() {
   const [selectedVoucher, setSelectedVoucher] = useState<JournalVoucher | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Get organization data for queries
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof import("@/lib/organization-utils").getUserOrganizationData>>>(null);
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const { getUserOrganizationData } = await import("@/lib/organization-utils");
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
   // Fetch customers and vendors to resolve names
-  const customersQuery = user ? query(collection(db, "customers"), where("userId", "==", user.uid)) : null;
+  const customersQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      return query(collection(db, "customers"), where("userId", "==", user.uid));
+    }
+    const { buildOrganizationQuery } = require("@/lib/organization-utils");
+    const orgQuery = buildOrganizationQuery('customers', user, orgData);
+    return orgQuery || query(collection(db, "customers"), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [customersSnapshot] = useCollection(customersQuery);
   const customers = useMemo(
     () =>
@@ -106,7 +127,15 @@ export default function JournalVoucherPage() {
     [customersSnapshot]
   );
 
-  const vendorsQuery = user ? query(collection(db, "vendors"), where("userId", "==", user.uid)) : null;
+  const vendorsQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      return query(collection(db, "vendors"), where("userId", "==", user.uid));
+    }
+    const { buildOrganizationQuery } = require("@/lib/organization-utils");
+    const orgQuery = buildOrganizationQuery('vendors', user, orgData);
+    return orgQuery || query(collection(db, "vendors"), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [vendorsSnapshot] = useCollection(vendorsQuery);
   const vendors = useMemo(
     () =>

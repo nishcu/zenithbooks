@@ -35,6 +35,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
+import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
 import { PartyDialog, ItemDialog } from "@/components/billing/add-new-dialogs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,11 +66,40 @@ export default function NewInvoicePage() {
   
   const [lineItems, setLineItems] = useState<LineItem[]>([createNewLineItem()]);
   
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  // Get organization data for queries
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof import("@/lib/organization-utils").getUserOrganizationData>>>(null);
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const { getUserOrganizationData } = await import("@/lib/organization-utils");
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
+  const customersQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      // Still loading org data, use userId query as fallback
+      return query(collection(db, 'customers'), where("userId", "==", user.uid));
+    }
+    const orgQuery = buildOrganizationQuery('customers', user, orgData);
+    return orgQuery || query(collection(db, 'customers'), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
-  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  const itemsQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      // Still loading org data, use userId query as fallback
+      return query(collection(db, 'items'), where("userId", "==", user.uid));
+    }
+    const orgQuery = buildOrganizationQuery('stockItems', user, orgData);
+    return orgQuery || query(collection(db, 'items'), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items: Item[] = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item)) || [], [itemsSnapshot]);
 

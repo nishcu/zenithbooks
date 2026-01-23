@@ -33,6 +33,9 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ItemDialog } from "@/components/billing/add-new-dialogs";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
+import { useRolePermissions } from "@/hooks/use-role-permissions";
 
 type Item = {
   id: string;
@@ -48,12 +51,33 @@ type Item = {
 export default function ItemsPage() {
   const [user, loadingUser] = useAuthState(auth);
   const { toast } = useToast();
+  const { canDelete } = useRolePermissions();
 
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof getUserOrganizationData>>>(null);
 
-  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  // Get organization data
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
+  const itemsQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      // Still loading org data, use userId query as fallback
+      return query(collection(db, 'items'), where("userId", "==", user.uid));
+    }
+    const orgQuery = buildOrganizationQuery('stockItems', user, orgData);
+    return orgQuery || query(collection(db, 'items'), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [itemsSnapshot]);
 
@@ -71,6 +95,10 @@ export default function ItemsPage() {
   }
 
   const handleDeleteItem = async (item: Item) => {
+    if (!canDelete) {
+      toast({ variant: "destructive", title: "Permission Denied", description: "You don't have permission to delete items." });
+      return;
+    }
     const itemDocRef = doc(db, "items", item.id);
     try {
         await deleteDoc(itemDocRef);

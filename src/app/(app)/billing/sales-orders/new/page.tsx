@@ -36,6 +36,7 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { PartyDialog, ItemDialog } from "@/components/billing/add-new-dialogs";
 import { ItemTable, type LineItem, type Item } from "@/components/billing/item-table";
+import { getUserOrganizationData, getDocumentData, buildOrganizationQuery } from "@/lib/organization-utils";
 
 const createNewLineItem = (): LineItem => ({
   id: `${Date.now()}-${Math.random()}`,
@@ -57,12 +58,38 @@ export default function NewSalesOrderPage() {
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
 
   const [lineItems, setLineItems] = useState<LineItem[]>([createNewLineItem()]);
+  const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof getUserOrganizationData>>>(null);
 
-  const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
+  // Get organization data
+  useEffect(() => {
+    const loadOrgData = async () => {
+      if (user) {
+        const data = await getUserOrganizationData(user);
+        setOrgData(data);
+      }
+    };
+    loadOrgData();
+  }, [user]);
+
+  const customersQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      return query(collection(db, 'customers'), where("userId", "==", user.uid));
+    }
+    const orgQuery = buildOrganizationQuery('customers', user, orgData);
+    return orgQuery || query(collection(db, 'customers'), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
-  const itemsQuery = user ? query(collection(db, 'items'), where("userId", "==", user.uid)) : null;
+  const itemsQuery = useMemo(() => {
+    if (!user) return null;
+    if (orgData === null) {
+      return query(collection(db, 'items'), where("userId", "==", user.uid));
+    }
+    const orgQuery = buildOrganizationQuery('stockItems', user, orgData);
+    return orgQuery || query(collection(db, 'items'), where("userId", "==", user.uid));
+  }, [user, orgData]);
   const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
   const items: Item[] = useMemo(() => itemsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item)) || [], [itemsSnapshot]);
 
@@ -119,8 +146,12 @@ export default function NewSalesOrderPage() {
       return;
     }
 
+    // Get organization data
+    const userOrgData = await getUserOrganizationData(user);
+    const docData = getDocumentData(user, userOrgData);
+
     const orderData = {
-        userId: user.uid,
+        ...docData, // Includes userId, organizationId, clientId
         customerId: customer,
         orderDate: orderDate,
         expiryDate: expiryDate || null,

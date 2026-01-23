@@ -308,12 +308,19 @@ export function ItemDialog({ open, onOpenChange, item, stockGroups }: { open: bo
            return;
        }
        try {
+            // Get user organization data
+            const orgData = await getUserOrganizationData(user);
+            const docData = getDocumentData(user, orgData);
+
             if (item) {
                 const itemDocRef = doc(db, "items", item.id);
                 await updateDoc(itemDocRef, values);
                 toast({ title: "Item Updated", description: `${values.name} has been updated.` });
             } else {
-                await addDoc(collection(db, 'items'), { ...values, userId: user.uid });
+                await addDoc(collection(db, 'items'), { 
+                    ...values, 
+                    ...docData, // Includes userId, organizationId, clientId
+                });
                 toast({ title: "Item Added", description: `${values.name} has been added.` });
             }
            onOpenChange(false);

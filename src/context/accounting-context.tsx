@@ -1,10 +1,11 @@
 "use client";
 
-import React, { createContext, useState, ReactNode, useContext, useEffect } from 'react';
+import React, { createContext, useState, ReactNode, useContext, useEffect, useMemo } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { getUserOrganizationData, getDocumentData, buildOrganizationQuery } from '@/lib/organization-utils';
 
 type JournalLine = {
     account: string;
@@ -45,6 +46,18 @@ export const useAccountingContext = () => {
 
 export const AccountingProvider = ({ children }: { children: ReactNode }) => {
     const [user] = useAuthState(auth);
+    const [orgData, setOrgData] = useState<Awaited<ReturnType<typeof getUserOrganizationData>>>(null);
+
+    // Load organization data
+    useEffect(() => {
+        const loadOrgData = async () => {
+            if (user) {
+                const data = await getUserOrganizationData(user);
+                setOrgData(data);
+            }
+        };
+        loadOrgData();
+    }, [user]);
 
     /**
      * IMPORTANT: Journal Vouchers & Subscription History
@@ -68,7 +81,23 @@ export const AccountingProvider = ({ children }: { children: ReactNode }) => {
      * - All accounting reports for the selected date ranges
      */
     const journalVouchersRef = collection(db, "journalVouchers");
-    const journalVouchersQuery = user ? query(journalVouchersRef, where("userId", "==", user.uid), orderBy("date", "desc")) : null;
+    
+    // Build query with organization support
+    const journalVouchersQuery = useMemo(() => {
+        if (!user) return null;
+        if (orgData === null) {
+            // Still loading org data, use userId query as fallback
+            return query(journalVouchersRef, where("userId", "==", user.uid), orderBy("date", "desc"));
+        }
+        const orgQuery = buildOrganizationQuery('journalVouchers', user, orgData);
+        if (orgQuery) {
+            // Add orderBy to organization query
+            return query(orgQuery, orderBy("date", "desc"));
+        }
+        // Fallback to userId query
+        return query(journalVouchersRef, where("userId", "==", user.uid), orderBy("date", "desc"));
+    }, [user, orgData]);
+    
     const [journalVouchersSnapshot, loading, error] = useCollection(journalVouchersQuery);
 
     useEffect(() => {
@@ -83,8 +112,15 @@ export const AccountingProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error("User not authenticated");
         if (!voucher.id) throw new Error("Voucher ID is required");
 
+        // Get organization data
+        const userOrgData = await getUserOrganizationData(user);
+        const docData = getDocumentData(user, userOrgData);
+
         const docRef = doc(db, "journalVouchers", voucher.id);
-        await setDoc(docRef, { ...voucher, userId: user.uid });
+        await setDoc(docRef, { 
+            ...voucher, 
+            ...docData, // Includes userId, organizationId, clientId
+        });
     };
     
     const updateJournalVoucher = async (id: string, voucherData: Partial<Omit<JournalVoucher, 'id' | 'userId'>>) => {
