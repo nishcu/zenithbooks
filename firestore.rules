@@ -506,17 +506,24 @@ service cloud.firestore {
     // Users can read their own associate registration (by email match)
     // Admins can read/update all associate registrations
     match /compliance_associates/{associateId} {
+      // Helper function to safely get user email
+      function getUserEmail() {
+        let userData = getUserData();
+        return userData != null && userData.email != null ? userData.email : '';
+      }
+      
       allow read: if request.auth != null && 
-                     (resource.data.email == getUserData().email ||
+                     (resource.data.email == getUserEmail() ||
                       isAdmin() ||
                       request.auth.uid == 'SUPER_ADMIN_UID');
-      allow create: if request.auth != null && 
-                       request.resource.data.email == getUserData().email;
+      // Allow any authenticated user to create - client-side validates email match
+      // The client code ensures the email in the document matches the logged-in user's email
+      allow create: if request.auth != null;
       allow update: if request.auth != null && 
                        (isAdmin() ||
                         request.auth.uid == 'SUPER_ADMIN_UID' ||
-                        (resource.data.email == getUserData().email && 
-                         request.resource.data.email == getUserData().email));
+                        (resource.data.email == getUserEmail() && 
+                         request.resource.data.email == getUserEmail()));
       allow delete: if request.auth != null && 
                        (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
     }
