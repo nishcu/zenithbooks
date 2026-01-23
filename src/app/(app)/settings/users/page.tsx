@@ -75,15 +75,26 @@ export default function UserManagementPage() {
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
   const clientDropdownRef = useRef<HTMLDivElement>(null);
+  const [roleFocusedIndex, setRoleFocusedIndex] = useState(-1);
+  const [clientFocusedIndex, setClientFocusedIndex] = useState(-1);
+  
+  const roles = [
+    { value: "admin", label: "Admin (Full Access)" },
+    { value: "accountant", label: "Accountant (Billing & Accounting)" },
+    { value: "sales", label: "Sales (Billing only)" },
+    { value: "viewer", label: "Viewer (Read-only)" },
+  ];
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
         setShowRoleDropdown(false);
+        setRoleFocusedIndex(-1);
       }
       if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
         setShowClientDropdown(false);
+        setClientFocusedIndex(-1);
       }
     };
 
@@ -94,6 +105,86 @@ export default function UserManagementPage() {
       };
     }
   }, [showRoleDropdown, showClientDropdown]);
+
+  // Handle keyboard navigation for role dropdown
+  const handleRoleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showRoleDropdown) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setShowRoleDropdown(true);
+        setRoleFocusedIndex(0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setRoleFocusedIndex((prev) => (prev < roles.length - 1 ? prev + 1 : 0));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setRoleFocusedIndex((prev) => (prev > 0 ? prev - 1 : roles.length - 1));
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (roleFocusedIndex >= 0) {
+          setNewUserRole(roles[roleFocusedIndex].value);
+          setShowRoleDropdown(false);
+          setRoleFocusedIndex(-1);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowRoleDropdown(false);
+        setRoleFocusedIndex(-1);
+        break;
+    }
+  };
+
+  // Handle keyboard navigation for client dropdown
+  const handleClientKeyDown = (e: React.KeyboardEvent) => {
+    const clientOptions = [
+      { value: null, label: "Organization-wide (All Clients)" },
+      ...clients.map(c => ({ value: c.id, label: `${c.name} (Client-specific)` }))
+    ];
+
+    if (!showClientDropdown) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setShowClientDropdown(true);
+        setClientFocusedIndex(0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setClientFocusedIndex((prev) => (prev < clientOptions.length - 1 ? prev + 1 : 0));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setClientFocusedIndex((prev) => (prev > 0 ? prev - 1 : clientOptions.length - 1));
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (clientFocusedIndex >= 0) {
+          const selected = clientOptions[clientFocusedIndex];
+          setSelectedClientId(selected.value);
+          setShowClientDropdown(false);
+          setClientFocusedIndex(-1);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowClientDropdown(false);
+        setClientFocusedIndex(-1);
+        break;
+    }
+  };
 
   const invitesQuery = user ? query(collection(db, 'userInvites'), where("invitedBy", "==", user.uid)) : null;
   const [invitesSnapshot, invitesLoading] = useCollection(invitesQuery);
@@ -248,7 +339,11 @@ export default function UserManagementPage() {
                              onClick={() => {
                                setShowClientDropdown(!showClientDropdown);
                                setShowRoleDropdown(false);
+                               if (!showClientDropdown) {
+                                 setClientFocusedIndex(0);
+                               }
                              }}
+                             onKeyDown={handleClientKeyDown}
                              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                            >
                              <span>
@@ -267,20 +362,32 @@ export default function UserManagementPage() {
                                    onClick={() => {
                                      setSelectedClientId(null);
                                      setShowClientDropdown(false);
+                                     setClientFocusedIndex(-1);
                                    }}
-                                   className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                   onMouseEnter={() => setClientFocusedIndex(0)}
+                                   className={`relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none ${
+                                     clientFocusedIndex === 0 
+                                       ? 'bg-accent text-accent-foreground' 
+                                       : 'hover:bg-accent hover:text-accent-foreground'
+                                   }`}
                                  >
                                    Organization-wide (All Clients)
                                  </button>
-                                 {clients.map((client) => (
+                                 {clients.map((client, index) => (
                                    <button
                                      key={client.id}
                                      type="button"
                                      onClick={() => {
                                        setSelectedClientId(client.id);
                                        setShowClientDropdown(false);
+                                       setClientFocusedIndex(-1);
                                      }}
-                                     className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                     onMouseEnter={() => setClientFocusedIndex(index + 1)}
+                                     className={`relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none ${
+                                       clientFocusedIndex === index + 1 
+                                         ? 'bg-accent text-accent-foreground' 
+                                         : 'hover:bg-accent hover:text-accent-foreground'
+                                     }`}
                                    >
                                      {client.name} (Client-specific)
                                    </button>
@@ -305,7 +412,11 @@ export default function UserManagementPage() {
                             onClick={() => {
                               setShowRoleDropdown(!showRoleDropdown);
                               setShowClientDropdown(false);
+                              if (!showRoleDropdown) {
+                                setRoleFocusedIndex(0);
+                              }
                             }}
+                            onKeyDown={handleRoleKeyDown}
                             className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                           >
                             <span>
@@ -319,46 +430,25 @@ export default function UserManagementPage() {
                           {showRoleDropdown && (
                             <div className="absolute z-[200] mt-1 w-full rounded-md border bg-popover shadow-md">
                               <div className="p-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNewUserRole("admin");
-                                    setShowRoleDropdown(false);
-                                  }}
-                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                >
-                                  Admin (Full Access)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNewUserRole("accountant");
-                                    setShowRoleDropdown(false);
-                                  }}
-                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                >
-                                  Accountant (Billing & Accounting)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNewUserRole("sales");
-                                    setShowRoleDropdown(false);
-                                  }}
-                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                >
-                                  Sales (Billing only)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNewUserRole("viewer");
-                                    setShowRoleDropdown(false);
-                                  }}
-                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                                >
-                                  Viewer (Read-only)
-                                </button>
+                                {roles.map((role, index) => (
+                                  <button
+                                    key={role.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewUserRole(role.value);
+                                      setShowRoleDropdown(false);
+                                      setRoleFocusedIndex(-1);
+                                    }}
+                                    onMouseEnter={() => setRoleFocusedIndex(index)}
+                                    className={`relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none ${
+                                      roleFocusedIndex === index 
+                                        ? 'bg-accent text-accent-foreground' 
+                                        : 'hover:bg-accent hover:text-accent-foreground'
+                                    }`}
+                                  >
+                                    {role.label}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           )}
