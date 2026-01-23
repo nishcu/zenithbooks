@@ -317,7 +317,9 @@ export default function UserManagementPage() {
                                 </DropdownMenu>
                             </TableCell>
                         </TableRow>
-                    )))}
+                        );
+                      })
+                    )}
                 </TableBody>
             </Table>
           </CardContent>
