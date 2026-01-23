@@ -8,6 +8,75 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    // Helper function to get current user's data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper function to check if user is part of an organization
+    function isOrganizationMember(organizationId) {
+      let userData = getUserData();
+      return userData != null && 
+             userData.organizationId == organizationId;
+    }
+
+    // Helper function to check if user can access data (owner or organization member)
+    function canAccessData(userId, organizationId) {
+      return isOwner(userId) || 
+             (organizationId != null && isOrganizationMember(organizationId));
+    }
+
+    // Helper function to check role permissions
+    function hasRolePermission(permission) {
+      let userData = getUserData();
+      if (userData == null) return false;
+      
+      let role = userData.role;
+      if (role == null) return false;
+      
+      // Admin has all permissions
+      if (role == 'admin') return true;
+      
+      // Role-based permissions
+      if (permission == 'read') {
+        return role == 'admin' || role == 'accountant' || role == 'sales' || role == 'viewer';
+      }
+      if (permission == 'create') {
+        return role == 'admin' || role == 'accountant' || role == 'sales';
+      }
+      if (permission == 'update') {
+        return role == 'admin' || role == 'accountant' || role == 'sales';
+      }
+      if (permission == 'delete') {
+        return role == 'admin';
+      }
+      if (permission == 'accounting') {
+        return role == 'admin' || role == 'accountant' || role == 'viewer';
+      }
+      if (permission == 'billing') {
+        return role == 'admin' || role == 'accountant' || role == 'sales' || role == 'viewer';
+      }
+      if (permission == 'settings') {
+        return role == 'admin';
+      }
+      
+      return false;
+    }
+
+    // Helper function to check client-specific access
+    function canAccessClientData(clientId) {
+      let userData = getUserData();
+      if (userData == null) return false;
+      
+      // If user has no clientId restriction, they can access all organization data
+      if (userData.clientId == null) {
+        return true;
+      }
+      
+      // If user has clientId restriction, they can only access that client's data
+      return userData.clientId == clientId;
+    }
+
     // NOTE: Production rules are now more restrictive
     // Uncomment below only for local testing/development
     // match /{document=**} {
@@ -35,30 +104,143 @@ service cloud.firestore {
       allow read, write: if true;  // Temporary: allow all operations for debugging
     }
 
-    // Users can only read/write their own documents in these collections
+    // Users can read/write their own documents OR organization documents (if member)
+    // Role-based permissions are enforced
     match /journalVouchers/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('accounting')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create') &&
+                         hasRolePermission('accounting')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update') &&
+                         hasRolePermission('accounting')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
     match /customers/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
     match /vendors/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
     match /stockItems/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
     match /settings/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('settings')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('settings')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
     match /sales-orders/{docId} {
-      allow read, update, delete: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create') &&
+                         hasRolePermission('billing')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update') &&
+                         hasRolePermission('billing')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
     }
 
     // Document Vault Collections
