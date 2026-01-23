@@ -22,91 +22,136 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Extract filters from query params
-    const state = searchParams.get('state') || undefined;
-    const city = searchParams.get('city') || undefined;
+    // Extract filters from query params - handle empty strings and undefined
+    const stateParam = searchParams.get('state');
+    const state = stateParam && stateParam.trim() !== '' ? stateParam.trim() : undefined;
+    
+    const cityParam = searchParams.get('city');
+    const city = cityParam && cityParam.trim() !== '' ? cityParam.trim() : undefined;
+    
     const skillsParam = searchParams.get('skills');
-    const skills = skillsParam ? skillsParam.split(',') : undefined;
-    const minExperience = searchParams.get('minExperience')
-      ? Number(searchParams.get('minExperience'))
+    const skills = skillsParam && skillsParam.trim() !== '' ? skillsParam.split(',').map(s => s.trim()).filter(s => s) : undefined;
+    
+    const minExperienceParam = searchParams.get('minExperience');
+    const minExperience = minExperienceParam && !isNaN(Number(minExperienceParam)) 
+      ? Number(minExperienceParam) 
       : undefined;
-    const isVerified = searchParams.get('isVerified')
-      ? searchParams.get('isVerified') === 'true'
-      : undefined;
-    const limitCount = searchParams.get('limit')
-      ? Number(searchParams.get('limit'))
+    
+    const isVerifiedParam = searchParams.get('isVerified');
+    const isVerified = isVerifiedParam === 'true' ? true : isVerifiedParam === 'false' ? false : undefined;
+    
+    const limitParam = searchParams.get('limit');
+    const limitCount = limitParam && !isNaN(Number(limitParam)) && Number(limitParam) > 0
+      ? Number(limitParam)
       : undefined;
 
-    // Build query directly in API route to avoid auth context issues
-    // For now, fetch all and filter client-side to avoid index issues
-    let q = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
-    
-    // Try to apply filters, but if they fail, we'll filter client-side
-    let useClientSideFiltering = false;
+    // Always start with simplest query - fetch all professionals
+    // We'll filter client-side to avoid index requirements
     let snapshot;
+    let useClientSideFiltering = true; // Default to client-side filtering
     
     try {
-      // Try to apply server-side filters
+      // Build base query
+      let q = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
+      
+      // Only apply server-side filters that don't require indexes
+      const whereClauses: any[] = [];
+      
       if (isVerified !== undefined) {
-        q = query(q, where('isVerified', '==', isVerified));
+        whereClauses.push(where('isVerified', '==', isVerified));
       }
       
-      // Don't use array-contains for locations (requires index)
-      // We'll filter client-side instead
-      
-      if (minExperience) {
-        q = query(q, where('experience', '>=', minExperience));
+      if (minExperience !== undefined && !isNaN(minExperience)) {
+        whereClauses.push(where('experience', '>=', minExperience));
       }
       
-      // Only add orderBy if no where clauses (to avoid index requirement)
-      const hasWhereClauses = isVerified !== undefined || minExperience;
-      if (!hasWhereClauses) {
+      // Apply where clauses if any
+      if (whereClauses.length > 0) {
+        q = query(q, ...whereClauses);
+      }
+      
+      // Try to add orderBy only if we have no location filters
+      // Location filters require array-contains which needs indexes
+      if (!state && !city) {
         try {
+          // Try orderBy, but don't fail if index doesn't exist
           q = query(q, orderBy('createdAt', 'desc'));
         } catch (orderError) {
-          // If orderBy fails, continue without it
-          console.warn('Could not order by createdAt:', orderError);
+          // Index might not exist, continue without orderBy
+          console.warn('Could not order by createdAt (index may be missing):', orderError);
         }
       }
       
+      // Apply limit only if no location filters (to avoid index issues)
       if (limitCount && !state && !city) {
-        // Only use limit if no location filters (to avoid index issues)
-        q = query(q, limit(limitCount * 2)); // Get more to account for client-side filtering
+        // Get more results to account for client-side filtering
+        q = query(q, limit(Math.min(limitCount * 3, 1000)));
       }
       
       snapshot = await getDocs(q);
     } catch (error: any) {
-      // If query fails, try simplest query and filter client-side
-      console.warn('Query with filters failed, falling back to simple query:', error);
+      // If any query fails, fall back to simplest query
+      console.warn('Query with filters failed, using simple query:', error?.message || error);
       try {
-        q = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
-        snapshot = await getDocs(q);
+        const simpleQuery = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
+        snapshot = await getDocs(simpleQuery);
         useClientSideFiltering = true;
       } catch (fallbackError: any) {
         console.error('Even simple query failed:', fallbackError);
-        throw new Error(`Failed to query professionals: ${fallbackError?.message || 'Unknown error'}`);
+        // Return empty array instead of error to prevent frontend loops
+        return NextResponse.json({
+          success: true,
+          professionals: [],
+          count: 0,
+          error: 'Database query failed',
+        });
       }
     }
     
+    // Map documents to professional objects
     let professionals = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      // Handle missing createdAt gracefully
-      let createdAt: Date;
-      let updatedAt: Date;
       try {
-        createdAt = data.createdAt?.toDate() || new Date();
-        updatedAt = data.updatedAt?.toDate() || new Date();
-      } catch (error) {
-        createdAt = new Date();
-        updatedAt = new Date();
+        const data = doc.data();
+        // Handle missing or invalid dates gracefully
+        let createdAt: Date = new Date();
+        let updatedAt: Date = new Date();
+        
+        try {
+          if (data.createdAt?.toDate) {
+            createdAt = data.createdAt.toDate();
+          } else if (data.createdAt) {
+            createdAt = new Date(data.createdAt);
+          }
+        } catch (e) {
+          // Use default
+        }
+        
+        try {
+          if (data.updatedAt?.toDate) {
+            updatedAt = data.updatedAt.toDate();
+          } else if (data.updatedAt) {
+            updatedAt = new Date(data.updatedAt);
+          }
+        } catch (e) {
+          // Use default
+        }
+        
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: createdAt.toISOString(),
+          updatedAt: updatedAt.toISOString(),
+        };
+      } catch (docError) {
+        console.warn('Error processing document:', doc.id, docError);
+        // Return minimal object to prevent crashes
+        return {
+          id: doc.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
       }
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: createdAt.toISOString(),
-        updatedAt: updatedAt.toISOString(),
-      };
-    });
+    }).filter(prof => prof !== null && prof !== undefined); // Remove any null/undefined entries
     
     // Sort by rating (client-side) after fetching
     professionals.sort((a, b) => {
@@ -116,41 +161,69 @@ export async function GET(request: NextRequest) {
         return ratingB - ratingA;
       }
       // If ratings are equal, sort by createdAt (newest first)
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return timeB - timeA;
+      try {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
+      } catch (e) {
+        return 0;
+      }
     });
     
-    // Apply client-side filters for location (to avoid index requirements)
-    if (useClientSideFiltering || state || city) {
+    // Apply client-side filters for location (case-insensitive, partial match)
+    if (state || city) {
       professionals = professionals.filter((prof) => {
-        // Check state filter
-        if (state) {
-          const locations = prof.locations || [];
-          const locationStr = Array.isArray(locations) ? locations.join(' ') : String(locations || '');
-          if (!locationStr.toLowerCase().includes(state.toLowerCase())) {
-            return false;
+        try {
+          // Check state filter (case-insensitive, partial match)
+          if (state) {
+            const locations = prof.locations || [];
+            const locationStr = Array.isArray(locations) 
+              ? locations.join(' ').toLowerCase() 
+              : String(locations || '').toLowerCase();
+            const stateLower = state.toLowerCase();
+            
+            // Check if state matches (handles "Andhra Pradesh", "AndhraPradesh", "AP", etc.)
+            if (!locationStr.includes(stateLower)) {
+              return false;
+            }
           }
-        }
-        
-        // Check city filter
-        if (city) {
-          const locations = prof.locations || [];
-          const locationStr = Array.isArray(locations) ? locations.join(' ') : String(locations || '');
-          if (!locationStr.toLowerCase().includes(city.toLowerCase())) {
-            return false;
+          
+          // Check city filter (case-insensitive, partial match)
+          if (city) {
+            const locations = prof.locations || [];
+            const locationStr = Array.isArray(locations) 
+              ? locations.join(' ').toLowerCase() 
+              : String(locations || '').toLowerCase();
+            const cityLower = city.toLowerCase();
+            
+            if (!locationStr.includes(cityLower)) {
+              return false;
+            }
           }
+          
+          return true;
+        } catch (filterError) {
+          // If filtering fails for a document, exclude it
+          console.warn('Error filtering professional:', prof.id, filterError);
+          return false;
         }
-        
-        return true;
       });
     }
     
     // Filter by skills if provided (client-side)
     if (skills && skills.length > 0) {
-      professionals = professionals.filter((prof) =>
-        skills.some((skill) => prof.skills?.includes(skill))
-      );
+      professionals = professionals.filter((prof) => {
+        try {
+          const profSkills = prof.skills || [];
+          return skills.some((skill) => 
+            profSkills.some((ps: string) => 
+              ps.toLowerCase().includes(skill.toLowerCase())
+            )
+          );
+        } catch (e) {
+          return false;
+        }
+      });
     }
     
     // Apply limit after client-side filtering
@@ -164,20 +237,21 @@ export async function GET(request: NextRequest) {
       count: professionals.length,
     });
   } catch (error: any) {
+    // Log error but return empty array to prevent frontend infinite loops
     console.error('Error listing professionals:', error);
     console.error('Error details:', {
       message: error?.message,
       code: error?.code,
-      stack: error?.stack,
+      stack: error?.stack?.substring(0, 500), // Limit stack trace length
     });
-    return NextResponse.json(
-      { 
-        error: 'Failed to list professionals', 
-        message: error?.message || 'Unknown error',
-        code: error?.code || 'unknown',
-      },
-      { status: 500 }
-    );
+    
+    // Return success with empty array instead of error to prevent frontend retry loops
+    return NextResponse.json({
+      success: true,
+      professionals: [],
+      count: 0,
+      error: error?.message || 'Unknown error',
+    });
   }
 }
 

@@ -28,17 +28,38 @@ export default function ProfessionalsListPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (stateFilter && stateFilter !== "all") params.append("state", stateFilter);
-      if (cityFilter) params.append("city", cityFilter);
+      if (stateFilter && stateFilter !== "all" && stateFilter.trim() !== "") {
+        params.append("state", stateFilter.trim());
+      }
+      if (cityFilter && cityFilter.trim() !== "") {
+        params.append("city", cityFilter.trim());
+      }
 
-      const response = await fetch(`/api/professionals/list?${params.toString()}`);
+      const url = params.toString() 
+        ? `/api/professionals/list?${params.toString()}`
+        : `/api/professionals/list`;
+
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        // Don't throw, just log and set empty array to prevent retry loops
+        console.error(`API returned ${response.status}: ${response.statusText}`);
+        setProfessionals([]);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
-        setProfessionals(data.professionals);
+        setProfessionals(data.professionals || []);
+      } else {
+        // API returned success: false, set empty array
+        setProfessionals([]);
       }
     } catch (error) {
       console.error("Error loading professionals:", error);
+      // Set empty array on error to prevent retry loops
+      setProfessionals([]);
     } finally {
       setIsLoading(false);
     }

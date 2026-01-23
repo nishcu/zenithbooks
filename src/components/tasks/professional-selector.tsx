@@ -47,29 +47,46 @@ export function ProfessionalSelector({
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Load professionals when dialog opens
+  // Load professionals when dialog opens (only once per open)
   useEffect(() => {
-    if (isOpen && professionals.length === 0) {
+    if (isOpen && professionals.length === 0 && !isLoading) {
       loadProfessionals();
     }
-  }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // Only depend on isOpen to prevent infinite loops
 
   const loadProfessionals = async () => {
+    // Prevent multiple simultaneous calls
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
       const response = await fetch("/api/professionals/list");
+      
+      if (!response.ok) {
+        // Don't throw, just log and set empty array to prevent retry loops
+        console.error(`API returned ${response.status}: ${response.statusText}`);
+        setProfessionals([]);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
         // Filter out excluded firm and map to firmIds
-        let filtered = data.professionals;
+        let filtered = data.professionals || [];
         if (excludeFirmId) {
           filtered = filtered.filter((prof: ProfessionalProfile) => prof.userId !== excludeFirmId);
         }
         setProfessionals(filtered);
+      } else {
+        // API returned success: false, set empty array
+        setProfessionals([]);
       }
     } catch (error) {
       console.error("Error loading professionals:", error);
+      // Set empty array on error to prevent retry loops
+      setProfessionals([]);
     } finally {
       setIsLoading(false);
     }
