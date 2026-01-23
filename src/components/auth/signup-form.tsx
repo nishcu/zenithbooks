@@ -199,6 +199,7 @@ export function SignupForm() {
       // 2. Check for pending invitations
       let invitationData: any = null;
       try {
+        // Try query with both conditions first (requires composite index)
         const invitesQuery = query(
           collection(db, "userInvites"),
           where("email", "==", sanitizedEmail),
@@ -218,9 +219,40 @@ export function SignupForm() {
             acceptedBy: user.uid,
           });
         }
-      } catch (error) {
-        console.error("Error checking for invitations:", error);
-        // Continue with signup even if invitation check fails
+      } catch (error: any) {
+        // If composite index is missing, try querying by email only and filter client-side
+        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+          try {
+            console.warn('Composite index missing, trying alternative query');
+            const fallbackQuery = query(
+              collection(db, "userInvites"),
+              where("email", "==", sanitizedEmail)
+            );
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            
+            // Filter client-side for status === "Invited"
+            const pendingInvites = fallbackSnapshot.docs.filter(
+              doc => doc.data().status === "Invited"
+            );
+            
+            if (pendingInvites.length > 0) {
+              const inviteDoc = pendingInvites[0];
+              invitationData = inviteDoc.data();
+              
+              await updateDoc(doc(db, "userInvites", inviteDoc.id), {
+                status: "Active",
+                acceptedAt: new Date(),
+                acceptedBy: user.uid,
+              });
+            }
+          } catch (fallbackError) {
+            console.error("Error with fallback invitation query:", fallbackError);
+            // Continue with signup even if invitation check fails
+          }
+        } else {
+          console.error("Error checking for invitations:", error);
+          // Continue with signup even if invitation check fails
+        }
       }
 
       // 3. Create user document in Firestore
