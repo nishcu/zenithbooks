@@ -45,8 +45,17 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error listing professionals:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
     return NextResponse.json(
-      { error: 'Failed to list professionals', message: error.message },
+      { 
+        error: 'Failed to list professionals', 
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'unknown',
+      },
       { status: 500 }
     );
   }
