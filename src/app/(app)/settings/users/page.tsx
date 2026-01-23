@@ -56,7 +56,6 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useEffect } from 'react';
 
 
 export default function UserManagementPage() {
