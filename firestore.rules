@@ -500,5 +500,41 @@ service cloud.firestore {
                          isOrganizationMember(resource.data.organizationId) &&
                          hasRolePermission('delete')));
     }
+
+    // Compliance Associates Collection
+    // Users can create their own associate registration
+    // Users can read their own associate registration (by email match)
+    // Admins can read/update all associate registrations
+    match /compliance_associates/{associateId} {
+      allow read: if request.auth != null && 
+                     (resource.data.email == getUserData().email ||
+                      isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID');
+      allow create: if request.auth != null && 
+                       request.resource.data.email == getUserData().email;
+      allow update: if request.auth != null && 
+                       (isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID' ||
+                        (resource.data.email == getUserData().email && 
+                         request.resource.data.email == getUserData().email));
+      allow delete: if request.auth != null && 
+                       (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
+    }
+
+    // Associate Audit Logs Collection
+    // Users can read audit logs for their own associate registration
+    // Admins can read all audit logs
+    // System can create audit logs
+    match /associate_audit_logs/{logId} {
+      allow read: if request.auth != null && 
+                     (isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID' ||
+                      (resource.data.associateId != null && 
+                       exists(/databases/$(database)/documents/compliance_associates/$(resource.data.associateId)) &&
+                       get(/databases/$(database)/documents/compliance_associates/$(resource.data.associateId)).data.email == getUserData().email));
+      allow create: if request.auth != null; // System creates logs via server-side
+      allow update, delete: if request.auth != null && 
+                                (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
+    }
   }
 }
