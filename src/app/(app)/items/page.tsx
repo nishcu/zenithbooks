@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -33,7 +33,6 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ItemDialog } from "@/components/billing/add-new-dialogs";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { getUserOrganizationData, buildOrganizationQuery } from "@/lib/organization-utils";
 import { useRolePermissions } from "@/hooks/use-role-permissions";
 

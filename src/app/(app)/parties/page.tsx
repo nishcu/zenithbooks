@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -57,7 +57,6 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, where, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useEffect, useState } from "react";
 import { getUserOrganizationData, getDocumentData, buildOrganizationQuery } from "@/lib/organization-utils";
 import { useRolePermissions } from "@/hooks/use-role-permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
