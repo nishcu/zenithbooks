@@ -214,7 +214,7 @@ export default function UserManagementPage() {
                              <SelectTrigger>
                                  <SelectValue placeholder="Select scope"/>
                              </SelectTrigger>
-                             <SelectContent className="z-[9999]">
+                             <SelectContent>
                                  <SelectItem value="organization">Organization-wide (All Clients)</SelectItem>
                                  {clients.map((client) => (
                                    <SelectItem key={client.id} value={client.id}>
@@ -237,7 +237,7 @@ export default function UserManagementPage() {
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a role"/>
                             </SelectTrigger>
-                            <SelectContent className="z-[9999]">
+                            <SelectContent>
                                 <SelectItem value="admin">Admin (Full Access)</SelectItem>
                                 <SelectItem value="accountant">Accountant (Billing & Accounting)</SelectItem>
                                 <SelectItem value="sales">Sales (Billing only)</SelectItem>
