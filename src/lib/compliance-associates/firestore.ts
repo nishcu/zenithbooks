@@ -34,14 +34,11 @@ const COLLECTIONS = {
 export async function createAssociateRegistration(
   associateData: Omit<ComplianceAssociate, 'id' | 'associateCode' | 'status' | 'tasksCompleted' | 'tasksInProgress' | 'createdAt' | 'updatedAt' | 'platformFee'>
 ): Promise<string> {
-  // Generate associate code (will be finalized after approval)
-  const tempCode = `PENDING-${Date.now()}`;
-  
-  // Get next associate code index
-  const associatesRef = collection(db, COLLECTIONS.COMPLIANCE_ASSOCIATES);
-  const allAssociates = await getDocs(query(associatesRef, orderBy('createdAt', 'desc')));
-  const nextIndex = allAssociates.size + 1;
-  const associateCode = generateAssociateCode(nextIndex);
+  // Generate associate code using timestamp to avoid querying all documents
+  // The code will be unique and can be reassigned during approval if needed
+  const timestamp = Date.now();
+  const randomSuffix = Math.floor(Math.random() * 1000);
+  const associateCode = `AS-${timestamp.toString().slice(-6)}-${String(randomSuffix).padStart(3, '0')}`;
   
   const associate: Omit<ComplianceAssociate, 'id'> = {
     ...associateData,
