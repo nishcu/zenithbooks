@@ -607,6 +607,8 @@ export default function JournalVoucherPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+            </>
+          )}
         </div>
       </div>
 
