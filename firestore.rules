@@ -570,5 +570,78 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && 
                                 (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
     }
+
+    // ITR Applications Collection
+    // Users can read/create/update their own ITR applications
+    // Professionals can read applications assigned to them
+    // Admins can read all applications
+    match /itrApplications/{applicationId} {
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) ||
+                      resource.data.assignedTo == request.auth.uid ||
+                      isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID');
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) ||
+                        resource.data.assignedTo == request.auth.uid ||
+                        isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID');
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) ||
+                        isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID');
+    }
+
+    // Compliance Subscriptions Collection
+    // Users can read/create/update their own compliance subscriptions
+    // Admins can read all subscriptions
+    match /compliance_subscriptions/{subscriptionId} {
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) ||
+                      isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID');
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) ||
+                        isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID');
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) ||
+                        isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID');
+    }
+
+    // Compliance Task Executions Collection
+    // Users can read task executions for their own subscriptions
+    // Admins can read all task executions
+    match /compliance_task_executions/{executionId} {
+      allow read: if request.auth != null && 
+                     (resource.data.userId == request.auth.uid ||
+                      isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID');
+      allow create: if request.auth != null; // System creates executions
+      allow update: if request.auth != null && 
+                       (resource.data.userId == request.auth.uid ||
+                        isAdmin() ||
+                        request.auth.uid == 'SUPER_ADMIN_UID');
+      allow delete: if request.auth != null && 
+                       (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
+    }
+
+    // Compliance Audit Logs Collection
+    // Users can read audit logs for their own subscriptions
+    // Admins can read all audit logs
+    match /compliance_audit_logs/{logId} {
+      allow read: if request.auth != null && 
+                     (resource.data.userId == request.auth.uid ||
+                      isAdmin() ||
+                      request.auth.uid == 'SUPER_ADMIN_UID');
+      allow create: if request.auth != null; // System creates logs
+      allow update, delete: if request.auth != null && 
+                                (isAdmin() || request.auth.uid == 'SUPER_ADMIN_UID');
+    }
   }
 }
