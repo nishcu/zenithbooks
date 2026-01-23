@@ -78,6 +78,7 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      style={{ zIndex: 99999 }}
       {...props}
     >
       <SelectScrollUpButton />

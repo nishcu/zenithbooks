@@ -185,14 +185,14 @@ export default function UserManagementPage() {
             Invite, manage, and set permissions for users in your organization.
           </p>
         </div>
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen} modal={false}>
             <DialogTrigger asChild>
                  <Button>
                     <UserPlus className="mr-2"/>
                     Invite User
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Invite a New User</DialogTitle>
                     <DialogDescription>
