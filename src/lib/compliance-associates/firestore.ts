@@ -40,8 +40,16 @@ export async function createAssociateRegistration(
   const randomSuffix = Math.floor(Math.random() * 1000);
   const associateCode = `AS-${timestamp.toString().slice(-6)}-${String(randomSuffix).padStart(3, '0')}`;
   
+  // Remove undefined values (Firestore doesn't allow undefined)
+  const cleanAssociateData: any = { ...associateData };
+  Object.keys(cleanAssociateData).forEach(key => {
+    if (cleanAssociateData[key] === undefined) {
+      delete cleanAssociateData[key];
+    }
+  });
+  
   const associate: Omit<ComplianceAssociate, 'id'> = {
-    ...associateData,
+    ...cleanAssociateData,
     associateCode,
     status: 'pending_approval',
     tasksCompleted: 0,
