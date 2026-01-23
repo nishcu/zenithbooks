@@ -82,17 +82,23 @@ function DashboardContent() {
     loadOrgData();
   }, [user]);
 
-  const customersQuery = queryUserId && orgData !== null ? (async () => {
-    const { buildOrganizationQuery } = await import("@/lib/organization-utils");
-    return buildOrganizationQuery('customers', user, orgData);
-  })() : (queryUserId ? query(collection(db, 'customers'), where("userId", "==", queryUserId)) : null);
+  const customersQuery = useMemo(() => {
+    if (!queryUserId) return null;
+    if (orgData !== null) {
+      return buildOrganizationQuery('customers', user, orgData);
+    }
+    return query(collection(db, 'customers'), where("userId", "==", queryUserId));
+  }, [queryUserId, orgData, user]);
   const [customersSnapshot, customersLoading] = useCollection(customersQuery);
   const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [customersSnapshot]);
 
-  const vendorsQuery = queryUserId && orgData !== null ? (async () => {
-    const { buildOrganizationQuery } = await import("@/lib/organization-utils");
-    return buildOrganizationQuery('vendors', user, orgData);
-  })() : (queryUserId ? query(collection(db, 'vendors'), where("userId", "==", queryUserId)) : null);
+  const vendorsQuery = useMemo(() => {
+    if (!queryUserId) return null;
+    if (orgData !== null) {
+      return buildOrganizationQuery('vendors', user, orgData);
+    }
+    return query(collection(db, 'vendors'), where("userId", "==", queryUserId));
+  }, [queryUserId, orgData, user]);
   const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
   const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() })) || [], [vendorsSnapshot]);
 
