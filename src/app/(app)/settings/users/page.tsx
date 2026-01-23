@@ -54,8 +54,9 @@ import {
 } from "@/components/ui/select";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, query, where } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useEffect } from 'react';
 
 
 export default function UserManagementPage() {
@@ -67,6 +68,9 @@ export default function UserManagementPage() {
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("viewer");
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clients, setClients] = useState<Array<{id: string, name: string}>>([]);
+  const [isProfessional, setIsProfessional] = useState(false);
 
   const invitesQuery = user ? query(collection(db, 'userInvites'), where("invitedBy", "==", user.uid)) : null;
   const [invitesSnapshot, invitesLoading] = useCollection(invitesQuery);
@@ -74,6 +78,41 @@ export default function UserManagementPage() {
   const users = useMemo(() => {
     return invitesSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data()})) || [];
   }, [invitesSnapshot]);
+
+  // Load user type and clients for professionals
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) return;
+      
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const userType = userData?.userType;
+          setIsProfessional(userType === 'professional');
+          
+          // Load clients if professional
+          if (userType === 'professional') {
+            const clientsQuery = query(
+              collection(db, 'professional_clients'),
+              where('professionalId', '==', user.uid)
+            );
+            const clientsSnapshot = await getDocs(clientsQuery);
+            const clientsList = clientsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              name: doc.data().name || 'Unknown Client'
+            }));
+            setClients(clientsList);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [user]);
 
   const handleAction = (action: string, userId: string) => {
     toast({
@@ -99,13 +138,23 @@ export default function UserManagementPage() {
 
     setIsInviting(true);
     try {
-        await addDoc(collection(db, "userInvites"), {
+        const inviteData: any = {
             email: newUserEmail,
             role: newUserRole,
             status: "Invited",
             invitedBy: user.uid,
             invitedAt: new Date(),
-        });
+        };
+        
+        // Add clientId if professional is inviting for a specific client
+        if (isProfessional && selectedClientId) {
+            inviteData.clientId = selectedClientId;
+            inviteData.inviteType = 'client-specific';
+        } else {
+            inviteData.inviteType = 'organization-wide';
+        }
+        
+        await addDoc(collection(db, "userInvites"), inviteData);
 
         toast({
             title: "Invitation Recorded",
@@ -115,6 +164,7 @@ export default function UserManagementPage() {
         setIsInviteDialogOpen(false);
         setNewUserEmail("");
         setNewUserRole("viewer");
+        setSelectedClientId(null);
 
     } catch(error: any) {
          toast({
@@ -147,7 +197,10 @@ export default function UserManagementPage() {
                 <DialogHeader>
                     <DialogTitle>Invite a New User</DialogTitle>
                     <DialogDescription>
-                        The user will need to sign up with this email to join your organization.
+                        {isProfessional 
+                          ? "Invite a user to help manage your organization or a specific client. They will need to sign up with this email."
+                          : "The user will need to sign up with this email to join your organization."
+                        }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -155,13 +208,37 @@ export default function UserManagementPage() {
                         <Label htmlFor="user-email">Email Address</Label>
                         <Input id="user-email" type="email" placeholder="name@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
                      </div>
+                     {isProfessional && clients.length > 0 && (
+                       <div className="space-y-2">
+                         <Label htmlFor="invite-scope">Invite For</Label>
+                         <Select value={selectedClientId || "organization"} onValueChange={(value) => setSelectedClientId(value === "organization" ? null : value)}>
+                             <SelectTrigger>
+                                 <SelectValue placeholder="Select scope"/>
+                             </SelectTrigger>
+                             <SelectContent className="z-[9999]">
+                                 <SelectItem value="organization">Organization-wide (All Clients)</SelectItem>
+                                 {clients.map((client) => (
+                                   <SelectItem key={client.id} value={client.id}>
+                                     {client.name} (Client-specific)
+                                   </SelectItem>
+                                 ))}
+                             </SelectContent>
+                         </Select>
+                         <p className="text-xs text-muted-foreground">
+                           {selectedClientId 
+                             ? "This user will only have access to the selected client's data."
+                             : "This user will have access to all clients and your organization data."
+                           }
+                         </p>
+                       </div>
+                     )}
                       <div className="space-y-2">
                         <Label htmlFor="user-role">Role</Label>
                         <Select value={newUserRole} onValueChange={setNewUserRole}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a role"/>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[9999]">
                                 <SelectItem value="admin">Admin (Full Access)</SelectItem>
                                 <SelectItem value="accountant">Accountant (Billing & Accounting)</SelectItem>
                                 <SelectItem value="sales">Sales (Billing only)</SelectItem>
@@ -192,23 +269,35 @@ export default function UserManagementPage() {
                     <TableRow>
                         <TableHead>User Email</TableHead>
                         <TableHead>Role</TableHead>
+                        {isProfessional && <TableHead>Scope</TableHead>}
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {invitesLoading ? (
-                        <TableRow><TableCell colSpan={4} className="h-24 text-center">Loading users...</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={isProfessional ? 5 : 4} className="h-24 text-center">Loading users...</TableCell></TableRow>
                     ) : users.length === 0 ? (
-                         <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No users have been invited yet.</TableCell></TableRow>
+                         <TableRow><TableCell colSpan={isProfessional ? 5 : 4} className="h-24 text-center text-muted-foreground">No users have been invited yet.</TableCell></TableRow>
                     ) : (
-                        users.map((u: any) => (
+                        users.map((u: any) => {
+                          const clientName = u.clientId && clients.find(c => c.id === u.clientId)?.name;
+                          return (
                         <TableRow key={u.id}>
                             <TableCell>
                                 <div className="font-medium">{u.name || u.email}</div>
                                 {u.name && <div className="text-sm text-muted-foreground">{u.email}</div>}
                             </TableCell>
                             <TableCell>{u.role}</TableCell>
+                            {isProfessional && (
+                              <TableCell>
+                                {u.clientId ? (
+                                  <Badge variant="outline">{clientName || 'Client'}</Badge>
+                                ) : (
+                                  <Badge variant="secondary">All Clients</Badge>
+                                )}
+                              </TableCell>
+                            )}
                              <TableCell>
                                 <Badge variant={u.status === "Active" ? "default" : "secondary"} className={u.status === "Active" ? "bg-green-600" : ""}>
                                     {u.status}
