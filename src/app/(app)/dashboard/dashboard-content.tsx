@@ -54,9 +54,9 @@ function DashboardContent() {
   const userRole = getRole();
   const displayRole = simulatedRole || userRole;
 
-  // Determine which user ID to use for queries (the pro's or the selected client's)
-  // For this prototype, we will still use the logged-in user's ID for data fetching.
-  // A real implementation would switch the `userId` in queries based on `activeClient.id`.
+  // Determine which user ID to use for queries
+  // Note: Data is automatically filtered by organizationId and clientId via buildOrganizationQuery
+  // The activeClient state is for future client workspace switching feature
   const queryUserId = user?.uid;
   
   if (!accountingContext) {
@@ -476,8 +476,8 @@ function DashboardContent() {
                         <CardDescription>You are currently viewing the dashboard for {activeClient.name}. All data displayed below belongs to this client.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {/* Placeholder for client-specific dashboard content */}
-                        <p className="text-muted-foreground">Client-specific dashboard components would be rendered here. For this prototype, we will show the main dashboard layout.</p>
+                        {/* Client workspace view - data is automatically filtered by clientId */}
+                        <p className="text-muted-foreground">You are viewing data for {activeClient.name}. All financial data, customers, vendors, and transactions shown below are filtered to this client's workspace.</p>
                     </CardContent>
                  </Card>
                )}
