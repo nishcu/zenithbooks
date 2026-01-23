@@ -15,9 +15,8 @@ service cloud.firestore {
 
     // Helper function to check if user is part of an organization
     function isOrganizationMember(organizationId) {
-      let userData = getUserData();
-      return userData != null && 
-             userData.organizationId == organizationId;
+      return getUserData() != null && 
+             getUserData().organizationId == organizationId;
     }
 
     // Helper function to check if user can access data (owner or organization member)
@@ -26,55 +25,53 @@ service cloud.firestore {
              (organizationId != null && isOrganizationMember(organizationId));
     }
 
+    // Helper function to check if user has admin role
+    function isAdmin() {
+      return getUserData() != null && getUserData().role == 'admin';
+    }
+
+    // Helper function to check if user has accountant role
+    function isAccountant() {
+      return getUserData() != null && getUserData().role == 'accountant';
+    }
+
+    // Helper function to check if user has sales role
+    function isSales() {
+      return getUserData() != null && getUserData().role == 'sales';
+    }
+
+    // Helper function to check if user has viewer role
+    function isViewer() {
+      return getUserData() != null && getUserData().role == 'viewer';
+    }
+
     // Helper function to check role permissions
     function hasRolePermission(permission) {
-      let userData = getUserData();
-      if (userData == null) return false;
-      
-      let role = userData.role;
-      if (role == null) return false;
-      
-      // Admin has all permissions
-      if (role == 'admin') return true;
-      
-      // Role-based permissions
-      if (permission == 'read') {
-        return role == 'admin' || role == 'accountant' || role == 'sales' || role == 'viewer';
-      }
-      if (permission == 'create') {
-        return role == 'admin' || role == 'accountant' || role == 'sales';
-      }
-      if (permission == 'update') {
-        return role == 'admin' || role == 'accountant' || role == 'sales';
-      }
-      if (permission == 'delete') {
-        return role == 'admin';
-      }
-      if (permission == 'accounting') {
-        return role == 'admin' || role == 'accountant' || role == 'viewer';
-      }
-      if (permission == 'billing') {
-        return role == 'admin' || role == 'accountant' || role == 'sales' || role == 'viewer';
-      }
-      if (permission == 'settings') {
-        return role == 'admin';
-      }
-      
-      return false;
+      return getUserData() != null && 
+             (
+               // Admin has all permissions
+               isAdmin() ||
+               // Read permission: all roles can read
+               (permission == 'read' && (isAdmin() || isAccountant() || isSales() || isViewer())) ||
+               // Create permission: admin, accountant, sales
+               (permission == 'create' && (isAdmin() || isAccountant() || isSales())) ||
+               // Update permission: admin, accountant, sales
+               (permission == 'update' && (isAdmin() || isAccountant() || isSales())) ||
+               // Delete permission: admin only
+               (permission == 'delete' && isAdmin()) ||
+               // Accounting permission: admin, accountant, viewer
+               (permission == 'accounting' && (isAdmin() || isAccountant() || isViewer())) ||
+               // Billing permission: all roles
+               (permission == 'billing' && (isAdmin() || isAccountant() || isSales() || isViewer())) ||
+               // Settings permission: admin only
+               (permission == 'settings' && isAdmin())
+             );
     }
 
     // Helper function to check client-specific access
     function canAccessClientData(clientId) {
-      let userData = getUserData();
-      if (userData == null) return false;
-      
-      // If user has no clientId restriction, they can access all organization data
-      if (userData.clientId == null) {
-        return true;
-      }
-      
-      // If user has clientId restriction, they can only access that client's data
-      return userData.clientId == clientId;
+      return getUserData() != null && 
+             (getUserData().clientId == null || getUserData().clientId == clientId);
     }
 
     // NOTE: Production rules are now more restrictive
