@@ -38,62 +38,53 @@ export async function GET(request: NextRequest) {
       : undefined;
 
     // Build query directly in API route to avoid auth context issues
+    // For now, fetch all and filter client-side to avoid index issues
     let q = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
     
-    // Apply filters
-    if (state) {
-      q = query(q, where('locations', 'array-contains', state));
-    }
-    
-    if (city) {
-      q = query(q, where('locations', 'array-contains', city));
-    }
-    
-    if (isVerified !== undefined) {
-      q = query(q, where('isVerified', '==', isVerified));
-    }
-    
-    if (minExperience) {
-      q = query(q, where('experience', '>=', minExperience));
-    }
-    
-    // Only add orderBy if no where clauses (to avoid index requirement)
-    const hasWhereClauses = state || city || isVerified !== undefined || minExperience;
-    if (!hasWhereClauses) {
-      q = query(q, orderBy('createdAt', 'desc'));
-    }
-    
-    if (limitCount) {
-      q = query(q, limit(limitCount));
-    }
-    
+    // Try to apply filters, but if they fail, we'll filter client-side
+    let useClientSideFiltering = false;
     let snapshot;
+    
     try {
+      // Try to apply server-side filters
+      if (isVerified !== undefined) {
+        q = query(q, where('isVerified', '==', isVerified));
+      }
+      
+      // Don't use array-contains for locations (requires index)
+      // We'll filter client-side instead
+      
+      if (minExperience) {
+        q = query(q, where('experience', '>=', minExperience));
+      }
+      
+      // Only add orderBy if no where clauses (to avoid index requirement)
+      const hasWhereClauses = isVerified !== undefined || minExperience;
+      if (!hasWhereClauses) {
+        try {
+          q = query(q, orderBy('createdAt', 'desc'));
+        } catch (orderError) {
+          // If orderBy fails, continue without it
+          console.warn('Could not order by createdAt:', orderError);
+        }
+      }
+      
+      if (limitCount && !state && !city) {
+        // Only use limit if no location filters (to avoid index issues)
+        q = query(q, limit(limitCount * 2)); // Get more to account for client-side filtering
+      }
+      
       snapshot = await getDocs(q);
     } catch (error: any) {
-      // If query fails due to missing index, try without orderBy
-      if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
-        console.warn('Query failed due to missing index, retrying without orderBy:', error);
-        // Rebuild query without orderBy
-        let fallbackQ = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
-        if (state) {
-          fallbackQ = query(fallbackQ, where('locations', 'array-contains', state));
-        }
-        if (city) {
-          fallbackQ = query(fallbackQ, where('locations', 'array-contains', city));
-        }
-        if (isVerified !== undefined) {
-          fallbackQ = query(fallbackQ, where('isVerified', '==', isVerified));
-        }
-        if (minExperience) {
-          fallbackQ = query(fallbackQ, where('experience', '>=', minExperience));
-        }
-        if (limitCount) {
-          fallbackQ = query(fallbackQ, limit(limitCount));
-        }
-        snapshot = await getDocs(fallbackQ);
-      } else {
-        throw error;
+      // If query fails, try simplest query and filter client-side
+      console.warn('Query with filters failed, falling back to simple query:', error);
+      try {
+        q = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
+        snapshot = await getDocs(q);
+        useClientSideFiltering = true;
+      } catch (fallbackError: any) {
+        console.error('Even simple query failed:', fallbackError);
+        throw new Error(`Failed to query professionals: ${fallbackError?.message || 'Unknown error'}`);
       }
     }
     
@@ -130,11 +121,41 @@ export async function GET(request: NextRequest) {
       return timeB - timeA;
     });
     
+    // Apply client-side filters for location (to avoid index requirements)
+    if (useClientSideFiltering || state || city) {
+      professionals = professionals.filter((prof) => {
+        // Check state filter
+        if (state) {
+          const locations = prof.locations || [];
+          const locationStr = Array.isArray(locations) ? locations.join(' ') : String(locations || '');
+          if (!locationStr.toLowerCase().includes(state.toLowerCase())) {
+            return false;
+          }
+        }
+        
+        // Check city filter
+        if (city) {
+          const locations = prof.locations || [];
+          const locationStr = Array.isArray(locations) ? locations.join(' ') : String(locations || '');
+          if (!locationStr.toLowerCase().includes(city.toLowerCase())) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+    }
+    
     // Filter by skills if provided (client-side)
     if (skills && skills.length > 0) {
       professionals = professionals.filter((prof) =>
         skills.some((skill) => prof.skills?.includes(skill))
       );
+    }
+    
+    // Apply limit after client-side filtering
+    if (limitCount && professionals.length > limitCount) {
+      professionals = professionals.slice(0, limitCount);
     }
 
     return NextResponse.json({
