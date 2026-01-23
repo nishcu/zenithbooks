@@ -52,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChevronDown } from "lucide-react";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -70,6 +71,29 @@ export default function UserManagementPage() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clients, setClients] = useState<Array<{id: string, name: string}>>([]);
   const [isProfessional, setIsProfessional] = useState(false);
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setShowRoleDropdown(false);
+      }
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
+        setShowClientDropdown(false);
+      }
+    };
+
+    if (showRoleDropdown || showClientDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showRoleDropdown, showClientDropdown]);
 
   const invitesQuery = user ? query(collection(db, 'userInvites'), where("invitedBy", "==", user.uid)) : null;
   const [invitesSnapshot, invitesLoading] = useCollection(invitesQuery);
@@ -164,6 +188,8 @@ export default function UserManagementPage() {
         setNewUserEmail("");
         setNewUserRole("viewer");
         setSelectedClientId(null);
+        setShowRoleDropdown(false);
+        setShowClientDropdown(false);
 
     } catch(error: any) {
          toast({
@@ -214,21 +240,55 @@ export default function UserManagementPage() {
                         <Input id="user-email" type="email" placeholder="name@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
                      </div>
                      {isProfessional && clients.length > 0 && (
-                       <div className="space-y-2" style={{ position: 'relative', zIndex: 999999 }}>
+                       <div className="space-y-2 relative">
                          <Label htmlFor="invite-scope">Invite For</Label>
-                         <Select value={selectedClientId || "organization"} onValueChange={(value) => setSelectedClientId(value === "organization" ? null : value)}>
-                             <SelectTrigger>
-                                 <SelectValue placeholder="Select scope"/>
-                             </SelectTrigger>
-                             <SelectContent>
-                                 <SelectItem value="organization">Organization-wide (All Clients)</SelectItem>
+                         <div className="relative" ref={clientDropdownRef}>
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setShowClientDropdown(!showClientDropdown);
+                               setShowRoleDropdown(false);
+                             }}
+                             className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                           >
+                             <span>
+                               {selectedClientId 
+                                 ? clients.find(c => c.id === selectedClientId)?.name + " (Client-specific)"
+                                 : "Organization-wide (All Clients)"
+                               }
+                             </span>
+                             <ChevronDown className="h-4 w-4 opacity-50" />
+                           </button>
+                           {showClientDropdown && (
+                             <div className="absolute z-[200] mt-1 w-full rounded-md border bg-popover shadow-md">
+                               <div className="p-1">
+                                 <button
+                                   type="button"
+                                   onClick={() => {
+                                     setSelectedClientId(null);
+                                     setShowClientDropdown(false);
+                                   }}
+                                   className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                 >
+                                   Organization-wide (All Clients)
+                                 </button>
                                  {clients.map((client) => (
-                                   <SelectItem key={client.id} value={client.id}>
+                                   <button
+                                     key={client.id}
+                                     type="button"
+                                     onClick={() => {
+                                       setSelectedClientId(client.id);
+                                       setShowClientDropdown(false);
+                                     }}
+                                     className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                   >
                                      {client.name} (Client-specific)
-                                   </SelectItem>
+                                   </button>
                                  ))}
-                             </SelectContent>
-                         </Select>
+                               </div>
+                             </div>
+                           )}
+                         </div>
                          <p className="text-xs text-muted-foreground">
                            {selectedClientId 
                              ? "This user will only have access to the selected client's data."
@@ -237,19 +297,72 @@ export default function UserManagementPage() {
                          </p>
                        </div>
                      )}
-                      <div className="space-y-2" style={{ position: 'relative', zIndex: 999999 }}>
+                      <div className="space-y-2 relative">
                         <Label htmlFor="user-role">Role</Label>
-                        <Select value={newUserRole} onValueChange={setNewUserRole}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a role"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                                <SelectItem value="accountant">Accountant (Billing & Accounting)</SelectItem>
-                                <SelectItem value="sales">Sales (Billing only)</SelectItem>
-                                <SelectItem value="viewer">Viewer (Read-only)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="relative" ref={roleDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowRoleDropdown(!showRoleDropdown);
+                              setShowClientDropdown(false);
+                            }}
+                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          >
+                            <span>
+                              {newUserRole === "admin" && "Admin (Full Access)"}
+                              {newUserRole === "accountant" && "Accountant (Billing & Accounting)"}
+                              {newUserRole === "sales" && "Sales (Billing only)"}
+                              {newUserRole === "viewer" && "Viewer (Read-only)"}
+                            </span>
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </button>
+                          {showRoleDropdown && (
+                            <div className="absolute z-[200] mt-1 w-full rounded-md border bg-popover shadow-md">
+                              <div className="p-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewUserRole("admin");
+                                    setShowRoleDropdown(false);
+                                  }}
+                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                  Admin (Full Access)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewUserRole("accountant");
+                                    setShowRoleDropdown(false);
+                                  }}
+                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                  Accountant (Billing & Accounting)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewUserRole("sales");
+                                    setShowRoleDropdown(false);
+                                  }}
+                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                  Sales (Billing only)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewUserRole("viewer");
+                                    setShowRoleDropdown(false);
+                                  }}
+                                  className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                >
+                                  Viewer (Read-only)
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                      </div>
                 </div>
                 <DialogFooter>
