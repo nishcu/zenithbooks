@@ -121,19 +121,42 @@ export async function listProfessionals(filters?: {
   
   if (!hasWhereClauses) {
     // Only order by createdAt if no where clauses (avoids index requirement)
-    try {
-      q = query(q, orderBy('createdAt', 'desc'));
-    } catch (error) {
-      // If orderBy fails (missing index), continue without it
-      console.warn('Could not order by createdAt, will sort client-side:', error);
-    }
+    q = query(q, orderBy('createdAt', 'desc'));
   }
   
   if (filters?.limitCount) {
     q = query(q, limit(filters.limitCount));
   }
   
-  const snapshot = await getDocs(q);
+  let snapshot;
+  try {
+    snapshot = await getDocs(q);
+  } catch (error: any) {
+    // If query fails due to missing index, try without orderBy
+    if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+      console.warn('Query failed due to missing index, retrying without orderBy:', error);
+      // Rebuild query without orderBy
+      let fallbackQ = query(collection(db, COLLECTIONS.PROFESSIONALS_PROFILES));
+      if (filters?.state) {
+        fallbackQ = query(fallbackQ, where('locations', 'array-contains', filters.state));
+      }
+      if (filters?.city) {
+        fallbackQ = query(fallbackQ, where('locations', 'array-contains', filters.city));
+      }
+      if (filters?.isVerified !== undefined) {
+        fallbackQ = query(fallbackQ, where('isVerified', '==', filters.isVerified));
+      }
+      if (filters?.minExperience) {
+        fallbackQ = query(fallbackQ, where('experience', '>=', filters.minExperience));
+      }
+      if (filters?.limitCount) {
+        fallbackQ = query(fallbackQ, limit(filters.limitCount));
+      }
+      snapshot = await getDocs(fallbackQ);
+    } else {
+      throw error;
+    }
+  }
   let professionals = snapshot.docs.map((doc) => {
     const data = doc.data();
     // Handle missing createdAt gracefully
