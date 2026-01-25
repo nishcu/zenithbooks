@@ -226,6 +226,22 @@ function DashboardContent() {
       color: "from-cyan-500 to-blue-600",
       badge: "Smart"
     },
+    {
+      title: "Asset Tax Calculator",
+      description: "Calculate capital gains tax with indexation for 11 asset types",
+      icon: TrendingUp,
+      href: "/income-tax/asset-tax-calculator",
+      color: "from-emerald-500 to-green-600",
+      badge: "Tax Expert"
+    },
+    {
+      title: "Loan Calculator",
+      description: "EMI calculator with tax benefits for all loan types",
+      icon: CreditCard,
+      href: "/income-tax/loan-calculator",
+      color: "from-amber-500 to-yellow-600",
+      badge: "Financial"
+    },
   ];
 
   // Quick Access Features
@@ -750,16 +766,6 @@ function DashboardContent() {
   // Default Business Dashboard
   return (
     <div className="space-y-10 lg:space-y-16 w-full max-w-full overflow-x-hidden px-1">
-      {/* Hero Section - Value Messaging */}
-      <div className="space-y-2 pb-4 border-b border-border/40">
-        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-          Your Complete CA & Accounting Platform
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl">
-          Built for Indian CAs, MSMEs, and startups. Manage GST, Income Tax, Accounting, and Compliance all in one place.
-        </p>
-      </div>
-
       <MarketingCarousel />
 
       {/* Document Vault Spotlight - Prominent */}

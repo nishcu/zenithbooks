@@ -8,7 +8,7 @@ import {
   Receipt, TrendingUp, BarChart3, FileCheck, Archive,
   Truck, FileSignature, Wallet, Boxes, ReceiptText,
   Scale, Shield, Award, Users, FilePenLine, Building2,
-  Sparkles, ArrowRight
+  Sparkles, ArrowRight, CreditCard
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { SummaryCard } from "@/components/mobile/summary-card";
@@ -123,6 +123,20 @@ export function MobileDashboard() {
       description: "Auto bank reconciliation",
       badge: "Smart",
       href: "/accounting/bank-reconciliation"
+    },
+    {
+      icon: TrendingUp,
+      title: "Asset Tax Calculator",
+      description: "Capital gains tax with indexation",
+      badge: "Tax Expert",
+      href: "/income-tax/asset-tax-calculator"
+    },
+    {
+      icon: CreditCard,
+      title: "Loan Calculator",
+      description: "EMI with tax benefits",
+      badge: "Financial",
+      href: "/income-tax/loan-calculator"
     },
   ];
 

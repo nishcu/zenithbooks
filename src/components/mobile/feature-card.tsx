@@ -23,6 +23,8 @@ const badgeColors: Record<string, string> = {
   "Innovative": "bg-teal-100 text-teal-700",
   "Smart": "bg-cyan-100 text-cyan-700",
   "Compliance": "bg-rose-100 text-rose-700",
+  "Tax Expert": "bg-emerald-100 text-emerald-700",
+  "Financial": "bg-amber-100 text-amber-700",
 };
 
 export function FeatureCard({ 
