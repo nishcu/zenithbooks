@@ -15,23 +15,23 @@ export function VaultCard() {
           <div>
             <h3 className="text-lg font-bold text-white">Digital Document Vault</h3>
             <p className="text-sm text-white/90">
-              Store & share GST, IT, MCA & Banking documents securely
+              Secure document storage & sharing for GST, Tax and Banking.
             </p>
           </div>
         </div>
 
-        <div className="space-y-2 text-white/90">
-          <div className="flex items-center gap-2 text-sm">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>Secret code sharing</span>
+        <div className="flex flex-wrap items-center gap-3 text-white/90 text-sm">
+          <div className="flex items-center gap-1.5">
+            <span>🔐</span>
+            <span>Secret-code access</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4" />
-            <span>Auto lock after 5 days</span>
+          <div className="flex items-center gap-1.5">
+            <span>⏱</span>
+            <span>Auto-lock after 5 days</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <XCircle className="h-4 w-4" />
-            <span>Zero WhatsApp / Email</span>
+          <div className="flex items-center gap-1.5">
+            <span>🚫</span>
+            <span>No WhatsApp or email</span>
           </div>
         </div>
 

@@ -25,7 +25,7 @@ export function VaultSpotlight() {
               Digital Document Vault
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground max-w-2xl">
-              Secure, intelligent document management for Indian businesses. Store GST, Income Tax, MCA, and Banking documents with enterprise-grade security.
+              Secure document storage & sharing for GST, Tax and Banking.
             </CardDescription>
           </div>
           
@@ -39,55 +39,24 @@ export function VaultSpotlight() {
       </CardHeader>
 
       <CardContent className="relative space-y-6">
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-primary/10 hover:border-primary/30 transition-colors">
-            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-              <Shield className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-1">Secret Code Sharing</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Share documents securely without email or WhatsApp. Recipients access with a secret code.
-              </p>
-            </div>
+        {/* Features Grid - Minimized */}
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔐</span>
+            <span className="text-muted-foreground">Secret-code access</span>
           </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-primary/10 hover:border-primary/30 transition-colors">
-            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-              <Clock className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-1">Auto-Lock After 5 Days</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Documents automatically lock after sharing period ends. Zero manual intervention needed.
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⏱</span>
+            <span className="text-muted-foreground">Auto-lock after 5 days</span>
           </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-primary/10 hover:border-primary/30 transition-colors">
-            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-              <FileCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-1">Zero WhatsApp/Email</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Eliminate document sharing via insecure channels. All access happens through secure platform.
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🚫</span>
+            <span className="text-muted-foreground">No WhatsApp or email</span>
           </div>
         </div>
 
         {/* CTA */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-primary/10">
-          <div>
-            <p className="text-sm font-medium text-foreground mb-1">
-              Trusted by 10,000+ Indian businesses & CAs
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Enterprise-grade security • GDPR compliant • Professional workflow
-            </p>
-          </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 pt-4 border-t border-primary/10">
           <Button asChild size="lg" className="shadow-lg">
             <Link href="/vault" className="group">
               Open Document Vault
