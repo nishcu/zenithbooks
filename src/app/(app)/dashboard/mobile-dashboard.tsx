@@ -8,7 +8,7 @@ import {
   Receipt, TrendingUp, BarChart3, FileCheck, Archive,
   Truck, FileSignature, Wallet, Boxes, ReceiptText,
   Scale, Shield, Award, Users, FilePenLine, Building2,
-  Sparkles, ArrowRight, CreditCard
+  Sparkles, ArrowRight, CreditCard, Calculator
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { SummaryCard } from "@/components/mobile/summary-card";
@@ -86,58 +86,85 @@ export function MobileDashboard() {
     { icon: Truck, label: "Delivery Challan", href: "/billing/invoices/new" }, // Temporary redirect to invoices until delivery challan page is created
   ];
 
-  // Core Features
+  // Core Features - Organized by Category (No badges on dashboard)
+  const coreFeaturesByCategory = {
+    automation: [
+      {
+        icon: Sparkles,
+        title: "Smart Journal Entry",
+        description: "English → Journal + GST",
+        href: "/accounting/journal/smart-entry",
+        highlight: true,
+      },
+      {
+        icon: BookOpen,
+        title: "Bulk Journal",
+        description: "Upload journals in bulk",
+        href: "/accounting/journal/bulk"
+      },
+      {
+        icon: Upload,
+        title: "Bank Reconciliation",
+        description: "Auto-create entries from statements",
+        href: "/accounting/bank-reconciliation"
+      },
+    ],
+    invoicing: [
+      {
+        icon: Zap,
+        title: "Rapid Invoice",
+        description: "Fast invoice creation",
+        href: "/billing/invoices/rapid"
+      },
+      {
+        icon: FileSpreadsheet,
+        title: "Bulk Invoice",
+        description: "CSV / Excel upload",
+        href: "/billing/invoices/bulk"
+      },
+      {
+        icon: Mic,
+        title: "Voice to Invoice",
+        description: "Create invoices by voice",
+        href: "/billing/invoices/voice"
+      },
+    ],
+    taxFinance: [
+      {
+        icon: TrendingUp,
+        title: "Asset Tax Calculator",
+        description: "Capital gains for 11 assets",
+        href: "/income-tax/asset-tax-calculator"
+      },
+      {
+        icon: CreditCard,
+        title: "Loan Calculator",
+        description: "EMI + tax benefits",
+        href: "/income-tax/loan-calculator"
+      },
+    ],
+    compliance: [
+      {
+        icon: FilePenLine,
+        title: "Bulk Form 16",
+        description: "Multi-employee generation",
+        href: "/income-tax/form-16"
+      },
+      {
+        icon: Users,
+        title: "Payroll",
+        description: "Salary, PF, ESI & compliance",
+        href: "/payroll"
+      },
+    ],
+  };
+
+  // Flatten for display
   const coreFeatures = [
-    {
-      icon: Sparkles,
-      title: "Smart Journal Entry",
-      description: "Plain English → Auto journal entries with GST",
-      badge: "NEW",
-      href: "/accounting/journal/smart-entry",
-      highlight: true, // Mark for special highlighting
-    },
-    {
-      icon: FileSpreadsheet,
-      title: "Bulk Invoice",
-      description: "Upload Excel/CSV → Generate 100s of invoices",
-      badge: "Time Saver",
-      href: "/billing/invoices/bulk"
-    },
-    {
-      icon: BookOpen,
-      title: "Bulk Journal",
-      description: "Upload journals in bulk (Non-accountant friendly)",
-      badge: "Game Changer",
-      href: "/accounting/journal/bulk"
-    },
-    {
-      icon: Mic,
-      title: "Voice to Invoice",
-      description: "Speak → GST Invoice in seconds",
-      badge: "AI Powered",
-      href: "/billing/invoices/voice"
-    },
-    {
-      icon: Zap,
-      title: "Single Click BRS",
-      description: "Auto bank reconciliation",
-      badge: "Smart",
-      href: "/accounting/bank-reconciliation"
-    },
-    {
-      icon: TrendingUp,
-      title: "Asset Tax Calculator",
-      description: "Capital gains tax with indexation",
-      badge: "Tax Expert",
-      href: "/income-tax/asset-tax-calculator"
-    },
-    {
-      icon: CreditCard,
-      title: "Loan Calculator",
-      description: "EMI with tax benefits",
-      badge: "Financial",
-      href: "/income-tax/loan-calculator"
-    },
+    ...coreFeaturesByCategory.automation,
+    ...coreFeaturesByCategory.invoicing,
+    ...coreFeaturesByCategory.taxFinance,
+    ...coreFeaturesByCategory.compliance,
   ];
 
   // Quick Access - Compliance & Services
@@ -200,36 +227,100 @@ export function MobileDashboard() {
           </div>
         </div>
 
-        {/* Core Features */}
-        <div className="space-y-3">
+        {/* Core Features - Organized by Category */}
+        <div className="space-y-4 px-4">
           <h2 className="text-base font-semibold text-gray-900 px-1">Core Features</h2>
-          <div className="space-y-3">
-            {coreFeatures.map((feature, idx) => (
-              <FeatureCard
-                key={idx}
-                icon={feature.icon}
-                title={feature.title}
-                description={feature.description}
-                badge={feature.badge}
-                href={feature.href}
-                className={feature.highlight ? "border-2 border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 shadow-md" : undefined}
-              />
-            ))}
+          
+          {/* Smart Automation */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-pink-600" />
+              Smart Automation
+            </h3>
+            <div className="space-y-2">
+              {coreFeaturesByCategory.automation.map((feature, idx) => (
+                <FeatureCard
+                  key={idx}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  href={feature.href}
+                  className={feature.highlight ? "border-2 border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 shadow-md" : undefined}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Invoicing */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-pink-600" />
+              Invoicing
+            </h3>
+            <div className="space-y-2">
+              {coreFeaturesByCategory.invoicing.map((feature, idx) => (
+                <FeatureCard
+                  key={idx}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  href={feature.href}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Tax & Finance */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-pink-600" />
+              Tax & Finance
+            </h3>
+            <div className="space-y-2">
+              {coreFeaturesByCategory.taxFinance.map((feature, idx) => (
+                <FeatureCard
+                  key={idx}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  href={feature.href}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Compliance & HR */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
+              <Users className="h-4 w-4 text-pink-600" />
+              Compliance & HR
+            </h3>
+            <div className="space-y-2">
+              {coreFeaturesByCategory.compliance.map((feature, idx) => (
+                <FeatureCard
+                  key={idx}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  href={feature.href}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Quick Access */}
-        <div className="space-y-3">
+        {/* Quick Access - Super Clean */}
+        <div className="space-y-3 px-4">
           <h2 className="text-base font-semibold text-gray-900 px-1">Quick Access</h2>
-          <div className="grid grid-cols-4 gap-2">
-            {quickAccess.map((item, idx) => (
-              <QuickAccessTile
-                key={idx}
-                icon={item.icon}
-                label={item.label}
-                href={item.href}
-              />
-            ))}
+          <div className="grid grid-cols-2 gap-2">
+            <QuickAccessTile label="Sales" href="/billing/invoices" icon={Receipt} />
+            <QuickAccessTile label="Procurement" href="/purchases" icon={ShoppingCart} />
+            <QuickAccessTile label="BRS" href="/accounting/bank-reconciliation" icon={Calculator} />
+            <QuickAccessTile label="Compliance" href="/gst-filings" icon={Shield} />
+            <QuickAccessTile label="HR" href="/payroll" icon={Users} />
+            <QuickAccessTile label="Legal" href="/legal-documents" icon={FileText} />
+            <QuickAccessTile label="Certificates" href="/ca-certificates" icon={Award} />
+            <QuickAccessTile label="Knowledge" href="/professional-services" icon={BookOpen} />
           </div>
         </div>
 

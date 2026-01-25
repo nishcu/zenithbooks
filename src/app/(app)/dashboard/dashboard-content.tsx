@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useContext, memo, useEffect } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus, Sparkles } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
@@ -39,6 +40,7 @@ function DashboardContent() {
   const [user, loadingUser, authError] = useAuthState(auth);
   const [isQuickInvoiceOpen, setIsQuickInvoiceOpen] = useState(false);
   const { simulatedRole } = useRoleSimulator();
+  const [viewMode, setViewMode] = useState<"business" | "ca">("business");
 
   // --- Client Workspace State ---
   const [activeClient, setActiveClient] = useState<{ id: string, name: string } | null>(null);
@@ -167,120 +169,141 @@ function DashboardContent() {
     );
   }, [invoices, searchTerm]);
 
-  // Core Features
+  // Core Features - Organized by Category (No badges on dashboard)
+  const coreFeaturesByCategory = {
+    automation: [
+      {
+        title: "Smart Journal Entry",
+        description: "English → Journal + GST",
+        icon: Sparkles,
+        href: "/accounting/journal/smart-entry",
+        color: "from-violet-500 to-purple-600",
+      },
+      {
+        title: "Bulk Journal",
+        description: "Upload journals in bulk",
+        icon: BookOpen,
+        href: "/accounting/journal/bulk",
+        color: "from-purple-500 to-pink-600",
+      },
+      {
+        title: "Bank Reconciliation",
+        description: "Auto-create entries from statements",
+        icon: Upload,
+        href: "/accounting/bank-reconciliation",
+        color: "from-cyan-500 to-blue-600",
+      },
+    ],
+    invoicing: [
+      {
+        title: "Rapid Invoice",
+        description: "Fast invoice creation",
+        icon: Zap,
+        href: "/billing/invoices/rapid",
+        color: "from-yellow-500 to-orange-600",
+      },
+      {
+        title: "Bulk Invoice",
+        description: "CSV / Excel upload",
+        icon: FileSpreadsheet,
+        href: "/billing/invoices/bulk",
+        color: "from-blue-500 to-indigo-600",
+      },
+      {
+        title: "Voice to Invoice",
+        description: "Create invoices by voice",
+        icon: Mic,
+        href: "/billing/invoices/voice",
+        color: "from-green-500 to-teal-600",
+      },
+    ],
+    taxFinance: [
+      {
+        title: "Asset Tax Calculator",
+        description: "Capital gains for 11 assets",
+        icon: TrendingUp,
+        href: "/income-tax/asset-tax-calculator",
+        color: "from-emerald-500 to-green-600",
+      },
+      {
+        title: "Loan Calculator",
+        description: "EMI + tax benefits",
+        icon: CreditCard,
+        href: "/income-tax/loan-calculator",
+        color: "from-amber-500 to-yellow-600",
+      },
+    ],
+    compliance: [
+      {
+        title: "Bulk Form 16",
+        description: "Multi-employee generation",
+        icon: FileText,
+        href: "/income-tax/form-16",
+        color: "from-rose-500 to-red-600",
+      },
+      {
+        title: "Payroll",
+        description: "Salary, PF, ESI & compliance",
+        icon: Users,
+        href: "/payroll",
+        color: "from-indigo-500 to-purple-600",
+      },
+    ],
+  };
+
+  // Flatten for display (organized by category)
   const coreFeatures = [
-    {
-      title: "Smart Journal Entry",
-      description: "Convert plain English to journal entries with automatic GST calculation",
-      icon: Sparkles,
-      href: "/accounting/journal/smart-entry",
-      color: "from-violet-500 to-purple-600",
-      badge: "NEW",
-      highlight: true, // Special highlighting
-    },
-    {
-      title: "Bulk Invoice",
-      description: "Upload CSV/Excel to generate multiple invoices at once",
-      icon: FileSpreadsheet,
-      href: "/billing/invoices/bulk",
-      color: "from-blue-500 to-indigo-600",
-      badge: "Time Saver"
-    },
-    {
-      title: "Bulk Journal",
-      description: "Upload journal entries in bulk - perfect for non-accounting users",
-      icon: BookOpen,
-      href: "/accounting/journal/bulk",
-      color: "from-purple-500 to-pink-600",
-      badge: "Game Changer"
-    },
-    {
-      title: "Bulk Form 16",
-      description: "Generate Form 16 certificates for multiple employees in one go",
-      icon: FileText,
-      href: "/income-tax/form-16",
-      color: "from-rose-500 to-red-600",
-      badge: "Compliance"
-    },
-    {
-      title: "Rapid Invoice",
-      description: "Quick invoice entry with minimal fields",
-      icon: Zap,
-      href: "/billing/invoices/rapid",
-      color: "from-yellow-500 to-orange-600",
-      badge: "Fast"
-    },
-    {
-      title: "Voice to Invoice",
-      description: "Create invoices using voice commands - perfect for mobile users",
-      icon: Mic,
-      href: "/billing/invoices/voice",
-      color: "from-green-500 to-teal-600",
-      badge: "Innovative"
-    },
-    {
-      title: "Bank Reconciliation",
-      description: "Upload bank statements (PDF/CSV/Excel) and auto-create entries",
-      icon: Upload,
-      href: "/accounting/bank-reconciliation",
-      color: "from-cyan-500 to-blue-600",
-      badge: "Smart"
-    },
-    {
-      title: "Asset Tax Calculator",
-      description: "Calculate capital gains tax with indexation for 11 asset types",
-      icon: TrendingUp,
-      href: "/income-tax/asset-tax-calculator",
-      color: "from-emerald-500 to-green-600",
-      badge: "Tax Expert"
-    },
-    {
-      title: "Loan Calculator",
-      description: "EMI calculator with tax benefits for all loan types",
-      icon: CreditCard,
-      href: "/income-tax/loan-calculator",
-      color: "from-amber-500 to-yellow-600",
-      badge: "Financial"
-    },
+    ...coreFeaturesByCategory.automation,
+    ...coreFeaturesByCategory.invoicing,
+    ...coreFeaturesByCategory.taxFinance,
+    ...coreFeaturesByCategory.compliance,
   ];
 
-  // Quick Access Features
+  // Quick Access - Super Clean (No descriptions)
+  const quickAccessModules = [
+    { label: "Sales", href: "/billing/invoices", icon: Receipt },
+    { label: "Procurement", href: "/purchases", icon: ShoppingCart },
+    { label: "BRS", href: "/accounting/bank-reconciliation", icon: Calculator },
+    { label: "Compliance", href: "/gst-filings", icon: Shield },
+    { label: "HR", href: "/payroll", icon: Users },
+    { label: "Legal", href: "/legal-documents", icon: FileText },
+    { label: "Certificates", href: "/ca-certificates", icon: Award },
+    { label: "Knowledge", href: "/professional-services", icon: BookOpen },
+  ];
+
+  // Quick Access Features (for backward compatibility with mobile view)
   const quickAccessFeatures = [
     {
       title: "Billing Invoices",
-      description: "Manage all your sales invoices and billing",
+      description: "",
       icon: Receipt,
       href: "/billing/invoices",
       color: "from-emerald-500 to-teal-600",
-      badge: "Sales"
     },
     {
       title: "Purchases",
-      description: "Track purchase bills and orders",
+      description: "",
       icon: ShoppingCart,
       href: "/purchases",
       color: "from-amber-500 to-orange-600",
-      badge: "Procurement"
     },
     {
       title: "Accounting",
-      description: "Manage your books of accounts and ledgers",
+      description: "",
       icon: Calculator,
       href: "/accounting",
       color: "from-indigo-500 to-purple-600",
-      badge: "Finance"
     },
     {
       title: "Certificates",
-      description: "Generate certificates through platform-managed professional resources",
+      description: "",
       icon: Award,
       href: "/ca-certificates",
       color: "from-violet-500 to-purple-600",
-      badge: "Platform"
     },
     {
       title: "Monthly Compliance Services",
-      description: "Platform-managed compliance services - GST, Tax, Payroll, MCA",
+      description: "",
       icon: Shield,
       href: "/compliance-plans",
       color: "from-indigo-500 to-blue-600",
@@ -806,112 +829,344 @@ function DashboardContent() {
 
       {/* Core Features Section - Enhanced for Desktop */}
       <div className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Core Features</h2>
-          <p className="text-lg text-muted-foreground">
-            Time-saving tools designed for Indian CAs and businesses
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Core Features</h2>
+            <p className="text-lg text-muted-foreground">
+              Built for speed, accuracy, and compliance
+            </p>
+          </div>
+          {/* View Toggle */}
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "business" | "ca")} className="w-auto">
+            <TabsList>
+              <TabsTrigger value="business">🧾 Business View</TabsTrigger>
+              <TabsTrigger value="ca">👔 CA View</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         
         <Card className="border border-border/50 shadow-lg bg-background">
           <CardContent className="p-6 lg:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full">
-              {coreFeatures.map((feature) => {
-                const Icon = feature.icon;
-                const isHighlighted = feature.highlight;
-                return (
-                  <Link key={feature.href} href={feature.href}>
-                    <Card className={`h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border group cursor-pointer relative min-w-0 ${
-                      isHighlighted 
-                        ? "border-2 border-violet-400 hover:border-violet-500 bg-gradient-to-br from-violet-50 to-purple-50 shadow-lg hover:shadow-2xl" 
-                        : "border-border/50 hover:border-primary/50 bg-card hover:shadow-primary/20"
-                    }`}>
-                      <CardHeader className="pb-4 px-6 pt-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs shrink-0 px-2.5 py-1 ${
-                              feature.badge === "NEW" 
-                                ? "bg-yellow-400 text-yellow-900 border-0 animate-pulse" 
-                                : "bg-primary/10 text-primary border-primary/20"
-                            }`}
-                          >
-                            {feature.badge}
-                          </Badge>
-                        </div>
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-all duration-300 ${isHighlighted ? "shadow-lg" : "shadow-md"}`}>
-                          <Icon className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
-                        </div>
-                        <CardTitle className={`text-lg font-bold transition-colors leading-tight mb-2 ${
-                          isHighlighted 
-                            ? "text-violet-700 group-hover:text-violet-800" 
-                            : "group-hover:text-primary"
-                        }`}>
-                          {feature.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0 px-6 pb-6">
-                        <CardDescription className="text-sm leading-relaxed text-muted-foreground mb-4">
-                          {feature.description}
-                        </CardDescription>
-                        <div className={`flex items-center transition-opacity duration-300 font-medium ${
-                          isHighlighted 
-                            ? "text-violet-600 opacity-100" 
-                            : "text-primary opacity-0 group-hover:opacity-100"
-                        }`}>
-                          <span className="text-sm">Explore feature</span>
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+            {/* Organized by Categories - View Mode Aware */}
+            <div className="space-y-8">
+              {viewMode === "business" ? (
+                <>
+                  {/* Smart Automation */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-primary" />
+                      Smart Automation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.automation.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Invoicing */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Receipt className="h-5 w-5 text-primary" />
+                      Invoicing
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.invoicing.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Tax & Finance */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      Tax & Finance
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.taxFinance.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Compliance & HR */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <UserCog className="h-5 w-5 text-primary" />
+                      Compliance & HR
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.compliance.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* CA View: Compliance & HR First */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <UserCog className="h-5 w-5 text-primary" />
+                      Compliance & HR
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.compliance.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Tax & Finance */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      Tax & Finance
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.taxFinance.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Smart Automation */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-primary" />
+                      Smart Automation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.automation.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Invoicing */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Receipt className="h-5 w-5 text-primary" />
+                      Invoicing
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.invoicing.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Access Features Section - Enhanced with visual distinction */}
+      {/* Quick Access - Super Clean (No descriptions) */}
       <div className="space-y-4">
         <div className="space-y-1">
           <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">Quick Access</h2>
-          <p className="text-lg text-muted-foreground">
-            Jump to key modules and essential features
-          </p>
         </div>
         
         <Card className="border border-border/50 shadow-lg bg-background">
           <CardContent className="p-6 lg:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-              {quickAccessFeatures.map((feature) => {
-                const Icon = feature.icon;
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {quickAccessModules.map((module) => {
+                const Icon = module.icon;
                 return (
-                  <Link key={feature.href} href={feature.href}>
-                    <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/40 group cursor-pointer relative min-w-0 bg-card">
-                      <CardHeader className="pb-4 px-6 pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center group-hover:scale-105 transition-transform shadow-md`}>
-                            <Icon className="h-7 w-7 text-white" />
-                          </div>
-                          <Badge variant="secondary" className="text-xs shrink-0 bg-muted text-muted-foreground px-2.5 py-1">
-                            {feature.badge}
-                          </Badge>
-                        </div>
-                        <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors leading-tight mb-2">
-                          {feature.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0 px-6 pb-6">
-                        <CardDescription className="text-sm leading-relaxed text-muted-foreground mb-4">
-                          {feature.description}
-                        </CardDescription>
-                        <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
-                          <span className="text-sm">Open module</span>
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <Link key={module.href} href={module.href}>
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-accent/50 transition-all duration-200 group cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="font-medium text-sm group-hover:text-primary transition-colors">{module.label}</span>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    </div>
                   </Link>
                 );
               })}
