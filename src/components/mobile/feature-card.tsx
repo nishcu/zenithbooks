@@ -15,6 +15,7 @@ interface FeatureCardProps {
 }
 
 const badgeColors: Record<string, string> = {
+  "NEW": "bg-yellow-400 text-yellow-900 animate-pulse",
   "Time Saver": "bg-blue-100 text-blue-700",
   "Game Changer": "bg-purple-100 text-purple-700",
   "AI Powered": "bg-green-100 text-green-700",

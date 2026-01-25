@@ -59,6 +59,7 @@ import {
   Loader2,
   Search,
   FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -412,32 +413,35 @@ export default function JournalVoucherPage() {
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01 && totalDebits > 0;
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold">Journal Vouchers</h1>
-              {isViewer && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
-                  <span>Read-Only</span>
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">Create manual journal entries to adjust ledger accounts.</p>
+    <div className="space-y-8 p-4 md:p-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">Journal Vouchers</h1>
+            {isViewer && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                <span>Read-Only</span>
+              </Badge>
+            )}
           </div>
+          <p className="text-muted-foreground mt-1">Create manual journal entries to adjust ledger accounts.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/accounting/journal/smart-entry">
+            <Button variant="outline" className="w-full md:w-auto">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Smart Entry
+            </Button>
+          </Link>
+          <Link href="/accounting/journal/bulk">
+            <Button variant="outline" className="w-full md:w-auto">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Bulk Upload
+            </Button>
+          </Link>
           {canCreate && (
-            <>
-              <Link href="/accounting/journal/bulk">
-                <Button variant="outline">
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Bulk Upload
-                </Button>
-              </Link>
-              <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
                 <DialogTrigger asChild>
                   <Button>
                     <PlusCircle className="mr-2" />
@@ -448,7 +452,9 @@ export default function JournalVoucherPage() {
               <DialogHeader>
                 <DialogTitle>{editingVoucher ? "Edit Journal Voucher" : "New Journal Voucher"}</DialogTitle>
                 <DialogDescription>
-                  {editingVoucher ? `Editing voucher #${editingVoucher.id}` : "Create a manual entry to record transactions."}
+                  {editingVoucher 
+                    ? `Editing voucher #${editingVoucher.id}. Modify the entries and save changes.`
+                    : "Create a manual entry to record transactions. Ensure debits equal credits."}
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4 space-y-6">
@@ -607,7 +613,6 @@ export default function JournalVoucherPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-            </>
           )}
         </div>
       </div>

@@ -7,7 +7,8 @@ import {
   Package, Upload, Mic, FileSpreadsheet, BookOpen, Zap,
   Receipt, TrendingUp, BarChart3, FileCheck, Archive,
   Truck, FileSignature, Wallet, Boxes, ReceiptText,
-  Scale, Shield, Award, Users, FilePenLine, Building2
+  Scale, Shield, Award, Users, FilePenLine, Building2,
+  Sparkles, ArrowRight
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { SummaryCard } from "@/components/mobile/summary-card";
@@ -87,6 +88,14 @@ export function MobileDashboard() {
 
   // Core Features
   const coreFeatures = [
+    {
+      icon: Sparkles,
+      title: "Smart Journal Entry",
+      description: "Plain English → Auto journal entries with GST",
+      badge: "NEW",
+      href: "/accounting/journal/smart-entry",
+      highlight: true, // Mark for special highlighting
+    },
     {
       icon: FileSpreadsheet,
       title: "Bulk Invoice",
@@ -189,6 +198,7 @@ export function MobileDashboard() {
                 description={feature.description}
                 badge={feature.badge}
                 href={feature.href}
+                className={feature.highlight ? "border-2 border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 shadow-md" : undefined}
               />
             ))}
           </div>

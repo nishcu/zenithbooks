@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useContext, memo, useEffect } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus, Sparkles } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -169,6 +169,15 @@ function DashboardContent() {
 
   // Core Features
   const coreFeatures = [
+    {
+      title: "Smart Journal Entry",
+      description: "Convert plain English to journal entries with automatic GST calculation",
+      icon: Sparkles,
+      href: "/accounting/journal/smart-entry",
+      color: "from-violet-500 to-purple-600",
+      badge: "NEW",
+      highlight: true, // Special highlighting
+    },
     {
       title: "Bulk Invoice",
       description: "Upload CSV/Excel to generate multiple invoices at once",
@@ -610,19 +619,35 @@ function DashboardContent() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full min-w-0">
                         {coreFeatures.map((feature) => {
                           const Icon = feature.icon;
+                          const isHighlighted = feature.highlight;
                           return (
                             <Link key={feature.href} href={feature.href}>
-                              <Card className="h-full hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-2 hover:border-primary/40 group cursor-pointer min-w-0">
+                              <Card className={`h-full hover:shadow-lg transition-all duration-300 border-2 group cursor-pointer min-w-0 ${
+                                isHighlighted 
+                                  ? "border-violet-400 hover:border-violet-500 bg-gradient-to-br from-violet-50 to-purple-50 shadow-md hover:shadow-xl" 
+                                  : "hover:border-primary/40 hover:shadow-primary/10"
+                              }`}>
                                 <CardHeader className="pb-3 px-4 pt-4">
                                   <div className="flex items-start justify-between mb-2">
-                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
+                                    <Badge 
+                                      variant="secondary" 
+                                      className={`text-xs shrink-0 px-1.5 py-0.5 ${
+                                        feature.badge === "NEW" 
+                                          ? "bg-yellow-400 text-yellow-900 border-0 animate-pulse" 
+                                          : ""
+                                      }`}
+                                    >
                                       {feature.badge}
                                     </Badge>
                                   </div>
-                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                  <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform ${isHighlighted ? "shadow-lg" : ""}`}>
                                     <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
                                   </div>
-                                  <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
+                                  <CardTitle className={`text-sm font-semibold transition-colors leading-tight ${
+                                    isHighlighted 
+                                      ? "text-violet-700 group-hover:text-violet-800" 
+                                      : "group-hover:text-primary"
+                                  }`}>
                                     {feature.title}
                                   </CardTitle>
                                 </CardHeader>
@@ -630,7 +655,11 @@ function DashboardContent() {
                                   <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
                                     {feature.description}
                                   </CardDescription>
-                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <div className={`mt-2 flex items-center transition-opacity duration-300 ${
+                                    isHighlighted 
+                                      ? "text-violet-600 opacity-100" 
+                                      : "text-primary opacity-0 group-hover:opacity-100"
+                                  }`}>
                                     <span className="text-xs font-medium">Open</span>
                                     <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
@@ -736,6 +765,39 @@ function DashboardContent() {
       {/* Document Vault Spotlight - Prominent */}
       <VaultSpotlight />
 
+      {/* Smart Journal Entry - Prominent Highlight Banner */}
+      <Link href="/accounting/journal/smart-entry">
+        <Card className="border-2 border-violet-300/50 shadow-xl bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-600 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+          <CardContent className="p-6 lg:p-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-2xl lg:text-3xl font-bold text-white">Smart Journal Entry</h3>
+                    <Badge className="bg-yellow-400 text-yellow-900 border-0 text-sm px-3 py-1">NEW</Badge>
+                  </div>
+                  <p className="text-white/90 text-base lg:text-lg leading-relaxed mb-3">
+                    Convert plain English narration into accurate double-entry journal entries with automatic GST calculation.
+                  </p>
+                  <p className="text-white/80 text-sm">
+                    Example: "Paid electricity bill Rs 1800 in cash" → Auto-generates balanced entries with GST
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center text-white font-semibold text-lg group">
+                <span>Try it now</span>
+                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* Core Features Section - Enhanced for Desktop */}
       <div className="space-y-4">
         <div className="space-y-1">
@@ -750,19 +812,35 @@ function DashboardContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full">
               {coreFeatures.map((feature) => {
                 const Icon = feature.icon;
+                const isHighlighted = feature.highlight;
                 return (
                   <Link key={feature.href} href={feature.href}>
-                    <Card className="h-full hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer relative min-w-0 bg-card">
+                    <Card className={`h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border group cursor-pointer relative min-w-0 ${
+                      isHighlighted 
+                        ? "border-2 border-violet-400 hover:border-violet-500 bg-gradient-to-br from-violet-50 to-purple-50 shadow-lg hover:shadow-2xl" 
+                        : "border-border/50 hover:border-primary/50 bg-card hover:shadow-primary/20"
+                    }`}>
                       <CardHeader className="pb-4 px-6 pt-6">
                         <div className="flex items-start justify-between mb-4">
-                          <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/20 px-2.5 py-1">
+                          <Badge 
+                            variant="secondary" 
+                            className={`text-xs shrink-0 px-2.5 py-1 ${
+                              feature.badge === "NEW" 
+                                ? "bg-yellow-400 text-yellow-900 border-0 animate-pulse" 
+                                : "bg-primary/10 text-primary border-primary/20"
+                            }`}
+                          >
                             {feature.badge}
                           </Badge>
                         </div>
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-all duration-300 shadow-md`}>
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-all duration-300 ${isHighlighted ? "shadow-lg" : "shadow-md"}`}>
                           <Icon className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
                         </div>
-                        <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors leading-tight mb-2">
+                        <CardTitle className={`text-lg font-bold transition-colors leading-tight mb-2 ${
+                          isHighlighted 
+                            ? "text-violet-700 group-hover:text-violet-800" 
+                            : "group-hover:text-primary"
+                        }`}>
                           {feature.title}
                         </CardTitle>
                       </CardHeader>
@@ -770,7 +848,11 @@ function DashboardContent() {
                         <CardDescription className="text-sm leading-relaxed text-muted-foreground mb-4">
                           {feature.description}
                         </CardDescription>
-                        <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+                        <div className={`flex items-center transition-opacity duration-300 font-medium ${
+                          isHighlighted 
+                            ? "text-violet-600 opacity-100" 
+                            : "text-primary opacity-0 group-hover:opacity-100"
+                        }`}>
                           <span className="text-sm">Explore feature</span>
                           <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                         </div>

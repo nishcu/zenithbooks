@@ -185,26 +185,28 @@ export const FinancialSummaryChart = memo(function FinancialSummaryChart() {
       <CardContent>
         {chartData && chartData.length > 0 ? (
           <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-            <ChartContainer config={chartConfig}>
-              <LazyBarChart accessibilityLayer data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                  tick={{ fontSize: 12 }}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dashed" />}
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
-                <Bar dataKey="purchases" fill="var(--color-purchases)" radius={4} />
-                <Bar dataKey="net" fill="var(--color-net)" radius={4} />
-              </LazyBarChart>
-            </ChartContainer>
+            <div className="w-full h-[400px] min-h-[400px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <LazyBarChart accessibilityLayer data={chartData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="dashed" />}
+                  />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+                  <Bar dataKey="purchases" fill="var(--color-purchases)" radius={4} />
+                  <Bar dataKey="net" fill="var(--color-net)" radius={4} />
+                </LazyBarChart>
+              </ChartContainer>
+            </div>
           </Suspense>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground">

@@ -111,6 +111,9 @@ function EwaybillDialog({ invoice, isOpen, onOpenChange }: { invoice: Invoice | 
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Generate E-Waybill for Invoice {invoice.id}</DialogTitle>
+                    <DialogDescription>
+                        Generate e-waybill data for this invoice
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -547,6 +550,9 @@ export default function InvoicesPage() {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Invoice Preview: {selectedInvoice?.id}</DialogTitle>
+            <DialogDescription>
+              View and share invoice details
+            </DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto">
             {selectedInvoice && (
