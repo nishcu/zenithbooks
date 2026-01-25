@@ -12,6 +12,7 @@ import type { ChartOfAccount, GSTConfig } from "./types";
 export const DEFAULT_CHART_OF_ACCOUNTS: ChartOfAccount[] = [
   // Assets
   { code: "1001", name: "Cash", type: "Asset", keywords: ["cash", "money", "currency"] },
+  { code: "1510", name: "Cash on Hand", type: "Cash", keywords: ["cash", "money", "currency"] }, // Match main accounts.ts
   { code: "1002", name: "Bank Account - HDFC", type: "Asset", keywords: ["bank", "hdfc", "account"] },
   { code: "1003", name: "Bank Account - SBI", type: "Asset", keywords: ["bank", "sbi", "account"] },
   { code: "1004", name: "UPI Payments", type: "Asset", keywords: ["upi", "phonepe", "gpay", "paytm"] },
@@ -36,6 +37,10 @@ export const DEFAULT_CHART_OF_ACCOUNTS: ChartOfAccount[] = [
   { code: "4001", name: "Sales", type: "Income", keywords: ["sale", "sold", "revenue", "income"] },
   { code: "4002", name: "Service Income", type: "Income", keywords: ["service", "fees", "consulting"] },
   { code: "4003", name: "Interest Income", type: "Income", keywords: ["interest", "dividend"] },
+  // Sales Returns: Use 4030 to match main accounts.ts (Revenue type, but treated as contra)
+  { code: "4030", name: "Sales Returns", type: "Revenue", keywords: ["sales return", "sale return", "return of goods", "goods returned"] },
+  // Purchase Returns: Use a code that matches or create new
+  { code: "4005", name: "Purchase Returns", type: "Revenue", keywords: ["purchase return", "return to supplier", "goods returned to"] },
   
   // Liabilities
   { code: "2001", name: "Sundry Creditors", type: "Liability", keywords: ["creditor", "supplier", "vendor", "payable"] },

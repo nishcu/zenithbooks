@@ -24,6 +24,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import {
@@ -44,6 +52,7 @@ import {
   createJournalEntry,
   validateJournalEntry,
   applyUserEdits,
+  addGSTToJournalEntry,
   type ParsingResult,
   type JournalEntry,
   type JournalConfirmation,
@@ -59,6 +68,8 @@ import {
 } from "@/components/ui/table";
 import { AccountingContext, type JournalVoucher } from "@/context/accounting-context";
 import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 
 const VOUCHER_TYPES: { value: VoucherType; label: string }[] = [
@@ -72,6 +83,7 @@ const VOUCHER_TYPES: { value: VoucherType; label: string }[] = [
 export default function SmartJournalEntryPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
   const accountingContext = useContext(AccountingContext);
   const { journalVouchers: allVouchers, addJournalVoucher, loading } = accountingContext || {
     journalVouchers: [],
@@ -90,16 +102,22 @@ export default function SmartJournalEntryPage() {
     warnings: string[];
   } | null>(null);
   const [activeTab, setActiveTab] = useState<"create" | "history">("create");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showGSTDialog, setShowGSTDialog] = useState(false);
+  const [gstRate, setGstRate] = useState("18");
+  const [gstType, setGstType] = useState<"CGST_SGST" | "IGST">("CGST_SGST");
+  const [isGSTInclusive, setIsGSTInclusive] = useState(false);
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (!narration.trim()) {
       alert("Please enter a narration");
       return;
     }
 
+    setIsProcessing(true);
     try {
       console.log("Processing narration:", narration);
-      const result = processNarration(narration);
+      const result = await processNarration(narration, undefined, undefined, user?.uid);
       console.log("Parsing result:", result);
       setParsingResult(result);
 
@@ -118,7 +136,51 @@ export default function SmartJournalEntryPage() {
       }
     } catch (error: any) {
       console.error("Error processing narration:", error);
-      alert(`Error: ${error.message || "Failed to process narration. Please check console for details."}`);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to process narration. Please check console for details.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAddGST = () => {
+    if (!journalEntry) return;
+    
+    const rate = parseFloat(gstRate);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      toast({
+        variant: "destructive",
+        title: "Invalid GST Rate",
+        description: "Please enter a valid GST rate between 0 and 100.",
+      });
+      return;
+    }
+
+    try {
+      const updatedEntry = addGSTToJournalEntry(
+        journalEntry,
+        rate,
+        isGSTInclusive,
+        gstType
+      );
+      setJournalEntry(updatedEntry);
+      setEditedEntry(updatedEntry);
+      setShowGSTDialog(false);
+      const validationResult = validateJournalEntry(updatedEntry);
+      setValidation(validationResult);
+      toast({
+        title: "GST Added",
+        description: `GST @ ${rate}% has been added to the journal entry.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add GST.",
+      });
     }
   };
 
@@ -164,6 +226,7 @@ export default function SmartJournalEntryPage() {
         id: `SMART-${Date.now()}`,
         date: journalEntry.date,
         narration: journalEntry.narration,
+        voucherType: journalEntry.voucherType || "Journal",
         lines: journalEntry.entries.map((entry) => ({
           account: entry.accountCode,
           debit: entry.isDebit ? entry.amount.toString() : "0",
@@ -467,6 +530,19 @@ export default function SmartJournalEntryPage() {
               </div>
             </div>
 
+            {!currentEntry.gstDetails && (currentEntry.voucherType === "Sales" || currentEntry.voucherType === "Purchase") && (
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div>
+                  <p className="font-medium text-blue-900">GST not detected</p>
+                  <p className="text-sm text-blue-700">Add GST to this entry if applicable</p>
+                </div>
+                <Button onClick={() => setShowGSTDialog(true)} variant="outline" size="sm">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Add GST
+                </Button>
+              </div>
+            )}
+
             {currentEntry.gstDetails && currentEntry.gstDetails.isGSTApplicable && (
               <>
                 <Separator />
@@ -637,6 +713,65 @@ export default function SmartJournalEntryPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* GST Dialog */}
+      <Dialog open={showGSTDialog} onOpenChange={setShowGSTDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add GST to Journal Entry</DialogTitle>
+            <DialogDescription>
+              Add GST details to this journal entry. The entry will be updated with GST calculations.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label>GST Rate (%)</Label>
+              <Input
+                type="number"
+                value={gstRate}
+                onChange={(e) => setGstRate(e.target.value)}
+                placeholder="18"
+                min="0"
+                max="100"
+                step="0.01"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>GST Type</Label>
+              <Select value={gstType} onValueChange={(v) => setGstType(v as "CGST_SGST" | "IGST")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CGST_SGST">CGST + SGST (Intra-state)</SelectItem>
+                  <SelectItem value="IGST">IGST (Inter-state)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="gst-inclusive"
+                checked={isGSTInclusive}
+                onChange={(e) => setIsGSTInclusive(e.target.checked)}
+                className="rounded"
+              />
+              <Label htmlFor="gst-inclusive" className="cursor-pointer">
+                GST is inclusive in the amount
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGSTDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddGST}>
+              <Calculator className="h-4 w-4 mr-2" />
+              Add GST
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

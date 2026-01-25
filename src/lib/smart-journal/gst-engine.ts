@@ -198,3 +198,25 @@ function getBlockedCreditReason(narration: string, config: GSTConfig): string | 
 
   return undefined;
 }
+
+/**
+ * Calculate GST for an existing entry (post-processing)
+ */
+export function calculateGSTForEntry(
+  amount: number,
+  gstRate: number,
+  isInclusive: boolean,
+  gstType: "CGST_SGST" | "IGST",
+  config: GSTConfig
+): GSTDetails {
+  return calculateGSTAmounts(
+    amount,
+    gstRate,
+    isInclusive,
+    gstType,
+    false, // isRCM
+    "", // narration
+    config
+  );
+}
+

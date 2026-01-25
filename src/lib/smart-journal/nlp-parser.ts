@@ -126,6 +126,8 @@ function detectTransactionType(
   }
   const purchaseKeywords = ["purchase", "purchased", "bought", "buy", "paid for", "expense"];
   const saleKeywords = ["sale", "sold", "sold to", "invoice", "billing"];
+  const salesReturnKeywords = ["sales return", "sale return", "return of goods", "goods returned", "returned goods", "sales returns"];
+  const purchaseReturnKeywords = ["purchase return", "purchase returns", "return to supplier", "goods returned to", "returned to vendor"];
   const paymentKeywords = ["payment", "paid", "pay", "paid to", "settled"];
   const receiptKeywords = ["received", "receipt", "collection", "collected", "got"];
   const expenseKeywords = ["expense", "spent", "incurred", "cost"];
@@ -133,6 +135,10 @@ function detectTransactionType(
 
   const lower = narration.toLowerCase();
 
+  // Check for returns first (before regular sales/purchases)
+  if (salesReturnKeywords.some((k) => lower.includes(k))) return "sales_return";
+  if (purchaseReturnKeywords.some((k) => lower.includes(k))) return "purchase_return";
+  
   if (purchaseKeywords.some((k) => lower.includes(k))) return "purchase";
   if (saleKeywords.some((k) => lower.includes(k))) return "sale";
   if (paymentKeywords.some((k) => lower.includes(k))) return "payment";

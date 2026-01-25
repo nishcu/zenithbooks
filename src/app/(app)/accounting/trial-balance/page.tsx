@@ -75,47 +75,153 @@ export default function TrialBalancePage() {
 
     const customersQuery = user ? query(collection(db, 'customers'), where("userId", "==", user.uid)) : null;
     const [customersSnapshot] = useCollection(customersQuery);
-    const customers = useMemo(() => customersSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [customersSnapshot]);
+    const customers = useMemo(() => customersSnapshot?.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, code: data.accountCode || doc.id, name: data.name };
+    }) || [], [customersSnapshot]);
 
     const vendorsQuery = user ? query(collection(db, 'vendors'), where("userId", "==", user.uid)) : null;
     const [vendorsSnapshot] = useCollection(vendorsQuery);
-    const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => ({ id: doc.id, name: doc.data().name })) || [], [vendorsSnapshot]);
+    const vendors = useMemo(() => vendorsSnapshot?.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, code: data.accountCode || doc.id, name: data.name };
+    }) || [], [vendorsSnapshot]);
+
+    // Also query user_accounts for dynamically created accounts
+    const userAccountsQuery = user ? query(collection(db, 'user_accounts'), where("userId", "==", user.uid)) : null;
+    const [userAccountsSnapshot] = useCollection(userAccountsQuery);
+    const userAccounts = useMemo(() => userAccountsSnapshot?.docs.map(doc => {
+      const data = doc.data();
+      return { code: data.code || doc.id, name: data.name, type: data.type || "Other" };
+    }) || [], [userAccountsSnapshot]);
 
     const trialBalanceData = useMemo(() => {
         const balances: Record<string, number> = {};
 
         // Initialize all possible accounts
         allAccounts.forEach(acc => { balances[acc.code] = 0; });
-        customers.forEach(c => { balances[c.id] = 0; });
-        vendors.forEach(v => { balances[v.id] = 0; });
+        customers.forEach(c => { 
+          balances[c.id] = 0; // Use Firebase ID
+          if (c.code && c.code !== c.id) {
+            balances[c.code] = 0; // Also use accountCode if different
+          }
+        });
+        vendors.forEach(v => { 
+          balances[v.id] = 0; // Use Firebase ID
+          if (v.code && v.code !== v.id) {
+            balances[v.code] = 0; // Also use accountCode if different
+          }
+        });
+        userAccounts.forEach(acc => { balances[acc.code] = 0; });
 
+        // Also initialize accounts found in journal vouchers (for dynamically created accounts)
         journalVouchers.forEach(voucher => {
             voucher.lines.forEach(line => {
-                if (balances.hasOwnProperty(line.account)) {
-                    const debit = parseFloat(line.debit);
-                    const credit = parseFloat(line.credit);
-                    balances[line.account] += debit - credit;
+                const accountCode = String(line.account || '').trim();
+                if (accountCode && !balances.hasOwnProperty(accountCode)) {
+                    // Account not in predefined list - initialize it
+                    balances[accountCode] = 0;
+                }
+            });
+        });
+
+        // Now process all vouchers
+        journalVouchers.forEach(voucher => {
+            voucher.lines.forEach(line => {
+                const accountCode = String(line.account || '').trim();
+                if (accountCode) {
+                    const debit = parseFloat(String(line.debit || '0').replace(/,/g, '')) || 0;
+                    const credit = parseFloat(String(line.credit || '0').replace(/,/g, '')) || 0;
+                    balances[accountCode] = (balances[accountCode] || 0) + debit - credit;
                 }
             });
         });
         
         const combinedData = [
             ...allAccounts.map(acc => ({...acc, group: acc.type})),
-            ...customers.map(c => ({ code: c.id, name: c.name, type: "Asset", group: "Customer" })),
-            ...vendors.map(v => ({ code: v.id, name: v.name, type: "Liability", group: "Vendor" }))
+            ...customers.map(c => ({ 
+              code: c.code || c.id, 
+              name: c.name, 
+              type: "Current Asset", 
+              group: "Customer" 
+            })),
+            ...vendors.map(v => ({ 
+              code: v.code || v.id, 
+              name: v.name, 
+              type: "Current Liability", 
+              group: "Vendor" 
+            })),
+            ...userAccounts.map(acc => ({
+              code: acc.code,
+              name: acc.name,
+              type: acc.type,
+              group: "User Accounts"
+            }))
         ];
 
-        return combinedData.map(acc => {
+        // Add dynamically found accounts (from journal vouchers but not in predefined lists)
+        const dynamicAccounts: Array<{ code: string; name: string; type: string; group: string }> = [];
+        Object.keys(balances).forEach(accountCode => {
+            const exists = combinedData.some(acc => acc.code === accountCode);
+            if (!exists && Math.abs(balances[accountCode]) > 0.01) {
+                // Try to find account name from user_accounts, customers, or vendors first
+                let accountName = accountCode;
+                let inferredType = "Other";
+                
+                // Check user_accounts
+                const userAccount = userAccounts.find(acc => acc.code === accountCode);
+                if (userAccount) {
+                    accountName = userAccount.name;
+                    inferredType = userAccount.type;
+                } else {
+                    // Check customers
+                    const customer = customers.find(c => c.code === accountCode || c.id === accountCode);
+                    if (customer) {
+                        accountName = customer.name;
+                        inferredType = "Current Asset";
+                    } else {
+                        // Check vendors
+                        const vendor = vendors.find(v => v.code === accountCode || v.id === accountCode);
+                        if (vendor) {
+                            accountName = vendor.name;
+                            inferredType = "Current Liability";
+                        } else {
+                            // Infer type based on account code patterns
+                            if (accountCode.startsWith("1") || (accountCode.startsWith("2") && accountCode.length > 4)) {
+                                inferredType = "Current Asset";
+                            } else if (accountCode.startsWith("2") || accountCode.startsWith("3")) {
+                                inferredType = "Current Liability";
+                            } else if (accountCode.startsWith("4")) {
+                                inferredType = "Revenue";
+                            } else if (accountCode.startsWith("5") || accountCode.startsWith("6")) {
+                                inferredType = "Expense";
+                            }
+                        }
+                    }
+                }
+                
+                dynamicAccounts.push({
+                    code: accountCode,
+                    name: accountName,
+                    type: inferredType,
+                    group: "Other"
+                });
+            }
+        });
+
+        const allCombinedData = [...combinedData, ...dynamicAccounts];
+
+        return allCombinedData.map(acc => {
             const finalBalance = balances[acc.code] || 0;
             const accountType = acc.type;
             
             let debit = 0;
             let credit = 0;
 
-            if (accountType === 'Asset' || accountType === 'Expense' || accountType === 'Cost of Goods Sold') {
+            if (accountType === 'Asset' || accountType === 'Expense' || accountType === 'Cost of Goods Sold' || accountType === 'Current Asset') {
                 if (finalBalance >= 0) debit = finalBalance;
                 else credit = -finalBalance;
-            } else { // Liability, Equity, Revenue
+            } else { // Liability, Equity, Revenue, Current Liability
                 if (finalBalance <= 0) credit = -finalBalance;
                 else debit = finalBalance;
             }
@@ -128,7 +234,7 @@ export default function TrialBalancePage() {
             };
         }).filter(item => item.debit > 0.01 || item.credit > 0.01);
 
-    }, [journalVouchers, customers, vendors]);
+    }, [journalVouchers, customers, vendors, userAccounts]);
 
     // Early return AFTER all hooks are called
     if (user && isFreemium) {

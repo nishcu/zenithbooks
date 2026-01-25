@@ -9,20 +9,24 @@ import type {
   JournalConfirmation,
   GSTConfig,
   ChartOfAccount,
+  GSTDetails,
 } from "./types";
 import { parseNarration } from "./nlp-parser";
-import { detectGST } from "./gst-engine";
-import { generateJournalEntry } from "./accounting-rules";
+import { detectGST, calculateGSTForEntry } from "./gst-engine";
+import { generateJournalEntry, addGSTToEntry } from "./accounting-rules";
+import { findOrCreatePartyAccount } from "./party-creator";
 import { DEFAULT_GST_CONFIG, DEFAULT_CHART_OF_ACCOUNTS } from "./constants";
 
 /**
  * Process narration and generate journal entry
+ * Optionally creates party accounts if counterparty is detected
  */
-export function processNarration(
+export async function processNarration(
   narration: string,
   gstConfig: GSTConfig = DEFAULT_GST_CONFIG,
-  chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS
-): ParsingResult {
+  chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS,
+  userId?: string
+): Promise<ParsingResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -32,6 +36,28 @@ export function processNarration(
   // Validate amount
   if (!parsed.amount) {
     errors.push("Amount not found in narration. Please specify amount.");
+  }
+
+  // Create party account if counterparty detected and userId provided
+  let partyAccount = null;
+  if (parsed.counterparty && userId) {
+    try {
+      partyAccount = await findOrCreatePartyAccount(parsed, userId);
+      if (partyAccount) {
+        // Update chart of accounts with the new party account
+        chartOfAccounts = [
+          ...chartOfAccounts,
+          {
+            code: partyAccount.accountCode,
+            name: partyAccount.accountName,
+            type: partyAccount.accountType,
+            keywords: [parsed.counterparty.toLowerCase()],
+          },
+        ];
+      }
+    } catch (error: any) {
+      warnings.push(`Could not create party account: ${error.message}`);
+    }
   }
 
   // Detect GST
@@ -45,7 +71,43 @@ export function processNarration(
   let suggestedVoucherType: any = "Journal";
 
   try {
+    // If party account was created, add it to chart of accounts before generating entry
+    if (partyAccount) {
+      chartOfAccounts = [
+        ...chartOfAccounts,
+        {
+          code: partyAccount.accountCode,
+          name: partyAccount.accountName,
+          type: partyAccount.accountType,
+          keywords: [parsed.counterparty!.toLowerCase()],
+        },
+      ];
+    }
+    
     journalEntry = generateJournalEntry(parsed, gstDetails, chartOfAccounts);
+    
+    // If party account was created, update the entry to use it
+    if (partyAccount && journalEntry) {
+      // Find entries that should use the party account
+      // For sales: debtor entry (debit, liability/asset)
+      // For purchases: creditor entry (credit, liability)
+      const isSale = parsed.transactionType === "sale" || parsed.transactionType === "income";
+      const entryToUpdate = journalEntry.entries.find((e) => {
+        if (isSale) {
+          // Sales: find debit entry that's a debtor (liability type or code 2002)
+          return e.isDebit && (e.accountCode === "2002" || e.accountType === "Liability");
+        } else {
+          // Purchase: find credit entry that's a creditor (liability type or code 2001)
+          return !e.isDebit && (e.accountCode === "2001" || e.accountType === "Liability");
+        }
+      });
+      
+      if (entryToUpdate) {
+        entryToUpdate.accountCode = partyAccount.accountCode;
+        entryToUpdate.accountName = partyAccount.accountName;
+      }
+    }
+    
     suggestedVoucherType = journalEntry.voucherType;
   } catch (error: any) {
     errors.push(`Failed to generate journal entry: ${error.message}`);
@@ -75,6 +137,32 @@ export function processNarration(
     errors,
     warnings,
   };
+}
+
+/**
+ * Add GST to an existing journal entry (post-processing)
+ */
+export function addGSTToJournalEntry(
+  entry: JournalEntry,
+  gstRate: number,
+  isInclusive: boolean,
+  gstType: "CGST_SGST" | "IGST",
+  gstConfig: GSTConfig = DEFAULT_GST_CONFIG,
+  chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS
+): JournalEntry {
+  // Find the main amount (from income/expense entry)
+  const mainEntry = entry.entries.find(
+    (e) => e.accountType === "Income" || e.accountType === "Expense"
+  );
+  
+  if (!mainEntry) {
+    return entry; // Can't add GST without main entry
+  }
+
+  const amount = mainEntry.amount;
+  const gstDetails = calculateGSTForEntry(amount, gstRate, isInclusive, gstType, gstConfig);
+  
+  return addGSTToEntry(entry, gstDetails, chartOfAccounts);
 }
 
 /**

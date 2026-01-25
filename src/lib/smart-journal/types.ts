@@ -21,7 +21,9 @@ export type TransactionType =
   | "advance"
   | "prepaid"
   | "outstanding"
-  | "accrued";
+  | "accrued"
+  | "sales_return"
+  | "purchase_return";
 
 /**
  * Parsed narration data
