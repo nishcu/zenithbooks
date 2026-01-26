@@ -40,6 +40,7 @@ export interface ParsedNarration {
   isAdvance?: boolean; // Advance payment
   isPrepaid?: boolean; // Prepaid expense
   isOutstanding?: boolean; // Outstanding/Accrued expense
+  isPersonal?: boolean; // Personal expense (should go to Drawings)
 }
 
 /**

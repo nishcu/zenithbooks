@@ -50,6 +50,9 @@ export const DEFAULT_CHART_OF_ACCOUNTS: ChartOfAccount[] = [
   { code: "2005", name: "Outstanding Salary", type: "Liability", keywords: ["outstanding salary", "accrued salary", "salary payable"] },
   { code: "2006", name: "Other Outstanding Expenses", type: "Liability", keywords: ["outstanding", "accrued"] },
   
+  // Equity (for personal expenses - Drawings)
+  { code: "2040", name: "Drawings", type: "Equity", keywords: ["drawings", "personal", "owner", "proprietor", "director", "private"] },
+  
   // GST Accounts
   { code: "3001", name: "Input CGST", type: "Asset", keywords: ["input cgst"], gstAccount: true },
   { code: "3002", name: "Input SGST", type: "Asset", keywords: ["input sgst"], gstAccount: true },

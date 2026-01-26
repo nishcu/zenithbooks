@@ -57,6 +57,18 @@ export function findMatchingAccounts(
       }
     }
 
+    // Priority: Personal expenses = Drawings (Equity), not Expense
+    if (narration.isPersonal) {
+      // For personal expenses, prioritize Drawings account
+      if (account.type === "Equity" && account.name.toLowerCase().includes("drawings")) {
+        score += 50; // Highest priority for Drawings
+      }
+      // Penalize expense accounts for personal use
+      if (account.type === "Expense") {
+        score -= 30; // Strongly penalize expense accounts for personal use
+      }
+    }
+
     // Type-based matching (only if not advance/prepaid/outstanding)
     if (!narration.isAdvance && !narration.isPrepaid && !narration.isOutstanding) {
       if (narration.transactionType === "purchase" || narration.transactionType === "expense") {

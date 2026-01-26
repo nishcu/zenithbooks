@@ -13,10 +13,11 @@ export function parseNarration(narration: string): ParsedNarration {
   const lowerNarration = narration.toLowerCase().trim();
   let confidence = 0.8; // Default confidence
 
-  // Detect advance/prepaid/outstanding first (before transaction type)
+  // Detect advance/prepaid/outstanding/personal first (before transaction type)
   const isAdvance = detectAdvance(lowerNarration);
   const isPrepaid = detectPrepaid(lowerNarration);
   const isOutstanding = detectOutstanding(lowerNarration);
+  const isPersonal = detectPersonal(lowerNarration);
 
   // Extract amount
   const amount = extractAmount(lowerNarration);
@@ -53,6 +54,7 @@ export function parseNarration(narration: string): ParsedNarration {
     isAdvance,
     isPrepaid,
     isOutstanding,
+    isPersonal,
   };
 }
 
@@ -105,6 +107,27 @@ function detectPrepaid(narration: string): boolean {
 function detectOutstanding(narration: string): boolean {
   const outstandingKeywords = ["outstanding", "accrued", "accrual", "payable", "due"];
   return outstandingKeywords.some((k) => narration.includes(k));
+}
+
+/**
+ * Detect personal expense/use
+ */
+function detectPersonal(narration: string): boolean {
+  const personalKeywords = [
+    "personal use",
+    "personal",
+    "for my personal",
+    "for personal",
+    "owner's personal",
+    "proprietor's personal",
+    "director's personal",
+    "my own",
+    "for myself",
+    "personal purpose",
+    "private use",
+    "private purpose"
+  ];
+  return personalKeywords.some((k) => narration.includes(k));
 }
 
 /**

@@ -121,17 +121,32 @@ function generatePurchaseEntry(
   const entries: AccountEntry[] = [];
   const amount = parsed.amount || 0;
 
-  // Get expense account
-  const expenseAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
-  if (!expenseAccount) throw new Error("No expense account found");
+  // For personal expenses, use Drawings (Equity) instead of Expense
+  let debitAccount;
+  if (parsed.isPersonal) {
+    // Find Drawings account
+    debitAccount = matchingAccounts.find((a) => 
+      a.type === "Equity" && a.name.toLowerCase().includes("drawings")
+    ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings")));
+    
+    if (!debitAccount) {
+      // Fallback: create Drawings account entry
+      debitAccount = { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
+    }
+  } else {
+    // Business expense - use expense account
+    debitAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
+  }
+  
+  if (!debitAccount) throw new Error("No debit account found");
 
   if (gstDetails && gstDetails.isGSTApplicable) {
     // GST Purchase Entry
-    // Dr Expense (taxable value)
+    // Dr Expense/Drawings (taxable value)
     entries.push({
-      accountCode: expenseAccount.code,
-      accountName: expenseAccount.name,
-      accountType: expenseAccount.type,
+      accountCode: debitAccount.code,
+      accountName: debitAccount.name,
+      accountType: debitAccount.type,
       amount: gstDetails.taxableValue,
       isDebit: true,
       narration: parsed.originalNarration,
@@ -223,9 +238,9 @@ function generatePurchaseEntry(
   } else {
     // Non-GST Purchase Entry
     entries.push({
-      accountCode: expenseAccount.code,
-      accountName: expenseAccount.name,
-      accountType: expenseAccount.type,
+      accountCode: debitAccount.code,
+      accountName: debitAccount.name,
+      accountType: debitAccount.type,
       amount,
       isDebit: true,
       narration: parsed.originalNarration,
@@ -500,16 +515,31 @@ function generatePaymentEntry(
     throw new Error("Amount is required for payment entry");
   }
 
-  // Dr Expense or Creditor
-  const expenseAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
-  if (!expenseAccount) {
-    throw new Error("No expense account found. Please ensure Chart of Accounts includes expense accounts.");
+  // For personal expenses, use Drawings (Equity) instead of Expense
+  let debitAccount;
+  if (parsed.isPersonal) {
+    // Find Drawings account
+    debitAccount = matchingAccounts.find((a) => 
+      a.type === "Equity" && a.name.toLowerCase().includes("drawings")
+    ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings")));
+    
+    if (!debitAccount) {
+      // Fallback: create Drawings account entry
+      debitAccount = { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
+    }
+  } else {
+    // Business expense - use expense account
+    debitAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
+  }
+  
+  if (!debitAccount) {
+    throw new Error("No debit account found. Please ensure Chart of Accounts includes expense or drawings accounts.");
   }
   
   entries.push({
-    accountCode: expenseAccount.code,
-    accountName: expenseAccount.name,
-    accountType: expenseAccount.type,
+    accountCode: debitAccount.code,
+    accountName: debitAccount.name,
+    accountType: debitAccount.type,
     amount,
     isDebit: true,
     narration: parsed.originalNarration,
