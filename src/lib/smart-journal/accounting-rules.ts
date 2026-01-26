@@ -318,6 +318,35 @@ function generatePurchaseEntry(
         isDebit: false,
         narration: parsed.originalNarration,
       });
+    } else {
+      // Fallback: Add Cash account if payment account not found
+      // Try multiple cash account codes for compatibility
+      const cashAccount = chartOfAccounts.find((a) => 
+        a.code === "1001" || 
+        a.code === "1510" || // Cash on Hand from main accounts.ts
+        (a.name.toLowerCase().includes("cash") && (a.type === "Cash" || a.type === "Asset"))
+      );
+      
+      if (cashAccount) {
+        entries.push({
+          accountCode: cashAccount.code,
+          accountName: cashAccount.name,
+          accountType: cashAccount.type,
+          amount: gstDetails.totalAmount,
+          isDebit: false,
+          narration: parsed.originalNarration,
+        });
+      } else {
+        // Final fallback: use main accounts.ts code
+        entries.push({
+          accountCode: "1510",
+          accountName: "Cash on Hand",
+          accountType: "Cash",
+          amount: gstDetails.totalAmount,
+          isDebit: false,
+          narration: parsed.originalNarration,
+        });
+      }
     }
     }
   } else {
@@ -403,6 +432,34 @@ function generatePurchaseEntry(
         isDebit: false,
         narration: parsed.originalNarration,
       });
+    } else {
+      // Fallback: Add Cash account if payment account not found
+      const cashAccount = chartOfAccounts.find((a) => 
+        a.code === "1001" || 
+        a.code === "1510" || // Cash on Hand from main accounts.ts
+        (a.name.toLowerCase().includes("cash") && (a.type === "Cash" || a.type === "Asset"))
+      );
+      
+      if (cashAccount) {
+        entries.push({
+          accountCode: cashAccount.code,
+          accountName: cashAccount.name,
+          accountType: cashAccount.type,
+          amount,
+          isDebit: false,
+          narration: parsed.originalNarration,
+        });
+      } else {
+        // Final fallback: use main accounts.ts code
+        entries.push({
+          accountCode: "1510",
+          accountName: "Cash on Hand",
+          accountType: "Cash",
+          amount,
+          isDebit: false,
+          narration: parsed.originalNarration,
+        });
+      }
     }
   }
 

@@ -182,8 +182,8 @@ export default function SmartJournalEntryPage() {
       const validationResult = validateJournalEntry(updatedEntry);
       setValidation(validationResult);
       toast({
-        title: "GST Added",
-        description: `GST @ ${rate}% has been added to the journal entry.`,
+        title: journalEntry.gstDetails ? "GST Updated" : "GST Added",
+        description: `GST @ ${rate}% has been ${journalEntry.gstDetails ? 'updated' : 'added'} to the journal entry.`,
       });
     } catch (error: any) {
       toast({
@@ -215,6 +215,16 @@ export default function SmartJournalEntryPage() {
   const handleCancel = () => {
     setEditedEntry(journalEntry);
     setIsEditing(false);
+  };
+
+  const handleEditGST = () => {
+    if (!journalEntry || !journalEntry.gstDetails) return;
+    
+    // Pre-fill the dialog with current GST values
+    setGstRate(journalEntry.gstDetails.gstRate?.toString() || "18");
+    setGstType(journalEntry.gstDetails.gstType || "CGST_SGST");
+    setIsGSTInclusive(journalEntry.gstDetails.isInclusive || false);
+    setShowGSTDialog(true);
   };
 
   const handlePost = async () => {
@@ -590,7 +600,13 @@ export default function SmartJournalEntryPage() {
               <>
                 <Separator />
                 <div>
-                  <Label className="mb-2 block">GST details</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>GST details</Label>
+                    <Button onClick={handleEditGST} variant="outline" size="sm">
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit GST Rate
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">GST rate</p>
@@ -761,9 +777,11 @@ export default function SmartJournalEntryPage() {
       <Dialog open={showGSTDialog} onOpenChange={setShowGSTDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add GST to Journal Entry</DialogTitle>
+            <DialogTitle>{journalEntry?.gstDetails ? "Edit GST" : "Add GST"} to Journal Entry</DialogTitle>
             <DialogDescription>
-              Add GST details to this journal entry. The entry will be updated with GST calculations.
+              {journalEntry?.gstDetails 
+                ? "Update GST details for this journal entry. The entry will be recalculated with the new GST rate."
+                : "Add GST details to this journal entry. The entry will be updated with GST calculations."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -810,7 +828,7 @@ export default function SmartJournalEntryPage() {
             </Button>
             <Button onClick={handleAddGST}>
               <Calculator className="h-4 w-4 mr-2" />
-              Add GST
+              {journalEntry?.gstDetails ? "Update GST" : "Add GST"}
             </Button>
           </DialogFooter>
         </DialogContent>
