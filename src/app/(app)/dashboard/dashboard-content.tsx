@@ -321,39 +321,34 @@ function DashboardContent() {
       icon: Shield,
       href: "/compliance-plans",
       color: "from-indigo-500 to-blue-600",
-      badge: "Subscription"
     },
     {
       title: "Business Registrations",
-      description: "GST, Company Incorporation, LLP, MSME registration by ZenithBooks Compliance Team",
+      description: "",
       icon: Building,
       href: "/business-registrations",
       color: "from-amber-500 to-orange-600",
-      badge: "Registration"
     },
     {
       title: "Legal Documents",
-      description: "Access and generate legal documents",
+      description: "",
       icon: Scale,
       href: "/legal-documents",
       color: "from-slate-500 to-gray-600",
-      badge: "Legal"
     },
     {
       title: "Knowledge Sharing Network",
-      description: "Platform-managed professional team resources",
+      description: "",
       icon: ConciergeBell,
       href: "/professional-services",
       color: "from-blue-500 to-cyan-600",
-      badge: "Internal"
     },
     {
       title: "Payroll",
-      description: "Manage employee payroll, PF, ESI, and compliance",
+      description: "",
       icon: UserCog,
       href: "/payroll",
       color: "from-rose-500 to-pink-600",
-      badge: "HR"
     },
   ];
 
@@ -752,14 +747,9 @@ function DashboardContent() {
                                   <div className={`w-14 h-14 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                     <Icon className="h-7 w-7 md:h-6 md:w-6 text-white" />
                                   </div>
-                                  <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight flex-1">
-                                      {feature.title}
-                                    </CardTitle>
-                                    <Badge variant="secondary" className="text-xs shrink-0 px-1.5 py-0.5">
-                                      {feature.badge}
-                                    </Badge>
-                                  </div>
+                                  <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors leading-tight">
+                                    {feature.title}
+                                  </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-0 px-4 pb-4">
                                   <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
