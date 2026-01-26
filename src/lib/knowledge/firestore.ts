@@ -244,9 +244,14 @@ export async function removeHelpfulReaction(
   }
   
   // Delete all matching reactions (should be only one)
-  const batch = reactionsSnapshot.docs.map(doc => doc.ref);
-  // Note: Firestore batch delete requires writeBatch, but for simplicity we'll update count
-  // In production, use writeBatch for atomic operations
+  const { writeBatch } = await import('firebase/firestore');
+  const batch = writeBatch(db);
+  
+  reactionsSnapshot.docs.forEach((docSnapshot) => {
+    batch.delete(docSnapshot.ref);
+  });
+  
+  await batch.commit();
   
   // Update post helpful count
   const postRef = doc(db, COLLECTIONS.KNOWLEDGE_POSTS, postId);
