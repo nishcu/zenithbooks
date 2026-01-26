@@ -142,6 +142,12 @@ export function MobileDashboard() {
         description: "EMI + tax benefits",
         href: "/income-tax/loan-calculator"
       },
+      {
+        icon: BarChart3,
+        title: "SIP Calculator",
+        description: "Post-tax wealth projection",
+        href: "/income-tax/sip-calculator"
+      },
     ],
     compliance: [
       {
@@ -155,6 +161,12 @@ export function MobileDashboard() {
         title: "Payroll",
         description: "Salary, PF, ESI & compliance",
         href: "/payroll"
+      },
+      {
+        icon: FileCheck,
+        title: "TDS Returns",
+        description: "TDS & TCS filing",
+        href: "/income-tax/tds-returns"
       },
     ],
   };

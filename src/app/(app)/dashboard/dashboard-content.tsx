@@ -232,6 +232,13 @@ function DashboardContent() {
         href: "/income-tax/loan-calculator",
         color: "from-amber-500 to-yellow-600",
       },
+      {
+        title: "SIP Calculator",
+        description: "Post-tax wealth projection",
+        icon: BarChart3,
+        href: "/income-tax/sip-calculator",
+        color: "from-teal-500 to-cyan-600",
+      },
     ],
     compliance: [
       {
@@ -247,6 +254,13 @@ function DashboardContent() {
         icon: Users,
         href: "/payroll",
         color: "from-indigo-500 to-purple-600",
+      },
+      {
+        title: "TDS Returns",
+        description: "TDS & TCS filing",
+        icon: FileCheck,
+        href: "/income-tax/tds-returns",
+        color: "from-orange-500 to-red-600",
       },
     ],
   };
