@@ -41,6 +41,10 @@ export interface ParsedNarration {
   isPrepaid?: boolean; // Prepaid expense
   isOutstanding?: boolean; // Outstanding/Accrued expense
   isPersonal?: boolean; // Personal expense (should go to Drawings)
+  personalPercentage?: number; // Percentage of expense that is personal (0-100)
+  isCapitalAsset?: boolean; // Capital asset purchase
+  isOwnerContribution?: boolean; // Owner contribution to capital
+  isOwnerWithdrawal?: boolean; // Owner withdrawal from capital
 }
 
 /**

@@ -107,6 +107,7 @@ export default function SmartJournalEntryPage() {
   const [gstRate, setGstRate] = useState("18");
   const [gstType, setGstType] = useState<"CGST_SGST" | "IGST">("CGST_SGST");
   const [isGSTInclusive, setIsGSTInclusive] = useState(false);
+  const [expenseType, setExpenseType] = useState<"business" | "personal" | "auto">("auto");
 
   const handleProcess = async () => {
     if (!narration.trim()) {
@@ -117,7 +118,16 @@ export default function SmartJournalEntryPage() {
     setIsProcessing(true);
     try {
       console.log("Processing narration:", narration);
-      const result = await processNarration(narration, undefined, undefined, user?.uid);
+      let processedNarration = narration;
+      
+      // If user explicitly selected business or personal, prepend to narration for better detection
+      if (expenseType === "personal") {
+        processedNarration = `for personal use ${narration}`;
+      } else if (expenseType === "business") {
+        processedNarration = `business expense ${narration}`;
+      }
+      
+      const result = await processNarration(processedNarration, undefined, undefined, user?.uid);
       console.log("Parsing result:", result);
       setParsingResult(result);
 
@@ -322,6 +332,39 @@ export default function SmartJournalEntryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-2">
+            <Label>Is this expense for business or personal use?</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={expenseType === "business" ? "default" : "outline"}
+                onClick={() => setExpenseType("business")}
+                className="flex-1"
+              >
+                Business
+              </Button>
+              <Button
+                type="button"
+                variant={expenseType === "personal" ? "default" : "outline"}
+                onClick={() => setExpenseType("personal")}
+                className="flex-1"
+              >
+                Personal
+              </Button>
+              <Button
+                type="button"
+                variant={expenseType === "auto" ? "default" : "outline"}
+                onClick={() => setExpenseType("auto")}
+                className="flex-1"
+              >
+                Auto-detect
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Select to improve accuracy. Personal expenses are treated as Drawings.
+            </p>
+          </div>
+          
           <div className="grid gap-2">
             <Label>Narration</Label>
             <Input

@@ -123,6 +123,25 @@ export async function processNarration(
   if (journalEntry && !journalEntry.isBalanced) {
     warnings.push("Journal entry is not balanced. Please review amounts.");
   }
+  
+  // Personal expense warnings
+  if (parsed.isPersonal) {
+    if (parsed.personalPercentage !== undefined && parsed.personalPercentage < 100) {
+      warnings.push(`Personal expense detected (${parsed.personalPercentage}% personal, ${100 - parsed.personalPercentage}% business). Entry split between Drawings and Expense.`);
+    } else {
+      warnings.push("Personal expense detected. Entry treated as Drawings instead of Expense.");
+    }
+    
+    // Personal expenses with GST - no ITC
+    if (gstDetails && gstDetails.isGSTApplicable) {
+      warnings.push("GST on personal expense: Input Tax Credit (ITC) is NOT claimable. Entire amount (including GST) debited to Drawings.");
+    }
+  }
+  
+  // Capital asset for personal use
+  if (parsed.isCapitalAsset && parsed.isPersonal) {
+    warnings.push("Capital asset for personal use detected. Debited to Drawings (not capitalized as asset).");
+  }
 
   // Find suggested accounts
   const suggestedAccounts = chartOfAccounts.filter((acc) =>

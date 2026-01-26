@@ -121,37 +121,121 @@ function generatePurchaseEntry(
   const entries: AccountEntry[] = [];
   const amount = parsed.amount || 0;
 
+  // Handle personal vs business expenses
   // For personal expenses, use Drawings (Equity) instead of Expense
-  let debitAccount;
-  if (parsed.isPersonal) {
-    // Find Drawings account
-    debitAccount = matchingAccounts.find((a) => 
-      a.type === "Equity" && a.name.toLowerCase().includes("drawings")
-    ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings")));
-    
-    if (!debitAccount) {
-      // Fallback: create Drawings account entry
-      debitAccount = { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
-    }
-  } else {
-    // Business expense - use expense account
-    debitAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
-  }
+  // For mixed expenses, split between Drawings and Expense
+  const personalPercentage = parsed.personalPercentage ?? (parsed.isPersonal ? 100 : 0);
+  const businessPercentage = 100 - personalPercentage;
   
-  if (!debitAccount) throw new Error("No debit account found");
+  // Get Drawings account
+  const drawingsAccount = matchingAccounts.find((a) => 
+    a.type === "Equity" && a.name.toLowerCase().includes("drawings")
+  ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings"))) ||
+  { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
+  
+  // Get expense account
+  const expenseAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
+  if (!expenseAccount) throw new Error("No expense account found");
 
   if (gstDetails && gstDetails.isGSTApplicable) {
     // GST Purchase Entry
-    // Dr Expense/Drawings (taxable value)
-    entries.push({
-      accountCode: debitAccount.code,
-      accountName: debitAccount.name,
-      accountType: debitAccount.type,
-      amount: gstDetails.taxableValue,
-      isDebit: true,
-      narration: parsed.originalNarration,
-      gstDetails,
-    });
+    // For personal expenses with GST: No ITC, entire amount goes to Drawings
+    if (parsed.isPersonal && personalPercentage === 100) {
+      // Personal expense with GST - no ITC, entire amount to Drawings
+      entries.push({
+        accountCode: drawingsAccount.code,
+        accountName: drawingsAccount.name,
+        accountType: drawingsAccount.type,
+        amount: gstDetails.totalAmount, // Total amount including GST
+        isDebit: true,
+        narration: parsed.originalNarration,
+        gstDetails: { ...gstDetails, itcEligible: false }, // Mark ITC as not eligible
+      });
+    } else if (personalPercentage > 0 && personalPercentage < 100) {
+      // Mixed personal/business with GST
+      const personalAmount = (gstDetails.totalAmount * personalPercentage) / 100;
+      const businessAmount = (gstDetails.totalAmount * businessPercentage) / 100;
+      const personalTaxable = (gstDetails.taxableValue * personalPercentage) / 100;
+      const businessTaxable = (gstDetails.taxableValue * businessPercentage) / 100;
+      
+      // Personal portion (no ITC)
+      entries.push({
+        accountCode: drawingsAccount.code,
+        accountName: drawingsAccount.name,
+        accountType: drawingsAccount.type,
+        amount: personalAmount,
+        isDebit: true,
+        narration: `${parsed.originalNarration} (${personalPercentage}% personal)`,
+      });
+      
+      // Business portion (with ITC)
+      entries.push({
+        accountCode: expenseAccount.code,
+        accountName: expenseAccount.name,
+        accountType: expenseAccount.type,
+        amount: businessTaxable,
+        isDebit: true,
+        narration: `${parsed.originalNarration} (${businessPercentage}% business)`,
+        gstDetails: { ...gstDetails, taxableValue: businessTaxable },
+      });
+      
+      // Add Input GST only for business portion
+      if (gstDetails.itcEligible) {
+        const businessCGST = gstDetails.cgstAmount ? (gstDetails.cgstAmount * businessPercentage) / 100 : 0;
+        const businessSGST = gstDetails.sgstAmount ? (gstDetails.sgstAmount * businessPercentage) / 100 : 0;
+        const businessIGST = gstDetails.igstAmount ? (gstDetails.igstAmount * businessPercentage) / 100 : 0;
+        
+        if (businessCGST > 0) {
+          const inputCGST = chartOfAccounts.find((a) => a.code === "3001");
+          if (inputCGST) {
+            entries.push({
+              accountCode: inputCGST.code,
+              accountName: inputCGST.name,
+              accountType: inputCGST.type,
+              amount: businessCGST,
+              isDebit: true,
+              narration: `Input CGST @ ${gstDetails.gstRate}% (business portion)`,
+            });
+          }
+        }
+        if (businessSGST > 0) {
+          const inputSGST = chartOfAccounts.find((a) => a.code === "3002");
+          if (inputSGST) {
+            entries.push({
+              accountCode: inputSGST.code,
+              accountName: inputSGST.name,
+              accountType: inputSGST.type,
+              amount: businessSGST,
+              isDebit: true,
+              narration: `Input SGST @ ${gstDetails.gstRate}% (business portion)`,
+            });
+          }
+        }
+        if (businessIGST > 0) {
+          const inputIGST = chartOfAccounts.find((a) => a.code === "3003");
+          if (inputIGST) {
+            entries.push({
+              accountCode: inputIGST.code,
+              accountName: inputIGST.name,
+              accountType: inputIGST.type,
+              amount: businessIGST,
+              isDebit: true,
+              narration: `Input IGST @ ${gstDetails.gstRate}% (business portion)`,
+            });
+          }
+        }
+      }
+    } else {
+      // Business expense with GST (normal case)
+      entries.push({
+        accountCode: expenseAccount.code,
+        accountName: expenseAccount.name,
+        accountType: expenseAccount.type,
+        amount: gstDetails.taxableValue,
+        isDebit: true,
+        narration: parsed.originalNarration,
+        gstDetails,
+      });
 
     // Dr Input GST (if ITC eligible)
     if (gstDetails.itcEligible) {
@@ -237,14 +321,49 @@ function generatePurchaseEntry(
     }
   } else {
     // Non-GST Purchase Entry
-    entries.push({
-      accountCode: debitAccount.code,
-      accountName: debitAccount.name,
-      accountType: debitAccount.type,
-      amount,
-      isDebit: true,
-      narration: parsed.originalNarration,
-    });
+    if (personalPercentage === 100) {
+      // Fully personal expense
+      entries.push({
+        accountCode: drawingsAccount.code,
+        accountName: drawingsAccount.name,
+        accountType: drawingsAccount.type,
+        amount,
+        isDebit: true,
+        narration: parsed.originalNarration,
+      });
+    } else if (personalPercentage > 0 && personalPercentage < 100) {
+      // Mixed personal/business expense
+      const personalAmount = (amount * personalPercentage) / 100;
+      const businessAmount = (amount * businessPercentage) / 100;
+      
+      entries.push({
+        accountCode: drawingsAccount.code,
+        accountName: drawingsAccount.name,
+        accountType: drawingsAccount.type,
+        amount: personalAmount,
+        isDebit: true,
+        narration: `${parsed.originalNarration} (${personalPercentage}% personal)`,
+      });
+      
+      entries.push({
+        accountCode: expenseAccount.code,
+        accountName: expenseAccount.name,
+        accountType: expenseAccount.type,
+        amount: businessAmount,
+        isDebit: true,
+        narration: `${parsed.originalNarration} (${businessPercentage}% business)`,
+      });
+    } else {
+      // Fully business expense
+      entries.push({
+        accountCode: expenseAccount.code,
+        accountName: expenseAccount.name,
+        accountType: expenseAccount.type,
+        amount,
+        isDebit: true,
+        narration: parsed.originalNarration,
+      });
+    }
 
     if (parsed.paymentMode === "credit") {
       // Try multiple creditor account codes for compatibility
@@ -515,35 +634,65 @@ function generatePaymentEntry(
     throw new Error("Amount is required for payment entry");
   }
 
-  // For personal expenses, use Drawings (Equity) instead of Expense
-  let debitAccount;
-  if (parsed.isPersonal) {
-    // Find Drawings account
-    debitAccount = matchingAccounts.find((a) => 
-      a.type === "Equity" && a.name.toLowerCase().includes("drawings")
-    ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings")));
+  // Handle personal vs business expenses (same logic as generatePurchaseEntry)
+  const personalPercentage = parsed.personalPercentage ?? (parsed.isPersonal ? 100 : 0);
+  const businessPercentage = 100 - personalPercentage;
+  
+  // Get Drawings account
+  const drawingsAccount = matchingAccounts.find((a) => 
+    a.type === "Equity" && a.name.toLowerCase().includes("drawings")
+  ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings"))) ||
+  { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
+  
+  // Get expense account
+  const expenseAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
+  if (!expenseAccount) {
+    throw new Error("No expense account found. Please ensure Chart of Accounts includes expense accounts.");
+  }
+  
+  if (personalPercentage === 100) {
+    // Fully personal expense
+    entries.push({
+      accountCode: drawingsAccount.code,
+      accountName: drawingsAccount.name,
+      accountType: drawingsAccount.type,
+      amount,
+      isDebit: true,
+      narration: parsed.originalNarration,
+    });
+  } else if (personalPercentage > 0 && personalPercentage < 100) {
+    // Mixed personal/business expense
+    const personalAmount = (amount * personalPercentage) / 100;
+    const businessAmount = (amount * businessPercentage) / 100;
     
-    if (!debitAccount) {
-      // Fallback: create Drawings account entry
-      debitAccount = { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
-    }
+    entries.push({
+      accountCode: drawingsAccount.code,
+      accountName: drawingsAccount.name,
+      accountType: drawingsAccount.type,
+      amount: personalAmount,
+      isDebit: true,
+      narration: `${parsed.originalNarration} (${personalPercentage}% personal)`,
+    });
+    
+    entries.push({
+      accountCode: expenseAccount.code,
+      accountName: expenseAccount.name,
+      accountType: expenseAccount.type,
+      amount: businessAmount,
+      isDebit: true,
+      narration: `${parsed.originalNarration} (${businessPercentage}% business)`,
+    });
   } else {
-    // Business expense - use expense account
-    debitAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
+    // Fully business expense
+    entries.push({
+      accountCode: expenseAccount.code,
+      accountName: expenseAccount.name,
+      accountType: expenseAccount.type,
+      amount,
+      isDebit: true,
+      narration: parsed.originalNarration,
+    });
   }
-  
-  if (!debitAccount) {
-    throw new Error("No debit account found. Please ensure Chart of Accounts includes expense or drawings accounts.");
-  }
-  
-  entries.push({
-    accountCode: debitAccount.code,
-    accountName: debitAccount.name,
-    accountType: debitAccount.type,
-    amount,
-    isDebit: true,
-    narration: parsed.originalNarration,
-  });
 
   // Cr Payment Account (default to Cash if not found)
   if (!paymentAccount) {

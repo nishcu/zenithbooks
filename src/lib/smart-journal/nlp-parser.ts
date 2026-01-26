@@ -17,7 +17,14 @@ export function parseNarration(narration: string): ParsedNarration {
   const isAdvance = detectAdvance(lowerNarration);
   const isPrepaid = detectPrepaid(lowerNarration);
   const isOutstanding = detectOutstanding(lowerNarration);
-  const isPersonal = detectPersonal(lowerNarration);
+  const personalDetection = detectPersonal(lowerNarration);
+  const isPersonal = personalDetection.isPersonal;
+  const personalPercentage = personalDetection.personalPercentage;
+  
+  // Detect capital asset and owner transactions
+  const isCapitalAsset = detectCapitalAsset(lowerNarration);
+  const isOwnerContribution = detectOwnerContribution(lowerNarration);
+  const isOwnerWithdrawal = detectOwnerWithdrawal(lowerNarration);
 
   // Extract amount
   const amount = extractAmount(lowerNarration);
@@ -42,6 +49,15 @@ export function parseNarration(narration: string): ParsedNarration {
   if (!paymentMode) confidence -= 0.1;
   if (!itemOrService) confidence -= 0.1;
 
+  // Adjust confidence based on personal detection
+  if (isPersonal) {
+    if (personalPercentage !== undefined) {
+      confidence += 0.1; // Higher confidence if percentage is explicit
+    } else {
+      confidence -= 0.05; // Slightly lower if inferred
+    }
+  }
+  
   return {
     transactionType,
     amount,
@@ -55,7 +71,54 @@ export function parseNarration(narration: string): ParsedNarration {
     isPrepaid,
     isOutstanding,
     isPersonal,
+    personalPercentage,
+    isCapitalAsset,
+    isOwnerContribution,
+    isOwnerWithdrawal,
   };
+}
+
+/**
+ * Detect capital asset purchase
+ */
+function detectCapitalAsset(narration: string): boolean {
+  const capitalKeywords = ["asset", "capital", "fixed asset", "equipment", "machinery", "vehicle", "building", "property"];
+  const purchaseKeywords = ["purchase", "bought", "acquired", "bought"];
+  return capitalKeywords.some((k) => narration.includes(k)) && 
+         purchaseKeywords.some((k) => narration.includes(k));
+}
+
+/**
+ * Detect owner contribution to capital
+ */
+function detectOwnerContribution(narration: string): boolean {
+  const contributionKeywords = [
+    "contribution",
+    "capital contribution",
+    "owner contribution",
+    "proprietor contribution",
+    "director contribution",
+    "invested",
+    "capital introduced",
+    "brought in capital"
+  ];
+  return contributionKeywords.some((k) => narration.includes(k));
+}
+
+/**
+ * Detect owner withdrawal from capital
+ */
+function detectOwnerWithdrawal(narration: string): boolean {
+  const withdrawalKeywords = [
+    "withdrawal",
+    "owner withdrawal",
+    "proprietor withdrawal",
+    "director withdrawal",
+    "capital withdrawal",
+    "drawings",
+    "withdrew"
+  ];
+  return withdrawalKeywords.some((k) => narration.includes(k));
 }
 
 /**
@@ -110,9 +173,9 @@ function detectOutstanding(narration: string): boolean {
 }
 
 /**
- * Detect personal expense/use
+ * Detect personal expense/use and extract percentage if mixed
  */
-function detectPersonal(narration: string): boolean {
+function detectPersonal(narration: string): { isPersonal: boolean; personalPercentage?: number } {
   const personalKeywords = [
     "personal use",
     "personal",
@@ -125,9 +188,53 @@ function detectPersonal(narration: string): boolean {
     "for myself",
     "personal purpose",
     "private use",
-    "private purpose"
+    "private purpose",
+    "family",
+    "home",
+    "household",
+    "domestic",
+    "private"
   ];
-  return personalKeywords.some((k) => narration.includes(k));
+  
+  const isPersonal = personalKeywords.some((k) => narration.includes(k));
+  
+  // Check for mixed personal/business (e.g., "personal use 40%", "60% business")
+  const percentagePatterns = [
+    /personal\s*(?:use|expense)?\s*(\d+)%/i,
+    /(\d+)%\s*personal/i,
+    /(\d+)%\s*for\s*personal/i,
+    /personal\s*(\d+)%/i,
+  ];
+  
+  let personalPercentage: number | undefined;
+  for (const pattern of percentagePatterns) {
+    const match = narration.match(pattern);
+    if (match && match[1]) {
+      personalPercentage = parseInt(match[1], 10);
+      if (personalPercentage >= 0 && personalPercentage <= 100) {
+        return { isPersonal: true, personalPercentage };
+      }
+    }
+  }
+  
+  // Check for business percentage (e.g., "business 60%", "60% business")
+  const businessPercentagePatterns = [
+    /business\s*(\d+)%/i,
+    /(\d+)%\s*business/i,
+  ];
+  
+  for (const pattern of businessPercentagePatterns) {
+    const match = narration.match(pattern);
+    if (match && match[1]) {
+      const businessPercentage = parseInt(match[1], 10);
+      if (businessPercentage >= 0 && businessPercentage <= 100) {
+        personalPercentage = 100 - businessPercentage;
+        return { isPersonal: true, personalPercentage };
+      }
+    }
+  }
+  
+  return { isPersonal };
 }
 
 /**
