@@ -1295,13 +1295,32 @@ function generateDefaultEntry(
 
 /**
  * Add GST to an existing journal entry (post-processing)
+ * If GST already exists, it will be replaced with the new GST details
  */
 export function addGSTToEntry(
   entry: JournalEntry,
   gstDetails: GSTDetails,
   chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS
 ): JournalEntry {
-  const updatedEntries = [...entry.entries];
+  // Remove existing GST entries first (if any)
+  const updatedEntries = entry.entries.filter((e) => {
+    // Remove GST account entries (Input/Output CGST, SGST, IGST)
+    const isGSTAccount = 
+      e.accountCode === "3001" || // Input CGST
+      e.accountCode === "3002" || // Input SGST
+      e.accountCode === "3003" || // Input IGST
+      e.accountCode === "3004" || // Output CGST
+      e.accountCode === "3005" || // Output SGST
+      e.accountCode === "3006" || // Output IGST
+      e.accountName.toLowerCase().includes("input cgst") ||
+      e.accountName.toLowerCase().includes("input sgst") ||
+      e.accountName.toLowerCase().includes("input igst") ||
+      e.accountName.toLowerCase().includes("output cgst") ||
+      e.accountName.toLowerCase().includes("output sgst") ||
+      e.accountName.toLowerCase().includes("output igst");
+    return !isGSTAccount;
+  });
+  
   const isSale = entry.voucherType === "Sales" || entry.voucherType === "Receipt";
   
   // Find the main income/expense entry
@@ -1314,6 +1333,13 @@ export function addGSTToEntry(
   }
   
   const mainEntry = updatedEntries[mainEntryIndex];
+  
+  // Get the original amount before GST (if entry had GST, restore to original taxable value)
+  // If the entry already had GST, the main entry amount is the taxable value
+  // If not, the main entry amount is the total amount
+  const originalAmount = entry.gstDetails 
+    ? entry.gstDetails.taxableValue 
+    : mainEntry.amount;
   
   if (isSale) {
     // Sales entry: Update taxable value, add Output GST, update debtor/cash amount
@@ -1366,14 +1392,19 @@ export function addGSTToEntry(
     }
     
     // Update debtor/cash entry to total amount
-    const debtorIndex = updatedEntries.findIndex(
-      (e) => e.isDebit && (e.accountType === "Liability" || e.accountType === "Asset")
-    );
-    if (debtorIndex !== -1) {
-      updatedEntries[debtorIndex] = {
-        ...updatedEntries[debtorIndex],
-        amount: gstDetails.totalAmount,
-      };
+    // Find debit entries (Debtor, Cash, or Bank accounts)
+    const debtorEntryIndices = updatedEntries
+      .map((e, idx) => (e.isDebit && (e.accountType === "Liability" || e.accountType === "Asset" || e.accountType === "Cash" || e.accountCode === "1320" || e.accountCode === "2002")) ? idx : -1)
+      .filter(idx => idx !== -1);
+    
+    if (debtorEntryIndices.length > 0) {
+      // Update the first debtor/cash entry
+      debtorEntryIndices.forEach(idx => {
+        updatedEntries[idx] = {
+          ...updatedEntries[idx],
+          amount: gstDetails.totalAmount,
+        };
+      });
     }
   } else {
     // Purchase entry: Update taxable value, add Input GST, update creditor/cash amount
