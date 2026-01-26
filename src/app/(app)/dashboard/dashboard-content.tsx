@@ -752,10 +752,12 @@ function DashboardContent() {
                                   </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-0 px-4 pb-4">
-                                  <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
-                                    {feature.description}
-                                  </CardDescription>
-                                  <div className="mt-2 flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  {feature.description && (
+                                    <CardDescription className="text-xs line-clamp-2 leading-snug text-muted-foreground">
+                                      {feature.description}
+                                    </CardDescription>
+                                  )}
+                                  <div className={`flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${feature.description ? 'mt-2' : ''}`}>
                                     <span className="text-xs font-medium">Open</span>
                                     <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                   </div>
