@@ -278,10 +278,10 @@ function generatePurchaseEntry(
           });
         }
       }
-      }
+    }
 
-      // Cr Payment Account or Creditor
-      if (parsed.paymentMode === "credit") {
+    // Cr Payment Account or Creditor
+    if (parsed.paymentMode === "credit") {
       // Try multiple creditor account codes for compatibility
       const creditor = chartOfAccounts.find((a) => 
         a.code === "2001" || 
@@ -318,7 +318,7 @@ function generatePurchaseEntry(
         isDebit: false,
         narration: parsed.originalNarration,
       });
-      }
+    }
     }
   } else {
     // Non-GST Purchase Entry
