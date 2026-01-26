@@ -18,6 +18,7 @@ import {
   limit,
   serverTimestamp,
   Timestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { 
@@ -244,7 +245,6 @@ export async function removeHelpfulReaction(
   }
   
   // Delete all matching reactions (should be only one)
-  const { writeBatch } = await import('firebase/firestore');
   const batch = writeBatch(db);
   
   reactionsSnapshot.docs.forEach((docSnapshot) => {

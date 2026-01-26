@@ -310,9 +310,14 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                        request.resource.data.authorId == request.auth.uid &&
                        request.resource.data.complianceDeclarationAccepted == true;
+      // Allow updates for author/admin, OR allow updating only helpfulCount and updatedAt fields for reactions
       allow update: if request.auth != null && 
                        (request.auth.uid == resource.data.authorId ||
-                        request.auth.uid == 'SUPER_ADMIN_UID'); // Only author or admin can update
+                        request.auth.uid == 'SUPER_ADMIN_UID' ||
+                        // Allow any authenticated user to update helpfulCount (for reactions)
+                        (request.resource.data.keys().hasAll(['helpfulCount', 'updatedAt']) &&
+                         request.resource.data.keys().size() == resource.data.keys().size() &&
+                         request.resource.data.helpfulCount is int));
       allow delete: if request.auth != null && 
                        (request.auth.uid == resource.data.authorId ||
                         request.auth.uid == 'SUPER_ADMIN_UID');
