@@ -26,7 +26,7 @@ export function SplashScreen() {
       }
     });
     
-    // Hide splash after 1.5 seconds
+    // Hide splash after 2 seconds (increased from 1.5s for better readability)
     const timer = setTimeout(() => {
       setIsVisible(false);
       
@@ -38,8 +38,8 @@ export function SplashScreen() {
         if (document.documentElement) {
           document.documentElement.classList.remove('splash-active');
         }
-      }, 450);
-    }, 1500);
+      }, 500);
+    }, 2000);
 
     return () => {
       clearTimeout(timer);
@@ -62,77 +62,54 @@ export function SplashScreen() {
           key="splash-screen"
           className={cn(
             "fixed inset-0 z-[9999] flex items-center justify-center",
-            "bg-gradient-to-br from-primary via-primary/98 to-primary"
+            "bg-gradient-to-br from-primary via-primary/95 to-primary/90"
           )}
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ 
             opacity: 0,
-            transition: { duration: 0.4, ease: "easeOut" }
+            transition: { duration: 0.5, ease: "easeOut" }
           }}
           style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
         >
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 overflow-hidden">
-            <motion.div
-              className="absolute inset-0 opacity-10"
-              animate={{
-                backgroundPosition: ["0% 0%", "100% 100%"],
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                repeatType: "reverse",
-                ease: "linear",
-              }}
-              style={{
-                backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-                backgroundSize: "40px 40px",
-              }}
-            />
-          </div>
-
-          {/* Main Content */}
+          {/* Main Content - Centered with generous spacing */}
           <motion.div
-            className="relative z-10 flex flex-col items-center justify-center space-y-6"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            className="relative z-10 flex flex-col items-center justify-center space-y-8 sm:space-y-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{
-              duration: 0.5,
+              duration: 0.6,
               ease: "easeOut",
             }}
           >
-            {/* Logo Container */}
+            {/* Large Logo */}
             <motion.div
               className="relative"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              {/* Logo */}
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-xl border border-white/20">
-                <ZenithBooksLogo className="h-16 w-16 sm:h-20 sm:w-20 text-white" />
-              </div>
+              <ZenithBooksLogo className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 text-white" />
             </motion.div>
 
-            {/* Brand Name */}
+            {/* Brand Name - Much Larger */}
             <motion.div
-              className="flex flex-col items-center space-y-1"
+              className="flex flex-col items-center space-y-3"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
             >
               <h1
-                className="text-4xl sm:text-5xl font-bold text-white tracking-tight"
+                className="text-5xl sm:text-6xl md:text-7xl font-bold text-white tracking-tight"
                 style={{
                   fontFamily: "var(--font-inter), sans-serif",
-                  textShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+                  textShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
                 }}
               >
                 ZenithBooks
               </h1>
-              <p className="text-lg sm:text-xl text-white/90 font-light">
+              <p className="text-xl sm:text-2xl md:text-3xl text-white/95 font-light">
                 AI-Driven. Professional-Grade.
               </p>
             </motion.div>
