@@ -44,7 +44,7 @@ function mergeServiceLists(defaults: ServiceItem[] = [], stored: ServiceItem[] =
 
 function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing> | null): ServicePricing {
   const s = stored || {};
-  return {
+  const merged: ServicePricing = {
     reports: mergeServiceLists(defaults.reports, s.reports as any),
     ca_certs: mergeServiceLists(defaults.ca_certs, s.ca_certs as any),
     registration_deeds: mergeServiceLists(defaults.registration_deeds, s.registration_deeds as any),
@@ -58,6 +58,14 @@ function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing>
     itr_filing: mergeServiceLists(defaults.itr_filing, s.itr_filing as any),
     compliance_plans: mergeServiceLists(defaults.compliance_plans, s.compliance_plans as any),
   };
+
+  // Business rule: Individual Form 16 generation is FREE for everyone.
+  // Even if Firestore has an older price, force it to 0.
+  merged.reports = merged.reports.map((item) =>
+    item.id === "form16_individual" ? { ...item, price: 0 } : item
+  );
+
+  return merged;
 }
 
 /**
