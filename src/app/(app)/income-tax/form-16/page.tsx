@@ -1432,7 +1432,16 @@ export default function Form16() {
                       value={form16Data.employeeId}
                       onValueChange={(value) => {
                         const employee = employees.find(e => e.id === value);
-                        const doj = employee?.doj ? (employee.doj instanceof Date ? employee.doj.toISOString().split('T')[0] : new Date(employee.doj).toISOString().split('T')[0]) : "";
+                        const doj = (() => {
+                          if (!employee?.doj) return "";
+                          let d: Date | null = null;
+                          const raw: any = (employee as any).doj;
+                          if (raw instanceof Date) d = raw;
+                          else if (raw && typeof raw === "object" && typeof raw.toDate === "function") d = raw.toDate(); // Firestore Timestamp
+                          else d = new Date(raw);
+                          if (!d || isNaN(d.getTime())) return "";
+                          return d.toISOString().split("T")[0];
+                        })();
                         setForm16Data(prev => ({
                           ...prev,
                           employeeId: value,

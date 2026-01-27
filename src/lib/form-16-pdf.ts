@@ -12,16 +12,24 @@ declare module 'jspdf' {
 
 export class Form16PDFGenerator {
   private static readonly FONT_SIZE = {
-    TITLE: 16,
-    SUBTITLE: 12,
-    NORMAL: 11,
-    SMALL: 9
+    // Compact typography so Part A + Part B fit in 2 pages.
+    TITLE: 14,
+    SUBTITLE: 10,
+    NORMAL: 9,
+    SMALL: 7
   };
 
   private static readonly COLORS = {
     PRIMARY: [0, 0, 139], // Dark Blue
     SECONDARY: [70, 70, 70], // Gray
     ACCENT: [255, 69, 0] // Orange Red
+  };
+
+  private static readonly TABLE_STYLES = {
+    fontSize: 7,
+    cellPadding: 1,
+    lineWidth: 0.1,
+    valign: 'middle'
   };
 
   /**
@@ -155,7 +163,7 @@ export class Form16PDFGenerator {
     pdf.text('Certificate for tax deducted at source from income chargeable under the head "Salaries"', 105, 48, { align: 'center' });
     pdf.text('[See section 203]', 105, 54, { align: 'center' });
 
-    let yPos = 65;
+    let yPos = 62;
 
     // Certificate Details
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
@@ -174,14 +182,14 @@ export class Form16PDFGenerator {
       head: [],
       body: certificateData,
       theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
+      styles: { fontSize: this.FONT_SIZE.SMALL, cellPadding: 0.6 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 50 },
         1: { cellWidth: 100 }
       }
     });
 
-    yPos = (pdf as any).lastAutoTable.finalY + 15;
+    yPos = (pdf as any).lastAutoTable.finalY + 8;
 
     // Details of the Deductor (Employer)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
@@ -202,14 +210,14 @@ export class Form16PDFGenerator {
       head: [],
       body: employerData,
       theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
+      styles: { fontSize: this.FONT_SIZE.SMALL, cellPadding: 0.6 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 60 },
         1: { cellWidth: 100 }
       }
     });
 
-    yPos = (pdf as any).lastAutoTable.finalY + 15;
+    yPos = (pdf as any).lastAutoTable.finalY + 8;
 
     // Details of the Recipient (Employee)
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
@@ -238,14 +246,14 @@ export class Form16PDFGenerator {
       head: [],
       body: employeeData,
       theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
+      styles: { fontSize: this.FONT_SIZE.SMALL, cellPadding: 0.6 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 60 },
         1: { cellWidth: 100 }
       }
     });
 
-    yPos = (pdf as any).lastAutoTable.finalY + 15;
+    yPos = (pdf as any).lastAutoTable.finalY + 8;
 
     // Summary of Tax Deducted and Deposited
     pdf.setFontSize(this.FONT_SIZE.NORMAL);
@@ -264,84 +272,72 @@ export class Form16PDFGenerator {
     // Helper to format amounts - show blank if 0
     const formatAmount = (amount: number) => amount > 0 ? amount.toLocaleString('en-IN') : '';
     const formatValue = (val: string | number) => val ? String(val) : '';
-    
-    const tdsTableData = [
-      ['Quarter', 'Section', 'Date of Deduction', 'Date of Deposit', 'Amount (₹)', 'Challan CIN'],
-      ['Q1', formatValue(quarterlyTDS.q1.section), formatValue(quarterlyTDS.q1.dateOfDeduction), formatValue(quarterlyTDS.q1.dateOfDeposit), 
-       formatAmount(quarterlyTDS.q1.amount), formatValue(quarterlyTDS.q1.challanCIN)],
-      ['Q2', formatValue(quarterlyTDS.q2.section), formatValue(quarterlyTDS.q2.dateOfDeduction), formatValue(quarterlyTDS.q2.dateOfDeposit), 
-       formatAmount(quarterlyTDS.q2.amount), formatValue(quarterlyTDS.q2.challanCIN)],
-      ['Q3', formatValue(quarterlyTDS.q3.section), formatValue(quarterlyTDS.q3.dateOfDeduction), formatValue(quarterlyTDS.q3.dateOfDeposit), 
-       formatAmount(quarterlyTDS.q3.amount), formatValue(quarterlyTDS.q3.challanCIN)],
-      ['Q4', formatValue(quarterlyTDS.q4.section), formatValue(quarterlyTDS.q4.dateOfDeduction), formatValue(quarterlyTDS.q4.dateOfDeposit), 
-       formatAmount(quarterlyTDS.q4.amount), formatValue(quarterlyTDS.q4.challanCIN)],
-      ['Total', '', '', '', formatAmount(partA?.totalTdsDeducted || 0), '']
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [tdsTableData[0]],
-      body: tdsTableData.slice(1),
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 25 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 30 },
-        4: { cellWidth: 30, halign: 'right' },
-        5: { cellWidth: 35 }
-      }
+    const hasAnyQuarterDetail = ['q1', 'q2', 'q3', 'q4'].some((k) => {
+      const q: any = (quarterlyTDS as any)[k];
+      return !!(q?.amount || q?.dateOfDeduction || q?.dateOfDeposit || q?.challanCIN || q?.section);
     });
+    
+    if (!hasAnyQuarterDetail && (partA?.totalTdsDeducted || 0) === 0) {
+      // Compact summary when there is no Part A / quarterly data (avoids extra pages).
+      this.getAutoTable(pdf)(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          ['Total TDS deducted', '0'],
+          ['Tax deposited', '0']
+        ],
+        theme: 'plain',
+        styles: { fontSize: this.FONT_SIZE.SMALL, cellPadding: 0.6 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 60 },
+          1: { cellWidth: 40, halign: 'right' }
+        }
+      });
+    } else {
+      const tdsTableData = [
+        ['Quarter', 'Section', 'Deduction Date', 'Deposit Date', 'Amount (₹)', 'Challan CIN'],
+        ['Q1', formatValue(quarterlyTDS.q1.section), formatValue(quarterlyTDS.q1.dateOfDeduction), formatValue(quarterlyTDS.q1.dateOfDeposit),
+         formatAmount(quarterlyTDS.q1.amount), formatValue(quarterlyTDS.q1.challanCIN)],
+        ['Q2', formatValue(quarterlyTDS.q2.section), formatValue(quarterlyTDS.q2.dateOfDeduction), formatValue(quarterlyTDS.q2.dateOfDeposit),
+         formatAmount(quarterlyTDS.q2.amount), formatValue(quarterlyTDS.q2.challanCIN)],
+        ['Q3', formatValue(quarterlyTDS.q3.section), formatValue(quarterlyTDS.q3.dateOfDeduction), formatValue(quarterlyTDS.q3.dateOfDeposit),
+         formatAmount(quarterlyTDS.q3.amount), formatValue(quarterlyTDS.q3.challanCIN)],
+        ['Q4', formatValue(quarterlyTDS.q4.section), formatValue(quarterlyTDS.q4.dateOfDeduction), formatValue(quarterlyTDS.q4.dateOfDeposit),
+         formatAmount(quarterlyTDS.q4.amount), formatValue(quarterlyTDS.q4.challanCIN)],
+        ['Total', '', '', '', formatAmount(partA?.totalTdsDeducted || 0), '']
+      ];
 
-    // Signatory Section
-    yPos = (pdf as any).lastAutoTable.finalY + 20;
-    if (yPos > 250) {
-      pdf.addPage();
-      yPos = 20;
+      this.getAutoTable(pdf)(pdf, {
+        startY: yPos,
+        head: [tdsTableData[0]],
+        body: tdsTableData.slice(1),
+        theme: 'grid',
+        styles: { fontSize: 6.5, cellPadding: 0.8, lineWidth: 0.1 },
+        headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 16 },
+          1: { cellWidth: 18 },
+          2: { cellWidth: 28 },
+          3: { cellWidth: 28 },
+          4: { cellWidth: 24, halign: 'right' },
+          5: { cellWidth: 36 }
+        }
+      });
     }
 
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('Signatory Details:', 20, yPos);
-    yPos += 10;
-
-    const signatoryData = [
-      ['Name', form16Doc.signatory?.name || 'N/A'],
-      ['Designation', form16Doc.signatory?.designation || 'N/A'],
-      ['Place', form16Doc.signatory?.place || 'N/A'],
-      ['Date', form16Doc.signatory?.date || 'N/A']
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [],
-      body: signatoryData,
-      theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50 },
-        1: { cellWidth: 100 }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 15;
-
-    // Signature line
+    // Signatory (compact, no extra page)
+    yPos = (pdf as any).lastAutoTable.finalY + 10;
+    const safeY = Math.min(265, Math.max(yPos, 230));
     pdf.setFontSize(this.FONT_SIZE.SMALL);
-    pdf.text('Signature: _________________________', 20, yPos);
-    yPos += 10;
-    pdf.text(`(${form16Doc.signatory?.name || 'N/A'})`, 20, yPos);
-    yPos += 5;
-    pdf.text(form16Doc.signatory?.designation || 'N/A', 20, yPos);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(`Signatory: ${form16Doc.signatory?.name || 'N/A'} (${form16Doc.signatory?.designation || 'N/A'})`, 20, safeY);
+    pdf.text(`Place: ${form16Doc.signatory?.place || ''}    Date: ${form16Doc.signatory?.date || ''}`, 20, safeY + 6);
+    pdf.text('Signature: _________________________', 20, safeY + 12);
 
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.setTextColor(100, 100, 100);
-    pdf.text('This is a computer generated certificate.', 20, 270);
+    pdf.text('This is a computer generated certificate.', 20, 285);
   }
 
   /**
@@ -367,392 +363,139 @@ export class Form16PDFGenerator {
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.text('Details of salary paid and any other income and tax deducted', 105, 48, { align: 'center' });
 
-    let yPos = 60;
+    // Compact Annexure-II style table (single table to keep Part B on one page)
+    const rs = 'Rs.';
+    const fmt = (n: number | undefined) => {
+      const v = Number(n || 0);
+      return v ? v.toLocaleString('en-IN') : '';
+    };
+    const safe = (s: any) => (s ? String(s) : '');
+    const fyParts = (form16Doc.financialYear || '').split('-');
+    const fyStart = `01/04/${fyParts[0] || ''}`;
+    const fyEnd = `31/03/${fyParts[1] || ''}`;
+    const periodFrom = partA?.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
+    const periodTo = partA?.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
 
-    // 1-5. DETAILS OF THE EMPLOYER
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('DETAILS OF THE EMPLOYER:', 20, yPos);
-    yPos += 10;
-
-    const employerData = [
-      ['1. Name of the Employer', form16Doc.employerName || 'N/A'],
-      ['2. Address of the Employer', form16Doc.employerAddress || ''],
-      ['3. TAN of the Employer', form16Doc.employerTan || 'N/A'],
-      ['4. PAN of the Employer', form16Doc.employerPan || ''],
-      ['5. Assessment Year', form16Doc.assessmentYear]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [],
-      body: employerData,
-      theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 60 },
-        1: { cellWidth: 100 }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 1-6. DETAILS OF THE EMPLOYEE
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('DETAILS OF THE EMPLOYEE:', 20, yPos);
-    yPos += 10;
-
-    const employeeData = [
-      ['1. Name of the Employee', partA?.employeeName || 'N/A'],
-      ['2. Address of the Employee', partA?.employeeAddress || ''],
-      ['3. PAN of the Employee', partA?.employeePan || 'N/A'],
-      ['4. Aadhaar Number (if available)', partA?.employeeAadhaar || ''],
-      ['5. Designation', partA?.employeeDesignation || 'Employee'],
-      ['6. Period of Employment', (() => {
-        const fyStart = `01/04/${form16Doc.financialYear.split('-')[0]}`;
-        const fyEnd = `31/03/${form16Doc.financialYear.split('-')[1]}`;
-        const periodFrom = partA?.periodFrom && partA.periodFrom !== 'NaNaNaNa' ? partA.periodFrom : fyStart;
-        const periodTo = partA?.periodTo && partA.periodTo !== 'NaNaNaNa' ? partA.periodTo : fyEnd;
-        return `${periodFrom} to ${periodTo}`;
-      })()]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [],
-      body: employeeData,
-      theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 60 },
-        1: { cellWidth: 100 }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 7. DETAILS OF SALARY PAID
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('7. DETAILS OF SALARY PAID:', 20, yPos);
-    yPos += 8;
-
-    const salaryData = [
-      ['(a) Salary as per provisions of section 17(1)', partB.salarySection17_1.toLocaleString('en-IN')],
-      ['(b) Value of perquisites under section 17(2)', partB.perquisitesSection17_2.toLocaleString('en-IN')],
-      ['(c) Profits in lieu of salary under section 17(3)', partB.profitsSection17_3.toLocaleString('en-IN')],
-      ['Gross Salary (Total of a+b+c)', partB.grossSalary.toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Salary Components', 'Amount (₹)']],
-      body: salaryData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 8. DEDUCTIONS UNDER SECTION 10
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('8. DEDUCTIONS UNDER SECTION 10:', 20, yPos);
-    yPos += 8;
-
-    const exemptionsData = [
-      ['(a) Travel concession or assistance under section 10(5)', '0'],
-      ['(b) Death-cum-retirement gratuity under section 10(10)', '0'],
-      ['(c) Commuted value of pension under section 10(10A)', '0'],
-      ['(d) Cash equivalent of leave salary encashment under section 10(10AA)', '0'],
-      ['(e) House rent allowance under section 10(13A)', '0'],
-      ['(f) Any other exemption under section 10', '0'],
-      ['Total Exemptions u/s 10', partB.exemptionsSection10.toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Exemptions u/s 10', 'Amount (₹)']],
-      body: exemptionsData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 9. INCOME UNDER THE HEAD "SALARIES" (7 - 8)
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`9. INCOME UNDER THE HEAD "SALARIES" (7 - 8) = ₹${(partB.netSalary || 0).toLocaleString('en-IN')}`, 20, yPos);
-    yPos += 12;
-
-    // 10. DEDUCTIONS UNDER SECTION 16
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('10. DEDUCTIONS UNDER SECTION 16:', 20, yPos);
-    yPos += 8;
-
-    const section16Data = [
-      ['(a) Standard deduction under section 16(ia)', partB.deductionsSection16.toLocaleString('en-IN')],
-      ['(b) Entertainment allowance under section 16(ii)', '0'],
-      ['(c) Tax on employment under section 16(iii)', '0'],
-      ['Total Deductions u/s 16', partB.deductionsSection16.toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Deductions u/s 16', 'Amount (₹)']],
-      body: section16Data,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 11. NET SALARY (9 - 10)
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`11. NET SALARY (9 - 10) = ₹${(partB.incomeFromSalary || 0).toLocaleString('en-IN')}`, 20, yPos);
-    yPos += 12;
-
-    // 12. ANY OTHER INCOME REPORTED BY THE EMPLOYEE
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('12. ANY OTHER INCOME REPORTED BY THE EMPLOYEE:', 20, yPos);
-    yPos += 8;
-
-    const otherIncomeData = [
-      ['(a) Income (or admissible loss) from house property', '0'],
-      ['(b) Income under the head "Other Sources"', partB.otherIncome.toLocaleString('en-IN')],
-      ['Total Other Income', partB.otherIncome.toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Other Income', 'Amount (₹)']],
-      body: otherIncomeData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 13. GROSS TOTAL INCOME (11 + 12)
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`13. GROSS TOTAL INCOME (11 + 12) = ₹${(partB.grossTotalIncome || 0).toLocaleString('en-IN')}`, 20, yPos);
-    yPos += 12;
-
-    // 14. DEDUCTIONS UNDER CHAPTER VI-A
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('14. DEDUCTIONS UNDER CHAPTER VI-A:', 20, yPos);
-    yPos += 8;
-
-    // Get Chapter VI-A deductions - use stored values or default to 0
     const chapterVIA = form16Doc.chapterVIADeductions;
-    const formatAmount = (val: number | undefined) => (val || 0).toLocaleString('en-IN');
-    
-    const chapterVIAData = [
-      ['(a) Section 80C (Life Insurance, PPF, NSC, etc.)', formatAmount(chapterVIA?.section80C)],
-      ['(b) Section 80CCC (Pension funds)', formatAmount(chapterVIA?.section80CCC)],
-      ['(c) Section 80CCD(1) (NPS employee contribution)', formatAmount(chapterVIA?.section80CCD1)],
-      ['(d) Section 80CCD(1B) (NPS self-contribution)', formatAmount(chapterVIA?.section80CCD1B)],
-      ['(e) Section 80CCD(2) (NPS employer contribution)', formatAmount(chapterVIA?.section80CCD2)],
-      ['(f) Section 80D (Health insurance premium)', formatAmount(chapterVIA?.section80D)],
-      ['(g) Section 80DD (Medical treatment of dependent)', formatAmount(chapterVIA?.section80DD)],
-      ['(h) Section 80DDB (Medical treatment)', formatAmount(chapterVIA?.section80DDB)],
-      ['(i) Section 80E (Interest on education loan)', formatAmount(chapterVIA?.section80E)],
-      ['(j) Section 80EE/80EEA (Interest on home loan)', formatAmount((chapterVIA?.section80EE || 0) + (chapterVIA?.section80EEA || 0))],
-      ['(k) Section 80G (Donations)', formatAmount(chapterVIA?.section80G)],
-      ['(l) Section 80GG (Rent paid)', formatAmount(chapterVIA?.section80GG)],
-      ['(m) Section 80GGA (Donations for scientific research)', formatAmount(chapterVIA?.section80GGA)],
-      ['(n) Section 80GGC (Donations to political parties)', formatAmount(chapterVIA?.section80GGC)],
-      ['(o) Section 80TTA (Interest on savings accounts)', formatAmount(chapterVIA?.section80TTA)],
-      ['(p) Section 80TTB (Interest on deposits for senior citizens)', formatAmount(chapterVIA?.section80TTB)],
-      ['(q) Any other deductions under Chapter VI-A', formatAmount(chapterVIA?.otherDeductions ? Object.values(chapterVIA.otherDeductions).reduce((a, b) => a + b, 0) : 0)],
-      ['Total Deductions u/s VI-A', (partB.deductionsChapterVIA || 0).toLocaleString('en-IN')]
-    ];
+    const otherChapVIA =
+      (chapterVIA?.otherDeductions ? Object.values(chapterVIA.otherDeductions).reduce((a, b) => a + (b || 0), 0) : 0) +
+      (chapterVIA?.section80GG || 0) +
+      (chapterVIA?.section80GGA || 0) +
+      (chapterVIA?.section80GGC || 0) +
+      (chapterVIA?.section80TTA || 0) +
+      (chapterVIA?.section80TTB || 0) +
+      (chapterVIA?.section80E || 0) +
+      (chapterVIA?.section80EE || 0) +
+      (chapterVIA?.section80EEA || 0);
 
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Deductions u/s VI-A', 'Amount (₹)']],
-      body: chapterVIAData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
+    const baseTaxBeforeRelief = Math.max(0, (partB.taxOnIncome || 0) + (partB.surcharge || 0) - (partB.rebate87A || 0));
+    const marginalRelief = Math.max(0, baseTaxBeforeRelief - (partB.taxAfterRebate || 0));
+
+    // Slab breakdown (for FY 2025-26 NEW regime); keep compact and only show slabs that apply.
+    const getNewRegimeSlabs = () => {
+      // FY 2025-26 onwards (Finance Act 2025)
+      if ((fyParts[0] || '') >= '2025') {
+        return [
+          { min: 0, max: 400000, rate: 0 },
+          { min: 400000, max: 800000, rate: 0.05 },
+          { min: 800000, max: 1200000, rate: 0.10 },
+          { min: 1200000, max: 1600000, rate: 0.15 },
+          { min: 1600000, max: 2000000, rate: 0.20 },
+          { min: 2000000, max: 2400000, rate: 0.25 },
+          { min: 2400000, max: Infinity, rate: 0.30 }
+        ];
       }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 15. TOTAL TAXABLE INCOME (13 - 14)
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.SECONDARY);
-    pdf.text(`15. TOTAL TAXABLE INCOME (13 - 14) = ₹${(partB.totalTaxableIncome || 0).toLocaleString('en-IN')}`, 20, yPos);
-    yPos += 12;
-
-    // 16. COMPUTATION OF TAX
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('16. COMPUTATION OF TAX:', 20, yPos);
-    yPos += 8;
-
-    const taxData = [
-      ['(a) Tax on Total Income', (partB.taxOnIncome || 0).toLocaleString('en-IN')],
-      ['(b) Surcharge (if applicable)', (partB.surcharge || 0).toLocaleString('en-IN')],
-      ['(c) Health and Education Cess @ 4%', (partB.healthEducationCess || 0).toLocaleString('en-IN')],
-      ['Total Tax Liability (a+b+c)', (partB.totalTaxLiability || 0).toLocaleString('en-IN')],
-      ['(d) Rebate under section 87A', (partB.rebate87A || 0).toLocaleString('en-IN')],
-      ['Tax after Rebate u/s 87A', (partB.taxAfterRebate || 0).toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Tax Computation', 'Amount (₹)']],
-      body: taxData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
+      // Older new regime slabs (Finance (No.2) Act 2024)
+      return [
+        { min: 0, max: 300000, rate: 0 },
+        { min: 300000, max: 700000, rate: 0.05 },
+        { min: 700000, max: 1000000, rate: 0.10 },
+        { min: 1000000, max: 1200000, rate: 0.15 },
+        { min: 1200000, max: 1500000, rate: 0.20 },
+        { min: 1500000, max: Infinity, rate: 0.30 }
+      ];
+    };
+    const slabRows: any[] = [];
+    if (partB.taxRegime === 'NEW') {
+      const slabs = getNewRegimeSlabs();
+      for (const slab of slabs) {
+        const taxable = Math.max(0, Math.min(partB.totalTaxableIncome || 0, slab.max) - slab.min);
+        if (taxable <= 0) continue;
+        const tax = Math.round(taxable * slab.rate);
+        if (!tax) continue;
+        const label = slab.max === Infinity
+          ? `Tax @ ${(slab.rate * 100).toFixed(0)}% above ₹${slab.min.toLocaleString('en-IN')}`
+          : `Tax @ ${(slab.rate * 100).toFixed(0)}% (₹${slab.min.toLocaleString('en-IN')}–₹${(slab.max as number).toLocaleString('en-IN')})`;
+        slabRows.push([label, rs, tax.toLocaleString('en-IN')]);
       }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 17. DETAILS OF TAX DEDUCTED AND DEPOSITED
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('17. DETAILS OF TAX DEDUCTED AND DEPOSITED:', 20, yPos);
-    yPos += 8;
-
-    const tdsData = [
-      ['(a) Total Tax Deducted', partB.tdsDeducted.toLocaleString('en-IN')],
-      ['(b) Tax Deposited in respect of Tax Deducted', partB.taxDeposited.toLocaleString('en-IN')]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['TDS Details', 'Amount (₹)']],
-      body: tdsData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
-      }
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 12;
-
-    // 18. RELIEF UNDER SECTION 89
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('18. RELIEF UNDER SECTION 89:', 20, yPos);
-    yPos += 8;
-
-    const reliefData = [
-      ['(a) Relief u/s 89', partB.relief89.toLocaleString('en-IN')],
-      ['(b) Net Tax Payable/(Refund)', partB.taxPayable >= 0 ? partB.taxPayable.toLocaleString('en-IN') : `(${Math.abs(partB.taxPayable).toLocaleString('en-IN')})`]
-    ];
-
-    // Call autoTable directly (already validated during initialization)
-    this.getAutoTable(pdf)(pdf, {
-      startY: yPos,
-      head: [['Final Computation', 'Amount (₹)']],
-      body: reliefData,
-      theme: 'grid',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
-      headStyles: { fillColor: this.COLORS.PRIMARY, textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' }
-      }
-    });
-
-    // Signatory Section
-    let finalYPos = (pdf as any).lastAutoTable.finalY + 20;
-    if (finalYPos > 240) {
-      pdf.addPage();
-      finalYPos = 20;
     }
 
-    pdf.setFontSize(this.FONT_SIZE.NORMAL);
-    pdf.setTextColor(...this.COLORS.PRIMARY);
-    pdf.text('Signatory Details:', 20, finalYPos);
-    finalYPos += 10;
+    const rows: any[] = [];
+    const section = (title: string) => {
+      rows.push([
+        { content: title, colSpan: 3, styles: { fontStyle: 'bold', fillColor: [245, 245, 245] } }
+      ]);
+    };
+    const row = (label: string, amount: string) => rows.push([label, rs, amount]);
 
-    const signatoryData = [
-      ['Name', form16Doc.signatory?.name || 'N/A'],
-      ['Designation', form16Doc.signatory?.designation || 'N/A'],
-      ['Place', form16Doc.signatory?.place || 'N/A'],
-      ['Date', form16Doc.signatory?.date || 'N/A']
-    ];
+    section(`ANNEXURE - II  |  INCOME TAX CALCULATION FOR FY ${form16Doc.financialYear}`);
+    row('Employee Name', safe(partA?.employeeName));
+    row('Employee PAN', safe(partA?.employeePan));
+    row('Designation', safe(partA?.employeeDesignation));
+    row('Period', `${safe(periodFrom)} to ${safe(periodTo)}`);
+    row('Employer', safe(form16Doc.employerName));
+    row('Employer TAN', safe(form16Doc.employerTan));
 
-    // Call autoTable directly (already validated during initialization)
+    section('Salary & Income');
+    row('Gross Salary', fmt(partB.grossSalary));
+    row('Less: Exemptions u/s 10', fmt(partB.exemptionsSection10));
+    row('Income under Head Salaries', fmt(partB.netSalary));
+    row('Less: Deductions u/s 16 (Std Deduction etc.)', fmt(partB.deductionsSection16));
+    row('Income from Salary', fmt(partB.incomeFromSalary));
+    row('Add: Income from Other Sources', fmt(partB.otherIncome));
+    row('Gross Total Income', fmt(partB.grossTotalIncome));
+    row('Less: Deductions (Chapter VI-A)', fmt(partB.deductionsChapterVIA));
+    row('Total Taxable Income', fmt(partB.totalTaxableIncome));
+
+    section(`Tax Computation (Regime: ${partB.taxRegime})`);
+    for (const r of slabRows) rows.push(r);
+    row('Tax on Total Income (slab-wise)', fmt(partB.taxOnIncome));
+    row('Surcharge', fmt(partB.surcharge));
+    row('Rebate u/s 87A', fmt(partB.rebate87A));
+    if (marginalRelief > 0) row('Marginal Relief', marginalRelief.toLocaleString('en-IN'));
+    row('Tax after Rebate/Relief', fmt(partB.taxAfterRebate));
+    row('Health & Education Cess @ 4%', fmt(partB.healthEducationCess));
+    row('Total Tax Liability', fmt(partB.totalTaxLiability));
+    row('Less: TDS', fmt(partB.tdsDeducted));
+    row('Less: Relief u/s 89', fmt(partB.relief89));
+    row('Tax Payable / (Refund)', partB.taxPayable >= 0 ? fmt(partB.taxPayable) : `(${fmt(Math.abs(partB.taxPayable))})`);
+
+    // Compact table
+    let yPos = 56;
     this.getAutoTable(pdf)(pdf, {
-      startY: finalYPos,
-      head: [],
-      body: signatoryData,
-      theme: 'plain',
-      styles: { fontSize: this.FONT_SIZE.SMALL },
+      startY: yPos,
+      body: rows,
+      theme: 'grid',
+      styles: { ...this.TABLE_STYLES, fontSize: 7 },
+      tableWidth: 182,
+      margin: { left: 14, right: 14 },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50 },
-        1: { cellWidth: 100 }
+        0: { cellWidth: 132 },
+        1: { cellWidth: 10, halign: 'center' },
+        2: { cellWidth: 40, halign: 'right' }
+      },
+      didParseCell: (data: any) => {
+        if (data.cell?.raw?.styles?.fillColor) {
+          data.cell.styles.fillColor = data.cell.raw.styles.fillColor;
+          data.cell.styles.fontStyle = 'bold';
+        }
       }
     });
-
-    finalYPos = (pdf as any).lastAutoTable.finalY + 15;
-
-    // Signature line
-    pdf.setFontSize(this.FONT_SIZE.SMALL);
-    pdf.text('Signature: _________________________', 20, finalYPos);
-    finalYPos += 10;
-    pdf.text(`(${form16Doc.signatory?.name || 'N/A'})`, 20, finalYPos);
-    finalYPos += 5;
-    pdf.text(form16Doc.signatory?.designation || 'N/A', 20, finalYPos);
 
     // Footer
     pdf.setFontSize(this.FONT_SIZE.SMALL);
     pdf.setTextColor(100, 100, 100);
-    pdf.text('This is a computer generated Form 16 Part B. Generated by ZenithBooks.', 20, 270);
-    pdf.text(`Generated on: ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}`, 20, 280);
+    pdf.text('Computer generated by ZenithBooks.', 14, 285);
   }
 
   /**
