@@ -88,6 +88,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse FY like "2025-26" or "2025-2026" into numeric years.
+    const [fyStartRaw, fyEndRaw] = (financialYear || "").split("-");
+    const fyStartYear = Number(fyStartRaw);
+    let fyEndYear = Number(fyEndRaw);
+    if (!Number.isFinite(fyStartYear) || !Number.isFinite(fyEndYear)) {
+      return NextResponse.json(
+        { success: false, errors: ['Invalid Financial Year format. Expected like "2025-26"'] },
+        { status: 400 }
+      );
+    }
+    // If end year is 2-digit (e.g. 26), resolve it to the correct century (e.g. 2026).
+    if (fyEndRaw?.length === 2) {
+      const century = Math.floor(fyStartYear / 100) * 100;
+      fyEndYear = century + fyEndYear;
+      // Handle FY spanning centuries (e.g. 1999-00)
+      if (fyEndYear < fyStartYear) fyEndYear += 100;
+    }
+
     // IMPORTANT:
     // This API route runs server-side without Firebase Auth context, so Firestore rules
     // will deny reads/writes (causing 500 permission-denied). Therefore, we avoid any
@@ -99,8 +117,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const doj = employeeFromClient?.doj ? new Date(employeeFromClient.doj as any) : new Date(`${financialYear.split('-')[0]}-04-01`);
-    const safeDoj = isNaN(doj.getTime()) ? new Date(`${financialYear.split('-')[0]}-04-01`) : doj;
+    const doj = employeeFromClient?.doj ? new Date(employeeFromClient.doj as any) : new Date(`${fyStartYear}-04-01`);
+    const safeDoj = isNaN(doj.getTime()) ? new Date(`${fyStartYear}-04-01`) : doj;
 
     const employee: EmployeeMaster = {
       id: employeeId,
@@ -215,10 +233,11 @@ export async function POST(request: NextRequest) {
 
     // Section 16 deductions
     let section16Data: Section16Deductions;
+    const standardDeduction = Form16ComputationEngine.getStandardDeduction(financialYear, employee.taxRegime);
     section16Data = {
       employeeId,
       financialYear,
-      standardDeduction: 50000,
+      standardDeduction,
       professionalTax: 0,
       entertainmentAllowance: 0,
       createdAt: Timestamp.now(),
@@ -288,11 +307,12 @@ export async function POST(request: NextRequest) {
     );
 
     // Create Form 16 document
-    const assessmentYear = `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`;
+    // AY is the year following the FY (e.g. FY 2025-26 => AY 2026-27)
+    const assessmentYear = `${fyEndYear}-${String((fyEndYear + 1) % 100).padStart(2, '0')}`;
 
     // Calculate period dates based on DOJ and financial year
-    const fyStartDate = new Date(`${financialYear.split('-')[0]}-04-01`);
-    const fyEndDate = new Date(`${financialYear.split('-')[1]}-03-31`);
+    const fyStartDate = new Date(`${fyStartYear}-04-01`);
+    const fyEndDate = new Date(`${fyEndYear}-03-31`);
     
     // Handle DOJ - could be Date, Timestamp, or string
     let dojDate: Date;

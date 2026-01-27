@@ -6,8 +6,7 @@ import {
   ChapterVIA_Deductions,
   OtherIncome,
   TDSDetails,
-  Form16Computation,
-  TaxRegimeConfig
+  Form16Computation
 } from './form-16-models';
 
 /**
@@ -16,53 +15,96 @@ import {
  */
 export class Form16ComputationEngine {
 
-  private static taxRegimeConfig: TaxRegimeConfig = {
-    financialYear: '2024-25',
-    oldRegime: {
+  private static parseFinancialYear(financialYear: string): { startYear: number; endYear: number } {
+    const [fyStartRaw, fyEndRaw] = (financialYear || "").split("-");
+    const startYear = Number(fyStartRaw);
+    let endYear = Number(fyEndRaw);
+    if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+      // Fallback: assume current FY-like year to avoid crashing; validation should catch invalid formats.
+      const now = new Date();
+      return { startYear: now.getFullYear(), endYear: now.getFullYear() + 1 };
+    }
+    if ((fyEndRaw || "").length === 2) {
+      const century = Math.floor(startYear / 100) * 100;
+      endYear = century + endYear;
+      if (endYear < startYear) endYear += 100; // handle 1999-00 style
+    }
+    return { startYear, endYear };
+  }
+
+  private static getTaxConfig(financialYear: string) {
+    const { startYear } = this.parseFinancialYear(financialYear);
+    const cess = 0.04;
+
+    const oldRegime = {
       slabs: [
         { min: 0, max: 250000, rate: 0 },
         { min: 250000, max: 500000, rate: 0.05 },
         { min: 500000, max: 1000000, rate: 0.20 },
         { min: 1000000, max: null, rate: 0.30 }
       ],
-      cess: 0.04, // 4%
+      cess,
       surcharge: [
-        // General surcharge slabs for individuals (excluding special-rate income/marginal relief handling)
         { min: 0, max: 5000000, rate: 0 },            // <= 50L
         { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
         { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
         { min: 20000000, max: 50000000, rate: 0.25 }, // 2Cr - 5Cr
         { min: 50000000, max: null, rate: 0.37 }      // > 5Cr
       ]
-    },
-    newRegime: {
-      slabs: [
-        { min: 0, max: 300000, rate: 0 },
-        { min: 300000, max: 700000, rate: 0.05 },
-        { min: 700000, max: 1000000, rate: 0.10 },
-        { min: 1000000, max: 1200000, rate: 0.15 },
-        { min: 1200000, max: 1500000, rate: 0.20 },
-        { min: 1500000, max: null, rate: 0.30 }
-      ],
-      cess: 0.04, // 4%
-      surcharge: [
-        // New regime: surcharge applies similarly, but max surcharge is effectively capped (commonly 25%).
-        { min: 0, max: 5000000, rate: 0 },            // <= 50L
-        { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
-        { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
-        { min: 20000000, max: null, rate: 0.25 }      // > 2Cr (cap 25%)
-      ]
-    },
-    rebate87A: {
-      // Old regime: income <= 5L -> rebate up to 12,500
-      // New regime (115BAC): income <= 7L -> rebate up to 25,000 (effectively zero tax up to 7L)
-      maxAmount: 12500,
-      incomeLimit: 500000,
-      // Backward-compatible extensions (used by our engine)
-      maxAmountNewRegime: 25000,
-      incomeLimitNewRegime: 700000
-    }
-  };
+    };
+
+    // New regime slabs changed with Finance Act 2025 for FY 2025-26 onwards.
+    const newRegime =
+      startYear >= 2025
+        ? {
+            slabs: [
+              { min: 0, max: 400000, rate: 0 },
+              { min: 400000, max: 800000, rate: 0.05 },
+              { min: 800000, max: 1200000, rate: 0.10 },
+              { min: 1200000, max: 1600000, rate: 0.15 },
+              { min: 1600000, max: 2000000, rate: 0.20 },
+              { min: 2000000, max: 2400000, rate: 0.25 },
+              { min: 2400000, max: null, rate: 0.30 }
+            ],
+            cess,
+            surcharge: [
+              { min: 0, max: 5000000, rate: 0 },            // <= 50L
+              { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
+              { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
+              { min: 20000000, max: null, rate: 0.25 }      // > 2Cr (cap 25%)
+            ],
+            rebate87A: { incomeLimit: 1200000, maxAmount: 60000 },
+            standardDeduction: 75000
+          }
+        : {
+            slabs: [
+              { min: 0, max: 300000, rate: 0 },
+              { min: 300000, max: 700000, rate: 0.05 },
+              { min: 700000, max: 1000000, rate: 0.10 },
+              { min: 1000000, max: 1200000, rate: 0.15 },
+              { min: 1200000, max: 1500000, rate: 0.20 },
+              { min: 1500000, max: null, rate: 0.30 }
+            ],
+            cess,
+            surcharge: [
+              { min: 0, max: 5000000, rate: 0 },            // <= 50L
+              { min: 5000000, max: 10000000, rate: 0.10 },  // 50L - 1Cr
+              { min: 10000000, max: 20000000, rate: 0.15 }, // 1Cr - 2Cr
+              { min: 20000000, max: null, rate: 0.25 }      // > 2Cr (cap 25%)
+            ],
+            rebate87A: { incomeLimit: 700000, maxAmount: 25000 },
+            standardDeduction: 50000
+          };
+
+    return {
+      oldRegime: {
+        ...oldRegime,
+        rebate87A: { incomeLimit: 500000, maxAmount: 12500 },
+        standardDeduction: 50000
+      },
+      newRegime
+    };
+  }
 
   /**
    * Main computation function - calculates Form 16 Part B
@@ -106,7 +148,7 @@ export class Form16ComputationEngine {
 
     // Step 10-12: Tax Calculation
     const { taxOnIncome, surcharge, rebate87A, taxAfterRebate, healthEducationCess, totalTaxLiability } =
-      this.calculateTax(totalTaxableIncome, employee.taxRegime);
+      this.calculateTax(totalTaxableIncome, employee.taxRegime, employee.residentialStatus, salaryStructure.financialYear);
 
     // Step 13: Relief under Section 89
     const relief89 = tdsDetails.relief89 || 0;
@@ -119,10 +161,10 @@ export class Form16ComputationEngine {
 
     // Calculate both regimes for comparison
     const oldRegimeTax = employee.taxRegime === 'OLD' ? totalTaxLiability :
-      this.calculateTaxOnly(totalTaxableIncome, 'OLD');
+      this.calculateTaxOnly(totalTaxableIncome, 'OLD', salaryStructure.financialYear);
 
     const newRegimeTax = employee.taxRegime === 'NEW' ? totalTaxLiability :
-      this.calculateTaxOnly(totalTaxableIncome, 'NEW');
+      this.calculateTaxOnly(totalTaxableIncome, 'NEW', salaryStructure.financialYear);
 
     // Calculate Section 17 breakdown for Part B
     const section17_1 = this.calculateSection17_1(salaryStructure);
@@ -370,8 +412,9 @@ export class Form16ComputationEngine {
   /**
    * Calculate surcharge based on income
    */
-  private static calculateSurcharge(income: number, tax: number, regime: 'OLD' | 'NEW'): number {
-    const regimeConfig = regime === 'OLD' ? this.taxRegimeConfig.oldRegime : this.taxRegimeConfig.newRegime;
+  private static calculateSurcharge(income: number, tax: number, regime: 'OLD' | 'NEW', financialYear: string): number {
+    const taxCfg = this.getTaxConfig(financialYear);
+    const regimeConfig = regime === 'OLD' ? taxCfg.oldRegime : taxCfg.newRegime;
     let surcharge = 0;
     
     for (const surchargeSlab of regimeConfig.surcharge) {
@@ -389,15 +432,42 @@ export class Form16ComputationEngine {
   /**
    * Calculate tax liability with rebate and cess
    */
-  private static calculateTax(income: number, regime: 'OLD' | 'NEW') {
-    const taxOnIncome = this.calculateTaxOnly(income, regime);
-    const surcharge = this.calculateSurcharge(income, taxOnIncome, regime);
+  private static calculateTax(
+    income: number,
+    regime: 'OLD' | 'NEW',
+    residentialStatus: EmployeeMaster["residentialStatus"],
+    financialYear: string
+  ) {
+    const taxOnIncome = this.calculateTaxOnly(income, regime, financialYear);
+    const surcharge = this.calculateSurcharge(income, taxOnIncome, regime, financialYear);
     const taxAfterSurcharge = taxOnIncome + surcharge;
-    const rebate87A = this.calculateRebate87AByRegime(income, taxAfterSurcharge, regime);
-    const taxAfterRebate = Math.max(0, taxAfterSurcharge - rebate87A);
+    const rebate87A = this.calculateRebate87AByRegime(income, taxAfterSurcharge, regime, financialYear);
+    let taxAfterRebate = Math.max(0, taxAfterSurcharge - rebate87A);
+
+    // Finance Act 2025: New regime rebate up to ₹12L and marginal relief for resident individuals above ₹12L.
+    if (regime === 'NEW') {
+      const cfg = this.getTaxConfig(financialYear).newRegime;
+      const rebateLimit = cfg.rebate87A?.incomeLimit ?? 700000;
+      if (financialYear && this.parseFinancialYear(financialYear).startYear >= 2025 && residentialStatus === 'resident') {
+        if (income > rebateLimit) {
+          const excess = Math.max(0, Math.round(income - rebateLimit));
+          // Apply marginal relief so that total tax payable does not exceed the excess income above the rebate limit.
+          // To align with CBDT Budget 2025 examples, we cap the *final payable* (tax + cess) to the excess.
+          const cessRate = cfg.cess || 0.04;
+          const payableWithCess = (base: number) => base + Math.round(base * cessRate);
+          if (payableWithCess(taxAfterRebate) > excess) {
+            // Start with a close estimate, then adjust down until the condition holds (at most a few steps).
+            let capped = Math.floor(excess / (1 + cessRate));
+            while (capped > 0 && payableWithCess(capped) > excess) capped--;
+            taxAfterRebate = capped;
+          }
+        }
+      }
+    }
     
     // Get regime-specific cess rate (4% for both regimes)
-    const regimeConfig = regime === 'OLD' ? this.taxRegimeConfig.oldRegime : this.taxRegimeConfig.newRegime;
+    const taxCfg = this.getTaxConfig(financialYear);
+    const regimeConfig = regime === 'OLD' ? taxCfg.oldRegime : taxCfg.newRegime;
     const cessRate = regimeConfig.cess || 0.04; // Default to 4% if not defined
     const healthEducationCess = Math.round(taxAfterRebate * cessRate);
     const totalTaxLiability = taxAfterRebate + healthEducationCess;
@@ -415,8 +485,9 @@ export class Form16ComputationEngine {
   /**
    * Calculate tax based on slabs only
    */
-  private static calculateTaxOnly(income: number, regime: 'OLD' | 'NEW'): number {
-    const regimeConfig = regime === 'OLD' ? this.taxRegimeConfig.oldRegime : this.taxRegimeConfig.newRegime;
+  private static calculateTaxOnly(income: number, regime: 'OLD' | 'NEW', financialYear: string): number {
+    const taxCfg = this.getTaxConfig(financialYear);
+    const regimeConfig = regime === 'OLD' ? taxCfg.oldRegime : taxCfg.newRegime;
     let tax = 0;
     let remainingIncome = income;
 
@@ -440,23 +511,18 @@ export class Form16ComputationEngine {
   /**
    * Calculate Rebate under Section 87A
    */
-  private static calculateRebate87A(income: number, taxOnIncome: number): number {
-    if (income <= this.taxRegimeConfig.rebate87A.incomeLimit) {
-      return Math.min(taxOnIncome, this.taxRegimeConfig.rebate87A.maxAmount);
+  private static calculateRebate87AByRegime(
+    income: number,
+    taxOnIncome: number,
+    regime: 'OLD' | 'NEW',
+    financialYear: string
+  ): number {
+    const taxCfg = this.getTaxConfig(financialYear);
+    const rebate = regime === 'OLD' ? taxCfg.oldRegime.rebate87A : taxCfg.newRegime.rebate87A;
+    if (income <= rebate.incomeLimit) {
+      return Math.min(taxOnIncome, rebate.maxAmount);
     }
     return 0;
-  }
-
-  private static calculateRebate87AByRegime(income: number, taxOnIncome: number, regime: 'OLD' | 'NEW'): number {
-    if (regime === 'NEW') {
-      const limit = (this.taxRegimeConfig.rebate87A as any).incomeLimitNewRegime ?? 700000;
-      const max = (this.taxRegimeConfig.rebate87A as any).maxAmountNewRegime ?? 25000;
-      if (income <= limit) {
-        return Math.min(taxOnIncome, max);
-      }
-      return 0;
-    }
-    return this.calculateRebate87A(income, taxOnIncome);
   }
 
   /**
@@ -501,8 +567,9 @@ export class Form16ComputationEngine {
    * Get default values for a new computation
    */
   static getDefaultValues(financialYear: string) {
-    const fyStart = `01/04/${financialYear.split('-')[0]}`;
-    const fyEnd = `31/03/${financialYear.split('-')[1]}`;
+    const { startYear, endYear } = this.parseFinancialYear(financialYear);
+    const fyStart = `01/04/${startYear}`;
+    const fyEnd = `31/03/${endYear}`;
     
     return {
       exemptions: {
@@ -520,7 +587,7 @@ export class Form16ComputationEngine {
         helperAllowance: 0
       } as Partial<ExemptionsSection10>,
       section16: {
-        standardDeduction: this.getStandardDeduction(financialYear),
+        standardDeduction: this.getStandardDeduction(financialYear, 'OLD'),
         professionalTax: 0,
         entertainmentAllowance: 0
       } as Partial<Section16Deductions>,
@@ -564,8 +631,12 @@ export class Form16ComputationEngine {
   /**
    * Get standard deduction based on financial year
    */
-  private static getStandardDeduction(financialYear: string): number {
-    // Standard deduction increased to ₹50,000 from FY 2018-19
+  static getStandardDeduction(financialYear: string, regime: 'OLD' | 'NEW'): number {
+    const { startYear } = this.parseFinancialYear(financialYear);
+    if (regime === 'NEW') {
+      // Finance Act 2025: New regime standard deduction increased to ₹75,000 from FY 2025-26.
+      return startYear >= 2025 ? 75000 : 50000;
+    }
     return 50000;
   }
 }

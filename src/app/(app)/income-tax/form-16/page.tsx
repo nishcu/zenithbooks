@@ -2589,26 +2589,48 @@ export default function Form16() {
                     {/* Exemptions under Section 10 */}
                     <div className="space-y-3">
                       <h4 className="font-semibold text-base">2. Exemptions under Section 10</h4>
+                      {computationResult.taxRegime === "NEW" && (
+                        <p className="text-xs text-muted-foreground">
+                          Note: Under the New Regime (115BAC), most Section 10 exemptions like HRA/LTA are not applicable, so
+                          they are treated as ₹0 in tax computation.
+                        </p>
+                      )}
                       <div className="space-y-1 pl-4">
                         <div className="flex justify-between text-sm">
                           <span>HRA Exemption:</span>
-                          <span className="font-mono">₹{form16Data.exemptions.hraExempt.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">
+                            ₹{(computationResult.taxRegime === "NEW" ? 0 : form16Data.exemptions.hraExempt).toLocaleString("en-IN")}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>LTA Exemption:</span>
-                          <span className="font-mono">₹{form16Data.exemptions.ltaExempt.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">
+                            ₹{(computationResult.taxRegime === "NEW" ? 0 : form16Data.exemptions.ltaExempt).toLocaleString("en-IN")}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Children Education Allowance:</span>
-                          <span className="font-mono">₹{form16Data.exemptions.childrenEduAllowance.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">
+                            ₹{(computationResult.taxRegime === "NEW" ? 0 : form16Data.exemptions.childrenEduAllowance).toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Hostel Allowance:</span>
-                          <span className="font-mono">₹{form16Data.exemptions.hostelAllowance.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">
+                            ₹{(computationResult.taxRegime === "NEW" ? 0 : form16Data.exemptions.hostelAllowance).toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Other Exemption (Section 10):</span>
-                          <span className="font-mono">₹{form16Data.exemptions.otherSection10.toLocaleString('en-IN')}</span>
+                          <span className="font-mono">
+                            ₹{(computationResult.taxRegime === "NEW" ? 0 : form16Data.exemptions.otherSection10).toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>
                         </div>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">
@@ -2630,6 +2652,14 @@ export default function Form16() {
                         <div className="flex justify-between">
                           <span>Less: Exemptions u/s 10:</span>
                           <span className="font-mono">₹{computationResult.exemptionsSection10.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Net Salary:</span>
+                          <span className="font-mono">₹{computationResult.netSalary.toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Less: Deductions u/s 16 (Std Deduction, etc.):</span>
+                          <span className="font-mono">₹{computationResult.deductionsSection16.toLocaleString("en-IN")}</span>
                         </div>
                       </div>
                       <div className="flex justify-between font-bold text-base border-t pt-2">
@@ -2797,8 +2827,30 @@ export default function Form16() {
                           <span className="font-mono">₹{computationResult.taxOnIncome.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between text-sm">
+                          <span>Add: Surcharge (if applicable):</span>
+                          <span className="font-mono">₹{(computationResult.surcharge || 0).toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
                           <span>Less: Rebate u/s 87A:</span>
                           <span className="font-mono">₹{computationResult.rebate87A.toLocaleString('en-IN')}</span>
+                        </div>
+                        {(() => {
+                          const baseTaxBeforeCess =
+                            (computationResult.taxOnIncome || 0) +
+                            (computationResult.surcharge || 0) -
+                            (computationResult.rebate87A || 0);
+                          const marginalRelief = Math.max(0, baseTaxBeforeCess - (computationResult.taxAfterRebate || 0));
+                          if (marginalRelief <= 0) return null;
+                          return (
+                            <div className="flex justify-between text-sm">
+                              <span>Less: Marginal Relief (if applicable):</span>
+                              <span className="font-mono">₹{marginalRelief.toLocaleString("en-IN")}</span>
+                            </div>
+                          );
+                        })()}
+                        <div className="flex justify-between text-sm">
+                          <span>Tax after Rebate/Relief:</span>
+                          <span className="font-mono">₹{(computationResult.taxAfterRebate || 0).toLocaleString("en-IN")}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Add: Health & Education Cess @4%:</span>

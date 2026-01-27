@@ -142,7 +142,8 @@ export interface ExemptionsSection10 {
 export interface Section16Deductions {
   employeeId: string;
   financialYear: string;
-  standardDeduction: number; // Always 50000 for FY 2023-24 onwards
+  // Standard deduction amount depends on FY and regime (e.g. New regime updated in Finance Act 2025).
+  standardDeduction: number;
   professionalTax: number;
   entertainmentAllowance: number;
   otherDeductions?: { [key: string]: number };
