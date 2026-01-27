@@ -76,7 +76,7 @@ export function TaskFilters({ onFilterChange, initialFilters = {} }: TaskFilters
             {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={category || undefined} onValueChange={(value) => setCategory(value || "")}>
+              <Select value={category || "all"} onValueChange={(value) => setCategory(value === "all" ? "" : value || "")}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
@@ -110,7 +110,7 @@ export function TaskFilters({ onFilterChange, initialFilters = {} }: TaskFilters
             {/* State */}
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Select value={state || undefined} onValueChange={(value) => setState(value === "all" ? "" : value || "")}>
+              <Select value={state || "all"} onValueChange={(value) => setState(value === "all" ? "" : value || "")}>
                 <SelectTrigger id="state">
                   <SelectValue placeholder="All states" />
                 </SelectTrigger>

@@ -890,7 +890,8 @@ export default function VoiceInvoiceEntryPage() {
                     <FormLabel>Product/Item (Optional)</FormLabel>
                     <Select 
                       onValueChange={(value) => {
-                        field.onChange(value || undefined);
+                        // Keep Select controlled (avoid undefined -> value transitions)
+                        field.onChange(value || "");
                         // Auto-calculate amount when product is selected
                         const selectedItem = items.find((i: any) => i.id === value);
                         if (selectedItem) {
@@ -907,7 +908,7 @@ export default function VoiceInvoiceEntryPage() {
                           form.setValue("amount", totalAmount);
                         }
                       }}
-                      value={field.value || undefined}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>

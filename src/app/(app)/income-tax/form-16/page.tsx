@@ -63,12 +63,17 @@ import { FileKey } from "lucide-react";
 
 interface Employee {
   id: string;
+  empId?: string;
   name: string;
   pan: string;
   designation: string;
-  aadhar?: string;
+  aadhaar?: string;
+  mobile?: string;
+  phone?: string;
   address?: string;
   doj?: Date | string; // Date of Joining
+  employmentType?: "permanent" | "contract" | "probation";
+  residentialStatus?: "resident" | "non-resident" | "resident-but-not-ordinarily-resident";
   selected?: boolean;
   status?: string;
   taxRegime?: string;
@@ -86,6 +91,7 @@ interface Form16Data {
   employeePan: string;
   employeeAadhar: string;
   employeeAddress: string;
+  employeeMobile: string;
   employeeDesignation: string;
   employeeDoj: string; // Date of Joining
   taxRegime: 'OLD' | 'NEW'; // Tax Regime for Form 16 generation
@@ -109,6 +115,7 @@ interface Form16Data {
     ltaExempt: number;
     childrenEduAllowance: number;
     hostelAllowance: number;
+    otherSection10: number; // Any other exemption under Section 10
   };
   deductions80: {
     section80C: number;
@@ -224,6 +231,9 @@ export default function Form16() {
     employeePan: "",
     employeeAadhar: "",
     employeeAddress: "",
+    employeeMobile: "",
+    employeeDesignation: "",
+    employeeDoj: new Date().toISOString().split('T')[0],
     salaryStructure: {
       basic: 0,
       hra: 0,
@@ -240,7 +250,8 @@ export default function Form16() {
       hraExempt: 0,
       ltaExempt: 0,
       childrenEduAllowance: 0,
-      hostelAllowance: 0
+      hostelAllowance: 0,
+      otherSection10: 0
     },
     deductions80: {
       section80C: 0,
@@ -271,6 +282,9 @@ export default function Form16() {
       relief89: 0
     },
     taxRegime: "NEW",
+    signatoryName: userData?.name || userData?.companyName || "",
+    signatoryDesignation: userData?.designation || "Authorized Signatory",
+    signatoryPlace: userData?.address?.split(',')[0] || "",
     includePartA: false,
     partA: {
       certificateNumber: "",
@@ -310,6 +324,7 @@ export default function Form16() {
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     pan: "",
+    mobile: "",
     aadhaar: "",
     designation: "",
     address: "",
@@ -331,6 +346,12 @@ export default function Form16() {
     // Employee details validation
     if (!data.employeeName.trim()) {
       errors.push("Employee name is required");
+    }
+    const mobileDigits = (data.employeeMobile || "").replace(/\D/g, "");
+    if (!mobileDigits) {
+      errors.push("Employee mobile number is required");
+    } else if (mobileDigits.length !== 10) {
+      errors.push("Employee mobile number must be 10 digits");
     }
     if (!data.employeeAddress.trim()) {
       errors.push("Employee address is required");
@@ -462,6 +483,15 @@ export default function Form16() {
       return;
     }
 
+    if (!newEmployee.mobile.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Employee mobile number is required"
+      });
+      return;
+    }
+
     // Validate PAN format
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     if (!panRegex.test(newEmployee.pan.toUpperCase())) {
@@ -469,6 +499,17 @@ export default function Form16() {
         variant: "destructive",
         title: "Invalid PAN",
         description: "PAN must be in format ABCDE1234F"
+      });
+      return;
+    }
+
+    // Validate Mobile (10 digits)
+    const mobileDigits = newEmployee.mobile.replace(/\D/g, "");
+    if (mobileDigits.length !== 10) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Mobile",
+        description: "Mobile number must be 10 digits"
       });
       return;
     }
@@ -490,6 +531,7 @@ export default function Form16() {
         empId: `EMP-${Date.now()}`,
         name: newEmployee.name.trim(),
         pan: newEmployee.pan.toUpperCase(),
+        mobile: newEmployee.mobile.replace(/\D/g, ''),
         aadhaar: newEmployee.aadhaar.replace(/\s/g, '') || undefined,
         designation: newEmployee.designation.trim() || "Employee",
         address: newEmployee.address.trim() || "",
@@ -511,6 +553,7 @@ export default function Form16() {
         name: employeeData.name,
         pan: employeeData.pan,
         aadhaar: employeeData.aadhaar,
+        mobile: employeeData.mobile,
         designation: employeeData.designation,
         address: employeeData.address,
         status: "Active",
@@ -526,13 +569,17 @@ export default function Form16() {
         employeeName: employeeData.name,
         employeePan: employeeData.pan,
         employeeAadhar: employeeData.aadhaar || "",
-        employeeAddress: employeeData.address
+        employeeAddress: employeeData.address,
+        employeeMobile: employeeData.mobile || "",
+        employeeDesignation: employeeData.designation || "",
+        employeeDoj: newEmployee.doj
       }));
 
       // Reset form
       setNewEmployee({
         name: "",
         pan: "",
+        mobile: "",
         aadhaar: "",
         designation: "",
         address: "",
@@ -578,6 +625,30 @@ export default function Form16() {
     setValidationErrors([]);
     setIsLoading(true);
     try {
+      // Persist employee mobile (required) into employee master for future use
+      try {
+        const mobileDigits = (form16Data.employeeMobile || "").replace(/\D/g, "");
+        if (user?.uid && form16Data.employeeId && mobileDigits) {
+          await updateDoc(doc(db, "employees", form16Data.employeeId), {
+            mobile: mobileDigits,
+            updatedAt: Timestamp.now(),
+          } as any);
+        }
+      } catch (e) {
+        // Non-blocking: do not fail generation if employee update fails
+        console.warn("Failed to update employee mobile:", e);
+      }
+
+      const exemptionsPayload = {
+        hraExempt: form16Data.exemptions.hraExempt,
+        ltaExempt: form16Data.exemptions.ltaExempt,
+        childrenEduAllowance: form16Data.exemptions.childrenEduAllowance,
+        hostelAllowance: form16Data.exemptions.hostelAllowance,
+        otherExemptions: form16Data.exemptions.otherSection10
+          ? { other: form16Data.exemptions.otherSection10 }
+          : undefined,
+      };
+
       const response = await fetch('/api/form-16/generate', {
         method: 'POST',
         headers: {
@@ -586,6 +657,20 @@ export default function Form16() {
         },
         body: JSON.stringify({
           employeeId: form16Data.employeeId,
+          employee: {
+            id: form16Data.employeeId,
+            empId: employees.find((e) => e.id === form16Data.employeeId)?.empId || undefined,
+            name: form16Data.employeeName,
+            pan: form16Data.employeePan,
+            mobile: (form16Data.employeeMobile || "").replace(/\D/g, "") || undefined,
+            aadhaar: form16Data.employeeAadhar || undefined,
+            address: form16Data.employeeAddress || "",
+            designation: form16Data.employeeDesignation || "Employee",
+            doj: form16Data.employeeDoj || undefined,
+            employmentType: employees.find((e) => e.id === form16Data.employeeId)?.employmentType || "permanent",
+            residentialStatus: employees.find((e) => e.id === form16Data.employeeId)?.residentialStatus || "resident",
+            taxRegime: form16Data.taxRegime,
+          },
           financialYear: form16Data.financialYear,
           employerName: form16Data.employerName || form16Data.employerCompanyName,
           employerTan: form16Data.employerTan,
@@ -599,7 +684,7 @@ export default function Form16() {
           partAData: form16Data.includePartA ? form16Data.partA : undefined,
           overrideData: {
             salaryStructure: form16Data.salaryStructure,
-            exemptions: form16Data.exemptions,
+            exemptions: exemptionsPayload,
             deductions80: form16Data.deductions80,
             otherIncome: form16Data.otherIncome,
             tdsDetails: form16Data.tdsDetails
@@ -607,7 +692,14 @@ export default function Form16() {
         })
       });
 
-      const result = await response.json();
+      // Robust parsing: Next.js may return HTML on 500; avoid crashing on response.json()
+      const rawText = await response.text();
+      let result: any = null;
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        result = { success: false, errors: [rawText || `Request failed (${response.status})`] };
+      }
 
       if (result.success) {
         setComputationResult(result.data.computation);
@@ -632,7 +724,7 @@ export default function Form16() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate Form 16"
+        description: error instanceof Error ? error.message : "Failed to generate Form 16"
       });
     } finally {
       setIsLoading(false);
@@ -780,7 +872,20 @@ export default function Form16() {
           'x-user-id': user!.uid
         },
         body: JSON.stringify({
-          employeeIds: selectedEmployees.map(emp => emp.id),
+          employees: selectedEmployees.map(emp => ({
+            id: emp.id,
+            empId: (emp as any).empId,
+            name: emp.name,
+            pan: emp.pan,
+            aadhaar: (emp as any).aadhaar,
+            mobile: (emp as any).mobile || (emp as any).phone,
+            address: emp.address,
+            designation: emp.designation,
+            doj: emp.doj,
+            employmentType: (emp as any).employmentType,
+            residentialStatus: (emp as any).residentialStatus,
+            taxRegime: emp.taxRegime,
+          })),
           financialYear: bulkFinancialYear,
           employerName: bulkEmployerName,
           employerTan: bulkEmployerTan,
@@ -791,7 +896,13 @@ export default function Form16() {
         })
       });
 
-      const result = await response.json();
+      const rawText = await response.text();
+      let result: any = null;
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        result = { success: false, errors: [rawText || `Request failed (${response.status})`] };
+      }
 
       if (result.success) {
         setBulkResults(result.data);
@@ -1193,6 +1304,15 @@ export default function Form16() {
                                 />
                               </div>
                               <div className="space-y-2">
+                                <Label htmlFor="emp-mobile">Mobile Number *</Label>
+                                <Input
+                                  id="emp-mobile"
+                                  value={newEmployee.mobile}
+                                  onChange={(e) => setNewEmployee(prev => ({ ...prev, mobile: e.target.value.replace(/[^0-9+\\s-]/g, '') }))}
+                                  placeholder="10-digit mobile number"
+                                />
+                              </div>
+                              <div className="space-y-2">
                                 <Label htmlFor="emp-aadhaar">Aadhaar Number</Label>
                                 <Input
                                   id="emp-aadhaar"
@@ -1315,8 +1435,9 @@ export default function Form16() {
                           employeeId: value,
                           employeeName: employee?.name || "",
                           employeePan: employee?.pan || "",
-                          employeeAadhar: employee?.aadhar || "",
+                          employeeAadhar: (employee as any)?.aadhaar || "",
                           employeeAddress: employee?.address || "",
+                          employeeMobile: (employee as any)?.mobile || (employee as any)?.phone || "",
                           employeeDesignation: employee?.designation || "",
                           employeeDoj: doj,
                           taxRegime: (employee?.taxRegime as 'OLD' | 'NEW') || 'NEW',
@@ -1363,6 +1484,14 @@ export default function Form16() {
                         value={form16Data.employeePan}
                         onChange={(e) => setForm16Data(prev => ({ ...prev, employeePan: e.target.value }))}
                         placeholder="AAAAA0000A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Mobile Number *</Label>
+                      <Input
+                        value={form16Data.employeeMobile}
+                        onChange={(e) => setForm16Data(prev => ({ ...prev, employeeMobile: e.target.value }))}
+                        placeholder="10-digit mobile number"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1612,6 +1741,42 @@ export default function Form16() {
                           exemptions: { ...prev.exemptions, ltaExempt: Number(e.target.value) }
                         }))}
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Children Education Allowance</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.exemptions.childrenEduAllowance}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          exemptions: { ...prev.exemptions, childrenEduAllowance: Number(e.target.value) }
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hostel Allowance</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.exemptions.hostelAllowance}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          exemptions: { ...prev.exemptions, hostelAllowance: Number(e.target.value) }
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label>Other Exemption (Section 10)</Label>
+                      <Input
+                        type="number"
+                        value={form16Data.exemptions.otherSection10}
+                        onChange={(e) => setForm16Data(prev => ({
+                          ...prev,
+                          exemptions: { ...prev.exemptions, otherSection10: Number(e.target.value) }
+                        }))}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Any other exemption eligible under Section 10 (optional).
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2440,6 +2605,10 @@ export default function Form16() {
                         <div className="flex justify-between text-sm">
                           <span>Hostel Allowance:</span>
                           <span className="font-mono">₹{form16Data.exemptions.hostelAllowance.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Other Exemption (Section 10):</span>
+                          <span className="font-mono">₹{form16Data.exemptions.otherSection10.toLocaleString('en-IN')}</span>
                         </div>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">

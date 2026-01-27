@@ -101,7 +101,7 @@ export default function ProfessionalsListPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">State</label>
-                <Select value={stateFilter || undefined} onValueChange={(value) => setStateFilter(value === "all" ? "" : value || "")}>
+                <Select value={stateFilter || "all"} onValueChange={(value) => setStateFilter(value === "all" ? "" : value || "")}>
                   <SelectTrigger>
                     <SelectValue placeholder="All states" />
                   </SelectTrigger>

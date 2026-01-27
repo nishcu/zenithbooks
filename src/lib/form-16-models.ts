@@ -6,6 +6,7 @@ export interface EmployeeMaster {
   empId: string;
   name: string;
   pan: string;
+  mobile?: string;
   aadhaar?: string;
   address?: string; // Employee address
   designation: string;

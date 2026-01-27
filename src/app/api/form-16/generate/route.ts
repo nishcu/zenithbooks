@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { Buffer } from 'buffer';
 import { Form16ComputationEngine } from '@/lib/form-16-computation';
 import { Form16PDFGenerator } from '@/lib/form-16-pdf';
@@ -38,6 +37,19 @@ export async function POST(request: NextRequest) {
       signatoryDesignation?: string; 
       signatoryPlace?: string; 
       taxRegime?: 'OLD' | 'NEW';
+      employee?: Partial<EmployeeMaster> & {
+        id?: string;
+        name?: string;
+        pan?: string;
+        aadhaar?: string;
+        address?: string;
+        designation?: string;
+        doj?: string | Date;
+        employmentType?: EmployeeMaster["employmentType"];
+        residentialStatus?: EmployeeMaster["residentialStatus"];
+        taxRegime?: EmployeeMaster["taxRegime"];
+        mobile?: string;
+      };
       includePartA?: boolean;
       partAData?: {
         certificateNumber: string;
@@ -64,6 +76,7 @@ export async function POST(request: NextRequest) {
       employerPan, 
       employerAddress, 
       taxRegime: overrideTaxRegime,
+      employee: employeeFromClient,
       includePartA = false,
       partAData
     } = body;
@@ -75,52 +88,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch employee data
-    const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
-    if (!employeeDoc.exists()) {
+    // IMPORTANT:
+    // This API route runs server-side without Firebase Auth context, so Firestore rules
+    // will deny reads/writes (causing 500 permission-denied). Therefore, we avoid any
+    // Firestore access here and rely on the caller to provide employee/employer inputs.
+    if (!employeeFromClient?.name || !employeeFromClient?.pan) {
       return NextResponse.json(
-        { success: false, errors: ['Employee not found'] },
-        { status: 404 }
+        { success: false, errors: ['Employee details (name, PAN) must be provided'] },
+        { status: 400 }
       );
     }
 
-    const employee = { id: employeeDoc.id, ...employeeDoc.data() } as EmployeeMaster;
-    
-    // Override tax regime if provided in request (for Form 16 generation)
-    if (overrideTaxRegime) {
-      employee.taxRegime = overrideTaxRegime;
-    }
+    const doj = employeeFromClient?.doj ? new Date(employeeFromClient.doj as any) : new Date(`${financialYear.split('-')[0]}-04-01`);
+    const safeDoj = isNaN(doj.getTime()) ? new Date(`${financialYear.split('-')[0]}-04-01`) : doj;
 
-    // Verify user has access to this employee
-    if (employee.employerId !== userId) {
-      return NextResponse.json(
-        { success: false, errors: ['Access denied'] },
-        { status: 403 }
-      );
-    }
+    const employee: EmployeeMaster = {
+      id: employeeId,
+      empId: employeeFromClient.empId || employeeId,
+      name: employeeFromClient.name,
+      pan: employeeFromClient.pan,
+      mobile: (employeeFromClient as any).mobile || undefined,
+      aadhaar: employeeFromClient.aadhaar || undefined,
+      address: employeeFromClient.address || "",
+      designation: employeeFromClient.designation || "Employee",
+      doj: safeDoj,
+      employmentType: employeeFromClient.employmentType || "permanent",
+      residentialStatus: employeeFromClient.residentialStatus || "resident",
+      taxRegime: overrideTaxRegime || (employeeFromClient.taxRegime as any) || "NEW",
+      employerId: userId,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
 
-    // Fetch or create default salary structure
-    let salaryStructure = await getDoc(doc(db, 'salaryStructures', `${employeeId}_${financialYear}`));
+    // Build salary structure from override data (no Firestore reads)
     let salaryData: SalaryStructure;
-
-    if (salaryStructure.exists()) {
-      salaryData = { id: salaryStructure.id, ...salaryStructure.data() } as SalaryStructure;
-    } else {
-      // Create default salary structure
-      // Handle override data - frontend sends flat structure, we need monthly/annual
-      const overrideSalary = overrideData?.salaryStructure || {};
-      
-      // Check if override is already in monthly/annual format or flat format
-      const isFlatFormat = overrideSalary.basic !== undefined && !overrideSalary.monthly;
-      
-      if (isFlatFormat) {
-        // Convert flat format to monthly/annual
-        // Frontend sends annual values, so use them directly for annual
-        // Calculate monthly by dividing by 12 (or use annual/12 for monthly)
-        const annualValue = (val: number) => val || 0;
-        const monthlyValue = (val: number) => (val || 0) / 12;
-        
-        salaryData = {
+    const overrideSalary: any = overrideData?.salaryStructure || {};
+    const isFlatFormat = overrideSalary.basic !== undefined && !overrideSalary.monthly;
+    const annualValue = (val: number) => val || 0;
+    const monthlyValue = (val: number) => (val || 0) / 12;
+    salaryData = isFlatFormat
+      ? {
           employeeId,
           financialYear,
           monthly: {
@@ -149,10 +156,8 @@ export async function POST(request: NextRequest) {
           },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
-        };
-      } else {
-        // Already in monthly/annual format
-        salaryData = {
+        }
+      : {
           employeeId,
           financialYear,
           monthly: {
@@ -182,110 +187,76 @@ export async function POST(request: NextRequest) {
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
         };
-      }
-    }
 
-    // Fetch or create default exemptions
-    let exemptionsDoc = await getDoc(doc(db, 'exemptions', `${employeeId}_${financialYear}`));
+    // Exemptions (Section 10)
     let exemptionsData: ExemptionsSection10;
+    const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
+    exemptionsData = {
+      employeeId,
+      financialYear,
+      travelConcession: 0,
+      gratuityExempt: 0,
+      commutedPensionExempt: 0,
+      leaveEncashmentExempt: 0,
+      hraExempt: 0,
+      childrenEduAllowance: 0,
+      hostelAllowance: 0,
+      transportAllowance: 0,
+      medicalAllowance: 0,
+      ltaExempt: 0,
+      uniformAllowance: 0,
+      helperAllowance: 0,
+      otherExemptions: {},
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      ...(defaultValues.exemptions as any),
+      ...overrideData?.exemptions
+    } as any;
 
-    if (exemptionsDoc.exists()) {
-      exemptionsData = { id: exemptionsDoc.id, ...exemptionsDoc.data() } as ExemptionsSection10;
-    } else {
-      const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
-      exemptionsData = {
-        employeeId,
-        financialYear,
-        hraExempt: 0,
-        ltaExempt: 0,
-        childrenEduAllowance: 0,
-        hostelAllowance: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.exemptions
-      };
-    }
-
-    // Fetch or create default Section 16 deductions
-    let section16Doc = await getDoc(doc(db, 'section16Deductions', `${employeeId}_${financialYear}`));
+    // Section 16 deductions
     let section16Data: Section16Deductions;
+    section16Data = {
+      employeeId,
+      financialYear,
+      standardDeduction: 50000,
+      professionalTax: 0,
+      entertainmentAllowance: 0,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    };
 
-    if (section16Doc.exists()) {
-      section16Data = { id: section16Doc.id, ...section16Doc.data() } as Section16Deductions;
-    } else {
-      const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
-      section16Data = {
-        employeeId,
-        financialYear,
-        standardDeduction: 50000,
-        professionalTax: 0,
-        entertainmentAllowance: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.deductions80
-      };
-    }
-
-    // Fetch or create default Chapter VI-A deductions
-    let chapterVIADoc = await getDoc(doc(db, 'chapterVIA_Deductions', `${employeeId}_${financialYear}`));
+    // Chapter VI-A deductions
     let chapterVIAData: ChapterVIA_Deductions;
+    chapterVIAData = {
+      employeeId,
+      financialYear,
+      ...(defaultValues.chapterVIA as any),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      ...overrideData?.deductions80
+    } as any;
 
-    if (chapterVIADoc.exists()) {
-      chapterVIAData = { id: chapterVIADoc.id, ...chapterVIADoc.data() } as ChapterVIA_Deductions;
-    } else {
-      const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
-      chapterVIAData = {
-        employeeId,
-        financialYear,
-        section80C: 0,
-        section80CCD1B: 0,
-        section80D: 0,
-        section80TTA: 0,
-        section80G: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.deductions80
-      };
-    }
-
-    // Fetch or create default other income
-    let otherIncomeDoc = await getDoc(doc(db, 'otherIncome', `${employeeId}_${financialYear}`));
+    // Other income
     let otherIncomeData: OtherIncome;
+    otherIncomeData = {
+      employeeId,
+      financialYear,
+      ...(defaultValues.otherIncome as any),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      ...overrideData?.otherIncome
+    } as any;
 
-    if (otherIncomeDoc.exists()) {
-      otherIncomeData = { id: otherIncomeDoc.id, ...otherIncomeDoc.data() } as OtherIncome;
-    } else {
-      const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
-      otherIncomeData = {
-        employeeId,
-        financialYear,
-        savingsInterest: 0,
-        fdInterest: 0,
-        otherIncome: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.otherIncome
-      };
-    }
-
-    // Fetch or create default TDS details
-    let tdsDoc = await getDoc(doc(db, 'tdsDetails', `${employeeId}_${financialYear}`));
+    // TDS details
     let tdsData: TDSDetails;
-
-    if (tdsDoc.exists()) {
-      tdsData = { id: tdsDoc.id, ...tdsDoc.data() } as TDSDetails;
-    } else {
-      const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
-      tdsData = {
-        employeeId,
-        financialYear,
-        totalTdsDeducted: 0,
-        relief89: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        ...overrideData?.tdsDetails
-      };
-    }
+    tdsData = {
+      employeeId,
+      financialYear,
+      ...(defaultValues.tdsDetails as any),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      ...overrideData?.tdsDetails
+    } as any;
 
     // Validate data
     const validation = Form16ComputationEngine.validateComputationData(
@@ -315,10 +286,6 @@ export async function POST(request: NextRequest) {
       otherIncomeData,
       tdsData
     );
-
-    // Get employer details
-    const employerDoc = await getDoc(doc(db, 'users', userId));
-    const employerData = employerDoc.data();
 
     // Create Form 16 document
     const assessmentYear = `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`;
@@ -372,9 +339,9 @@ export async function POST(request: NextRequest) {
     const safePeriodTo = periodToStr || fyEnd;
 
     // Get signatory details from request body or use defaults
-    const finalSignatoryName = signatoryName || employerData?.name || employerData?.companyName || 'Authorized Signatory';
+    const finalSignatoryName = signatoryName || 'Authorized Signatory';
     const finalSignatoryDesignation = signatoryDesignation || 'Authorized Signatory';
-    const finalSignatoryPlace = signatoryPlace || employerData?.address?.split(',')[0] || '';
+    const finalSignatoryPlace = signatoryPlace || '';
 
     // Helper function to convert date string (YYYY-MM-DD) to DD/MM/YYYY format
     const convertDateFormat = (dateStr: string): string => {
@@ -484,10 +451,10 @@ export async function POST(request: NextRequest) {
       employeeId,
       financialYear,
       assessmentYear,
-      employerName: employerName || employerData?.companyName || employerData?.name || 'Employer Name',
-      employerTan: employerTan || employerData?.tan || '',
-      employerPan: employerPan || employerData?.pan || '',
-      employerAddress: employerAddress || employerData?.address || '',
+      employerName: employerName || 'Employer Name',
+      employerTan: employerTan || '',
+      employerPan: employerPan || '',
+      employerAddress: employerAddress || '',
       partA: finalPartAData,
       partB: computation,
       chapterVIADeductions: chapterVIAData,
@@ -504,9 +471,8 @@ export async function POST(request: NextRequest) {
       accessLogs: []
     };
 
-    // Save to database
-    const docRef = await addDoc(collection(db, 'form16Documents'), form16Document);
-    const savedDocument: Form16Document = { id: docRef.id, ...form16Document };
+    // No Firestore write here (see note above). Return an in-memory document for PDF generation.
+    const savedDocument: Form16Document = { id: `tmp_${employeeId}_${Date.now()}`, ...form16Document };
 
     // Generate PDF
     const pdfData = await Form16PDFGenerator.generateForm16PDF(savedDocument);

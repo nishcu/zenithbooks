@@ -205,7 +205,7 @@ export default function RapidInvoiceEntryPage() {
                                 <FormLabel>Product/Item (Optional)</FormLabel>
                                 <Select 
                                     onValueChange={(value) => handleItemChange(value || undefined)} 
-                                    value={field.value || undefined}
+                                    value={field.value ?? ""}
                                 >
                                     <FormControl>
                                     <SelectTrigger><SelectValue placeholder={itemsLoading ? "Loading..." : "Select Product (Optional)"} /></SelectTrigger>

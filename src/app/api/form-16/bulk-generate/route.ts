@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { Form16ComputationEngine } from '@/lib/form-16-computation';
-import { Form16PDFGenerator } from '@/lib/form-16-pdf';
 import {
   EmployeeMaster,
   SalaryStructure,
@@ -15,7 +13,10 @@ import {
 } from '@/lib/form-16-models';
 
 interface BulkForm16Request {
-  employeeIds: string[];
+  // Preferred: send employee snapshots (API route doesn't access Firestore)
+  employees?: Array<Partial<EmployeeMaster> & { id: string; name: string; pan: string }>;
+  // Legacy: employeeIds (not supported here due to Firestore rules on server)
+  employeeIds?: string[];
   financialYear: string;
   employerName: string;
   employerTan: string;
@@ -56,20 +57,19 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: BulkForm16Request = await request.json();
-    const { employeeIds, financialYear, employerName, employerTan, employerPan, signatoryName, signatoryDesignation, signatoryPlace } = body;
+    const { employees, employeeIds, financialYear, employerName, employerTan, employerPan, signatoryName, signatoryDesignation, signatoryPlace } = body;
 
-    // Get employer data for defaults
-    const employerDoc = await getDoc(doc(db, 'users', userId));
-    const employerData = employerDoc.data();
-
-    // Signatory details
-    const finalSignatoryName = signatoryName || employerData?.name || employerData?.companyName || 'Authorized Signatory';
-    const finalSignatoryDesignation = signatoryDesignation || 'Authorized Signatory';
-    const finalSignatoryPlace = signatoryPlace || employerData?.address?.split(',')[0] || '';
-
-    if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+    // IMPORTANT: No Firestore access here (server-side without auth).
+    if (!employees || !Array.isArray(employees) || employees.length === 0) {
+      // If legacy IDs were sent, guide the client to send employee snapshots instead.
+      if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
+        return NextResponse.json(
+          { success: false, errors: ['Client must send employees[] (snapshots). employeeIds-only is not supported in this API route.'] },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { success: false, errors: ['At least one employee ID is required'] },
+        { success: false, errors: ['At least one employee is required'] },
         { status: 400 }
       );
     }
@@ -86,46 +86,11 @@ export async function POST(request: NextRequest) {
     let successful = 0;
     let failed = 0;
 
-    // Process each employee
-    for (const employeeId of employeeIds) {
+    // Process each employee snapshot
+    for (const emp of employees) {
+      const employeeId = emp.id;
       try {
-        // Fetch employee data - employeeId is the Firestore document ID
-        const employeeDoc = await getDoc(doc(db, 'employees', employeeId));
-        
-        if (!employeeDoc.exists()) {
-          errors.push({
-            employeeId,
-            errors: ['Employee not found']
-          });
-          failed++;
-          continue;
-        }
-
-        const employeeData = employeeDoc.data();
-        
-        if (!employeeData) {
-          errors.push({
-            employeeId,
-            errors: ['Invalid employee data']
-          });
-          failed++;
-          continue;
-        }
-        
-        const employee = { id: employeeDoc.id, ...employeeData } as EmployeeMaster;
-        
-        // Verify access
-        if (employee.employerId !== userId) {
-          errors.push({
-            employeeId,
-            errors: ['Access denied']
-          });
-          failed++;
-          continue;
-        }
-        
-        // Ensure employee has required fields
-        if (!employee.name || !employee.pan) {
+        if (!emp?.name || !emp?.pan) {
           errors.push({
             employeeId,
             errors: ['Missing required fields (name or PAN)']
@@ -136,6 +101,27 @@ export async function POST(request: NextRequest) {
 
         // Get default values for computation
         const defaultValues = Form16ComputationEngine.getDefaultValues(financialYear);
+
+        const doj = (emp as any).doj ? new Date((emp as any).doj) : new Date(`${financialYear.split('-')[0]}-04-01`);
+        const safeDoj = isNaN(doj.getTime()) ? new Date(`${financialYear.split('-')[0]}-04-01`) : doj;
+
+        const employee: EmployeeMaster = {
+          id: employeeId,
+          empId: (emp as any).empId || employeeId,
+          name: emp.name as any,
+          pan: emp.pan as any,
+          mobile: (emp as any).mobile || undefined,
+          aadhaar: (emp as any).aadhaar || undefined,
+          address: (emp as any).address || "",
+          designation: (emp as any).designation || "Employee",
+          doj: safeDoj,
+          employmentType: (emp as any).employmentType || "permanent",
+          residentialStatus: (emp as any).residentialStatus || "resident",
+          taxRegime: (emp as any).taxRegime || "NEW",
+          employerId: userId,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        };
 
         // Create default data structures
         const salaryData: SalaryStructure = {
@@ -172,10 +158,19 @@ export async function POST(request: NextRequest) {
         const exemptionsData: ExemptionsSection10 = {
           employeeId,
           financialYear,
+          travelConcession: 0,
+          gratuityExempt: 0,
+          commutedPensionExempt: 0,
+          leaveEncashmentExempt: 0,
           hraExempt: 0,
           ltaExempt: 0,
           childrenEduAllowance: 0,
           hostelAllowance: 0,
+          transportAllowance: 0,
+          medicalAllowance: 0,
+          uniformAllowance: 0,
+          helperAllowance: 0,
+          otherExemptions: {},
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
         };
@@ -254,7 +249,8 @@ export async function POST(request: NextRequest) {
         // Create Form 16 document
         const assessmentYear = `${parseInt(financialYear.split('-')[1]) + 1}-${parseInt(financialYear.split('-')[1]) + 2}`;
 
-        const form16Document: Omit<Form16Document, 'id'> = {
+        const form16Document: Form16Document = {
+          id: `tmp_${employeeId}_${Date.now()}`,
           employeeId,
           financialYear,
           employerName,
@@ -276,11 +272,7 @@ export async function POST(request: NextRequest) {
           accessLogs: []
         };
 
-        // Save to database
-        const docRef = await addDoc(collection(db, 'form16Documents'), form16Document);
-        const savedDocument: Form16Document = { id: docRef.id, ...form16Document };
-
-        documents.push(savedDocument);
+        documents.push(form16Document);
         successful++;
 
       } catch (error) {
@@ -293,15 +285,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate bulk PDFs (for potential download)
-    const pdfs = await Form16PDFGenerator.generateBulkForm16PDFs(documents);
-
     const response: BulkForm16Response = {
       success: true,
       data: {
         documents,
         summary: {
-          total: employeeIds.length,
+          total: employees.length,
           successful,
           failed,
           errors
