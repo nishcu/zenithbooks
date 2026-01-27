@@ -527,12 +527,12 @@ export default function Form16() {
     setIsAddingEmployee(true);
     try {
       // Create employee in Firestore
+      const aadhaarDigits = (newEmployee.aadhaar || "").replace(/\s/g, "");
       const employeeData = {
         empId: `EMP-${Date.now()}`,
         name: newEmployee.name.trim(),
         pan: newEmployee.pan.toUpperCase(),
         mobile: newEmployee.mobile.replace(/\D/g, ''),
-        aadhaar: newEmployee.aadhaar.replace(/\s/g, '') || undefined,
         designation: newEmployee.designation.trim() || "Employee",
         address: newEmployee.address.trim() || "",
         doj: new Date(newEmployee.doj),
@@ -542,7 +542,10 @@ export default function Form16() {
         employerId: user!.uid,
         status: "Active",
         createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
+        // IMPORTANT: never store `undefined` in Firestore (it throws).
+        // Only include Aadhaar when provided.
+        ...(aadhaarDigits ? { aadhaar: aadhaarDigits } : {})
       };
 
       const employeeRef = await addDoc(collection(db, 'employees'), employeeData);
@@ -552,7 +555,7 @@ export default function Form16() {
         id: employeeRef.id,
         name: employeeData.name,
         pan: employeeData.pan,
-        aadhaar: employeeData.aadhaar,
+        aadhaar: aadhaarDigits || "",
         mobile: employeeData.mobile,
         designation: employeeData.designation,
         address: employeeData.address,
@@ -568,7 +571,7 @@ export default function Form16() {
         employeeId: employeeRef.id,
         employeeName: employeeData.name,
         employeePan: employeeData.pan,
-        employeeAadhar: employeeData.aadhaar || "",
+        employeeAadhar: aadhaarDigits || "",
         employeeAddress: employeeData.address,
         employeeMobile: employeeData.mobile || "",
         employeeDesignation: employeeData.designation || "",
