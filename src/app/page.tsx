@@ -369,12 +369,12 @@ export default function LandingPage() {
                     <CardHeader>
                       <div className="flex items-center gap-4">
                         <div className="p-3 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                          <Shield className="h-8 w-8" />
+                          <Users className="h-8 w-8" />
                         </div>
                         <div>
                           <CardTitle className="text-2xl">Compliance Associate</CardTitle>
                           <CardDescription className="text-base">
-                            Dedicated compliance support for your business
+                            Join ZenithBooks Team - Earn While You Learn
                           </CardDescription>
                         </div>
                       </div>
@@ -384,33 +384,33 @@ export default function LandingPage() {
                         <div className="flex items-start gap-3">
                           <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium">Monthly Compliance Services</p>
+                            <p className="font-medium">Perfect for Young CAs, Accountants & Students</p>
                             <p className="text-sm text-muted-foreground">
-                              Automated GST, Income Tax, Payroll & MCA compliance handled by ZenithBooks Compliance Team
+                              Join our team and gain hands-on experience while earning. Work on real compliance cases and build your expertise.
                             </p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
                           <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium">Expert Team Support</p>
+                            <p className="font-medium">Earn Competitive Compensation</p>
                             <p className="text-sm text-muted-foreground">
-                              Platform-managed professional resources ensure timely and accurate compliance
+                              Get paid for handling GST, Income Tax, Payroll & MCA compliance for ZenithBooks clients. Flexible work hours.
                             </p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
                           <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium">Comprehensive Plans</p>
+                            <p className="font-medium">Build Your Professional Profile</p>
                             <p className="text-sm text-muted-foreground">
-                              Choose from Starter, Growth, or Enterprise plans based on your needs
+                              Enhance your skills, work with experienced professionals, and grow your career in accounting and compliance.
                             </p>
                           </div>
                         </div>
                       </div>
                       <Button asChild className="w-full mt-6">
-                        <Link href="/compliance-plans">Explore Compliance Plans</Link>
+                        <Link href="/compliance-associate">Join as Compliance Associate</Link>
                       </Button>
                     </CardContent>
                   </Card>
