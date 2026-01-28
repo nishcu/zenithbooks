@@ -1,5 +1,5 @@
 
-import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { servicePricing, ServicePricing } from "./on-demand-pricing";
 
@@ -64,7 +64,7 @@ function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing>
 
 /**
  * Fetches the current service pricing from Firestore.
- * If no pricing is found, it initializes Firestore with the default prices.
+ * If no pricing is found, it falls back to defaults (client cannot write configuration).
  * @returns {Promise<ServicePricing>} A promise that resolves to the current service pricing.
  */
 export async function getServicePricing(): Promise<ServicePricing> {
@@ -75,12 +75,16 @@ export async function getServicePricing(): Promise<ServicePricing> {
       const firestoreData = docSnap.data() as Partial<ServicePricing>;
       return mergePricing(servicePricing, firestoreData);
     } else {
-      // No pricing document found, initialize it with default values
-      await setDoc(pricingDocRef, servicePricing);
+      // No pricing document found. Configuration is server-managed; return defaults.
       return servicePricing;
     }
   } catch (error) {
-    console.error("Error fetching service pricing: ", error);
+    const e: any = error;
+    const isPermissionDenied =
+      e?.code === "permission-denied" || String(e?.message || "").toLowerCase().includes("insufficient permissions");
+    if (!isPermissionDenied) {
+      console.error("Error fetching service pricing: ", error);
+    }
     // Return default pricing as a fallback
     return servicePricing;
   }
