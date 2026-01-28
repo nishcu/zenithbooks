@@ -1277,21 +1277,6 @@ export default function Form16() {
     }
   };
 
-  // Early return for freemium users
-  if (user && isFreemium) {
-    return (
-      <div className="space-y-8 p-8">
-        <h1 className="text-3xl font-bold">Form 16 Generator</h1>
-        <UpgradeRequiredAlert
-          featureName="Form 16 Generator"
-          description="Generate comprehensive Form 16 certificates for your employees with detailed Part B calculations."
-          backHref="/dashboard"
-          backLabel="Back to Dashboard"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -3049,7 +3034,17 @@ export default function Form16() {
         </TabsContent>
 
         <TabsContent value="bulk" className="space-y-6">
-          <div className="grid gap-6">
+          {user && isFreemium ? (
+            <div className="space-y-6">
+              <UpgradeRequiredAlert
+                featureName="Bulk Form 16 Generation"
+                description="Bulk upload and multi-employee Form 16 generation is available for Business and Professional plans. You can still generate 1 Individual Form 16 for free."
+                backHref="/income-tax/form-16?tab=single"
+                backLabel="Back to Single Form 16"
+              />
+            </div>
+          ) : (
+            <div className="grid gap-6">
             {/* Bulk Upload Card */}
             <Card>
             <CardHeader>
@@ -3606,7 +3601,8 @@ export default function Form16() {
               )}
             </CardFooter>
         </Card>
-      </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
