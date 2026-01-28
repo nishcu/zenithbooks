@@ -177,8 +177,6 @@ export function ChatWidget({
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
-  if (!user && !previewMode) return null; // show only after login (unless preview mode)
-
   const userRole = mapRoleToZenith(userRoleHint);
 
   const pushMsg = (m: UiMessage) => setMessages((prev) => [...prev, m]);
@@ -200,6 +198,9 @@ export function ChatWidget({
   React.useEffect(() => {
     setShowAllSuggestions(false);
   }, [lastAssistantIntent, messages.length]);
+
+  // IMPORTANT: keep this early return AFTER all hooks to avoid React hook order mismatch.
+  if (!user && !previewMode) return null; // show only after login (unless preview mode)
 
   async function send(text: string) {
     const trimmed = text.trim();
