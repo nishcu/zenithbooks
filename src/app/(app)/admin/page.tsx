@@ -15,7 +15,8 @@ import {
   UserCheck,
   DollarSign,
   Calendar,
-  BookOpen
+  BookOpen,
+  Download
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -114,6 +115,13 @@ export default function AdminPage() {
       icon: Users,
       path: "/admin/subscribers",
       badge: "Marketing"
+    },
+    {
+      title: "Free Form 16 Leads",
+      description: "Export employee mobile numbers (free Form 16)",
+      icon: Download,
+      path: "/admin/form16-free-leads",
+      badge: "Leads"
     },
     {
       title: "Appointments",

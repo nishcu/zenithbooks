@@ -533,6 +533,19 @@ service cloud.firestore {
                          hasRolePermission('delete')));
     }
 
+    // Free Form 16 Generation Leads (for admin tracking/export)
+    // - Users can create only for themselves (userId must match auth uid)
+    // - Users can read their own records
+    // - Admin can read all
+    match /form16_free_generations/{leadId} {
+      allow create: if request.auth != null &&
+                      request.resource.data.userId != null &&
+                      isOwner(request.resource.data.userId);
+      allow read: if request.auth != null &&
+                    (isOwner(resource.data.userId) || isAdmin());
+      allow update, delete: if false;
+    }
+
     // Compliance Associates Collection
     // Users can create their own associate registration
     // Users can read their own associate registration (by email match)

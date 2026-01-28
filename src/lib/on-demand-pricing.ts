@@ -30,8 +30,8 @@ export const servicePricing: ServicePricing = {
         { id: "sales_analysis", name: "Sales Analysis", price: 999 },
         { id: "purchase_analysis", name: "Purchase Analysis", price: 999 },
         // Income Tax
-        // Individual Form 16 is FREE (no payment required)
-        { id: "form16_individual", name: "Form 16 Generation (Individual)", price: 0 },
+        // Individual Form 16 is paid by default. The app grants 1 free generation per account (freemium).
+        { id: "form16_individual", name: "Form 16 Generation (Individual)", price: 499 },
         { id: "form16_bulk", name: "Form 16 Generation (Bulk)", price: 1999 },
     ],
     ca_certs: [

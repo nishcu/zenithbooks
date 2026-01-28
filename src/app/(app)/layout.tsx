@@ -275,6 +275,7 @@ const allMenuItems = [
         },
         { href: "/admin/subscribers", label: "Subscribers", icon: BadgeDollarSign, roles: ['super_admin']},
         { href: "/admin/users", label: "All Users", icon: Users, roles: ['super_admin']},
+        { href: "/admin/form16-free-leads", label: "Free Form 16 Leads", icon: FileText, roles: ['super_admin']},
         { href: "/admin/professionals", label: "Professionals", icon: UserSquare, roles: ['super_admin']},
         { href: "/admin/appointments", label: "Appointments", icon: CalendarClock, roles: ['super_admin']},
         { href: "/admin/notices", label: "Submitted Notices", icon: MailWarning, roles: ['super_admin']},

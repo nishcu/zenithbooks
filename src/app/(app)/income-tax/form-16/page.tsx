@@ -206,7 +206,50 @@ export default function Form16() {
   };
 
   const requirePaymentOrUnlock = (mode: "single" | "bulk"): boolean => {
-    const effectivePrice = pricing ? getForm16EffectivePrice(mode) : 0;
+    if (!user?.uid) {
+      toast({
+        variant: "destructive",
+        title: "Sign in required",
+        description: "Please sign in to generate Form 16.",
+      });
+      return false;
+    }
+
+    const freeForm16Used =
+      Boolean((userData as any)?.freeForm16IndividualUsedAt) ||
+      Boolean((userData as any)?.freeForm16IndividualUsed) ||
+      Boolean((userData as any)?.freeForm16UsedAt) || // backward-compatible field name if already used
+      Boolean((userData as any)?.freeForm16Used); // backward-compatible field name if already used
+
+    const hasFreeSingleCredit = mode === "single" && subscriptionPlan === "freemium" && !freeForm16Used;
+
+    // If pricing hasn't loaded yet, be conservative after free credit is consumed.
+    if (!pricing) {
+      if (mode === "single" && hasFreeSingleCredit) return true;
+      toast({
+        title: "Please wait",
+        description: "Loading pricing and access rules. Please try again in a moment.",
+      });
+      return false;
+    }
+
+    const effectivePrice = getForm16EffectivePrice(mode);
+
+    // Freemium policy: allow exactly 1 free Individual Form 16 per account.
+    // After that, require payment/unlock (even if pricing doc still shows 0).
+    if (mode === "single" && subscriptionPlan === "freemium") {
+      if (hasFreeSingleCredit) return true;
+      if (unlockedMode === "single") return true;
+
+      const chargeable = effectivePrice > 0 ? effectivePrice : 499;
+      setPendingPaymentMode("single");
+      toast({
+        title: "Free limit used",
+        description: `Free Individual Form 16 is available once per account. Please complete payment to generate again (₹${chargeable}).`,
+      });
+      return false;
+    }
+
     if (effectivePrice <= 0) return true;
     if (unlockedMode === mode) return true;
 
@@ -628,6 +671,13 @@ export default function Form16() {
     setValidationErrors([]);
     setIsLoading(true);
     try {
+      const freeForm16UsedBefore =
+        Boolean((userData as any)?.freeForm16IndividualUsedAt) ||
+        Boolean((userData as any)?.freeForm16IndividualUsed) ||
+        Boolean((userData as any)?.freeForm16UsedAt) ||
+        Boolean((userData as any)?.freeForm16Used);
+      const usedFreeThisTime = subscriptionPlan === "freemium" && !freeForm16UsedBefore;
+
       // Persist employee mobile (required) into employee master for future use
       try {
         const mobileDigits = (form16Data.employeeMobile || "").replace(/\D/g, "");
@@ -656,7 +706,7 @@ export default function Form16() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.uid
+          'x-user-id': user.uid
         },
         body: JSON.stringify({
           employeeId: form16Data.employeeId,
@@ -711,9 +761,49 @@ export default function Form16() {
           setUnlockedMode(null);
           localStorage.removeItem("on_demand_unlock");
         }
+
+        // Mark free quota as used (freemium: 1 free generation per account)
+        if (usedFreeThisTime && user?.uid) {
+          // Log lead for admin tracking/export (minimal fields only)
+          try {
+            const mobileDigits = (form16Data.employeeMobile || "").replace(/\D/g, "");
+            const pan = (form16Data.employeePan || "").toUpperCase().trim();
+            await addDoc(collection(db, "form16_free_generations"), {
+              userId: user.uid,
+              userEmail: user.email || "",
+              employeeId: form16Data.employeeId,
+              employeeName: form16Data.employeeName,
+              employeeMobile: mobileDigits,
+              employeePanLast4: pan ? pan.slice(-4) : "",
+              financialYear: form16Data.financialYear,
+              taxRegime: form16Data.taxRegime,
+              source: "form16_individual_free",
+              createdAt: serverTimestamp(),
+            } as any);
+          } catch (e) {
+            // Non-blocking: generation succeeded; logging can retry later
+            console.warn("Failed to log free Form 16 generation:", e);
+          }
+
+          try {
+            await setDoc(
+              doc(db, "users", user.uid),
+              {
+                freeForm16IndividualUsed: true,
+                freeForm16IndividualUsedAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+              } as any,
+              { merge: true }
+            );
+          } catch (e) {
+            // Non-blocking: generation succeeded; quota marking can retry later
+            console.warn("Failed to mark free Form 16 usage:", e);
+          }
+        }
+
         toast({
           title: "Success",
-          description: "Form 16 generated successfully"
+          description: usedFreeThisTime ? "Form 16 generated successfully (free credit used)" : "Form 16 generated successfully"
         });
       } else {
         toast({
@@ -2484,14 +2574,26 @@ export default function Form16() {
             </CardContent>
               <CardFooter className="flex gap-2">
                 {(() => {
+                  const freeForm16Used =
+                    Boolean((userData as any)?.freeForm16IndividualUsedAt) ||
+                    Boolean((userData as any)?.freeForm16IndividualUsed) ||
+                    Boolean((userData as any)?.freeForm16UsedAt) ||
+                    Boolean((userData as any)?.freeForm16Used);
+                  const hasFreeCredit = subscriptionPlan === "freemium" && !freeForm16Used;
+
                   const effectivePrice = pricing ? getForm16EffectivePrice("single") : 0;
-                  const needsPayment = effectivePrice > 0 && unlockedMode !== "single";
+                  const chargeablePrice = effectivePrice > 0 ? effectivePrice : 499;
+
+                  const needsPayment =
+                    unlockedMode !== "single" &&
+                    ((subscriptionPlan === "freemium" && freeForm16Used) || effectivePrice > 0) &&
+                    !hasFreeCredit;
 
                   if (needsPayment && pendingPaymentMode === "single" && user) {
                     return (
                       <div className="flex-1">
                         <CashfreeCheckout
-                          amount={effectivePrice}
+                          amount={chargeablePrice}
                           planId="form16_individual"
                           planName="Form 16 Generation (Individual)"
                           userId={user.uid}
@@ -2513,11 +2615,17 @@ export default function Form16() {
                   return (
                     <Button
                       onClick={generateSingleForm16}
-                      disabled={isLoading || (effectivePrice > 0 && !pricing)}
+                      disabled={isLoading || (!pricing && !hasFreeCredit)}
                       className="flex-1"
                     >
                       <Calculator className="mr-2 h-4 w-4" />
-                      {isLoading ? "Generating..." : effectivePrice > 0 ? `Pay & Generate (₹${effectivePrice})` : "Generate Form 16"}
+                      {isLoading
+                        ? "Generating..."
+                        : hasFreeCredit
+                          ? "Generate Form 16 (Free)"
+                          : needsPayment || effectivePrice > 0
+                            ? `Pay & Generate (₹${chargeablePrice})`
+                            : "Generate Form 16"}
                     </Button>
                   );
                 })()}
