@@ -671,6 +671,9 @@ export default function Form16() {
     setValidationErrors([]);
     setIsLoading(true);
     try {
+      const isPermissionDenied = (e: any) =>
+        e?.code === "permission-denied" || String(e?.message || "").toLowerCase().includes("insufficient permissions");
+
       const freeForm16UsedBefore =
         Boolean((userData as any)?.freeForm16IndividualUsedAt) ||
         Boolean((userData as any)?.freeForm16IndividualUsed) ||
@@ -689,7 +692,7 @@ export default function Form16() {
         }
       } catch (e) {
         // Non-blocking: do not fail generation if employee update fails
-        console.warn("Failed to update employee mobile:", e);
+        if (!isPermissionDenied(e)) console.warn("Failed to update employee mobile:", e);
       }
 
       const exemptionsPayload = {
@@ -782,7 +785,7 @@ export default function Form16() {
             } as any);
           } catch (e) {
             // Non-blocking: generation succeeded; logging can retry later
-            console.warn("Failed to log free Form 16 generation:", e);
+            if (!isPermissionDenied(e)) console.warn("Failed to log free Form 16 generation:", e);
           }
 
           try {
@@ -797,7 +800,7 @@ export default function Form16() {
             );
           } catch (e) {
             // Non-blocking: generation succeeded; quota marking can retry later
-            console.warn("Failed to mark free Form 16 usage:", e);
+            if (!isPermissionDenied(e)) console.warn("Failed to mark free Form 16 usage:", e);
           }
         }
 
