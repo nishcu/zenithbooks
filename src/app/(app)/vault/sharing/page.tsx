@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, serverTimestamp, getDocs, writeBatch } from "firebase/firestore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Key, Eye, EyeOff, Trash2, Clock, Copy, CheckCircle2, AlertCircle, FileText } from "lucide-react";
@@ -73,11 +73,26 @@ export default function ShareCodeManagementPage() {
     return () => unsubscribe();
   }, [user, toast]);
 
-  const handleDelete = async (codeId: string) => {
+  const handleDelete = async (code: ShareCode) => {
     if (!user) return;
 
     try {
-      await deleteDoc(doc(db, "vaultShareCodes", codeId));
+      await deleteDoc(doc(db, "vaultShareCodes", code.id));
+
+      // Best-effort: revoke public access immediately
+      if (code.codeHash) {
+        try {
+          const docsCol = collection(db, "vaultShareCodeIndex", code.codeHash, "documents");
+          const snap = await getDocs(docsCol);
+          const batch = writeBatch(db);
+          snap.docs.forEach((d) => batch.delete(d.ref));
+          batch.delete(doc(db, "vaultShareCodeIndex", code.codeHash));
+          await batch.commit();
+        } catch (e) {
+          console.warn("Failed to revoke public share index:", e);
+        }
+      }
+
       toast({
         title: "Share Code Deleted",
         description: "The share code has been deleted and access is revoked.",
@@ -337,7 +352,7 @@ export default function ShareCodeManagementPage() {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDelete(code.id)}
+                            onClick={() => handleDelete(code)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete

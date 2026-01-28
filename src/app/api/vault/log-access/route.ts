@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { checkSuspiciousActivity } from "@/lib/vault-security";
 
 // Ensure this route is included in the build
@@ -14,41 +14,24 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { shareCodeId, documentId, action } = body;
+    const { shareCodeId, codeHash, documentId, documentName, documentCategory, action } = body;
 
-    if (!shareCodeId || !documentId || !action) {
+    if (!codeHash || !documentId || !action) {
       return NextResponse.json(
-        { error: "shareCodeId, documentId, and action are required." },
+        { error: "codeHash, documentId, and action are required." },
         { status: 400 }
       );
     }
 
-    // Get share code info
-    const shareCodeRef = doc(db, "vaultShareCodes", shareCodeId);
-    const shareCodeDoc = await getDoc(shareCodeRef);
-
-    if (!shareCodeDoc.exists()) {
-      return NextResponse.json(
-        { error: "Share code not found." },
-        { status: 404 }
-      );
+    // Resolve owner from public share index
+    const indexSnap = await getDoc(doc(db, "vaultShareCodeIndex", String(codeHash)));
+    if (!indexSnap.exists()) {
+      return NextResponse.json({ error: "Share code not found." }, { status: 404 });
     }
-
-    const shareCodeData = shareCodeDoc.data();
-    const userId = shareCodeData.userId;
-
-    // Get document info
-    const documentRef = doc(db, "vaultDocuments", documentId);
-    const documentDoc = await getDoc(documentRef);
-
-    if (!documentDoc.exists()) {
-      return NextResponse.json(
-        { error: "Document not found." },
-        { status: 404 }
-      );
-    }
-
-    const documentData = documentDoc.data();
+    const indexData = indexSnap.data() as any;
+    const userId = indexData.userId;
+    const codeName = indexData.codeName || "Share Code";
+    const effectiveShareCodeId = String(shareCodeId || indexData.shareCodeId || String(codeHash));
 
     // Get client IP (if available)
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || 
@@ -57,15 +40,15 @@ export async function POST(request: NextRequest) {
                      "unknown";
 
     // Check for suspicious activity
-    const suspiciousCheck = await checkSuspiciousActivity(userId, shareCodeId, clientIp);
+    const suspiciousCheck = await checkSuspiciousActivity(userId, effectiveShareCodeId, clientIp);
     
     // Create access log entry
     await addDoc(collection(db, "vaultAccessLogs"), {
       userId,
-      shareCodeId,
+      shareCodeId: effectiveShareCodeId,
       documentId,
-      documentName: documentData.fileName,
-      documentCategory: documentData.category,
+      documentName: documentName || "Document",
+      documentCategory: documentCategory || "Unknown",
       action, // "view" or "download"
       accessedAt: serverTimestamp(),
       clientIp,
@@ -73,22 +56,6 @@ export async function POST(request: NextRequest) {
       suspicious: suspiciousCheck.suspicious || false,
       suspiciousReason: suspiciousCheck.reason || null,
     });
-
-    // Update share code access count
-    const currentAccessCount = shareCodeData.accessCount || 0;
-    await updateDoc(shareCodeRef, {
-      accessCount: currentAccessCount + 1,
-      lastAccessedAt: serverTimestamp(),
-    });
-
-    // Create notification for document owner (use main notifications collection)
-    const { notifyDocumentAccess } = await import("@/lib/vault-notifications");
-    await notifyDocumentAccess(
-      userId,
-      documentData.fileName,
-      shareCodeData.codeName,
-      action as "view" | "download"
-    );
 
     return NextResponse.json({
       success: true,

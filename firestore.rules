@@ -271,6 +271,30 @@ service cloud.firestore {
       // Note: Public code validation will be handled server-side via API route
     }
 
+    // Public Share Code Index (capability-based access)
+    // Doc ID = SHA-256(codeWithPrefix). This allows validation via `get` (no listing).
+    // The subcollection contains a snapshot of shared documents (fileUrl, fileName, etc).
+    match /vaultShareCodeIndex/{codeHash} {
+      // Public can validate by exact doc id only (no listing).
+      allow get: if true;
+      allow list: if false;
+
+      // Only the owner can create/update/delete the index document.
+      allow create: if request.auth != null &&
+                     request.resource.data.userId != null &&
+                     isOwner(request.resource.data.userId);
+      allow update: if request.auth != null && isOwner(resource.data.userId);
+      allow delete: if request.auth != null && isOwner(resource.data.userId);
+
+      match /documents/{docId} {
+        // Anyone with the codeHash can list/get snapshot docs for that code.
+        allow read: if true;
+        // Only the share code owner can write.
+        allow create, update, delete: if request.auth != null &&
+          get(/databases/$(database)/documents/vaultShareCodeIndex/$(codeHash)).data.userId == request.auth.uid;
+      }
+    }
+
     match /vaultAccessLogs/{logId} {
       allow read: if isOwner(resource.data.userId);
       allow create: if request.resource.data.userId != null;

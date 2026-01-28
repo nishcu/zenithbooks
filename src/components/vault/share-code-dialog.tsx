@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, serverTimestamp, Timestamp, setDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,11 @@ import { addUserPrefixToCode, extractUserPrefixFromCode } from "@/lib/vault-user
 
 interface ShareCode {
   id: string;
+  userId?: string;
   codeName: string;
   categories: VaultCategory[];
   description?: string;
+  codeHash?: string;
 }
 
 interface ShareCodeDialogProps {
@@ -131,6 +133,72 @@ export function ShareCodeDialog({
     return hashHex;
   };
 
+  async function syncPublicShareIndex(args: {
+    codeHash: string;
+    shareCodeId: string;
+    userId: string;
+    codeName: string;
+    categories: VaultCategory[];
+    expiresAt: Date;
+    isActive: boolean;
+  }) {
+    const indexRef = doc(db, "vaultShareCodeIndex", args.codeHash);
+    await setDoc(
+      indexRef,
+      {
+        userId: args.userId,
+        shareCodeId: args.shareCodeId,
+        codeName: args.codeName,
+        categories: args.categories,
+        expiresAt: Timestamp.fromDate(args.expiresAt),
+        isActive: args.isActive,
+        updatedAt: serverTimestamp(),
+      } as any,
+      { merge: true }
+    );
+
+    // Build a snapshot of shared documents under this codeHash.
+    // This avoids reading private vault documents from public API routes.
+    const categories = args.categories || [];
+    const vaultDocs: Array<{ id: string; data: any }> = [];
+    const chunks: VaultCategory[][] = [];
+    for (let i = 0; i < categories.length; i += 10) chunks.push(categories.slice(i, i + 10));
+
+    for (const chunk of chunks) {
+      const qv = query(
+        collection(db, "vaultDocuments"),
+        where("userId", "==", args.userId),
+        // Firestore "in" max is 10
+        where("category", "in", chunk as any)
+      );
+      const snap = await getDocs(qv);
+      for (const d of snap.docs) vaultDocs.push({ id: d.id, data: d.data() });
+    }
+
+    // Clear existing snapshot docs, then write fresh.
+    const docsCol = collection(db, "vaultShareCodeIndex", args.codeHash, "documents");
+    const existing = await getDocs(docsCol);
+    const batch = writeBatch(db);
+    existing.docs.forEach((d) => batch.delete(d.ref));
+
+    vaultDocs.forEach(({ id, data }) => {
+      const latestVersion = data.versions?.[data.currentVersion];
+      const fileUrl = latestVersion?.fileUrl || data.fileUrl || "";
+      batch.set(doc(db, "vaultShareCodeIndex", args.codeHash, "documents", id), {
+        userId: args.userId,
+        documentId: id,
+        fileName: data.fileName || "",
+        category: data.category || "",
+        fileSize: data.fileSize || latestVersion?.fileSize || 0,
+        uploadedAt: data.uploadedAt || null,
+        currentVersion: data.currentVersion || 1,
+        fileUrl,
+      } as any);
+    });
+
+    await batch.commit();
+  }
+
   const handleSave = async () => {
     if (!user) {
       setError("User not authenticated.");
@@ -180,6 +248,11 @@ export function ShareCodeDialog({
       expiresAt.setDate(expiresAt.getDate() + VAULT_SHARE_CODE.EXPIRY_DAYS);
 
       if (editingCode) {
+        const existingHash = editingCode.codeHash;
+        if (!existingHash) {
+          setError("Missing code hash. Please recreate the share code.");
+          return;
+        }
         // Update existing code
         const codeRef = doc(db, "vaultShareCodes", editingCode.id);
         await updateDoc(codeRef, {
@@ -187,6 +260,16 @@ export function ShareCodeDialog({
           description: description.trim() || null,
           categories: Array.from(selectedCategories),
           lastUpdated: serverTimestamp(),
+        });
+
+        await syncPublicShareIndex({
+          codeHash: existingHash,
+          shareCodeId: editingCode.id,
+          userId: user.uid,
+          codeName: codeName.trim(),
+          categories: Array.from(selectedCategories),
+          expiresAt,
+          isActive: true,
         });
 
         toast({
@@ -198,7 +281,7 @@ export function ShareCodeDialog({
         const expiresAtDate = new Date();
         expiresAtDate.setDate(expiresAtDate.getDate() + VAULT_SHARE_CODE.EXPIRY_DAYS);
         
-        await addDoc(collection(db, "vaultShareCodes"), {
+        const shareRef = await addDoc(collection(db, "vaultShareCodes"), {
           userId: user.uid,
           codeName: codeName.trim(),
           description: description.trim() || null,
@@ -208,6 +291,16 @@ export function ShareCodeDialog({
           expiresAt: Timestamp.fromDate(expiresAtDate), // Convert to Firestore Timestamp
           isActive: true,
           accessCount: 0,
+        });
+
+        await syncPublicShareIndex({
+          codeHash,
+          shareCodeId: shareRef.id,
+          userId: user.uid,
+          codeName: codeName.trim(),
+          categories: Array.from(selectedCategories),
+          expiresAt: expiresAtDate,
+          isActive: true,
         });
 
         // Set generated code for display (show the full code with prefix)

@@ -18,6 +18,7 @@ interface ShareCodeInfo {
   categories: string[];
   expiresAt: string;
   userId: string;
+  codeHash: string;
 }
 
 interface SharedDocument {
@@ -116,9 +117,8 @@ export default function VaultAccessPage() {
   const loadDocuments = async (codeInfo: ShareCodeInfo) => {
     setLoading(true);
     try {
-      // Fetch documents from the user's vault that match shared categories
-      const categoriesParam = encodeURIComponent(codeInfo.categories.join(","));
-      const response = await fetch(`/api/vault/shared-documents?userId=${codeInfo.userId}&categories=${categoriesParam}`);
+      // Fetch documents snapshot tied to this share code (public capability)
+      const response = await fetch(`/api/vault/shared-documents?codeHash=${encodeURIComponent(codeInfo.codeHash)}`);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -153,7 +153,10 @@ export default function VaultAccessPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shareCodeId: shareCodeInfo?.shareCodeId,
+          codeHash: shareCodeInfo?.codeHash,
           documentId: document.id,
+          documentName: document.fileName,
+          documentCategory: document.category,
           action: "download",
         }),
       }).catch(err => console.error("Failed to log access:", err));
@@ -215,7 +218,10 @@ export default function VaultAccessPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shareCodeId: shareCodeInfo?.shareCodeId,
+          codeHash: shareCodeInfo?.codeHash,
           documentId: document.id,
+          documentName: document.fileName,
+          documentCategory: document.category,
           action: "view",
         }),
       });

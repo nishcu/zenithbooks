@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 
 // Ensure this route is included in the build
 export const runtime = 'nodejs';
@@ -13,12 +13,32 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    const codeHash = searchParams.get("codeHash");
     const userId = searchParams.get("userId");
     const categoriesParam = searchParams.get("categories");
 
+    // New flow (public): codeHash -> read snapshot docs from vaultShareCodeIndex/{codeHash}/documents
+    if (codeHash) {
+      const indexRef = doc(db, "vaultShareCodeIndex", codeHash);
+      const indexSnap = await getDoc(indexRef);
+      if (!indexSnap.exists()) {
+        return NextResponse.json({ error: "Invalid or expired share code." }, { status: 404 });
+      }
+      const data = indexSnap.data() as any;
+      const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+      if (expiresAt < new Date() || data.isActive === false) {
+        return NextResponse.json({ error: "Share code has expired or was revoked." }, { status: 403 });
+      }
+
+      const docsSnap = await getDocs(collection(db, "vaultShareCodeIndex", codeHash, "documents"));
+      const documents = docsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      return NextResponse.json({ documents, count: documents.length });
+    }
+
+    // Backward compatibility (legacy): userId + categories (requires Firestore access to vaultDocuments)
     if (!userId || !categoriesParam) {
       return NextResponse.json(
-        { error: "userId and categories are required." },
+        { error: "codeHash OR (userId and categories) are required." },
         { status: 400 }
       );
     }
