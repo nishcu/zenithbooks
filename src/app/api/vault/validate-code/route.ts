@@ -3,6 +3,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { checkRateLimit, resetRateLimit } from "@/lib/vault-security";
 import { extractUserPrefixFromCode } from "@/lib/vault-user-code";
+import { createHash } from "crypto";
 
 // CRITICAL: Ensure this route is included in the build
 // Build timestamp: 2025-12-03-16-30 - Force fresh rebuild
@@ -53,13 +54,22 @@ export async function POST(request: NextRequest) {
     // Validation uses a public capability index:
     // `vaultShareCodeIndex/{codeHash}`, where codeHash = SHA-256(fullCodeWithPrefix).
 
-    // Hash function (WebCrypto)
+    // Hash function (prefer WebCrypto, fallback to Node crypto)
     const hashString = async (input: string): Promise<string> => {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(input);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const c: any = (globalThis as any).crypto;
+        if (c?.subtle?.digest) {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(input);
+          const hashBuffer = await c.subtle.digest("SHA-256", data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+        }
+      } catch {
+        // fall through to Node crypto
+      }
+      return createHash("sha256").update(input, "utf8").digest("hex");
     };
     
     const trimmedCode = code.trim().toUpperCase();
