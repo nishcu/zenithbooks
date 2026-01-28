@@ -54,6 +54,7 @@ import { useHotkeys } from "@/hooks/use-hotkeys";
 import { ClientContextBanner } from "@/components/organization/client-context-banner";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Fab } from "@/components/layout/fab";
+import { ChatWidget } from "@/components/zenith-assist/chat-widget";
 import { RoleSimulatorProvider, useRoleSimulator } from "@/context/role-simulator-context";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -516,6 +517,10 @@ function MainLayout({
                       ))}
                     </div>
                     <Separator />
+                    <Button asChild className="w-full" variant="default">
+                      <Link href="/zenith-assist">Open Zenith Assist</Link>
+                    </Button>
+                    <Separator />
                      <Button asChild className="w-full" variant="secondary">
                         <Link href="/contact">Contact Support</Link>
                       </Button>
@@ -535,6 +540,7 @@ function MainLayout({
           </main>
           <BottomNav />
           <Fab />
+          <ChatWidget userRoleHint={(userData as any)?.role} companyType={(userData as any)?.companyType} gstRegistered={(userData as any)?.gstRegistered} />
         </SidebarInset>
       </SidebarProvider>
   );

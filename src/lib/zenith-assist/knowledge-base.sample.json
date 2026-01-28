@@ -1,0 +1,26 @@
+[
+  {
+    "id": "bulk-invoice-upload",
+    "intent": "FeatureHelp",
+    "title": "Bulk invoice upload (CSV/Excel)",
+    "answer": "Go to Billing → Invoices. Use the Bulk Upload option to upload your CSV/Excel. Make sure columns match the template (Party, Date, Item, Qty, Rate, GST%, Place of Supply).",
+    "keywords": ["bulk", "invoice", "upload", "csv", "excel", "template", "billing"],
+    "actions": [{ "type": "navigate", "label": "Open Invoices", "href": "/billing/invoices" }]
+  },
+  {
+    "id": "gst-mismatch",
+    "intent": "ErrorExplanation",
+    "title": "GST mismatch / GST not matching totals",
+    "answer": "GST mismatches usually happen due to inclusive vs exclusive amounts, wrong rate, CGST/SGST vs IGST, or rounding. Confirm place of supply and whether the amount includes GST.",
+    "keywords": ["gst", "mismatch", "cgst", "sgst", "igst", "rounding"]
+  },
+  {
+    "id": "personal-expense",
+    "intent": "FAQ",
+    "title": "Personal expense vs business expense (Drawings)",
+    "answer": "If narration indicates personal use, treat it as Drawings: Debit Drawings, Credit Cash/Bank. This avoids impacting Profit & Loss. Always review before posting.",
+    "keywords": ["personal", "drawings", "family", "home", "private", "expense"],
+    "actions": [{ "type": "navigate", "label": "Open Smart Entry", "href": "/accounting/journal/smart-entry" }]
+  }
+]
+
