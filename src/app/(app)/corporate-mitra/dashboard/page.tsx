@@ -39,8 +39,13 @@ export default function CorporateMitraDashboardPage() {
       .finally(() => setLoading(false));
   }, [user?.email]);
 
+  useEffect(() => {
+    if (user === null) {
+      router.push("/login?redirect=/corporate-mitra/dashboard");
+    }
+  }, [user, router]);
+
   if (!user) {
-    router.push("/login?redirect=/corporate-mitra/dashboard");
     return (
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[40vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
