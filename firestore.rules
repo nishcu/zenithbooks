@@ -8,9 +8,9 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Helper function to get current user's data
+    // Helper function to get current user's data (null if doc missing or not logged in)
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return request.auth != null ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : null;
     }
 
     // Helper function to check if user is part of an organization
@@ -30,9 +30,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == '9soE3VaoHzUcytSTtA9SaFS7cC82';
     }
 
-    // Helper function to check if user has admin role
+    // Helper function to check if user has admin role (super_admin UID, or user doc role/admin flag)
     function isAdmin() {
-      return isSuperAdmin() || (getUserData() != null && getUserData().role == 'admin');
+      return isSuperAdmin() || 
+             (getUserData() != null && 
+              (getUserData().role == 'admin' || getUserData().isAdmin == true));
     }
 
     // Helper function to check if user has accountant role
@@ -148,6 +150,28 @@ service cloud.firestore {
                          hasRolePermission('delete')));
     }
     match /customers/{docId} {
+      allow read: if request.auth != null && 
+                     (isOwner(resource.data.userId) || 
+                      (resource.data.organizationId != null && 
+                       isOrganizationMember(resource.data.organizationId) &&
+                       hasRolePermission('read')));
+      allow create: if request.auth != null && 
+                       (isOwner(request.resource.data.userId) || 
+                        (request.resource.data.organizationId != null && 
+                         isOrganizationMember(request.resource.data.organizationId) &&
+                         hasRolePermission('create')));
+      allow update: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('update')));
+      allow delete: if request.auth != null && 
+                       (isOwner(resource.data.userId) || 
+                        (resource.data.organizationId != null && 
+                         isOrganizationMember(resource.data.organizationId) &&
+                         hasRolePermission('delete')));
+    }
+    match /items/{docId} {
       allow read: if request.auth != null && 
                      (isOwner(resource.data.userId) || 
                       (resource.data.organizationId != null && 
