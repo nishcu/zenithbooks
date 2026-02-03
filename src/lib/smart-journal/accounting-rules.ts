@@ -26,7 +26,7 @@ export function generateJournalEntry(
 
   // Get matching accounts
   const matchingAccounts = findMatchingAccounts(parsed, chartOfAccounts);
-  const paymentAccount = getPaymentModeAccount(parsed.paymentMode, chartOfAccounts);
+  const paymentAccount = getPaymentModeAccount(parsed.paymentMode, chartOfAccounts, parsed.originalNarration);
 
   // Generate entries based on transaction type
   switch (parsed.transactionType) {
@@ -133,9 +133,12 @@ function generatePurchaseEntry(
   ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings"))) ||
   { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
   
-  // Get expense account
-  const expenseAccount = matchingAccounts.find((a) => a.type === "Expense") || getDefaultExpenseAccount(chartOfAccounts);
-  if (!expenseAccount) throw new Error("No expense account found");
+  // Get debit account: Fixed Asset for capital purchase (vehicle, equipment, etc.), else Expense
+  const debitAccount =
+    matchingAccounts.find((a) => a.type === "Fixed Asset") ||
+    matchingAccounts.find((a) => a.type === "Expense") ||
+    getDefaultExpenseAccount(chartOfAccounts);
+  if (!debitAccount) throw new Error("No expense or fixed asset account found");
 
   if (gstDetails && gstDetails.isGSTApplicable) {
     // GST Purchase Entry
@@ -170,9 +173,9 @@ function generatePurchaseEntry(
       
       // Business portion (with ITC)
       entries.push({
-        accountCode: expenseAccount.code,
-        accountName: expenseAccount.name,
-        accountType: expenseAccount.type,
+        accountCode: debitAccount.code,
+        accountName: debitAccount.name,
+        accountType: debitAccount.type,
         amount: businessTaxable,
         isDebit: true,
         narration: `${parsed.originalNarration} (${businessPercentage}% business)`,
@@ -226,11 +229,11 @@ function generatePurchaseEntry(
         }
       }
     } else {
-      // Business expense with GST (normal case)
+      // Business expense/fixed asset with GST (normal case)
       entries.push({
-        accountCode: expenseAccount.code,
-        accountName: expenseAccount.name,
-        accountType: expenseAccount.type,
+        accountCode: debitAccount.code,
+        accountName: debitAccount.name,
+        accountType: debitAccount.type,
         amount: gstDetails.taxableValue,
         isDebit: true,
         narration: parsed.originalNarration,
@@ -376,19 +379,19 @@ function generatePurchaseEntry(
       });
       
       entries.push({
-        accountCode: expenseAccount.code,
-        accountName: expenseAccount.name,
-        accountType: expenseAccount.type,
+        accountCode: debitAccount.code,
+        accountName: debitAccount.name,
+        accountType: debitAccount.type,
         amount: businessAmount,
         isDebit: true,
         narration: `${parsed.originalNarration} (${businessPercentage}% business)`,
       });
     } else {
-      // Fully business expense
+      // Fully business expense or fixed asset purchase
       entries.push({
-        accountCode: expenseAccount.code,
-        accountName: expenseAccount.name,
-        accountType: expenseAccount.type,
+        accountCode: debitAccount.code,
+        accountName: debitAccount.name,
+        accountType: debitAccount.type,
         amount,
         isDebit: true,
         narration: parsed.originalNarration,

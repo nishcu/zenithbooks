@@ -79,10 +79,32 @@ export function findMatchingAccounts(
     if (!narration.isAdvance && !narration.isPrepaid && !narration.isOutstanding) {
       if (narration.transactionType === "purchase" || narration.transactionType === "expense") {
         if (account.type === "Expense") score += 5;
+        if (account.type === "Fixed Asset") score += 5; // capital purchase
       }
       if (narration.transactionType === "sale" || narration.transactionType === "income") {
         if (account.type === "Income" || account.type === "Revenue" || account.type === "Other Income") score += 5;
       }
+    }
+
+    // ---- Context: Sales return (return by customer) → Sales Returns, not Sales ----
+    const isSalesReturnContext =
+      (lowerNarration.includes("return") || lowerNarration.includes("returned")) &&
+      (lowerNarration.includes("customer") || lowerNarration.includes("goods returned") || lowerNarration.includes("defective") || lowerNarration.includes("return of goods"));
+    if (isSalesReturnContext) {
+      if (account.name.toLowerCase().includes("sales return") || account.name.toLowerCase().includes("sale return")) {
+        score += 28;
+      }
+      if (account.code === "4001" || (account.type === "Income" && account.name.toLowerCase().includes("sales") && !account.name.toLowerCase().includes("return"))) {
+        score -= 18;
+      }
+    }
+
+    // ---- Context: Purchase return (return to supplier) → Purchase Returns ----
+    const isPurchaseReturnContext =
+      (lowerNarration.includes("return") || lowerNarration.includes("returned")) &&
+      (lowerNarration.includes("supplier") || lowerNarration.includes("vendor") || lowerNarration.includes("return to supplier") || lowerNarration.includes("goods returned to"));
+    if (isPurchaseReturnContext && account.name.toLowerCase().includes("purchase return")) {
+      score += 25;
     }
 
     // ---- Payment mode ----
@@ -188,10 +210,32 @@ export function findMatchingAccounts(
       }
     }
 
+    // ---- Context: Vehicle/Car purchase → Fixed Asset (Vehicles), not Purchase of Goods ----
+    const isVehiclePurchase =
+      (lowerNarration.includes("vehicle") || lowerNarration.includes("car") || lowerNarration.includes("bike") || lowerNarration.includes("automobile") || lowerNarration.includes("scooter") || lowerNarration.includes("van") || lowerNarration.includes("truck")) &&
+      (lowerNarration.includes("purchase") || lowerNarration.includes("purchased") || lowerNarration.includes("bought") || lowerNarration.includes("for business"));
+    if (isVehiclePurchase) {
+      if (account.type === "Fixed Asset" && (account.name.toLowerCase().includes("vehicle") || account.name.toLowerCase().includes("vehicles"))) {
+        score += 35;
+      }
+      if (account.type === "Expense" && (account.name.toLowerCase().includes("purchase of goods") || account.name.toLowerCase().includes("purchases - cogs"))) {
+        score -= 25;
+      }
+    }
+
+    // ---- Context: Capital asset (equipment, machinery, computer, furniture) → Fixed Asset ----
+    const isOtherCapitalPurchase =
+      (lowerNarration.includes("equipment") || lowerNarration.includes("machinery") || lowerNarration.includes("computer") || lowerNarration.includes("laptop") || lowerNarration.includes("furniture")) &&
+      (lowerNarration.includes("purchase") || lowerNarration.includes("purchased") || lowerNarration.includes("bought"));
+    if (isOtherCapitalPurchase && account.type === "Fixed Asset") {
+      score += 28;
+    }
+
     // ---- Conflict: "Purchase" without delivery context → prefer Purchase of Goods; "material" alone with "purchase" ----
     const hasPurchaseWord = lowerNarration.includes("purchase") || lowerNarration.includes("purchased") || lowerNarration.includes("bought");
     const noDelivery = !lowerNarration.includes("delivering") && !lowerNarration.includes("delivery to");
-    if (hasPurchaseWord && noDelivery && account.type === "Expense") {
+    const noVehicleOrCapital = !isVehiclePurchase && !isOtherCapitalPurchase;
+    if (hasPurchaseWord && noDelivery && noVehicleOrCapital && account.type === "Expense") {
       if (account.name.toLowerCase().includes("purchase") || account.name.toLowerCase().includes("cogs")) {
         score += 12;
       }
@@ -218,20 +262,61 @@ export function findMatchingAccounts(
 }
 
 /**
- * Get default account for payment mode
+ * Get default account for payment mode.
+ * When mode is bank, optional narration is used to pick bank by name (e.g. "State Bank India" → SBI).
  */
 export function getPaymentModeAccount(
   paymentMode: string | undefined,
-  chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS
+  chartOfAccounts: ChartOfAccount[] = DEFAULT_CHART_OF_ACCOUNTS,
+  narration?: string
 ): ChartOfAccount | undefined {
   if (!paymentMode) return undefined;
 
   const lowerMode = paymentMode.toLowerCase();
+  const lowerNarration = (narration ?? "").toLowerCase();
 
   if (lowerMode === "cash") {
     return chartOfAccounts.find((a) => a.name.toLowerCase().includes("cash"));
   }
   if (lowerMode === "bank" || lowerMode === "cheque" || lowerMode === "neft" || lowerMode === "rtgs") {
+    // Prefer bank account mentioned in narration (match by bank-specific keywords)
+    const bankKeywordMatches: Array<{ code: string; patterns: string[] }> = [
+      { code: "1522", patterns: ["state bank", "sbi bank", "sbi "] },
+      { code: "1003", patterns: ["state bank", "sbi bank", "sbi "] },
+      { code: "1520", patterns: ["hdfc"] },
+      { code: "1002", patterns: ["hdfc"] },
+      { code: "1521", patterns: ["icici"] },
+      { code: "1523", patterns: ["pnb", "punjab national"] },
+      { code: "1524", patterns: ["bob", "bank of baroda", "baroda"] },
+      { code: "1525", patterns: ["axis bank", "axis ", "uti bank"] },
+      { code: "1526", patterns: ["kotak"] },
+      { code: "1527", patterns: ["yes bank", "yesbank"] },
+      { code: "1528", patterns: ["indusind", "indus ind"] },
+      { code: "1529", patterns: ["idbi"] },
+      { code: "1530", patterns: ["central bank of india", "cbi bank", " cbi "] },
+      { code: "1531", patterns: ["bank of india", " boi "] },
+      { code: "1532", patterns: ["canara"] },
+      { code: "1533", patterns: ["union bank"] },
+      { code: "1534", patterns: ["federal bank", "federal "] },
+      { code: "1535", patterns: ["indian bank"] },
+      { code: "1536", patterns: ["iob", "indian overseas"] },
+      { code: "1537", patterns: ["uco bank", " uco "] },
+      { code: "1538", patterns: ["bank of maharashtra", "bom bank", " maharashtra"] },
+      { code: "1539", patterns: ["punjab & sind", "punjab and sind", "psb"] },
+      { code: "1540", patterns: ["idfc"] },
+      { code: "1541", patterns: ["bandhan"] },
+      { code: "1542", patterns: ["south indian bank", "sib"] },
+      { code: "1543", patterns: ["kvb", "karur vysya"] },
+      { code: "1544", patterns: ["city union", "cub"] },
+      { code: "1545", patterns: ["dcb bank", " dcb "] },
+      { code: "1546", patterns: ["rbl bank", " rbl ", "ratnakar"] },
+    ];
+    for (const { code, patterns } of bankKeywordMatches) {
+      if (patterns.some((p) => lowerNarration.includes(p))) {
+        const bank = chartOfAccounts.find((a) => a.code === code);
+        if (bank) return bank;
+      }
+    }
     return chartOfAccounts.find((a) => a.name.toLowerCase().includes("bank"));
   }
   if (lowerMode === "upi") {

@@ -143,13 +143,11 @@ export async function updateAssociatePaymentStatus(
 }
 
 /**
- * Approve associate registration.
- * By default requires platformFee.paymentStatus === 'paid'. Pass { waivePayment: true } to approve without payment (e.g. offline payment or waiver).
+ * Approve associate registration
  */
 export async function approveAssociate(
   associateId: string,
-  approvedBy: string,
-  options?: { waivePayment?: boolean }
+  approvedBy: string
 ): Promise<void> {
   const associateRef = doc(db, COLLECTIONS.COMPLIANCE_ASSOCIATES, associateId);
   const associateSnap = await getDoc(associateRef);
@@ -160,8 +158,8 @@ export async function approveAssociate(
   
   const associateData = associateSnap.data() as ComplianceAssociate;
   
-  if (associateData.platformFee.paymentStatus !== 'paid' && !options?.waivePayment) {
-    throw new Error('Cannot approve associate without payment. Use "Approve (waive payment)" if payment was received offline or waived.');
+  if (associateData.platformFee.paymentStatus !== 'paid') {
+    throw new Error('Cannot approve associate without payment');
   }
   
   await updateDoc(associateRef, {
@@ -465,3 +463,4 @@ export async function updateAssociateCertifications(
       });
   }
 }
+
