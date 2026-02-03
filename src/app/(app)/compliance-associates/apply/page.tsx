@@ -1,6 +1,7 @@
 /**
- * Compliance Associate Registration Page
- * Public page for associates to register and pay platform fee
+ * Zenith Corporate Mitra Registration Page
+ * Public page for associates to register and pay platform fee.
+ * Zenith Corporate Mitra is an internal platform-defined role and not a government-authorized designation.
  */
 
 "use client";
@@ -200,9 +201,12 @@ export default function ComplianceAssociateApplyPage() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Register as Compliance Associate</h1>
+        <h1 className="text-3xl font-bold mb-2">Register as Zenith Corporate Mitra</h1>
         <p className="text-muted-foreground">
-          Join ZenithBooks as a Compliance Associate and help businesses with their compliance needs.
+          Join ZenithBooks as a Zenith Corporate Mitra and help businesses with their compliance needs.
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Zenith Corporate Mitra is an internal platform-defined role and not a government-authorized designation.
         </p>
       </div>
 
@@ -214,7 +218,7 @@ export default function ComplianceAssociateApplyPage() {
               Associate Information
             </CardTitle>
             <CardDescription>
-              Fill in your details to register as a Compliance Associate. All information will be verified before approval.
+              Fill in your details to register as a Zenith Corporate Mitra. All information will be verified before approval.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -448,7 +452,7 @@ export default function ComplianceAssociateApplyPage() {
                 <CashfreeCheckout
                   amount={PLATFORM_FEE_ANNUAL}
                   planId={`associate_registration_${associateId}`}
-                  planName="Compliance Associate Registration - Annual Platform Fee"
+                  planName="Zenith Corporate Mitra Registration - Annual Platform Fee"
                   userId={user.uid}
                   userEmail={user.email}
                   userName={user.displayName || formData.name}

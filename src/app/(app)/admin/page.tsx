@@ -75,7 +75,7 @@ export default function AdminPage() {
       badge: "Compliance"
     },
     {
-      title: "Compliance Associates",
+      title: "Zenith Corporate Mitra",
       description: "Manage associate registrations and approvals",
       icon: UserCheck,
       path: "/admin/compliance-associates",

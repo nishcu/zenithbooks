@@ -337,7 +337,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Compliance Associate & Professional Network Section */}
+      {/* Zenith Corporate Mitra & Professional Network Section */}
       <section className="py-12 lg:py-16 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <ClientOnly>
@@ -358,7 +358,7 @@ export default function LandingPage() {
               </div>
 
               <div className="grid lg:grid-cols-2 gap-8">
-                {/* Compliance Associate */}
+                {/* Zenith Corporate Mitra */}
                 <motion.div
                   initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -372,7 +372,7 @@ export default function LandingPage() {
                           <Users className="h-8 w-8" />
                         </div>
                         <div>
-                          <CardTitle className="text-2xl">Compliance Associate</CardTitle>
+                          <CardTitle className="text-2xl">Zenith Corporate Mitra</CardTitle>
                           <CardDescription className="text-base">
                             Join ZenithBooks Team - Earn While You Learn
                           </CardDescription>
@@ -410,7 +410,7 @@ export default function LandingPage() {
                         </div>
                       </div>
                       <Button asChild className="w-full mt-6">
-                        <Link href="/compliance-associate">Join as Compliance Associate</Link>
+                        <Link href="/compliance-associate">Join as Zenith Corporate Mitra</Link>
                       </Button>
                     </CardContent>
                   </Card>

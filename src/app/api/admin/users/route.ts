@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase-admin/firestore";
+import { getAdminFirestore } from "@/lib/firebase-admin";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 // Get super admin UID from environment or fallback to constant
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all users
+    const db = getAdminFirestore();
     const usersCollection = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCollection);
 
@@ -61,6 +62,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const db = getAdminFirestore();
     const userRef = doc(db, 'users', targetUserId);
     await updateDoc(userRef, {
       ...updates,
@@ -96,6 +98,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Cannot delete super admin account" }, { status: 403 });
     }
 
+    const db = getAdminFirestore();
     const userRef = doc(db, 'users', targetUserId);
     await deleteDoc(userRef);
 

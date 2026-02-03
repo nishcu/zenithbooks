@@ -29,8 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getAllAssociates, approveAssociate, rejectAssociate, updateAssociateStatus, getAssociateById } from "@/lib/compliance-associates/firestore";
+import { getAllAssociates, approveAssociate, rejectAssociate, updateAssociateStatus, getAssociateById, withCorporateMitraDefaults } from "@/lib/compliance-associates/firestore";
 import type { ComplianceAssociate, AssociateStatus } from "@/lib/compliance-associates/types";
+
+const MITRA_DISCLAIMER = "Zenith Corporate Mitra is an internal platform-defined role and not a government-authorized designation.";
 
 export default function ComplianceAssociatesPage() {
   const { toast } = useToast();
@@ -54,7 +56,7 @@ export default function ComplianceAssociatesPage() {
       const data = statusFilter === "all" 
         ? await getAllAssociates()
         : await getAllAssociates(statusFilter);
-      setAssociates(data);
+      setAssociates(data.map(withCorporateMitraDefaults));
     } catch (error) {
       console.error("Error loading associates:", error);
       toast({
@@ -167,7 +169,7 @@ export default function ComplianceAssociatesPage() {
     try {
       const associate = await getAssociateById(associateId);
       if (associate) {
-        setSelectedAssociate(associate);
+        setSelectedAssociate(withCorporateMitraDefaults(associate));
         setIsDetailDialogOpen(true);
       }
     } catch (error) {
@@ -219,9 +221,9 @@ export default function ComplianceAssociatesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Compliance Associates</h1>
+        <h1 className="text-3xl font-bold">Zenith Corporate Mitra</h1>
         <p className="text-muted-foreground">
-          Manage associate registrations, approvals, and platform fee tracking
+          Manage Corporate Mitra registrations, approvals, levels, and platform fee tracking. {MITRA_DISCLAIMER}
         </p>
       </div>
 
@@ -263,8 +265,8 @@ export default function ComplianceAssociatesPage() {
       {/* Associates List */}
       <Card>
         <CardHeader>
-          <CardTitle>Associates ({filteredAssociates.length})</CardTitle>
-          <CardDescription>All registered compliance associates</CardDescription>
+          <CardTitle>Corporate Mitras ({filteredAssociates.length})</CardTitle>
+          <CardDescription>All registered Zenith Corporate Mitras (internal — clients never see identity)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -289,6 +291,9 @@ export default function ComplianceAssociatesPage() {
                           <strong>Code:</strong> {associate.associateCode}
                         </div>
                         <div>
+                          <strong>Level:</strong> {associate.level ?? "CM-L1"}
+                        </div>
+                        <div>
                           <strong>Email:</strong> {associate.email}
                         </div>
                         <div>
@@ -296,6 +301,9 @@ export default function ComplianceAssociatesPage() {
                         </div>
                         <div>
                           <strong>Experience:</strong> {associate.yearsOfExperience} years
+                        </div>
+                        <div>
+                          <strong>Performance Score:</strong> {(associate.performance as any)?.score ?? 50}
                         </div>
                         <div>
                           <strong>Payment Status:</strong>{" "}
@@ -443,8 +451,8 @@ export default function ComplianceAssociatesPage() {
                   <div className="mt-1">{getStatusBadge(selectedAssociate.status)}</div>
                 </div>
                 <div>
-                  <Label>Associate Code</Label>
-                  <p className="mt-1 font-mono">{selectedAssociate.associateCode}</p>
+                  <Label>Associate Code / Level</Label>
+                  <p className="mt-1 font-mono">{selectedAssociate.associateCode} — {selectedAssociate.level ?? "CM-L1"}</p>
                 </div>
                 <div>
                   <Label>Email</Label>
@@ -473,6 +481,19 @@ export default function ComplianceAssociatesPage() {
                       {selectedAssociate.platformFee.paymentStatus}
                     </Badge>
                   </div>
+                </div>
+                <div>
+                  <Label>Performance Score / Risk</Label>
+                  <p className="mt-1">{(selectedAssociate.performance as any)?.score ?? 50} — {selectedAssociate.riskFlag ?? "low"}</p>
+                </div>
+              </div>
+              <div>
+                <Label>Certifications</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedAssociate.certifications && Object.entries(selectedAssociate.certifications).map(([k, v]) => (
+                    <Badge key={k} variant={v ? "default" : "outline"}>{k}: {v ? "Yes" : "No"}</Badge>
+                  ))}
+                  {!selectedAssociate.certifications && <span className="text-sm text-muted-foreground">None</span>}
                 </div>
               </div>
               <div>

@@ -27,14 +27,34 @@ export async function notifyTaskStatusChange(
       return;
     }
 
-    const statusMessages: Record<ComplianceTaskExecution['status'], { subject: string; body: string }> = {
+    const statusMessages: Record<string, { subject: string; body: string }> = {
       pending: {
         subject: 'Compliance Task Created - ZenithBooks',
         body: `A new compliance task "${task.taskName}" has been created for your account. It will be handled by ZenithBooks Compliance Team.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
       },
+      assigned: {
+        subject: 'Compliance Task Assigned - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" has been assigned to our team. It will be handled by ZenithBooks Compliance Team.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
+      },
       in_progress: {
         subject: 'Compliance Task In Progress - ZenithBooks',
         body: `Your compliance task "${task.taskName}" is now being processed by ZenithBooks Compliance Team.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}\n\nYou will receive an update once the task is completed.`,
+      },
+      submitted: {
+        subject: 'Compliance Task Submitted for Review - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" has been submitted for internal review. ZenithBooks Compliance Team will complete the process.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
+      },
+      review_required: {
+        subject: 'Compliance Task Under Review - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" is under quality review. It will be handled by ZenithBooks Compliance Team.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
+      },
+      approved: {
+        subject: 'Compliance Task Approved - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" has been approved by our team. It will be completed by ZenithBooks Compliance Team.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
+      },
+      rework: {
+        subject: 'Compliance Task Update - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" is being refined by our team. ZenithBooks Compliance Team will complete it shortly.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}`,
       },
       completed: {
         subject: 'Compliance Task Completed - ZenithBooks',
@@ -44,13 +64,17 @@ export async function notifyTaskStatusChange(
         subject: 'Compliance Filing Completed - ZenithBooks',
         body: `Your compliance filing "${task.taskName}" has been successfully filed by ZenithBooks Compliance Team.\n\n${task.filingDetails ? `Form: ${task.filingDetails.formType}\nPeriod: ${task.filingDetails.period}\n${task.filingDetails.acknowledgmentNumber ? `Acknowledgment Number: ${task.filingDetails.acknowledgmentNumber}` : ''}` : ''}\n\nPlease check your dashboard for the filed documents in your vault.`,
       },
+      closed: {
+        subject: 'Compliance Task Closed - ZenithBooks',
+        body: `Your compliance task "${task.taskName}" has been closed by ZenithBooks Compliance Team.\n\nPlease check your dashboard for details.`,
+      },
       failed: {
         subject: 'Compliance Task Update Required - ZenithBooks',
         body: `There was an issue processing your compliance task "${task.taskName}". Our Compliance Team will reach out to resolve this.\n\nDue Date: ${task.dueDate instanceof Date ? task.dueDate.toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}\n\nPlease check your dashboard or contact support for assistance.`,
       },
     };
 
-    const message = statusMessages[newStatus];
+    const message = statusMessages[newStatus] ?? statusMessages.completed;
     
     if (message) {
       await sendEmail({

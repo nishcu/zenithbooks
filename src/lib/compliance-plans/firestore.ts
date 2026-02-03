@@ -287,62 +287,90 @@ export async function getTaskExecutionsBySubscription(
 }
 
 /**
- * Update task execution status
+ * Update task execution status (supports QA workflow: assigned → in_progress → submitted → review_required → approved/rework → filed → closed)
  */
 export async function updateTaskExecutionStatus(
   taskExecutionId: string,
   status: ComplianceTaskExecution['status'],
   updates?: Partial<ComplianceTaskExecution>
 ): Promise<void> {
-  // Get current task to check old status
   const taskRef = doc(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS, taskExecutionId);
   const currentTaskSnap = await getDoc(taskRef);
-  const oldStatus = currentTaskSnap.exists() ? (currentTaskSnap.data() as ComplianceTaskExecution).status : 'pending';
-  
+  const currentData = currentTaskSnap.exists() ? (currentTaskSnap.data() as ComplianceTaskExecution) : null;
+  const oldStatus = currentData?.status ?? 'pending';
+
   const updateData: any = {
     status,
     updatedAt: serverTimestamp(),
   };
-  
-  if (status === 'completed' || status === 'filed') {
+
+  if (['completed', 'filed', 'closed', 'approved'].includes(status)) {
     updateData.completedAt = serverTimestamp();
   }
-  
+
   if (status === 'filed' && updates?.filingDetails) {
     updateData.filingDetails = {
       ...updates.filingDetails,
       filingDate: serverTimestamp(),
     };
   }
-  
-  if (updates?.internalNotes) {
-    updateData.internalNotes = updates.internalNotes;
+
+  if (updates?.internalNotes !== undefined) updateData.internalNotes = updates.internalNotes;
+  if (updates?.assignedTo !== undefined) {
+    updateData.assignedTo = updates.assignedTo;
+    updateData.assignedToInternalTeam = true;
   }
-  
+  if (updates?.qa !== undefined) updateData.qa = updates.qa;
+
   await updateDoc(taskRef, updateData);
-  
-  // Get updated task execution for audit log and notification
+
+  // On rework: increment associate reworkCount (Corporate Mitra performance)
+  if (status === 'rework' && currentData?.assignedTo) {
+    try {
+      const { getAssociateByCode, updateAssociatePerformance } = await import('@/lib/compliance-associates/firestore');
+      const associate = await getAssociateByCode(currentData.assignedTo);
+      if (associate?.performance) {
+        const next = { ...associate.performance, reworkCount: (associate.performance.reworkCount ?? 0) + 1 };
+        await updateAssociatePerformance(associate.id, next);
+      }
+    } catch (e) {
+      console.error('Failed to update associate rework count:', e);
+    }
+  }
+
   const updatedTaskSnap = await getDoc(taskRef);
   if (updatedTaskSnap.exists()) {
     const taskData = updatedTaskSnap.data() as ComplianceTaskExecution;
+    const action = status === 'filed' ? 'filing_completed' : status === 'closed' || status === 'approved' ? 'task_completed' : 'task_assigned';
     await createAuditLog({
       subscriptionId: taskData.subscriptionId,
       userId: taskData.userId,
       firmId: taskData.firmId,
-      action: status === 'filed' ? 'filing_completed' : 'task_completed',
+      action,
       details: { taskExecutionId, taskId: taskData.taskId, status },
-      performedBy: 'system', // Internal team actions
+      performedBy: 'system',
     });
-    
-    // Trigger notification asynchronously (don't await - non-critical)
     if (oldStatus !== status) {
       import('@/lib/compliance-plans/notifications').then(({ notifyTaskStatusChange }) => {
-        notifyTaskStatusChange(taskData, oldStatus, status).catch(err => {
-          console.error('Notification failed:', err);
-        });
+        notifyTaskStatusChange(taskData, oldStatus, status).catch(err => console.error('Notification failed:', err));
       });
     }
   }
+}
+
+/**
+ * Update task QA review (reviewer must be CM-L3 or CM-L4)
+ */
+export async function updateTaskExecutionQA(
+  taskExecutionId: string,
+  qa: Partial<ComplianceTaskExecution['qa']>
+): Promise<void> {
+  const taskRef = doc(db, COLLECTIONS.COMPLIANCE_TASK_EXECUTIONS, taskExecutionId);
+  const snap = await getDoc(taskRef);
+  if (!snap.exists()) throw new Error('Task not found');
+  const current = snap.data() as ComplianceTaskExecution;
+  const merged = { ...(current.qa || {}), ...qa, reviewedAt: serverTimestamp() } as ComplianceTaskExecution['qa'];
+  await updateDoc(taskRef, { qa: merged, updatedAt: serverTimestamp() });
 }
 
 // ==================== Audit Logs ====================

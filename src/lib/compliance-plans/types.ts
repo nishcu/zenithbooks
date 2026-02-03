@@ -46,6 +46,31 @@ export interface ComplianceSubscription {
   updatedAt: Timestamp | Date;
 }
 
+/** Task status including QA workflow (Zenith Corporate Mitra) */
+export type ComplianceTaskExecutionStatus =
+  | 'pending'
+  | 'assigned'
+  | 'in_progress'
+  | 'submitted'
+  | 'review_required'
+  | 'approved'
+  | 'rework'
+  | 'completed'
+  | 'filed'
+  | 'closed'
+  | 'failed';
+
+export type QAReviewStatus = 'pending' | 'approved' | 'rework';
+
+export interface TaskQA {
+  required: boolean;
+  reviewerAssociateId?: string;
+  reviewerLevelRequired: 'CM-L3' | 'CM-L4';
+  reviewStatus: QAReviewStatus;
+  reviewNotes?: string;
+  reviewedAt?: Timestamp | Date;
+}
+
 export interface ComplianceTaskExecution {
   id: string;
   subscriptionId: string;
@@ -53,7 +78,7 @@ export interface ComplianceTaskExecution {
   firmId: string;
   taskId: string; // Reference to ComplianceTask.id
   taskName: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'filed' | 'failed';
+  status: ComplianceTaskExecutionStatus;
   assignedToInternalTeam: boolean; // Always true - ICAI compliance
   dueDate: Timestamp | Date;
   completedAt?: Timestamp | Date;
@@ -65,10 +90,12 @@ export interface ComplianceTaskExecution {
     acknowledgmentNumber?: string;
   };
   internalNotes?: string;
-  assignedTo?: string; // Compliance Associate code (no client names - ICAI compliant)
+  assignedTo?: string; // Corporate Mitra / Associate code (no client names - ICAI compliant)
   caReviewer?: string; // CA reviewer code for Enterprise plan tasks
   sopReference?: string; // SOP reference for task execution
   platformOwned: true; // Always true - ZenithBooks as principal
+  /** QA workflow (Zenith Corporate Mitra) */
+  qa?: TaskQA;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

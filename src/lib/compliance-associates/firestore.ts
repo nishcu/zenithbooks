@@ -13,17 +13,35 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   Timestamp,
   addDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ComplianceAssociate, AssociateAuditLog, AssociateStatus } from './types';
-import { generateAssociateCode, PLATFORM_FEE_ANNUAL } from './constants';
+import type { ComplianceAssociate, AssociateAuditLog, AssociateStatus, CorporateMitraAuditLog, CorporateMitraLevel, CorporateMitraPerformance, CorporateMitraCertifications } from './types';
+import { generateAssociateCode, PLATFORM_FEE_ANNUAL, TASK_CERTIFICATION_MAP } from './constants';
 
 const COLLECTIONS = {
   COMPLIANCE_ASSOCIATES: 'compliance_associates',
   ASSOCIATE_AUDIT_LOGS: 'associate_audit_logs',
+  CORPORATE_MITRA_AUDIT_LOGS: 'corporate_mitra_audit_logs',
+};
+
+/** Default performance for new/migrated associates */
+const DEFAULT_PERFORMANCE: CorporateMitraPerformance = {
+  score: 50,
+  accuracyRate: 0,
+  avgTurnaroundHours: 0,
+  reworkCount: 0,
+  lastEvaluatedAt: new Date() as any,
+};
+/** Default certifications */
+const DEFAULT_CERTIFICATIONS: CorporateMitraCertifications = {
+  gstBasics: false,
+  msmeCompliance: false,
+  payrollBasics: false,
+  mcaBasics: false,
 };
 
 // ==================== Associate Management ====================
@@ -59,6 +77,11 @@ export async function createAssociateRegistration(
       paymentStatus: 'pending',
       autoRenew: false,
     },
+    level: 'CM-L1',
+    performance: DEFAULT_PERFORMANCE,
+    certifications: DEFAULT_CERTIFICATIONS,
+    eligibleTaskTypes: [],
+    riskFlag: 'low',
     createdAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
   };
@@ -315,5 +338,129 @@ export async function getAssociateAuditLogs(associateId: string): Promise<Associ
   
   const snapshot = await getDocs(logsQuery);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssociateAuditLog));
+}
+
+// ==================== Corporate Mitra Audit Logs ====================
+
+/**
+ * Create Corporate Mitra audit log (level_up, score_update, certification_passed, task_reviewed)
+ */
+export async function createCorporateMitraAuditLog(
+  logData: Omit<CorporateMitraAuditLog, 'id' | 'createdAt'>
+): Promise<string> {
+  const logsRef = collection(db, COLLECTIONS.CORPORATE_MITRA_AUDIT_LOGS);
+  const docRef = await addDoc(logsRef, {
+    ...logData,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Get Corporate Mitra audit logs for an associate
+ */
+export async function getCorporateMitraAuditLogs(associateId: string, limitCount = 50): Promise<CorporateMitraAuditLog[]> {
+  const logsRef = collection(db, COLLECTIONS.CORPORATE_MITRA_AUDIT_LOGS);
+  const q = query(
+    logsRef,
+    where('associateId', '==', associateId),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => {
+    const d = doc.data();
+    return { id: doc.id, ...d, createdAt: d.createdAt?.toDate?.() || new Date() } as CorporateMitraAuditLog;
+  });
+}
+
+// ==================== Corporate Mitra Helpers ====================
+
+/** Ensure associate has default level/performance/certifications (for backward compat) */
+export function withCorporateMitraDefaults(associate: ComplianceAssociate): ComplianceAssociate {
+  return {
+    ...associate,
+    level: associate.level ?? 'CM-L1',
+    performance: associate.performance ?? DEFAULT_PERFORMANCE,
+    certifications: associate.certifications ?? DEFAULT_CERTIFICATIONS,
+    eligibleTaskTypes: associate.eligibleTaskTypes ?? [],
+    riskFlag: associate.riskFlag ?? 'low',
+  };
+}
+
+/**
+ * Get associates eligible for a task (by certification gating). Returns only active associates with required certification.
+ */
+export async function getEligibleAssociatesForTask(taskId: string): Promise<ComplianceAssociate[]> {
+  const certKey = TASK_CERTIFICATION_MAP[taskId] ?? TASK_CERTIFICATION_MAP[taskId.split('_')[0]];
+  const associates = await getAllAssociates('active');
+  return associates
+    .map(withCorporateMitraDefaults)
+    .filter(a => {
+      if (!certKey) return true;
+      return (a.certifications as CorporateMitraCertifications)?.[certKey] === true;
+    });
+}
+
+/**
+ * Update associate performance and risk flag
+ */
+export async function updateAssociatePerformance(
+  associateId: string,
+  performance: Partial<CorporateMitraPerformance>
+): Promise<void> {
+  const ref = doc(db, COLLECTIONS.COMPLIANCE_ASSOCIATES, associateId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Associate not found');
+  const existing = snap.data() as ComplianceAssociate;
+  const currentPerf = (existing.performance ?? DEFAULT_PERFORMANCE) as CorporateMitraPerformance;
+  const merged = { ...currentPerf, ...performance, lastEvaluatedAt: serverTimestamp() };
+  await updateDoc(ref, { performance: merged, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Update associate level (admin or auto)
+ */
+export async function updateAssociateLevel(
+  associateId: string,
+  level: CorporateMitraLevel,
+  performedBy: string
+): Promise<void> {
+  const ref = doc(db, COLLECTIONS.COMPLIANCE_ASSOCIATES, associateId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Associate not found');
+  const associate = { id: snap.id, ...snap.data() } as ComplianceAssociate;
+  await updateDoc(ref, { level, updatedAt: serverTimestamp() });
+  await createCorporateMitraAuditLog({
+    associateId,
+    associateCode: associate.associateCode,
+    action: 'level_up',
+    meta: { previousLevel: associate.level, newLevel: level, performedBy },
+  });
+}
+
+/**
+ * Update associate certifications
+ */
+export async function updateAssociateCertifications(
+  associateId: string,
+  certifications: Partial<CorporateMitraCertifications>
+): Promise<void> {
+  const ref = doc(db, COLLECTIONS.COMPLIANCE_ASSOCIATES, associateId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error('Associate not found');
+  const data = snap.data() as ComplianceAssociate;
+  const current = (data.certifications ?? DEFAULT_CERTIFICATIONS) as CorporateMitraCertifications;
+  const next = { ...current, ...certifications };
+  await updateDoc(ref, { certifications: next, updatedAt: serverTimestamp() });
+  for (const [key, value] of Object.entries(certifications)) {
+    if (value === true)
+      await createCorporateMitraAuditLog({
+        associateId,
+        associateCode: data.associateCode,
+        action: 'certification_passed',
+        meta: { certification: key },
+      });
+  }
 }
 

@@ -415,7 +415,7 @@ export default function AdminBusinessRegistrationsPage() {
                 Task Assignment (Internal)
               </h4>
               <div>
-                <Label htmlFor="assigned-to">Assigned To (Compliance Associate)</Label>
+                <Label htmlFor="assigned-to">Assigned To (Zenith Corporate Mitra)</Label>
                 <Input
                   id="assigned-to"
                   value={assignedTo}

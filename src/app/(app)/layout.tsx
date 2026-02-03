@@ -204,7 +204,8 @@ const allMenuItems = [
     icon: ConciergeBell,
     roles: ['business', 'professional', 'super_admin']
   },
-  { href: "/compliance-associates/apply", label: "Become Compliance Associate", icon: Handshake, roles: ['business', 'professional', 'super_admin'] },
+  { href: "/compliance-associates/apply", label: "Become Zenith Corporate Mitra", icon: Handshake, roles: ['business', 'professional', 'super_admin'] },
+  { href: "/corporate-mitra/dashboard", label: "Corporate Mitra Dashboard", icon: Award, roles: ['business', 'professional', 'super_admin'] },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen, roles: ['professional'] },
   {
     label: "Tasks & Networking",

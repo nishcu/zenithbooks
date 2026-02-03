@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
-import { getActiveAssociates } from '@/lib/compliance-associates/firestore';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { getActiveAssociates, getEligibleAssociatesForTask, withCorporateMitraDefaults } from '@/lib/compliance-associates/firestore';
 import type { ComplianceAssociate } from '@/lib/compliance-associates/types';
+import { updateTaskExecutionStatus, updateTaskExecutionQA } from '@/lib/compliance-plans/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle2, Clock, FileText, AlertCircle, Filter, Search, UserCog, BookOpen, Calendar, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'filed' | 'failed';
+type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'submitted' | 'review_required' | 'approved' | 'rework' | 'completed' | 'filed' | 'closed' | 'failed';
+
+interface TaskQA {
+  required?: boolean;
+  reviewerAssociateId?: string;
+  reviewerLevelRequired?: 'CM-L3' | 'CM-L4';
+  reviewStatus?: 'pending' | 'approved' | 'rework';
+  reviewNotes?: string;
+  reviewedAt?: Date;
+}
 
 interface ComplianceTask {
   id: string;
@@ -47,6 +58,7 @@ interface ComplianceTask {
   assignedTo?: string;
   caReviewer?: string;
   sopReference?: string;
+  qa?: TaskQA;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,7 +83,12 @@ export default function AdminComplianceTasks() {
   const [caReviewer, setCaReviewer] = useState('');
   const [sopReference, setSopReference] = useState('');
   const [activeAssociates, setActiveAssociates] = useState<ComplianceAssociate[]>([]);
+  const [eligibleAssociates, setEligibleAssociates] = useState<ComplianceAssociate[]>([]);
   const [loadingAssociates, setLoadingAssociates] = useState(false);
+  const [qaRequired, setQaRequired] = useState(false);
+  const [qaReviewStatus, setQaReviewStatus] = useState<'pending' | 'approved' | 'rework'>('pending');
+  const [qaReviewNotes, setQaReviewNotes] = useState('');
+  const [qaReviewerAssociateId, setQaReviewerAssociateId] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -84,13 +101,18 @@ export default function AdminComplianceTasks() {
     setLoadingAssociates(true);
     try {
       const associates = await getActiveAssociates();
-      setActiveAssociates(associates);
+      setActiveAssociates(associates.map(withCorporateMitraDefaults));
     } catch (error) {
       console.error('Error loading associates:', error);
     } finally {
       setLoadingAssociates(false);
     }
   };
+
+  useEffect(() => {
+    if (!isDialogOpen || !selectedTask) return;
+    getEligibleAssociatesForTask(selectedTask.taskId).then(setEligibleAssociates).catch(() => setEligibleAssociates([]));
+  }, [isDialogOpen, selectedTask?.taskId]);
 
   const loadTasks = async () => {
     if (!user) return;
@@ -119,6 +141,7 @@ export default function AdminComplianceTasks() {
             ...data.filingDetails,
             filingDate: data.filingDetails.filingDate?.toDate(),
           } : undefined,
+          qa: data.qa,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as ComplianceTask);
@@ -139,54 +162,41 @@ export default function AdminComplianceTasks() {
 
   const handleUpdateStatus = async () => {
     if (!selectedTask) return;
-    
     try {
-      const taskRef = doc(db, 'compliance_task_executions', selectedTask.id);
-      const updateData: any = {
-        status: newStatus,
-        updatedAt: Timestamp.now(),
+      const updates: Partial<ComplianceTask> = {
+        internalNotes: internalNotes || undefined,
+        assignedTo: assignedTo || undefined,
+        caReviewer: caReviewer || undefined,
+        sopReference: sopReference || undefined,
       };
-      
-      if (internalNotes) {
-        updateData.internalNotes = internalNotes;
+      if (newStatus === 'filed' && (filingDetails.formType || filingDetails.period || filingDetails.acknowledgmentNumber)) {
+        updates.filingDetails = {
+          formType: filingDetails.formType,
+          period: filingDetails.period,
+          acknowledgmentNumber: filingDetails.acknowledgmentNumber,
+          filingDate: new Date(),
+        };
       }
-      
-      if (assignedTo) {
-        updateData.assignedTo = assignedTo;
-        updateData.assignedToInternalTeam = true;
+      if (qaRequired) {
+        updates.qa = {
+          required: true,
+          reviewerLevelRequired: 'CM-L3',
+          reviewStatus: qaReviewStatus,
+          reviewNotes: qaReviewNotes || undefined,
+          reviewerAssociateId: qaReviewerAssociateId || undefined,
+        };
       }
-      
-      if (caReviewer) {
-        updateData.caReviewer = caReviewer;
+      await updateTaskExecutionStatus(selectedTask.id, newStatus, updates);
+      if (qaRequired && (qaReviewStatus !== 'pending' || qaReviewNotes)) {
+        await updateTaskExecutionQA(selectedTask.id, {
+          required: true,
+          reviewerLevelRequired: 'CM-L3',
+          reviewStatus: qaReviewStatus,
+          reviewNotes: qaReviewNotes || undefined,
+          reviewerAssociateId: qaReviewerAssociateId || undefined,
+        });
       }
-      
-      if (sopReference) {
-        updateData.sopReference = sopReference;
-      }
-      
-      if (newStatus === 'completed' || newStatus === 'filed') {
-        updateData.completedAt = Timestamp.now();
-      }
-      
-      if (newStatus === 'filed') {
-        updateData.filedAt = Timestamp.now();
-        if (filingDetails.formType || filingDetails.period || filingDetails.acknowledgmentNumber) {
-          updateData.filingDetails = {
-            formType: filingDetails.formType,
-            period: filingDetails.period,
-            acknowledgmentNumber: filingDetails.acknowledgmentNumber,
-            filingDate: Timestamp.now(),
-          };
-        }
-      }
-      
-      await updateDoc(taskRef, updateData);
-      
-      toast({
-        title: 'Success',
-        description: 'Task status updated successfully',
-      });
-      
+      toast({ title: 'Success', description: 'Task status updated successfully' });
       setIsDialogOpen(false);
       setSelectedTask(null);
       setInternalNotes('');
@@ -194,14 +204,14 @@ export default function AdminComplianceTasks() {
       setAssignedTo('');
       setCaReviewer('');
       setSopReference('');
+      setQaRequired(false);
+      setQaReviewStatus('pending');
+      setQaReviewNotes('');
+      setQaReviewerAssociateId('');
       loadTasks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating task:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update task status',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: error?.message || 'Failed to update task status' });
     }
   };
 
@@ -213,25 +223,33 @@ export default function AdminComplianceTasks() {
     setAssignedTo(task.assignedTo || '');
     setCaReviewer(task.caReviewer || '');
     setSopReference(task.sopReference || '');
+    setQaRequired(task.qa?.required ?? false);
+    setQaReviewStatus((task.qa?.reviewStatus as 'pending' | 'approved' | 'rework') || 'pending');
+    setQaReviewNotes(task.qa?.reviewNotes || '');
+    setQaReviewerAssociateId(task.qa?.reviewerAssociateId || '');
     setIsDialogOpen(true);
   };
 
   const getStatusBadge = (status: TaskStatus) => {
-    const variants: Record<TaskStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline', icon: any }> = {
+    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline', icon: any }> = {
       pending: { variant: 'secondary', icon: Clock },
+      assigned: { variant: 'secondary', icon: UserCog },
       in_progress: { variant: 'default', icon: Loader2 },
+      submitted: { variant: 'default', icon: FileText },
+      review_required: { variant: 'secondary', icon: AlertCircle },
+      approved: { variant: 'default', icon: CheckCircle2 },
+      rework: { variant: 'outline', icon: AlertCircle },
       completed: { variant: 'default', icon: CheckCircle2 },
       filed: { variant: 'default', icon: FileText },
+      closed: { variant: 'outline', icon: CheckCircle2 },
       failed: { variant: 'destructive', icon: AlertCircle },
     };
-    
-    const config = variants[status];
+    const config = variants[status] ?? variants.pending;
     const Icon = config.icon;
-    
     return (
       <Badge variant={config.variant} className="flex items-center gap-1">
         <Icon className="h-3 w-3" />
-        {status.replace('_', ' ').toUpperCase()}
+        {String(status).replace(/_/g, ' ').toUpperCase()}
       </Badge>
     );
   };
@@ -262,7 +280,7 @@ export default function AdminComplianceTasks() {
         <div>
           <h1 className="text-3xl font-bold">Compliance Task Management</h1>
           <p className="text-muted-foreground mt-1">
-            Manage compliance tasks assigned to ZenithBooks Compliance Team
+            Manage compliance tasks assigned to Zenith Corporate Mitras (ZenithBooks Compliance Team). Handled by ZenithBooks Compliance Team — clients never see associate identity (ICAI compliant).
           </p>
         </div>
       </div>
@@ -291,9 +309,15 @@ export default function AdminComplianceTasks() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="review_required">Review Required</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rework">Rework</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="filed">Filed</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
               </SelectContent>
             </Select>
@@ -305,7 +329,7 @@ export default function AdminComplianceTasks() {
         <CardHeader>
           <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
           <CardDescription>
-            All compliance tasks are managed by ZenithBooks Compliance Team
+            All compliance tasks are managed by Zenith Corporate Mitras (ZenithBooks Compliance Team)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -365,7 +389,7 @@ export default function AdminComplianceTasks() {
                           <div>
                             <span className="font-medium text-muted-foreground">Assigned To:</span>{' '}
                             <span className="text-xs">
-                              {task.assignedTo || 'Internal Team (Unassigned)'}
+                              {task.assignedTo || 'ZenithBooks Team (Unassigned)'}
                             </span>
                             {task.caReviewer && (
                               <span className="text-xs text-muted-foreground ml-2">
@@ -433,9 +457,15 @@ export default function AdminComplianceTasks() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="assigned">Assigned</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="review_required">Review Required</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rework">Rework</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="filed">Filed</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
                 </SelectContent>
               </Select>
@@ -473,45 +503,42 @@ export default function AdminComplianceTasks() {
               </div>
             )}
             
-            {/* Task Assignment Fields */}
+            {/* Task Assignment Fields - Certification gating: only eligible associates shown */}
             <div className="space-y-4 border-t pt-4">
               <h4 className="font-medium flex items-center gap-2">
                 <UserCog className="h-4 w-4" />
                 Task Assignment (Internal)
               </h4>
               <div>
-                <Label htmlFor="assigned-to">Assigned To (Compliance Associate)</Label>
+                <Label htmlFor="assigned-to">Assigned To (Zenith Corporate Mitra)</Label>
                 {loadingAssociates ? (
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading associates...
+                    Loading...
                   </div>
-                ) : activeAssociates.length > 0 ? (
+                ) : eligibleAssociates.length > 0 ? (
                   <>
                     <Select
                       value={assignedTo === "__manual__" ? "" : (assignedTo || "")}
                       onValueChange={(value) => {
-                        if (value === "__manual__") {
-                          setAssignedTo("");
-                        } else {
-                          setAssignedTo(value);
-                        }
+                        if (value === "__manual__") setAssignedTo("");
+                        else setAssignedTo(value);
                       }}
                     >
                       <SelectTrigger id="assigned-to" className="mt-1">
-                        <SelectValue placeholder="Select associate (or enter code manually)" />
+                        <SelectValue placeholder="Select Corporate Mitra (certification-eligible)" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">None (Unassigned)</SelectItem>
-                        {activeAssociates.map((associate) => (
+                        {eligibleAssociates.map((associate) => (
                           <SelectItem key={associate.id} value={associate.associateCode}>
-                            {associate.associateCode} - {associate.name} ({associate.qualification})
+                            {associate.associateCode} - {associate.name} ({associate.level ?? 'CM-L1'})
                           </SelectItem>
                         ))}
                         <SelectItem value="__manual__">Enter code manually...</SelectItem>
                       </SelectContent>
                     </Select>
-                    {!assignedTo || (!activeAssociates.find(a => a.associateCode === assignedTo) && assignedTo !== "") ? (
+                    {(!assignedTo || (!eligibleAssociates.find(a => a.associateCode === assignedTo) && assignedTo !== "")) && (
                       <Input
                         id="assigned-to-manual"
                         value={assignedTo || ""}
@@ -519,19 +546,24 @@ export default function AdminComplianceTasks() {
                         placeholder="Enter associate code manually"
                         className="mt-2"
                       />
-                    ) : null}
+                    )}
                   </>
                 ) : (
-                  <Input
-                    id="assigned-to"
-                    value={assignedTo || ""}
-                    onChange={(e) => setAssignedTo(e.target.value)}
-                    placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
-                    className="mt-1"
-                  />
+                  <>
+                    <Input
+                      id="assigned-to"
+                      value={assignedTo || ""}
+                      onChange={(e) => setAssignedTo(e.target.value)}
+                      placeholder="Enter Corporate Mitra code manually"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-amber-600 mt-1" title="Certification required">
+                      No eligible Corporate Mitra for this task type. Certification required. You can enter code manually.
+                    </p>
+                  </>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Assign to internal compliance associate. Select from active associates or enter code manually.
+                  Assign to Zenith Corporate Mitra. Only associates with required certification are shown. Handled by ZenithBooks Compliance Team (ICAI compliant).
                 </p>
               </div>
               <div>
@@ -561,6 +593,52 @@ export default function AdminComplianceTasks() {
                   CA reviewer for verification (only for Enterprise plan tasks).
                 </p>
               </div>
+            </div>
+
+            {/* QA Workflow - Reviewer must be CM-L3 or CM-L4 */}
+            <div className="space-y-4 border-t pt-4">
+              <h4 className="font-medium">QA & Review (Zenith Corporate Mitra)</h4>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="qa-required" checked={qaRequired} onCheckedChange={(v) => setQaRequired(!!v)} />
+                <Label htmlFor="qa-required">QA required (task cannot be closed without approval)</Label>
+              </div>
+              {qaRequired && (
+                <>
+                  <div>
+                    <Label>Review Status</Label>
+                    <Select value={qaReviewStatus} onValueChange={(v) => setQaReviewStatus(v as 'pending' | 'approved' | 'rework')}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rework">Rework</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Reviewer (CM-L3 or CM-L4)</Label>
+                    <Select value={qaReviewerAssociateId} onValueChange={setQaReviewerAssociateId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select reviewer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeAssociates.filter(a => (a.level === 'CM-L3' || a.level === 'CM-L4')).map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.associateCode} - {a.name} ({a.level})</SelectItem>
+                        ))}
+                        {activeAssociates.filter(a => a.level === 'CM-L3' || a.level === 'CM-L4').length === 0 && (
+                          <SelectItem value="" disabled>No CM-L3/CM-L4 available</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Review Notes</Label>
+                    <Textarea value={qaReviewNotes} onChange={(e) => setQaReviewNotes(e.target.value)} placeholder="QA review notes..." rows={2} className="mt-1" />
+                  </div>
+                </>
+              )}
             </div>
             
             <div>

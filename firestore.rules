@@ -618,6 +618,18 @@ service cloud.firestore {
                                 (isAdmin() || isSuperAdmin());
     }
 
+    // Corporate Mitra Audit Logs (Zenith Corporate Mitra - level_up, score_update, certification_passed, task_reviewed)
+    match /corporate_mitra_audit_logs/{logId} {
+      allow read: if request.auth != null && 
+                     (isAdmin() ||
+                      isSuperAdmin() ||
+                      (resource.data.associateId != null && 
+                       exists(/databases/$(database)/documents/compliance_associates/$(resource.data.associateId)) &&
+                       get(/databases/$(database)/documents/compliance_associates/$(resource.data.associateId)).data.email == getUserData().email));
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (isAdmin() || isSuperAdmin());
+    }
+
     // ITR Applications Collection
     // Users can read/create/update their own ITR applications
     // Professionals can read applications assigned to them

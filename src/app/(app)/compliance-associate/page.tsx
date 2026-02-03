@@ -36,7 +36,7 @@ export default function ComplianceAssociatePage() {
       toast({
         variant: "destructive",
         title: "Authentication required",
-        description: "Please sign in to apply as a Compliance Associate",
+        description: "Please sign in to apply as a Zenith Corporate Mitra",
       });
       router.push("/login");
       return;
@@ -114,10 +114,13 @@ export default function ComplianceAssociatePage() {
           <div className="p-3 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
             <Users className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Join as Compliance Associate</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Join as Zenith Corporate Mitra</h1>
         </div>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
           Perfect for Young CAs, Accountants & Students - Earn While You Learn
+        </p>
+        <p className="text-sm text-muted-foreground mt-2 max-w-2xl mx-auto">
+          Zenith Corporate Mitra is an internal platform-defined role and not a government-authorized designation.
         </p>
       </div>
 

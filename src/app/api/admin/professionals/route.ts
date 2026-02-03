@@ -6,8 +6,8 @@ import {
   doc,
   getDocs,
   updateDoc,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+} from "firebase-admin/firestore";
+import { getAdminFirestore } from "@/lib/firebase-admin";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const denied = assertSuperAdmin(request);
     if (denied) return denied;
 
+    const db = getAdminFirestore();
     const snap = await getDocs(collection(db, "professionals"));
     const professionals = snap.docs.map((d) => {
       const data: any = d.data();
@@ -87,6 +88,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const db = getAdminFirestore();
     const ref = await addDoc(collection(db, "professionals"), {
       ownerUid,
       name: String(name).trim(),
@@ -127,6 +129,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const db = getAdminFirestore();
     await updateDoc(doc(db, "professionals", targetProfessionalId), {
       ...updates,
       updatedAt: new Date(),
@@ -159,6 +162,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    const db = getAdminFirestore();
     await deleteDoc(doc(db, "professionals", targetProfessionalId));
     return NextResponse.json({ success: true });
   } catch (error) {
