@@ -104,4 +104,3 @@ export interface CorporateMitraAuditLog {
   meta: Record<string, unknown>;
   createdAt: Timestamp | Date;
 }
-

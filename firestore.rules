@@ -85,9 +85,10 @@ service cloud.firestore {
     //   allow read, write: if true;
     // }
 
-    // Users can only read and write their own user document
+    // Users: own doc read/write; admins can read any user (for admin pages)
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId);
     }
 
     // All users can read company info, professionals, and blogs
@@ -573,6 +574,27 @@ service cloud.firestore {
       allow read: if request.auth != null &&
                     (isOwner(resource.data.userId) || isAdmin());
       allow update, delete: if false;
+    }
+
+    // Certification Requests (CA certificates, etc.) - users read own; admins read/update all
+    match /certificationRequests/{requestId} {
+      allow read: if request.auth != null &&
+                    (resource.data.userId == request.auth.uid || isAdmin() || isSuperAdmin());
+      allow create: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null &&
+                      (resource.data.userId == request.auth.uid || isAdmin() || isSuperAdmin());
+      allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
+    }
+
+    // Business Registrations (admin task queue) - admins read/update; users read own if applicable
+    match /business_registrations/{registrationId} {
+      allow read: if request.auth != null && (isAdmin() || isSuperAdmin() ||
+                    (resource.data.userId != null && resource.data.userId == request.auth.uid));
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (isAdmin() || isSuperAdmin() ||
+                      (resource.data.userId != null && resource.data.userId == request.auth.uid));
+      allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
     }
 
     // Compliance Associates Collection

@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  updateDoc,
-} from "firebase-admin/firestore";
-import { getAdminFirestore } from "@/lib/firebase-admin";
+import { getAdminFirestore, FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE } from "@/lib/firebase-admin";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -35,7 +27,10 @@ export async function GET(request: NextRequest) {
     if (denied) return denied;
 
     const db = getAdminFirestore();
-    const snap = await getDocs(collection(db, "professionals"));
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    const snap = await db.collection("professionals").get();
     const professionals = snap.docs.map((d) => {
       const data: any = d.data();
       return {
@@ -89,7 +84,10 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    const ref = await addDoc(collection(db, "professionals"), {
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    const docRef = await db.collection("professionals").add({
       ownerUid,
       name: String(name).trim(),
       title: String(title || "").trim(),
@@ -103,7 +101,7 @@ export async function POST(request: NextRequest) {
       updatedBy: superAdminUid,
     });
 
-    return NextResponse.json({ success: true, id: ref.id });
+    return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
     console.error("Error creating professional:", error);
     return NextResponse.json(
@@ -130,7 +128,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    await updateDoc(doc(db, "professionals", targetProfessionalId), {
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    await db.collection("professionals").doc(targetProfessionalId).update({
       ...updates,
       updatedAt: new Date(),
       updatedBy: superAdminUid,
@@ -163,7 +164,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    await deleteDoc(doc(db, "professionals", targetProfessionalId));
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    await db.collection("professionals").doc(targetProfessionalId).delete();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting professional:", error);

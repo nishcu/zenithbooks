@@ -37,9 +37,16 @@ type User = {
   email: string;
   userType: 'business' | 'professional' | 'freemium';
   companyName: string;
-  createdAt: any;
+  createdAt: string | null;
   status?: 'Active' | 'Inactive' | 'Suspended';
 };
+
+function formatUserDate(createdAt: string | null | undefined): string {
+  if (!createdAt) return 'N/A';
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return format(date, 'dd MMM, yyyy');
+}
 
 export default function AdminUsers() {
   const [user] = useAuthState(auth);
@@ -505,7 +512,7 @@ export default function AdminUsers() {
                       <TableCell className="max-w-[150px] truncate">{user.companyName || 'Not specified'}</TableCell>
                       <TableCell>{getUserTypeBadge(user.userType)}</TableCell>
                       <TableCell>
-                        {user.createdAt ? format(new Date(user.createdAt.seconds * 1000), 'dd MMM, yyyy') : 'N/A'}
+                        {formatUserDate(user.createdAt)}
                       </TableCell>
                       <TableCell>{getStatusBadge(user.status)}</TableCell>
                       <TableCell className="text-right">
@@ -610,7 +617,7 @@ export default function AdminUsers() {
               <div className="space-y-2">
                 <Label>Joined On</Label>
                 <p className="text-sm font-medium">
-                  {selectedUser.createdAt ? format(new Date(selectedUser.createdAt.seconds * 1000), 'dd MMM, yyyy') : 'N/A'}
+                  {formatUserDate(selectedUser.createdAt)}
                 </p>
               </div>
             </div>

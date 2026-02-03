@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -27,30 +27,64 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 type Subscriber = {
   id: string;
+  userId: string;
   userName: string;
-  plan: 'Professional' | 'Business';
-  startDate: Date;
+  plan: string;
+  startDate: string | null;
   status: 'Active' | 'Cancelled';
 };
 
-const initialSubscribers: Subscriber[] = [
-    { id: 'SUB-001', userName: 'Rohan Sharma', plan: 'Professional', startDate: new Date(2024, 6, 1), status: 'Active' },
-    { id: 'SUB-002', userName: 'Priya Mehta', plan: 'Business', startDate: new Date(2024, 5, 15), status: 'Active' },
-    { id: 'SUB-003', userName: 'Anjali Singh', plan: 'Business', startDate: new Date(2023, 4, 10), status: 'Cancelled' },
-];
+function formatSubscriberDate(iso: string | null | undefined): string {
+  if (!iso) return 'N/A';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return format(date, 'dd MMM, yyyy');
+}
 
 export default function Subscribers() {
-  const [subscribers, setSubscribers] = useState<Subscriber[]>(initialSubscribers);
+  const [user] = useAuthState(auth);
+  const isSuperAdmin = !!user?.uid && user.uid === SUPER_ADMIN_UID;
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [isLoadingList, setIsLoadingList] = useState(true);
   const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isChangePlanDialogOpen, setIsChangePlanDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'Professional' | 'Business'>('Professional');
+  const [selectedPlan, setSelectedPlan] = useState<string>('Business');
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const fetchSubscribers = async () => {
+    if (!user?.uid) return;
+    setIsLoadingList(true);
+    try {
+      const res = await fetch('/api/admin/subscribers', { headers: { 'x-user-id': user.uid } });
+      if (res.status === 403) {
+        toast({ variant: 'destructive', title: 'Access Denied', description: 'Super admin only.' });
+        setSubscribers([]);
+        return;
+      }
+      if (!res.ok) throw new Error('Failed to load subscribers');
+      const data = await res.json();
+      setSubscribers(data.subscribers ?? []);
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to load subscribers.' });
+      setSubscribers([]);
+    } finally {
+      setIsLoadingList(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && isSuperAdmin) fetchSubscribers();
+    else if (!user) setIsLoadingList(false);
+  }, [user?.uid, isSuperAdmin]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -70,14 +104,14 @@ export default function Subscribers() {
 
   const handleChangePlan = (sub: Subscriber) => {
     setSelectedSubscriber(sub);
-    setSelectedPlan(sub.plan);
+    setSelectedPlan(sub.plan || 'Business');
     setIsChangePlanDialogOpen(true);
   };
 
   const handleSavePlanChange = async () => {
     if (!selectedSubscriber) return;
     setIsLoading('change-plan');
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // TODO: add API to update planTier in compliance_subscriptions if needed
     setSubscribers(subscribers.map(s => 
       s.id === selectedSubscriber.id 
         ? { ...s, plan: selectedPlan }
@@ -95,20 +129,30 @@ export default function Subscribers() {
   const handleCancelSubscription = async () => {
     if (!selectedSubscriber) return;
     setIsLoading('cancel');
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setSubscribers(subscribers.map(s => 
-      s.id === selectedSubscriber.id 
-        ? { ...s, status: 'Cancelled' as Subscriber['status'] }
-        : s
-    ));
-    toast({
-      title: "Subscription Cancelled",
-      description: `${selectedSubscriber.userName}'s subscription has been cancelled.`,
-      variant: "destructive",
-    });
-    setIsCancelDialogOpen(false);
-    setSelectedSubscriber(null);
-    setIsLoading(null);
+    try {
+      const res = await fetch('/api/admin/subscribers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
+        body: JSON.stringify({ subscriptionId: selectedSubscriber.id, status: 'cancelled' }),
+      });
+      if (!res.ok) throw new Error('Failed to cancel');
+      setSubscribers(subscribers.map(s => 
+        s.id === selectedSubscriber.id 
+          ? { ...s, status: 'Cancelled' as const }
+          : s
+      ));
+      toast({
+        title: "Subscription Cancelled",
+        description: `${selectedSubscriber.userName}'s subscription has been cancelled.`,
+        variant: "destructive",
+      });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to cancel subscription.' });
+    } finally {
+      setIsCancelDialogOpen(false);
+      setSelectedSubscriber(null);
+      setIsLoading(null);
+    }
   };
 
   return (
@@ -141,7 +185,13 @@ export default function Subscribers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {subscribers.length === 0 ? (
+                {isLoadingList ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      <Loader2 className="inline h-5 w-5 animate-spin" /> Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : subscribers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No subscribers found.
@@ -152,9 +202,9 @@ export default function Subscribers() {
                     <TableRow key={sub.id}>
                       <TableCell className="font-medium">{sub.userName}</TableCell>
                       <TableCell>
-                          <Badge variant={sub.plan === 'Professional' ? 'default' : 'secondary'}>{sub.plan}</Badge>
+                          <Badge variant={sub.plan === 'Complete' ? 'default' : 'secondary'}>{sub.plan}</Badge>
                       </TableCell>
-                      <TableCell>{format(sub.startDate, 'dd MMM, yyyy')}</TableCell>
+                      <TableCell>{formatSubscriberDate(sub.startDate)}</TableCell>
                       <TableCell>{getStatusBadge(sub.status)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -220,7 +270,7 @@ export default function Subscribers() {
               </div>
               <div className="space-y-2">
                 <Label>Start Date</Label>
-                <p className="text-sm font-medium">{format(selectedSubscriber.startDate, 'dd MMM, yyyy')}</p>
+                <p className="text-sm font-medium">{formatSubscriberDate(selectedSubscriber.startDate)}</p>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -247,13 +297,14 @@ export default function Subscribers() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="change-plan">New Plan</Label>
-              <Select value={selectedPlan} onValueChange={(value: 'Professional' | 'Business') => setSelectedPlan(value)}>
+              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
                 <SelectTrigger id="change-plan">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Professional">Professional</SelectItem>
-                  <SelectItem value="Business">Business</SelectItem>
+                  <SelectItem value="Core">Core</SelectItem>
+                  <SelectItem value="Statutory">Statutory</SelectItem>
+                  <SelectItem value="Complete">Complete</SelectItem>
                 </SelectContent>
               </Select>
             </div>

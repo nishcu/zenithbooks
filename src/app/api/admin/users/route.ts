@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase-admin/firestore";
-import { getAdminFirestore } from "@/lib/firebase-admin";
+import { getAdminFirestore, FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE } from "@/lib/firebase-admin";
 import { SUPER_ADMIN_UID } from "@/lib/constants";
 
 // Get super admin UID from environment or fallback to constant
@@ -22,19 +21,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
     }
 
-    // Fetch all users
+    // Fetch all users (requires Firebase Admin env: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)
     const db = getAdminFirestore();
-    const usersCollection = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersCollection);
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    const usersSnapshot = await db.collection('users').get();
 
-    const users = usersSnapshot.docs.map(doc => {
-      const data = doc.data();
+    const users = usersSnapshot.docs.map((d) => {
+      const data = d.data();
+      const rawCreatedAt = data.createdAt;
+      let createdAt: string | null = null;
+      if (rawCreatedAt) {
+        if (typeof rawCreatedAt.toDate === 'function') {
+          createdAt = rawCreatedAt.toDate().toISOString();
+        } else if (typeof rawCreatedAt === 'object' && (rawCreatedAt.seconds != null || (rawCreatedAt as { _seconds?: number })._seconds != null)) {
+          const sec = rawCreatedAt.seconds ?? (rawCreatedAt as { _seconds: number })._seconds;
+          createdAt = new Date(sec * 1000).toISOString();
+        } else if (typeof rawCreatedAt === 'string') {
+          createdAt = rawCreatedAt;
+        }
+      }
       return {
-        id: doc.id,
+        id: d.id,
         email: data.email || '',
         userType: data.userType || 'business',
         companyName: data.companyName || '',
-        createdAt: data.createdAt,
+        createdAt,
         // Note: We don't expose sensitive data like passwords
       };
     });
@@ -63,8 +76,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    const userRef = doc(db, 'users', targetUserId);
-    await updateDoc(userRef, {
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    await db.collection('users').doc(targetUserId).update({
       ...updates,
       updatedAt: new Date(),
       updatedBy: userId,
@@ -99,8 +114,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    const userRef = doc(db, 'users', targetUserId);
-    await deleteDoc(userRef);
+    if (!db) {
+      return NextResponse.json({ error: FIREBASE_ADMIN_NOT_CONFIGURED_MESSAGE }, { status: 503 });
+    }
+    await db.collection('users').doc(targetUserId).delete();
 
     return NextResponse.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
