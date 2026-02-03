@@ -34,6 +34,14 @@ import type { ComplianceAssociate, AssociateStatus } from "@/lib/compliance-asso
 
 const MITRA_DISCLAIMER = "Zenith Corporate Mitra is an internal platform-defined role and not a government-authorized designation.";
 
+function getPaymentStatusBadge(status: string | undefined) {
+  const s = (status || "pending").toLowerCase();
+  if (s === "paid") return <Badge className="bg-green-600 hover:bg-green-700">Paid</Badge>;
+  if (s === "expired") return <Badge variant="destructive">Expired</Badge>;
+  if (s === "refunded") return <Badge variant="secondary">Refunded</Badge>;
+  return <Badge variant="outline" className="border-amber-500 text-amber-700">Pending</Badge>;
+}
+
 export default function ComplianceAssociatesPage() {
   const { toast } = useToast();
   const [associates, setAssociates] = useState<ComplianceAssociate[]>([]);
@@ -71,17 +79,20 @@ export default function ComplianceAssociatesPage() {
 
   const handleApprove = async (associateId: string) => {
     try {
-      // Get current user (admin)
       const { auth } = await import("@/lib/firebase");
       const adminId = auth.currentUser?.uid || "system";
-      
-      await approveAssociate(associateId, adminId);
-      
+      const paymentPaid = selectedAssociate?.platformFee?.paymentStatus === "paid";
+      if (!paymentPaid) {
+        const confirmed = window.confirm(
+          "Payment not received for this associate. Approve anyway (waive payment)? Use this if payment was received offline or you are waiving the fee."
+        );
+        if (!confirmed) return;
+      }
+      await approveAssociate(associateId, adminId, paymentPaid ? undefined : { waivePayment: true });
       toast({
         title: "Success",
         description: "Associate approved successfully",
       });
-      
       setIsDialogOpen(false);
       setSelectedAssociate(null);
       loadAssociates();
@@ -282,9 +293,13 @@ export default function ComplianceAssociatesPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="font-semibold text-lg">{associate.name}</h3>
                         {getStatusBadge(associate.status)}
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="text-sm">
+                          <strong>Payment:</strong> {getPaymentStatusBadge(associate.platformFee?.paymentStatus)}
+                        </span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                         <div>
@@ -306,10 +321,7 @@ export default function ComplianceAssociatesPage() {
                           <strong>Performance Score:</strong> {(associate.performance as any)?.score ?? 50}
                         </div>
                         <div>
-                          <strong>Payment Status:</strong>{" "}
-                          <Badge variant={associate.platformFee.paymentStatus === "paid" ? "default" : "secondary"}>
-                            {associate.platformFee.paymentStatus}
-                          </Badge>
+                          <strong>Payment:</strong> {getPaymentStatusBadge(associate.platformFee?.paymentStatus)}
                         </div>
                         <div>
                           <strong>Tasks:</strong> {associate.tasksCompleted} completed, {associate.tasksInProgress} in progress
@@ -475,11 +487,14 @@ export default function ComplianceAssociatesPage() {
                   <p className="mt-1">{selectedAssociate.yearsOfExperience} years</p>
                 </div>
                 <div>
-                  <Label>Payment Status</Label>
+                  <Label>Platform fee payment</Label>
                   <div className="mt-1">
-                    <Badge variant={selectedAssociate.platformFee.paymentStatus === "paid" ? "default" : "secondary"}>
-                      {selectedAssociate.platformFee.paymentStatus}
-                    </Badge>
+                    {getPaymentStatusBadge(selectedAssociate.platformFee?.paymentStatus)}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {selectedAssociate.platformFee?.paymentStatus === "paid"
+                        ? "Fee received — associate can be approved."
+                        : "Fee not received — use Approve (waive payment) to approve anyway."}
+                    </p>
                   </div>
                 </div>
                 <div>
