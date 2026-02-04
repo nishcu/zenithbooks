@@ -210,6 +210,21 @@ export function findMatchingAccounts(
       }
     }
 
+    // ---- Context: Xerox/Stationery/Printing (including typo "xeror") → Office/Printing expense, NOT Vehicles ----
+    const isXeroxStationeryContext =
+      lowerNarration.includes("xerox") || lowerNarration.includes("xeror") || lowerNarration.includes("xero ") ||
+      (lowerNarration.includes("photocopy") || lowerNarration.includes("photocopying")) ||
+      (lowerNarration.includes("stationery") || lowerNarration.includes("stationary")) ||
+      (lowerNarration.includes("printing") && (lowerNarration.includes("paid") || lowerNarration.includes("for")));
+    if (isXeroxStationeryContext && account.type === "Expense") {
+      if (account.name.toLowerCase().includes("office") || account.name.toLowerCase().includes("printing") || account.name.toLowerCase().includes("stationery")) {
+        score += 32;
+      }
+    }
+    if (isXeroxStationeryContext && account.type === "Fixed Asset" && (account.name.toLowerCase().includes("vehicle") || account.name.toLowerCase().includes("vehicles"))) {
+      score -= 30; // Never map xerox/stationery to Vehicles
+    }
+
     // ---- Context: Vehicle/Car purchase → Fixed Asset (Vehicles), not Purchase of Goods ----
     const isVehiclePurchase =
       (lowerNarration.includes("vehicle") || lowerNarration.includes("car") || lowerNarration.includes("bike") || lowerNarration.includes("automobile") || lowerNarration.includes("scooter") || lowerNarration.includes("van") || lowerNarration.includes("truck")) &&

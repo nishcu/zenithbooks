@@ -133,10 +133,9 @@ function generatePurchaseEntry(
   ) || chartOfAccounts.find((a) => a.code === "2040" || (a.type === "Equity" && a.name.toLowerCase().includes("drawings"))) ||
   { code: "2040", name: "Drawings", type: "Equity", keywords: [] };
   
-  // Get debit account: Fixed Asset for capital purchase (vehicle, equipment, etc.), else Expense
+  // Get debit account: use highest-scoring match (Expense or Fixed Asset) so rent → Rent Expense, vehicle → Vehicles
   const debitAccount =
-    matchingAccounts.find((a) => a.type === "Fixed Asset") ||
-    matchingAccounts.find((a) => a.type === "Expense") ||
+    matchingAccounts.find((a) => a.type === "Expense" || a.type === "Fixed Asset") ||
     getDefaultExpenseAccount(chartOfAccounts);
   if (!debitAccount) throw new Error("No expense or fixed asset account found");
 
