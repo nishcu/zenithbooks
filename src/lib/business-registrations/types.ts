@@ -13,7 +13,9 @@ export type RegistrationType =
   | 'sole_proprietorship_msme'
   | 'shops_establishment'
   | 'professional_tax'
-  | 'pf_esi_registration';
+  | 'pf_esi_registration'
+  | 'startup_registration'
+  | 'iec_code';
 
 export type RegistrationStatus =
   | 'pending_documents'

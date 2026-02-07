@@ -242,6 +242,13 @@ function DashboardContent() {
     ],
     compliance: [
       {
+        title: "Business Registrations",
+        description: "GST, Pvt Ltd, LLP, Partnership, Udyam & more",
+        icon: Building,
+        href: "/business-registrations",
+        color: "from-amber-500 to-orange-600",
+      },
+      {
         title: "Bulk Form 16",
         description: "Multi-employee generation",
         icon: FileText,

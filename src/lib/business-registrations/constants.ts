@@ -23,7 +23,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'GST Registration',
     description: 'Register for Goods and Services Tax (GST) with GSTN',
     category: 'essential',
-    basePrice: 4999,
+    basePrice: 499,
     estimatedDays: 7,
     requiredDocuments: [
       'PAN Card',
@@ -52,7 +52,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'Private Limited Company Incorporation',
     description: 'Incorporate a Private Limited Company with MCA',
     category: 'business_structure',
-    basePrice: 14999,
+    basePrice: 1999,
     estimatedDays: 15,
     requiredDocuments: [
       'Director PAN Cards',
@@ -86,7 +86,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'LLP Registration',
     description: 'Register a Limited Liability Partnership with MCA',
     category: 'business_structure',
-    basePrice: 9999,
+    basePrice: 1999,
     estimatedDays: 12,
     requiredDocuments: [
       'Partner PAN Cards',
@@ -119,7 +119,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'Partnership Firm Registration',
     description: 'Register a Partnership Firm with Registrar of Firms',
     category: 'business_structure',
-    basePrice: 6999,
+    basePrice: 499,
     estimatedDays: 10,
     requiredDocuments: [
       'Partner PAN Cards',
@@ -148,7 +148,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'Sole Proprietorship / MSME (Udyam)',
     description: 'Register as Sole Proprietorship and obtain MSME/Udyam Registration',
     category: 'business_structure',
-    basePrice: 2999,
+    basePrice: 199,
     estimatedDays: 5,
     requiredDocuments: [
       'PAN Card',
@@ -176,7 +176,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'Shops & Establishment Registration',
     description: 'Register under Shops and Establishment Act',
     category: 'compliance',
-    basePrice: 3999,
+    basePrice: 499,
     estimatedDays: 7,
     requiredDocuments: [
       'Business license',
@@ -202,7 +202,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'Professional Tax Registration',
     description: 'Register for Professional Tax (state-specific)',
     category: 'compliance',
-    basePrice: 1999,
+    basePrice: 499,
     estimatedDays: 5,
     requiredDocuments: [
       'PAN Card',
@@ -227,7 +227,7 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
     name: 'PF & ESI Registration',
     description: 'Register for Provident Fund (PF) and Employees State Insurance (ESI)',
     category: 'compliance',
-    basePrice: 5999,
+    basePrice: 499,
     estimatedDays: 10,
     requiredDocuments: [
       'PAN Card',
@@ -251,7 +251,67 @@ export const REGISTRATION_TYPES: Record<RegistrationType, RegistrationConfig> = 
       'Platform-managed delivery by ZenithBooks Compliance Team',
     ],
   },
+  startup_registration: {
+    id: 'startup_registration',
+    name: 'Startup Registration',
+    description: 'DPIIT Startup India recognition and registration',
+    category: 'business_structure',
+    basePrice: 999,
+    estimatedDays: 10,
+    requiredDocuments: [
+      'PAN Card',
+      'Aadhaar Card',
+      'Certificate of Incorporation / Registration',
+      'Proof of Business Address',
+      'Pitch deck or business summary',
+    ],
+    workflowSteps: [
+      'Submit required documents',
+      'ZenithBooks Compliance Team prepares application',
+      'Application submitted to Startup India portal',
+      'DPIIT recognition issued',
+      'Startup certificate delivered',
+    ],
+    features: [
+      'DPIIT recognition',
+      'Startup India registration',
+      'Certificate of recognition',
+      'Platform-managed delivery by ZenithBooks Compliance Team',
+    ],
+  },
+  iec_code: {
+    id: 'iec_code',
+    name: 'IEC Code Registration',
+    description: 'Importer Exporter Code (IEC) from DGFT',
+    category: 'essential',
+    basePrice: 999,
+    estimatedDays: 7,
+    requiredDocuments: [
+      'PAN Card',
+      'Aadhaar Card',
+      'Bank Account Details',
+      'Proof of Business Address',
+      'Certificate of Incorporation (for companies)',
+    ],
+    workflowSteps: [
+      'Submit required documents',
+      'ZenithBooks Compliance Team prepares application',
+      'Application submitted to DGFT',
+      'IEC code issued',
+      'IEC certificate delivered',
+    ],
+    features: [
+      'IEC code registration',
+      'IEC certificate',
+      'DGFT portal support',
+      'Platform-managed delivery by ZenithBooks Compliance Team',
+    ],
+  },
 };
+
+/** Note displayed on Business Registrations page about professional charges */
+export const REGISTRATION_CHARGES_NOTE =
+  'The above charges are Professional Charges. Govt fees, Stamp duties, Notary, etc. will be borne by the Users on COST to COST basis.';
 
 export const REGISTRATION_IDS = Object.keys(REGISTRATION_TYPES) as RegistrationType[];
 

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Building, IndianRupee, ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
-import { getAllRegistrations, getRegistrationsByCategory } from "@/lib/business-registrations/constants";
+import { getAllRegistrations, getRegistrationsByCategory, REGISTRATION_CHARGES_NOTE } from "@/lib/business-registrations/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BusinessRegistrationsPage() {
@@ -32,11 +32,18 @@ export default function BusinessRegistrationsPage() {
             </p>
           </div>
         </div>
-        <div className="bg-muted/50 p-4 rounded-lg border">
-          <p className="text-sm text-muted-foreground">
-            <strong>ICAI-Compliant Service:</strong> All registration tasks are handled by ZenithBooks Compliance Team 
-            in compliance with Indian laws and ICAI regulations. Clients never see or select individual professionals.
-          </p>
+        <div className="space-y-3">
+          <div className="bg-muted/50 p-4 rounded-lg border">
+            <p className="text-sm text-muted-foreground">
+              <strong>ICAI-Compliant Service:</strong> All registration tasks are handled by ZenithBooks Compliance Team 
+              in compliance with Indian laws and ICAI regulations. Clients never see or select individual professionals.
+            </p>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Note:</strong> {REGISTRATION_CHARGES_NOTE}
+            </p>
+          </div>
         </div>
       </div>
 

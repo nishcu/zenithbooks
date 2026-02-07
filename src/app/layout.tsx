@@ -123,6 +123,16 @@ export default function RootLayout({
             </Script>
           </>
         )}
+        {/* PWA Service Worker */}
+        <Script id="sw-register" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').catch(function() {});
+              });
+            }
+          `}
+        </Script>
         {/* Cashfree SDK - Loaded dynamically in checkout component for CSP safety */}
         {/* Script removed from here - using dynamic loader instead */}
         <ClientOnly>

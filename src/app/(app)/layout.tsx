@@ -193,6 +193,12 @@ const allMenuItems = [
     roles: ['business', 'professional']
   },
   {
+    href: "/business-registrations",
+    label: "Business Registrations",
+    icon: Building,
+    roles: ['business', 'professional']
+  },
+  {
     href: "/legal-documents",
     label: "Legal Documents",
     icon: Shield,

@@ -21,7 +21,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -52,6 +52,8 @@ import type {
 } from "@/lib/business-registrations/types";
 import { getRegistrationConfig } from "@/lib/business-registrations/constants";
 import { updateBusinessRegistrationStatus } from "@/lib/business-registrations/firestore";
+import { getActiveAssociates, withCorporateMitraDefaults } from "@/lib/compliance-associates/firestore";
+import type { ComplianceAssociate } from "@/lib/compliance-associates/types";
 
 export default function AdminBusinessRegistrationsPage() {
   const [user] = useAuthState(auth);
@@ -68,12 +70,30 @@ export default function AdminBusinessRegistrationsPage() {
   const [caReviewer, setCaReviewer] = useState("");
   const [sopReference, setSopReference] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
+  const [corporateMitras, setCorporateMitras] = useState<ComplianceAssociate[]>([]);
+  const [professionals, setProfessionals] = useState<{ id: string; name: string; firm: string }[]>([]);
 
   useEffect(() => {
     if (user) {
       loadRegistrations();
     }
   }, [user, statusFilter]);
+
+  useEffect(() => {
+    getActiveAssociates()
+      .then((associates) => setCorporateMitras(associates.map(withCorporateMitraDefaults)))
+      .catch(() => setCorporateMitras([]));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/admin/professionals", {
+      headers: { "x-user-id": user.uid },
+    })
+      .then((r) => (r.ok ? r.json() : { professionals: [] }))
+      .then((data) => setProfessionals((data.professionals || []).filter((p: any) => p.status === "approved" || !p.status)))
+      .catch(() => setProfessionals([]));
+  }, [user]);
 
   const loadRegistrations = async () => {
     if (!user) return;
@@ -172,6 +192,22 @@ export default function AdminBusinessRegistrationsPage() {
     setSopReference(registration.sopReference || "");
     setRegistrationNumber(registration.registrationNumber || "");
     setIsDialogOpen(true);
+  };
+
+  const isAssignedFromDropdown =
+    assignedTo &&
+    (corporateMitras.some((a) => a.associateCode === assignedTo) ||
+      (assignedTo.startsWith("PROF-") && professionals.some((p) => `PROF-${p.id}` === assignedTo)));
+
+  const getAssignedToLabel = (value: string | undefined) => {
+    if (!value) return "Internal Team (Unassigned)";
+    const mitra = corporateMitras.find((a) => a.associateCode === value);
+    if (mitra) return `${mitra.associateCode} — ${mitra.name || "Corporate Mitra"}`;
+    if (value.startsWith("PROF-")) {
+      const prof = professionals.find((p) => `PROF-${p.id}` === value);
+      if (prof) return `Professional: ${prof.name}${prof.firm ? ` (${prof.firm})` : ""}`;
+    }
+    return value;
   };
 
   const getStatusBadge = (status: RegistrationStatus) => {
@@ -324,7 +360,7 @@ export default function AdminBusinessRegistrationsPage() {
                             <div>
                               <span className="font-medium text-muted-foreground">Assigned To:</span>{" "}
                               <span className="text-xs">
-                                {registration.assignedTo || "Internal Team (Unassigned)"}
+                                {getAssignedToLabel(registration.assignedTo)}
                               </span>
                             </div>
                           </div>
@@ -412,17 +448,54 @@ export default function AdminBusinessRegistrationsPage() {
             <div className="space-y-4 border-t pt-4">
               <h4 className="font-medium flex items-center gap-2">
                 <UserCog className="h-4 w-4" />
-                Task Assignment (Internal)
+                Task Assignment
               </h4>
+              <p className="text-xs text-muted-foreground">
+                Assign to Zenith Corporate Mitra or Professional
+              </p>
               <div>
-                <Label htmlFor="assigned-to">Assigned To (Zenith Corporate Mitra)</Label>
-                <Input
-                  id="assigned-to"
-                  value={assignedTo}
-                  onChange={(e) => setAssignedTo(e.target.value)}
-                  placeholder="e.g., Associate Code: AS-001 (No client names - ICAI compliant)"
-                  className="mt-1"
-                />
+                <Label htmlFor="assigned-to">Assigned To (Corporate Mitra / Professional)</Label>
+                <Select
+                  value={isAssignedFromDropdown ? assignedTo : "__manual__"}
+                  onValueChange={(v) => setAssignedTo(v === "__manual__" ? "" : v)}
+                >
+                  <SelectTrigger id="assigned-to" className="mt-1">
+                    <SelectValue placeholder="Select Corporate Mitra or Professional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__manual__">
+                      Enter code manually
+                    </SelectItem>
+                    {corporateMitras.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Corporate Mitras</SelectLabel>
+                        {corporateMitras.map((a) => (
+                          <SelectItem key={a.id} value={a.associateCode}>
+                            {a.associateCode} {a.name ? `— ${a.name}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                    {professionals.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Professionals</SelectLabel>
+                        {professionals.map((p) => (
+                          <SelectItem key={p.id} value={`PROF-${p.id}`}>
+                            {p.name}{p.firm ? ` (${p.firm})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                  </SelectContent>
+                </Select>
+                {(!assignedTo || (!isAssignedFromDropdown && assignedTo !== "")) && (
+                  <Input
+                    value={assignedTo || ""}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    placeholder="e.g., AS-001 or PROF-xxx"
+                    className="mt-2"
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="sop-reference">SOP Reference</Label>

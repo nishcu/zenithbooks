@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { Loader2, Building, ArrowRight, CheckCircle2, Upload, FileText } from "lucide-react";
-import { getRegistrationConfig, type RegistrationType } from "@/lib/business-registrations/constants";
+import { getRegistrationConfig, REGISTRATION_CHARGES_NOTE, type RegistrationType } from "@/lib/business-registrations/constants";
 import { createBusinessRegistration } from "@/lib/business-registrations/firestore";
 import { doc, getDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
@@ -158,11 +158,18 @@ export default function BusinessRegistrationApplyPage() {
         </div>
       </div>
 
-      <Alert className="mb-6">
+      <Alert className="mb-4">
         <Info className="h-4 w-4" />
         <AlertDescription>
           <strong>ICAI-Compliant Service:</strong> All registration tasks are handled by ZenithBooks Compliance Team 
           in compliance with Indian laws and ICAI regulations. You will receive updates as your registration progresses.
+        </AlertDescription>
+      </Alert>
+
+      <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+        <Info className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800 dark:text-amber-200">
+          <strong>Note:</strong> {REGISTRATION_CHARGES_NOTE}
         </AlertDescription>
       </Alert>
 
