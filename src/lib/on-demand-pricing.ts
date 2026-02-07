@@ -106,12 +106,12 @@ export const servicePricing: ServicePricing = {
         { id: "itr4", name: "ITR-4 (Presumptive Taxation)", price: 2499 },
     ],
     compliance_plans: [
-        { id: "core_monthly", name: "Core Compliance (Monthly)", price: 2999 },
-        { id: "core_annual", name: "Core Compliance (Annual)", price: 29990 },
-        { id: "statutory_monthly", name: "Statutory Compliance (Monthly)", price: 5999 },
-        { id: "statutory_annual", name: "Statutory Compliance (Annual)", price: 59990 },
-        { id: "complete_monthly", name: "Complete Compliance (Monthly)", price: 9999 },
-        { id: "complete_annual", name: "Complete Compliance (Annual)", price: 99990 },
+        { id: "core_monthly", name: "Core Compliance (Monthly)", price: 999 },
+        { id: "core_annual", name: "Core Compliance (Annual)", price: 9990 },
+        { id: "statutory_monthly", name: "Statutory Compliance (Monthly)", price: 1299 },
+        { id: "statutory_annual", name: "Statutory Compliance (Annual)", price: 12990 },
+        { id: "complete_monthly", name: "Complete Compliance (Monthly)", price: 1499 },
+        { id: "complete_annual", name: "Complete Compliance (Annual)", price: 14990 },
     ],
 };
 

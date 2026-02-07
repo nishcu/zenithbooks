@@ -453,7 +453,7 @@ export default function PricingPage() {
                   GST Returns + Basic Accounting + Monthly Reports
                 </p>
                 <p className="text-lg font-bold pl-7">
-                  ₹2,999/month or ₹29,990/year
+                  ₹999/month or ₹9,990/year
                 </p>
                 <Button asChild variant="outline" className="w-full mt-4">
                   <Link href="/compliance-plans">View Details</Link>
@@ -470,7 +470,7 @@ export default function PricingPage() {
                   GST + Accounting + TDS/TCS + Payroll (PF/ESI) + Compliance Calendar
                 </p>
                 <p className="text-lg font-bold pl-7">
-                  ₹5,999/month or ₹59,990/year
+                  ₹1,299/month or ₹12,990/year
                 </p>
                 <Button asChild className="w-full mt-4">
                   <Link href="/compliance-plans">View Details</Link>
@@ -486,7 +486,7 @@ export default function PricingPage() {
                   Everything in Growth + MCA Compliances + CA Review + Dedicated Account Manager
                 </p>
                 <p className="text-lg font-bold pl-7">
-                  ₹9,999/month or ₹99,990/year
+                  ₹1,499/month or ₹14,990/year
                 </p>
                 <Button asChild variant="outline" className="w-full mt-4">
                   <Link href="/compliance-plans">View Details</Link>

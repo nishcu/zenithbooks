@@ -351,7 +351,7 @@ export default function CompliancePlansPage() {
                       </>
                     ) : (
                       <>
-                        Get Started Now
+                        Start Now
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}

@@ -227,8 +227,8 @@ export const COMPLIANCE_PLANS: Record<CompliancePlanTier, CompliancePlan> = {
     id: 'core',
     name: 'Starter Plan',
     description: 'GST Returns + Basic Accounting + Monthly Reports - Perfect for small MSMEs and early startups',
-    monthlyPrice: 2999,
-    annualPrice: 29990, // ~16% discount
+    monthlyPrice: 999,
+    annualPrice: 9990, // ~2 months free
     targetAudience: 'Small MSMEs, early startups',
     includes: [
       'Monthly bookkeeping & journal entries',
@@ -256,8 +256,8 @@ export const COMPLIANCE_PLANS: Record<CompliancePlanTier, CompliancePlan> = {
     id: 'statutory',
     name: 'Growth Plan',
     description: 'GST + Accounting + TDS/TCS + Payroll (PF/ESI) + Compliance Calendar - Complete compliance for growing businesses',
-    monthlyPrice: 5999,
-    annualPrice: 59990, // ~16% discount
+    monthlyPrice: 1299,
+    annualPrice: 12990, // ~2 months free
     targetAudience: 'Growing businesses',
     includes: [
       'Everything in Starter Plan',
@@ -284,8 +284,8 @@ export const COMPLIANCE_PLANS: Record<CompliancePlanTier, CompliancePlan> = {
     id: 'complete',
     name: 'Enterprise Plan',
     description: 'Everything in Growth + MCA Compliances + CA Review + Dedicated Account Manager - Full service for funded startups, LLPs, Pvt Ltd companies',
-    monthlyPrice: 9999,
-    annualPrice: 99990, // ~16% discount
+    monthlyPrice: 1499,
+    annualPrice: 14990, // ~2 months free (unchanged)
     targetAudience: 'Funded startups, LLPs, Pvt Ltd',
     includes: [
       'Everything in Growth Plan',
