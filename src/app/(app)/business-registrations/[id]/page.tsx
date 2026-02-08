@@ -26,7 +26,6 @@ import {
   IndianRupee,
 } from "lucide-react";
 import {
-  getBusinessRegistration,
   getAuditLogsByRegistration,
   addDocumentToRegistration,
 } from "@/lib/business-registrations/firestore";
@@ -59,27 +58,60 @@ export default function BusinessRegistrationStatusPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const reg = await getBusinessRegistration(registrationId);
-      if (!reg || reg.userId !== user.uid) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Registration not found or access denied.",
-        });
-        router.push("/business-registrations");
-        return;
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/registrations/${registrationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const message = body?.message || body?.error || "Failed to load registration.";
+        if (res.status === 401 || res.status === 403) {
+          toast({
+            variant: "destructive",
+            title: "Access denied",
+            description: message,
+          });
+          router.push("/business-registrations");
+          return;
+        }
+        if (res.status === 404) {
+          toast({
+            variant: "destructive",
+            title: "Not found",
+            description: "Registration not found.",
+          });
+          router.push("/business-registrations");
+          return;
+        }
+        throw new Error(message);
       }
+      const data = await res.json();
+      const reg: BusinessRegistration = {
+        ...data,
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
+        documents: (data.documents || []).map((d: { uploadedAt?: string; [k: string]: unknown }) => ({
+          ...d,
+          uploadedAt: d.uploadedAt ? new Date(d.uploadedAt as string) : new Date(),
+        })),
+      };
       setRegistration(reg);
 
-      // Load audit logs
-      const logs = await getAuditLogsByRegistration(registrationId, 10);
-      setAuditLogs(logs);
+      // Load audit logs (non-blocking: if rules/index not deployed, registration still shows)
+      try {
+        const logs = await getAuditLogsByRegistration(registrationId, 10);
+        setAuditLogs(logs);
+      } catch (logError: any) {
+        console.warn("Audit logs unavailable:", logError);
+        setAuditLogs([]);
+      }
     } catch (error: any) {
       console.error("Error loading registration:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load registration. Please try again.",
+        description: error?.message || "Failed to load registration. Please try again.",
       });
     } finally {
       setLoading(false);

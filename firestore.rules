@@ -613,12 +613,24 @@ service cloud.firestore {
 
     // Business Registrations (admin task queue) - admins read/update; users read own if applicable
     match /business_registrations/{registrationId} {
+      allow read: if request.auth != null && (
+                    isAdmin() ||
+                    isSuperAdmin() ||
+                    resource.data.userId == request.auth.uid ||
+                    resource.data.createdBy == request.auth.uid
+                  );
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (isAdmin() || isSuperAdmin() ||
+                      (resource.data.userId == request.auth.uid || resource.data.createdBy == request.auth.uid));
+      allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
+    }
+
+    // Business Registration Audit Logs (created when user submits or admin updates a registration)
+    match /registration_audit_logs/{logId} {
       allow read: if request.auth != null && (isAdmin() || isSuperAdmin() ||
                     (resource.data.userId != null && resource.data.userId == request.auth.uid));
       allow create: if request.auth != null;
-      allow update: if request.auth != null && (isAdmin() || isSuperAdmin() ||
-                      (resource.data.userId != null && resource.data.userId == request.auth.uid));
-      allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
+      allow update, delete: if request.auth != null && (isAdmin() || isSuperAdmin());
     }
 
     // Compliance Associates Collection
