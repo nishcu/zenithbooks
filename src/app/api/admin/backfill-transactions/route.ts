@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         amount: data.amount,
         status: data.status,
         source: data.source,
-        createdAt: data.createdAt?.toDate?.?.()?.toISOString?.() ?? data.createdAt,
+        createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? data.createdAt,
       };
     });
     return NextResponse.json({ userId, count: transactions.length, transactions });
