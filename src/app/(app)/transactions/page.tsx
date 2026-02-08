@@ -8,14 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 // Removed unused Tabs import
 import { format } from "date-fns";
-import { IndianRupee, Receipt, FileText, CreditCard, Loader2, Search } from "lucide-react";
+import { IndianRupee, Receipt, FileText, CreditCard, Loader2, Search, Building, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { doc, getDoc } from "firebase/firestore";
 
 interface Transaction {
   id: string;
-  type: "subscription" | "ca_certificate" | "legal_document" | "report" | "notice";
+  type: "subscription" | "ca_certificate" | "legal_document" | "report" | "notice" | "business_registration" | "associate_registration";
   description: string;
   amount: number;
   date: Date;
@@ -24,6 +25,8 @@ interface Transaction {
   paymentId?: string;
   serviceId?: string;
   reportType?: string;
+  /** Link to open the related item (e.g. registration, document) */
+  actionUrl?: string;
 }
 
 // Stable empty array reference outside component
@@ -173,10 +176,19 @@ export default function TransactionsPage() {
 
           let type: Transaction["type"] = "subscription";
           let description = pid || "Payment";
+          let actionUrl: string | undefined;
 
           if (pid === "business" || pid === "professional") {
             type = "subscription";
             description = `${pid} Plan`;
+          } else if (pid.startsWith("business_registration_")) {
+            const regId = pid.replace("business_registration_", "");
+            type = "business_registration";
+            description = "Business Registration";
+            actionUrl = `/business-registrations/${regId}`;
+          } else if (pid.includes("associate_registration")) {
+            type = "associate_registration";
+            description = "Zenith Corporate Mitra Registration";
           } else if (pid.includes("notice")) {
             type = "notice";
             description = "Notice Handling";
@@ -204,6 +216,7 @@ export default function TransactionsPage() {
             paymentId: data.paymentId,
             serviceId: data.planId,
             reportType: data.planId,
+            actionUrl,
           });
         });
 
@@ -270,6 +283,10 @@ export default function TransactionsPage() {
       case "report":
         return <FileText className="h-4 w-4" />;
       case "notice":
+        return <Receipt className="h-4 w-4" />;
+      case "business_registration":
+        return <Building className="h-4 w-4" />;
+      case "associate_registration":
         return <Receipt className="h-4 w-4" />;
       default:
         return <Receipt className="h-4 w-4" />;
@@ -399,9 +416,10 @@ export default function TransactionsPage() {
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
-              <SelectContent>
+                <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="subscription">Subscriptions</SelectItem>
+                <SelectItem value="business_registration">Business Registrations</SelectItem>
                 <SelectItem value="ca_certificate">CA Certificates</SelectItem>
                 <SelectItem value="legal_document">Legal Documents</SelectItem>
                 <SelectItem value="report">Reports</SelectItem>
@@ -466,6 +484,13 @@ export default function TransactionsPage() {
                         {getStatusBadge(transaction.status)}
                       </div>
                     </div>
+                    {transaction.actionUrl && (
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={transaction.actionUrl}>
+                          View <ExternalLink className="ml-1 h-3 w-3" />
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

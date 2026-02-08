@@ -1,24 +1,65 @@
 /**
  * Business Registrations - Main Page
- * Lists all available registration types
+ * Shows user's registration requests first, then catalog to apply for new
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Building, IndianRupee, ArrowRight, Clock } from "lucide-react";
+import { CheckCircle2, Building, IndianRupee, ArrowRight, Clock, Loader2, Upload, CreditCard, FileText } from "lucide-react";
 import Link from "next/link";
-import { getAllRegistrations, getRegistrationsByCategory, REGISTRATION_CHARGES_NOTE } from "@/lib/business-registrations/constants";
+import { getAllRegistrations, getRegistrationsByCategory, getRegistrationConfig, REGISTRATION_CHARGES_NOTE } from "@/lib/business-registrations/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
+import type { RegistrationStatus } from "@/lib/business-registrations/types";
+
+type MyRegistration = {
+  id: string;
+  userId: string;
+  registrationType: string;
+  status: RegistrationStatus;
+  feePaid: boolean;
+  feeAmount: number;
+  documents: { name: string }[];
+  createdAt: string;
+};
 
 export default function BusinessRegistrationsPage() {
+  const [user] = useAuthState(auth);
+  const [myRegistrations, setMyRegistrations] = useState<MyRegistration[]>([]);
+  const [loadingMy, setLoadingMy] = useState(true);
+
   const allRegistrations = getAllRegistrations();
   const essentialRegistrations = getRegistrationsByCategory('essential');
   const businessStructureRegistrations = getRegistrationsByCategory('business_structure');
   const complianceRegistrations = getRegistrationsByCategory('compliance');
+
+  useEffect(() => {
+    if (!user) {
+      setLoadingMy(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/registrations", { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setMyRegistrations(data);
+        }
+      } catch {
+        if (!cancelled) setMyRegistrations([]);
+      } finally {
+        if (!cancelled) setLoadingMy(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -47,6 +88,77 @@ export default function BusinessRegistrationsPage() {
         </div>
       </div>
 
+      {/* Your registration requests – resume from here */}
+      {user && (
+        <Card className="mb-8 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Your registration requests
+            </CardTitle>
+            <CardDescription>
+              Continue from where you left off. Pay, upload documents, or track status.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingMy ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : myRegistrations.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">You have no registration requests yet. Apply for a service below.</p>
+            ) : (
+              <div className="space-y-3">
+                {myRegistrations.map((reg) => {
+                  const config = getRegistrationConfig(reg.registrationType as any);
+                  const statusLabel = reg.status === "completed" ? "Completed" : reg.status === "rejected" ? "Rejected" : reg.feePaid ? "Upload documents" : "Pending payment";
+                  return (
+                    <div
+                      key={reg.id}
+                      className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <p className="font-semibold">{config?.name ?? reg.registrationType}</p>
+                          <p className="text-sm text-muted-foreground">
+                            ₹{reg.feeAmount?.toLocaleString("en-IN") ?? "—"} · {reg.documents?.length ?? 0} documents uploaded
+                            {reg.feePaid && " · Payment received"}
+                          </p>
+                        </div>
+                        <Badge variant={reg.feePaid ? "default" : "secondary"}>{statusLabel}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!reg.feePaid && (
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/business-registrations/${reg.id}/pay`}>
+                              <CreditCard className="mr-1 h-4 w-4" />
+                              Pay now
+                            </Link>
+                          </Button>
+                        )}
+                        <Button asChild size="sm">
+                          <Link href={`/business-registrations/${reg.id}`}>
+                            {reg.feePaid ? (
+                              <>
+                                <Upload className="mr-1 h-4 w-4" />
+                                Upload documents / View status
+                              </>
+                            ) : (
+                              "View details"
+                            )}
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <h2 className="text-xl font-semibold mb-4">Apply for a new registration</h2>
       <Tabs defaultValue="all" className="space-y-6">
         <TabsList>
           <TabsTrigger value="all">All Registrations</TabsTrigger>
@@ -76,35 +188,44 @@ export default function BusinessRegistrationsPage() {
       <Card className="mt-12">
         <CardHeader>
           <CardTitle>How It Works</CardTitle>
-          <CardDescription>Simple 3-step process</CardDescription>
+          <CardDescription>Apply → Pay → Upload documents (optional) → We handle the rest</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mx-auto mb-4">
                 1
               </div>
-              <h3 className="font-semibold mb-2">Submit Documents</h3>
+              <h3 className="font-semibold mb-2">Apply & Pay</h3>
               <p className="text-sm text-muted-foreground">
-                Upload required documents through our secure portal
+                Submit details and complete payment. Return anytime to see &quot;Your registration requests&quot; above.
               </p>
             </div>
             <div className="text-center">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mx-auto mb-4">
                 2
               </div>
-              <h3 className="font-semibold mb-2">ZenithBooks Compliance Team Handles Filing</h3>
+              <h3 className="font-semibold mb-2">Upload Documents (optional)</h3>
               <p className="text-sm text-muted-foreground">
-                Our internal professional team prepares and submits your application
+                Upload required documents at your convenience. You can do this in multiple visits.
               </p>
             </div>
             <div className="text-center">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mx-auto mb-4">
                 3
               </div>
-              <h3 className="font-semibold mb-2">Completion & Status Update</h3>
+              <h3 className="font-semibold mb-2">ZenithBooks Team Handles Filing</h3>
               <p className="text-sm text-muted-foreground">
-                Receive your registration certificate and status updates
+                Our compliance team prepares and submits your application
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mx-auto mb-4">
+                4
+              </div>
+              <h3 className="font-semibold mb-2">Completion & Certificate</h3>
+              <p className="text-sm text-muted-foreground">
+                Track status and receive your registration certificate
               </p>
             </div>
           </div>

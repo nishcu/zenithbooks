@@ -58,6 +58,28 @@ export default function BusinessRegistrationApplyPage() {
       setRegistrationType(type);
     }
 
+    // If user already has an in-progress registration for this type, send them there instead of showing form again
+    const checkExisting = async () => {
+      if (!user || !type) return;
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/registrations", { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const list = await res.json();
+        const existing = list.find(
+          (r: { registrationType: string; status: string }) =>
+            r.registrationType === type && !["completed", "rejected"].includes(r.status)
+        );
+        if (existing?.id) {
+          router.replace(`/business-registrations/${existing.id}`);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    };
+    checkExisting();
+
     // Load user data
     const loadUserData = async () => {
       if (user) {

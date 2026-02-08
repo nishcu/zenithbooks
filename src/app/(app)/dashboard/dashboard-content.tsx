@@ -337,6 +337,13 @@ function DashboardContent() {
       color: "from-amber-500 to-orange-600",
     },
     {
+      title: "Payments & Transactions",
+      description: "View payments, invoices and transaction history",
+      icon: CreditCard,
+      href: "/transactions",
+      color: "from-emerald-500 to-teal-600",
+    },
+    {
       title: "Legal Documents",
       description: "",
       icon: Scale,

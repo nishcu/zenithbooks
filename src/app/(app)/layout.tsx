@@ -199,6 +199,12 @@ const allMenuItems = [
     roles: ['business', 'professional']
   },
   {
+    href: "/transactions",
+    label: "Payments & Transactions",
+    icon: CreditCard,
+    roles: ['business', 'professional', 'super_admin']
+  },
+  {
     href: "/legal-documents",
     label: "Legal Documents",
     icon: Shield,
