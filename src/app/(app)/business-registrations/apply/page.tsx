@@ -111,10 +111,10 @@ export default function BusinessRegistrationApplyPage() {
 
       toast({
         title: "Registration Request Submitted",
-        description: "Your registration request has been submitted. Please upload required documents.",
+        description: "Proceed to payment to complete your registration request.",
       });
 
-      router.push(`/business-registrations/${registrationId}`);
+      router.push(`/business-registrations/${registrationId}/pay`);
     } catch (error: any) {
       console.error("Error creating registration:", error);
       toast({
@@ -320,7 +320,7 @@ export default function BusinessRegistrationApplyPage() {
                 ))}
               </ul>
               <p className="text-xs text-muted-foreground mt-4">
-                You can upload documents after submitting the request.
+                After payment you can optionally upload documents on the registration status page.
               </p>
             </CardContent>
           </Card>

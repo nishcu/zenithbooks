@@ -122,6 +122,7 @@ export function CashfreeCheckout({
       let compliancePlanTier: string | undefined;
       let billingPeriod: string | undefined;
       let associateId: string | undefined;
+      let businessRegistrationId: string | undefined;
 
       if (postPaymentContext?.key === 'pending_compliance_subscription') {
         const complianceData = postPaymentContext.payload;
@@ -135,6 +136,12 @@ export function CashfreeCheckout({
         if (associateData?.paymentType === 'associate_registration') {
           paymentType = 'associate_registration';
           associateId = associateData.associateId;
+        }
+      } else if (postPaymentContext?.key === 'pending_business_registration') {
+        const regData = postPaymentContext.payload;
+        if (regData?.type === 'business_registration' && regData?.registrationId) {
+          paymentType = 'business_registration';
+          businessRegistrationId = regData.registrationId;
         }
       }
 
@@ -155,6 +162,7 @@ export function CashfreeCheckout({
         ...(compliancePlanTier ? { compliancePlanTier } : {}),
         ...(billingPeriod ? { billingPeriod } : {}),
         ...(associateId ? { associateId } : {}),
+        ...(businessRegistrationId ? { businessRegistrationId } : {}),
       };
 
       console.log('DEBUG - Full request body:', requestBody);
@@ -292,6 +300,7 @@ export function CashfreeCheckout({
         console.log('Launching Cashfree checkout with paymentSessionId:', paymentSessionId.substring(0, 40) + '...');
         const result = await cashfree.checkout({
           paymentSessionId: paymentSessionId,
+          redirectTarget: '_self', // Same tab - session is passed correctly; _blank can break session
             });
         
         console.log('✅ Cashfree checkout completed:', result);

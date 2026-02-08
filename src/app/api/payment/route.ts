@@ -15,6 +15,7 @@ const {
   compliancePlanTier,
   billingPeriod,
   associateId,
+  businessRegistrationId,
 } = requestBody;
 
 // --- VALIDATIONS ---
@@ -98,6 +99,10 @@ const orderId = `order_${Date.now()}`;
         paymentType: 'associate_registration',
         ...(associateId ? { associateId } : {}),
       } : {}),
+      ...(paymentType === 'business_registration' && businessRegistrationId ? {
+        paymentType: 'business_registration',
+        businessRegistrationId,
+      } : {}),
     },
   };
 
@@ -107,7 +112,7 @@ const response = await fetch(`${baseUrl}/orders`, {
   headers: {
     'x-client-id': appId,
     'x-client-secret': secret,
-    'x-api-version': '2022-09-01',
+    'x-api-version': '2023-08-01',
     'Content-Type': 'application/json',
   },
   body: JSON.stringify(cashfreeBody),

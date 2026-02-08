@@ -229,6 +229,20 @@ function PaymentSuccessContent() {
             console.error("Post-payment compliance subscription handling failed:", e);
           }
 
+          // If this payment came from business registration
+          try {
+            const regRaw = localStorage.getItem("pending_business_registration");
+            if (regRaw && orderIdParam) {
+              const regPending = JSON.parse(regRaw);
+              if (regPending?.type === "business_registration" && regPending?.registrationId) {
+                localStorage.removeItem("pending_business_registration");
+                redirectTo = `/business-registrations/${regPending.registrationId}`;
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment business registration redirect failed:", e);
+          }
+
           // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
           try {
             const raw = localStorage.getItem("pending_on_demand_action");

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getAdminFirestore } from '@/lib/firebase-admin';
 import { createHmac } from 'crypto';
 
 /**
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
     const compliancePlanTier = body.order?.order_tags?.compliancePlanTier || body.order_tags?.compliancePlanTier;
     const billingPeriod = body.order?.order_tags?.billingPeriod || body.order_tags?.billingPeriod;
     const associateId = body.order?.order_tags?.associateId || body.order_tags?.associateId;
+    const businessRegistrationId = body.order?.order_tags?.businessRegistrationId || body.order_tags?.businessRegistrationId;
 
     // Verify webhook signature if provided
     const signature = request.headers.get('x-cashfree-signature');
@@ -70,6 +72,24 @@ export async function POST(request: NextRequest) {
               orderId,
               paymentId,
             });
+          }
+          // Handle business registration payment (use Admin SDK - no auth in webhook)
+          else if (paymentType === 'business_registration' && businessRegistrationId) {
+            const adminDb = getAdminFirestore();
+            if (adminDb) {
+              const regRef = adminDb.collection('business_registrations').doc(businessRegistrationId);
+              await regRef.update({
+                feePaid: true,
+                paymentId: paymentId || orderId,
+                status: 'pending_documents',
+                updatedAt: new Date(),
+              });
+              console.log('Business registration payment processed via webhook:', {
+                businessRegistrationId,
+                orderId,
+                paymentId,
+              });
+            }
           }
           // Handle compliance plan subscription
           else if (paymentType === 'compliance_plan' && compliancePlanTier) {

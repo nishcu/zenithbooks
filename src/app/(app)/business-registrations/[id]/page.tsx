@@ -5,14 +5,15 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { auth, storage } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import {
   Loader2,
   Building,
@@ -24,6 +25,7 @@ import {
   Calendar,
   UserCog,
   IndianRupee,
+  CreditCard,
 } from "lucide-react";
 import {
   getAuditLogsByRegistration,
@@ -43,6 +45,9 @@ export default function BusinessRegistrationStatusPage() {
   const [loading, setLoading] = useState(true);
   const [registration, setRegistration] = useState<BusinessRegistration | null>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [uploadingForDoc, setUploadingForDoc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingDocNameRef = useRef<string | null>(null);
 
   const registrationId = params.id as string;
 
@@ -242,11 +247,23 @@ export default function BusinessRegistrationStatusPage() {
               <FileText className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {registration.documents.length} of {config.requiredDocuments.length} documents
+              {registration.documents.length} uploaded (all optional)
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {!registration.feePaid && (
+        <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+          <CreditCard className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-4">
+            <span>Complete payment to proceed to document upload (optional) and track status.</span>
+            <Button onClick={() => router.push(`/business-registrations/${registrationId}/pay`)}>
+              Pay now
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Registration Details */}
       <Card className="mb-6">
@@ -316,18 +333,59 @@ export default function BusinessRegistrationStatusPage() {
         </CardContent>
       </Card>
 
-      {/* Documents */}
+      {/* Documents - all optional, only after payment */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Required Documents</CardTitle>
+          <CardTitle>Documents (all optional)</CardTitle>
           <CardDescription>
-            Upload all required documents to proceed with your registration
+            {registration.feePaid
+              ? "You may upload the following documents to support your registration. Uploads are optional."
+              : "Complete payment above to unlock document upload."}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              const docName = pendingDocNameRef.current;
+              e.target.value = "";
+              pendingDocNameRef.current = null;
+              if (!file || !docName || !user || !registration.feePaid) return;
+              setUploadingForDoc(docName);
+              try {
+                const path = `business-registrations/${registrationId}/${user.uid}/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, path);
+                await uploadBytesResumable(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+                await addDocumentToRegistration(registrationId, {
+                  id: crypto.randomUUID(),
+                  name: docName,
+                  type: file.type || "application/octet-stream",
+                  uploadedAt: new Date(),
+                  uploadedBy: user.uid,
+                  vaultReference: downloadURL,
+                });
+                toast({ title: "Document uploaded", description: `${file.name} uploaded.` });
+                loadRegistration();
+              } catch (err: any) {
+                toast({
+                  variant: "destructive",
+                  title: "Upload failed",
+                  description: err?.message || "Failed to upload document.",
+                });
+              } finally {
+                setUploadingForDoc(null);
+              }
+            }}
+          />
           <div className="space-y-3">
             {config.requiredDocuments.map((docName, idx) => {
               const uploadedDoc = registration.documents.find((d) => d.name === docName);
+              const isUploading = uploadingForDoc === docName;
               return (
                 <div
                   key={idx}
@@ -355,8 +413,20 @@ export default function BusinessRegistrationStatusPage() {
                     </div>
                   </div>
                   {!uploadedDoc && (
-                    <Button variant="outline" size="sm">
-                      <Upload className="mr-2 h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!registration.feePaid || isUploading}
+                      onClick={() => {
+                        pendingDocNameRef.current = docName;
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
                       Upload
                     </Button>
                   )}
