@@ -340,7 +340,9 @@ export async function getAssociateAuditLogs(associateId: string): Promise<Associ
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssociateAuditLog));
 }
 
-// ==================== Corporate Mitra Audit Logs ====================/**
+// ==================== Corporate Mitra Audit Logs ====================
+
+/**
  * Create Corporate Mitra audit log (level_up, score_update, certification_passed, task_reviewed)
  */
 export async function createCorporateMitraAuditLog(
