@@ -6,7 +6,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ import { Info } from "lucide-react";
 export default function BusinessRegistrationStatusPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,7 @@ export default function BusinessRegistrationStatusPage() {
   const pendingDocNameRef = useRef<string | null>(null);
 
   const registrationId = params.id as string;
+  const paymentJustCompleted = searchParams.get("payment_success") === "1";
 
   useEffect(() => {
     if (!user) {
@@ -58,6 +60,16 @@ export default function BusinessRegistrationStatusPage() {
     }
     loadRegistration();
   }, [user, registrationId, router]);
+
+  // After redirect from payment success, refetch once to pick up webhook-updated feePaid and clean URL
+  useEffect(() => {
+    if (!paymentJustCompleted || !registrationId) return;
+    const t = setTimeout(() => {
+      loadRegistration();
+      router.replace(`/business-registrations/${registrationId}`, { scroll: false });
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [paymentJustCompleted, registrationId, router]);
 
   const loadRegistration = async () => {
     if (!user) return;
@@ -212,14 +224,14 @@ export default function BusinessRegistrationStatusPage() {
                   {registration.feeAmount.toLocaleString("en-IN")}
                 </p>
               </div>
-              {registration.feePaid ? (
+              {registration.feePaid || paymentJustCompleted ? (
                 <CheckCircle2 className="h-8 w-8 text-green-500" />
               ) : (
                 <AlertCircle className="h-8 w-8 text-yellow-500" />
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {registration.feePaid ? "Payment Received" : "Payment Pending"}
+              {registration.feePaid || paymentJustCompleted ? "Payment Received" : "Payment Pending"}
             </p>
           </CardContent>
         </Card>
@@ -253,7 +265,7 @@ export default function BusinessRegistrationStatusPage() {
         </Card>
       </div>
 
-      {!registration.feePaid && (
+      {!registration.feePaid && !paymentJustCompleted && (
         <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
           <CreditCard className="h-4 w-4 text-amber-600" />
           <AlertDescription className="flex flex-wrap items-center justify-between gap-4">
@@ -338,7 +350,7 @@ export default function BusinessRegistrationStatusPage() {
         <CardHeader>
           <CardTitle>Documents (all optional)</CardTitle>
           <CardDescription>
-            {registration.feePaid
+            {registration.feePaid || paymentJustCompleted
               ? "You may upload the following documents to support your registration. Uploads are optional."
               : "Complete payment above to unlock document upload."}
           </CardDescription>
@@ -354,7 +366,7 @@ export default function BusinessRegistrationStatusPage() {
               const docName = pendingDocNameRef.current;
               e.target.value = "";
               pendingDocNameRef.current = null;
-              if (!file || !docName || !user || !registration.feePaid) return;
+              if (!file || !docName || !user || (!registration.feePaid && !paymentJustCompleted)) return;
               setUploadingForDoc(docName);
               try {
                 const path = `business-registrations/${registrationId}/${user.uid}/${Date.now()}_${file.name}`;
@@ -416,7 +428,7 @@ export default function BusinessRegistrationStatusPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={!registration.feePaid || isUploading}
+                      disabled={(!registration.feePaid && !paymentJustCompleted) || isUploading}
                       onClick={() => {
                         pendingDocNameRef.current = docName;
                         fileInputRef.current?.click();

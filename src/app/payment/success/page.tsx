@@ -237,7 +237,7 @@ function PaymentSuccessContent() {
               const regPending = JSON.parse(regRaw);
               if (regPending?.type === "business_registration" && regPending?.registrationId) {
                 localStorage.removeItem("pending_business_registration");
-                redirectTo = `/business-registrations/${regPending.registrationId}`;
+                redirectTo = `/business-registrations/${regPending.registrationId}?payment_success=1`;
               }
             }
           } catch (e) {
