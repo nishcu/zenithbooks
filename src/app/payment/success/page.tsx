@@ -53,9 +53,35 @@ function PaymentSuccessContent() {
     const verifyPayment = async () => {
       try {
         // Extract planId from order tags if available, or use a default
-        // You might want to store this in localStorage or pass it differently
         const planId = localStorage.getItem('pending_plan_id') || 'unknown';
-        
+        const orderAmount = Number(searchParams.get("order_amount") || 0) || null;
+
+        // Persist transaction record immediately so it always appears in Transaction History
+        // (even if verify fails or is slow – e.g. business registration, any payment)
+        if (user?.uid && orderIdParam) {
+          try {
+            await setDoc(
+              doc(db, "paymentTransactions", `cf_${orderIdParam}`),
+              {
+                userId: user.uid,
+                provider: "cashfree",
+                orderId: orderIdParam,
+                paymentId: paymentIdParam || null,
+                planId: planId || null,
+                amount: orderAmount,
+                status: "SUCCESS",
+                consumedAt: null,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                source: "payment_success",
+              },
+              { merge: true }
+            );
+          } catch (e) {
+            console.error("Failed to write paymentTransactions from /payment/success:", e);
+          }
+        }
+
         const response = await fetch('/api/payment/verify', {
           method: 'POST',
           headers: {
@@ -66,7 +92,7 @@ function PaymentSuccessContent() {
             paymentId: paymentIdParam,
             userId: user?.uid,
             planId: planId,
-            amount: parseFloat(searchParams.get('order_amount') || '0'),
+            amount: orderAmount ?? 0,
           }),
         });
 
@@ -81,31 +107,6 @@ function PaymentSuccessContent() {
 
           // Decide where to redirect after success (default dashboard)
           let redirectTo: string = '/dashboard';
-
-          // Always persist a payment transaction record (for Tickets + Transaction History)
-          try {
-            if (user?.uid && orderIdParam) {
-              await setDoc(
-                doc(db, "paymentTransactions", `cf_${orderIdParam}`),
-                {
-                  userId: user.uid,
-                  provider: "cashfree",
-                  orderId: orderIdParam,
-                  paymentId: paymentIdParam || null,
-                  planId: planId || null,
-                  amount: Number(searchParams.get("order_amount") || 0) || null,
-                  status: "SUCCESS",
-                  consumedAt: null,
-                  createdAt: serverTimestamp(),
-                  updatedAt: serverTimestamp(),
-                  source: "payment_success",
-                },
-                { merge: true }
-              );
-            }
-          } catch (e) {
-            console.error("Failed to write paymentTransactions from /payment/success:", e);
-          }
 
           // If this payment came from a CA certificate purchase, finalize the flow here
           // (Cashfree checkout typically redirects, so the originating page may not run callbacks).

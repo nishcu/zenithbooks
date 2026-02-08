@@ -611,6 +611,17 @@ service cloud.firestore {
       allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
     }
 
+    // Payment Transactions (transaction history) - users read/create/update own; admins can read all
+    match /paymentTransactions/{transactionId} {
+      allow read: if request.auth != null &&
+                    (resource.data.userId == request.auth.uid || isAdmin() || isSuperAdmin());
+      allow create: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null &&
+                      (resource.data.userId == request.auth.uid || isAdmin() || isSuperAdmin());
+      allow delete: if request.auth != null && (isAdmin() || isSuperAdmin());
+    }
+
     // Business Registrations (admin task queue) - admins read/update; users read own if applicable
     match /business_registrations/{registrationId} {
       allow read: if request.auth != null && (

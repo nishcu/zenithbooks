@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getAdminFirestore } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -213,22 +215,25 @@ export async function POST(request: NextRequest) {
           ) || 0;
 
           // Always record a payment transaction (for full transaction history)
+          // Use Admin SDK so the write succeeds server-side (client db has no auth context here)
           try {
-            await setDoc(
-              doc(db, "paymentTransactions", `cf_${orderId}`),
-              {
-                userId,
-                provider: "cashfree",
-                orderId,
-                paymentId: paymentId || null,
-                planId: planId || null,
-                amount: verifiedAmount,
-                status: orderStatus || paymentStatus || "SUCCESS",
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-              },
-              { merge: true }
-            );
+            const adminDb = getAdminFirestore();
+            if (adminDb) {
+              await adminDb.collection("paymentTransactions").doc(`cf_${orderId}`).set(
+                {
+                  userId,
+                  provider: "cashfree",
+                  orderId,
+                  paymentId: paymentId || null,
+                  planId: planId || null,
+                  amount: verifiedAmount,
+                  status: orderStatus || paymentStatus || "SUCCESS",
+                  createdAt: FieldValue.serverTimestamp(),
+                  updatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+              );
+            }
           } catch (e) {
             console.error("Failed to write paymentTransactions:", e);
           }

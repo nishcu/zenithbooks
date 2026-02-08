@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAdminFirestore } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { createHmac } from 'crypto';
 
 /**
@@ -61,6 +62,30 @@ export async function POST(request: NextRequest) {
     if (paymentStatus === 'SUCCESS' || orderStatus === 'PAID') {
       if (userId) {
         try {
+          // Always record payment transaction (so it appears in user's Transaction History)
+          const adminDb = getAdminFirestore();
+          if (adminDb && orderId) {
+            try {
+              await adminDb.collection('paymentTransactions').doc(`cf_${orderId}`).set(
+                {
+                  userId,
+                  provider: 'cashfree',
+                  orderId,
+                  paymentId: paymentId || null,
+                  planId: planId || null,
+                  amount: amount ?? null,
+                  status: orderStatus || paymentStatus || 'SUCCESS',
+                  source: 'webhook',
+                  createdAt: FieldValue.serverTimestamp(),
+                  updatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+              );
+            } catch (e) {
+              console.error('Webhook: failed to write paymentTransactions:', e);
+            }
+          }
+
           // Handle associate registration payment
           if (paymentType === 'associate_registration' && associateId) {
             const { updateAssociatePaymentStatus } = await import('@/lib/compliance-associates/firestore');
