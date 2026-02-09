@@ -25,7 +25,7 @@ type MpbfAssessmentProps = {
 export const MpbfAssessment = ({ report }: MpbfAssessmentProps) => {
   return (
     <AccordionItem value="mpbf">
-      <AccordionTrigger>Part VI: MPBF Assessment</AccordionTrigger>
+      <AccordionTrigger>Part VI: Working Capital Assessment</AccordionTrigger>
       <AccordionContent>
         <div className="overflow-x-auto">
             <Table>

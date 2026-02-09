@@ -555,10 +555,10 @@ service cloud.firestore {
 
     // Configuration Collection (for service pricing and other config)
     // All authenticated users can read configuration
-    // Only admins can write (if needed in future)
+    // Only admins can write (e.g. admin service-pricing page)
     match /configuration/{configId} {
       allow read: if request.auth != null;
-      allow write: if false; // Configuration is managed server-side only
+      allow write: if request.auth != null && (isAdmin() || isSuperAdmin());
     }
 
     // Form 16 Documents Collection

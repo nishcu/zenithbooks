@@ -170,27 +170,32 @@ export const generateCma = (
   const years = ["Audited FY-2", "Audited FY-1", ...Array.from({ length: numProjectedYears }, (_, i) => `Projected FY-${i + 1}`)];
   const headers = ["Particulars", ...years];
 
-  // Operating Statement
+  // Operating Statement – Standard CMA (General Format): one-line expenses, bank-style
+  const totalRevenue = financials.netSales.map((ns, i) => ns + financials.otherOpIncome[i]);
+  const cogs = financials.rawMaterials.map((rm, i) => rm + financials.directWages[i] + financials.powerFuel[i]);
+  const grossProfit = totalRevenue.map((tr, i) => tr - cogs[i]);
+  const adminSellingExpenses = financials.adminSalary.map((a, i) => a + financials.rent[i] + financials.sellingExpenses[i] + financials.otherExpenses[i]);
+  const operatingProfit = grossProfit.map((gp, i) => gp - adminSellingExpenses[i] - financials.depreciation[i]);
+  const pbt = operatingProfit.map((op, i) => op - financials.interest[i]);
+  const pat = pbt.map((p, i) => p - financials.tax[i]);
+
   const operatingStatementBody = [
-    ["Net Sales", ...financials.netSales.map(formatValue)],
-    ["Other Operating Income", ...financials.otherOpIncome.map(formatValue)],
-    ["Total Operating Income", ...financials.netSales.map((ns, i) => formatValue(ns + financials.otherOpIncome[i]))],
-    ["Raw Materials Consumed", ...financials.rawMaterials.map(formatValue)],
-    ["Direct Wages", ...financials.directWages.map(formatValue)],
-    ["Power & Fuel", ...financials.powerFuel.map(formatValue)],
-    ["Total Cost of Sales", ...financials.rawMaterials.map((rm, i) => formatValue(rm + financials.directWages[i] + financials.powerFuel[i]))],
-    ["Gross Profit", ...financials.netSales.map((ns, i) => formatValue((ns + financials.otherOpIncome[i]) - (financials.rawMaterials[i] + financials.directWages[i] + financials.powerFuel[i])))],
-    ["Administrative Salary", ...financials.adminSalary.map(formatValue)],
-    ["Rent", ...financials.rent.map(formatValue)],
-    ["Selling Expenses", ...financials.sellingExpenses.map(formatValue)],
-    ["Other Expenses", ...financials.otherExpenses.map(formatValue)],
-    ["PBDIT", ...financials.netSales.map((ns, i) => formatValue((ns + financials.otherOpIncome[i]) - (financials.rawMaterials[i] + financials.directWages[i] + financials.powerFuel[i]) - financials.adminSalary[i] - financials.rent[i] - financials.sellingExpenses[i] - financials.otherExpenses[i]))],
-    ["Depreciation", ...financials.depreciation.map(formatValue)],
-    ["PBIT", ...financials.netSales.map((ns, i) => formatValue((ns + financials.otherOpIncome[i]) - (financials.rawMaterials[i] + financials.directWages[i] + financials.powerFuel[i]) - financials.adminSalary[i] - financials.rent[i] - financials.sellingExpenses[i] - financials.otherExpenses[i] - financials.depreciation[i]))],
+    ["A. Sales / Revenue", ...Array(numTotalYears).fill("")],
+    ["Net Sales / Turnover", ...financials.netSales.map(formatValue)],
+    ["B. Cost of Production / Cost of Sales", ...Array(numTotalYears).fill("")],
+    ["Cost of Goods Sold", ...cogs.map(formatValue)],
+    ["C. Gross Profit", ...Array(numTotalYears).fill("")],
+    ["Gross Profit", ...grossProfit.map(formatValue)],
+    ["D. Operating & Administrative Expenses", ...Array(numTotalYears).fill("")],
+    ["Administrative & Selling Expenses", ...adminSellingExpenses.map(formatValue)],
+    ["E. Operating Profit", ...Array(numTotalYears).fill("")],
+    ["Operating Profit", ...operatingProfit.map(formatValue)],
+    ["F. Financial & Statutory Charges", ...Array(numTotalYears).fill("")],
     ["Interest", ...financials.interest.map(formatValue)],
-    ["PBT", ...financials.netSales.map((ns, i) => formatValue((ns + financials.otherOpIncome[i]) - (financials.rawMaterials[i] + financials.directWages[i] + financials.powerFuel[i]) - financials.adminSalary[i] - financials.rent[i] - financials.sellingExpenses[i] - financials.otherExpenses[i] - financials.depreciation[i] - financials.interest[i]))],
+    ["Depreciation", ...financials.depreciation.map(formatValue)],
     ["Tax", ...financials.tax.map(formatValue)],
-    ["PAT", ...financials.netSales.map((ns, i) => formatValue((ns + financials.otherOpIncome[i]) - (financials.rawMaterials[i] + financials.directWages[i] + financials.powerFuel[i]) - financials.adminSalary[i] - financials.rent[i] - financials.sellingExpenses[i] - financials.otherExpenses[i] - financials.depreciation[i] - financials.interest[i] - financials.tax[i]))],
+    ["G. Net Profit", ...Array(numTotalYears).fill("")],
+    ["Net Profit After Tax", ...pat.map(formatValue)],
   ];
 
   // Balance Sheet
@@ -204,48 +209,46 @@ export const generateCma = (
   const workingCapitalGap = currentAssets.map((ca, i) => ca - currentLiabilities[i]);
   const totalAssets = netFixedAssets.map((nfa, i) => nfa + financials.investments[i] + currentAssets[i]);
 
+  // Balance Sheet – Standard CMA (General Format): Current Assets, Current Liabilities, WCG, Long-Term Funds, Fixed Assets
   const balanceSheetBody = [
-    ["LIABILITIES", ...Array(numTotalYears).fill("")],
-    ["Share Capital", ...financials.shareCapital.map(formatValue)],
-    ["Reserves & Surplus", ...financials.reservesSurplus.map(formatValue)],
-    ["Net Worth", ...netWorth.map(formatValue)],
-    ["Term Loan", ...financials.termLoan.map(formatValue)],
-    ["Unsecured Loan", ...financials.unsecuredLoan.map(formatValue)],
-    ["Total Debt", ...totalDebt.map(formatValue)],
-    ["Sundry Creditors", ...financials.sundryCreditors.map(formatValue)],
-    ["Other Liabilities", ...financials.otherLiabilities.map(formatValue)],
-    ["Total Outside Liabilities", ...totalOutsideLiabilities.map(formatValue)],
-    ["Total Liabilities & Equity", ...totalLiabilities.map(formatValue)],
-    ["ASSETS", ...Array(numTotalYears).fill("")],
-    ["Gross Fixed Assets", ...financials.grossFixedAssets.map(formatValue)],
-    ["Accumulated Depreciation", ...financials.accDepreciation.map(formatValue)],
-    ["Net Fixed Assets", ...netFixedAssets.map(formatValue)],
-    ["Investments", ...financials.investments.map(formatValue)],
-    ["Inventory", ...financials.inventory.map(formatValue)],
-    ["Sundry Debtors", ...financials.sundryDebtors.map(formatValue)],
+    ["Current Assets", ...Array(numTotalYears).fill("")],
     ["Cash & Bank", ...financials.cashBank.map(formatValue)],
+    ["Sundry Debtors", ...financials.sundryDebtors.map(formatValue)],
+    ["Inventory", ...financials.inventory.map(formatValue)],
     ["Other Current Assets", ...financials.otherCurrentAssets.map(formatValue)],
-    ["Total Current Assets", ...currentAssets.map(formatValue)],
-    ["Total Assets", ...totalAssets.map(formatValue)],
+    ["Total Current Assets (TCA)", ...currentAssets.map(formatValue)],
+    ["Current Liabilities", ...Array(numTotalYears).fill("")],
+    ["Sundry Creditors", ...financials.sundryCreditors.map(formatValue)],
+    ["Other Current Liabilities", ...financials.otherLiabilities.map(formatValue)],
+    ["Total Current Liabilities (TCL)", ...currentLiabilities.map(formatValue)],
+    ["Working Capital Gap", ...workingCapitalGap.map(formatValue)],
+    ["(TCA – TCL)", ...Array(numTotalYears).fill("")],
+    ["Long-Term Funds", ...Array(numTotalYears).fill("")],
+    ["Term Loans", ...financials.termLoan.map(formatValue)],
+    ["Unsecured Loans", ...financials.unsecuredLoan.map(formatValue)],
+    ["Net Worth", ...netWorth.map(formatValue)],
+    ["Capital", ...financials.shareCapital.map(formatValue)],
+    ["Reserves & Surplus", ...financials.reservesSurplus.map(formatValue)],
+    ["Fixed Assets", ...Array(numTotalYears).fill("")],
+    ["Gross Fixed Assets", ...financials.grossFixedAssets.map(formatValue)],
+    ["Less: Depreciation", ...financials.accDepreciation.map(formatValue)],
+    ["Net Fixed Assets", ...netFixedAssets.map(formatValue)],
   ];
 
-  // Ratio Analysis
+  // Ratio Analysis (uses computed pbt, pat from operating statement)
   const ratioAnalysisBody = [
     ["Current Ratio", ...currentAssets.map((ca, i) => formatRatio(ca / currentLiabilities[i]))],
     ["Quick Ratio", ...currentAssets.map((ca, i) => formatRatio((ca - financials.inventory[i]) / currentLiabilities[i]))],
     ["Debt-Equity Ratio", ...totalDebt.map((td, i) => formatRatio(td / netWorth[i]))],
     ["TOL/TNW", ...totalOutsideLiabilities.map((tol, i) => formatRatio(tol / netWorth[i]))],
     ["Net Sales / Total Assets", ...financials.netSales.map((ns, i) => formatRatio(ns / totalAssets[i]))],
-    ["PBT / Net Sales (%)", ...financials.netSales.map((ns, i) => formatRatio((operatingStatementBody[16][i+1] as number * 100000) / ns * 100))],
-    ["PAT / Net Sales (%)", ...financials.netSales.map((ns, i) => formatRatio((operatingStatementBody[18][i+1] as number * 100000) / ns * 100))],
-    ["ROCE (%)", ...netWorth.map((nw, i) => formatRatio(((operatingStatementBody[14][i+1] as number * 100000) / (nw + totalDebt[i])) * 100))],
+    ["PBT / Net Sales (%)", ...financials.netSales.map((ns, i) => formatRatio(ns ? (pbt[i] / ns) * 100 : 0))],
+    ["PAT / Net Sales (%)", ...financials.netSales.map((ns, i) => formatRatio(ns ? (pat[i] / ns) * 100 : 0))],
+    ["ROCE (%)", ...netWorth.map((nw, i) => formatRatio((nw + totalDebt[i]) ? (operatingProfit[i] / (nw + totalDebt[i])) * 100 : 0))],
     ["DSCR", ...financials.netSales.map((ns, i) => {
-        const pat = operatingStatementBody[18][i+1] as number * 100000;
-        const interest = financials.interest[i];
-        const dep = financials.depreciation[i];
         const principalRepayment = loan.type === 'term-loan' && i > 1 ? (loan.amount / loan.repaymentYears) : 0;
-        const denominator = interest + principalRepayment;
-        return denominator > 0 ? formatRatio((pat + interest + dep) / denominator) : 'N/A';
+        const denominator = financials.interest[i] + principalRepayment;
+        return denominator > 0 ? formatRatio((pat[i] + financials.interest[i] + financials.depreciation[i]) / denominator) : 'N/A';
     })],
   ];
   
@@ -255,12 +258,12 @@ export const generateCma = (
   const cff = Array(numTotalYears).fill(0);
   const openingCash = [0, ...financials.cashBank.slice(0, -1)];
   for(let i=1; i<numTotalYears; i++) {
-      const pat = (operatingStatementBody[18][i+1] as number * 100000) - (operatingStatementBody[18][i] as number * 100000)
+      const patChange = pat[i] - pat[i-1];
       const dep = financials.depreciation[i];
       const changeInDebtors = financials.sundryDebtors[i] - financials.sundryDebtors[i-1];
       const changeInInventory = financials.inventory[i] - financials.inventory[i-1];
       const changeInCreditors = financials.sundryCreditors[i] - financials.sundryCreditors[i-1];
-      cfo[i] = pat + dep - changeInDebtors - changeInInventory + changeInCreditors;
+      cfo[i] = patChange + dep - changeInDebtors - changeInInventory + changeInCreditors;
 
       const changeInGFA = financials.grossFixedAssets[i] - financials.grossFixedAssets[i-1];
       cfi[i] = -changeInGFA;
@@ -306,17 +309,17 @@ export const generateCma = (
       ["TOTAL USES", ...uses.map(formatValue)]
   ];
 
-  // MPBF
+  // Working Capital Assessment (Standard CMA): TCA, TCL, WCG, Borrower's Contribution (Margin), Bank Finance Required
   const mpbfMethod1 = workingCapitalGap.map(w => w * 0.75);
   const mpbfMethod2 = currentAssets.map((ca, i) => (ca * 0.75) - currentLiabilities[i]);
-  const assessedBankFinance = mpbfMethod1.map((m1, i) => Math.min(m1, mpbfMethod2[i]));
+  const bankFinanceRequired = mpbfMethod1.map((m1, i) => Math.min(m1, mpbfMethod2[i]));
+  const borrowerContribution = workingCapitalGap.map((wcg, i) => wcg - bankFinanceRequired[i]);
   const mpbfBody = [
       ["Total Current Assets (TCA)", ...currentAssets.map(formatValue)],
-      ["Other Current Liabilities (OCL)", ...currentLiabilities.map(formatValue)],
-      ["Working Capital Gap (WCG = TCA - OCL)", ...workingCapitalGap.map(formatValue)],
-      ["Method I: 75% of WCG", ...mpbfMethod1.map(formatValue)],
-      ["Method II: 75% of TCA - OCL", ...mpbfMethod2.map(formatValue)],
-      ["Assessed Bank Finance (Lower of I & II)", ...assessedBankFinance.map(formatValue)],
+      ["Total Current Liabilities (TCL)", ...currentLiabilities.map(formatValue)],
+      ["Working Capital Gap", ...workingCapitalGap.map(formatValue)],
+      ["Borrower's Contribution (Margin)", ...borrowerContribution.map(formatValue)],
+      ["Bank Finance Required", ...bankFinanceRequired.map(formatValue)],
   ];
 
   // Loan Repayment

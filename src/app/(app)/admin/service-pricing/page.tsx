@@ -23,9 +23,12 @@ import { Input } from "@/components/ui/input";
 import { CreditCard, Save, Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from '@/components/ui/separator';
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { servicePricing as initialServices } from '@/lib/on-demand-pricing';
-import { saveServicePricingAction } from './actions';
 import { getServicePricing, onPricingUpdate } from '@/lib/pricing-service';
+
+const PRICING_DOC_ID = "on_demand_service_pricing";
 
 type Service = {
     id: string;
@@ -68,20 +71,22 @@ export default function ServicePricingPage() {
   
   const handleSaveChanges = async () => {
       setIsSaving(true);
-      const result = await saveServicePricingAction(services);
-      setIsSaving(false);
-      
-      if (result.success) {
+      try {
+        const pricingRef = doc(db, "configuration", PRICING_DOC_ID);
+        await setDoc(pricingRef, services);
         toast({
           title: "Prices Updated",
           description: "The new service prices have been saved successfully. Changes will be live for all users."
         });
-      } else {
+      } catch (error) {
+        console.error("Error saving service pricing:", error);
         toast({
-            variant: "destructive",
-            title: "Save Failed",
-            description: "Could not update the pricing file. Please check server logs."
+          variant: "destructive",
+          title: "Save Failed",
+          description: error instanceof Error ? error.message : "Could not update the pricing file. You may need admin access."
         });
+      } finally {
+        setIsSaving(false);
       }
   }
 

@@ -229,12 +229,16 @@ export async function updateAssociateStatus(
   
   await updateDoc(associateRef, updateData);
   
-  // Create audit log
+  // Create audit log (omit reason if undefined - Firestore does not allow undefined)
   const action = status === 'suspended' ? 'suspended' : status === 'active' ? 'reactivated' : 'status_updated';
+  const details: { status: AssociateStatus; updatedBy: string; reason?: string } = { status, updatedBy };
+  if (reason != null && reason !== '') {
+    details.reason = reason;
+  }
   await createAssociateAuditLog({
     associateId,
     action: action as any,
-    details: { status, updatedBy, reason },
+    details,
     performedBy: updatedBy,
   });
 }
@@ -270,18 +274,26 @@ export async function getAssociateByEmail(email: string): Promise<ComplianceAsso
 }
 
 /**
- * Get all associates (for admin)
+ * Get all associates (for admin).
+ * Sorts in memory to avoid requiring a composite Firestore index for where+orderBy.
  */
 export async function getAllAssociates(status?: AssociateStatus): Promise<ComplianceAssociate[]> {
   const associatesRef = collection(db, COLLECTIONS.COMPLIANCE_ASSOCIATES);
-  let q = query(associatesRef, orderBy('createdAt', 'desc'));
-  
-  if (status) {
-    q = query(associatesRef, where('status', '==', status), orderBy('createdAt', 'desc'));
-  }
-  
+  const q = status
+    ? query(associatesRef, where('status', '==', status))
+    : query(associatesRef);
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ComplianceAssociate));
+  const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ComplianceAssociate));
+  const toMs = (v: unknown): number => {
+    if (v == null) return 0;
+    if (v instanceof Timestamp) return v.toMillis();
+    if (typeof (v as { toMillis?: () => number }).toMillis === 'function') return (v as { toMillis: () => number }).toMillis();
+    if (typeof (v as { seconds?: number }).seconds === 'number') return (v as { seconds: number }).seconds * 1000;
+    const d = new Date(v as string | number | Date);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  };
+  list.sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
+  return list;
 }
 
 /**
@@ -310,16 +322,30 @@ export async function getAssociateByCode(associateCode: string): Promise<Complia
 // ==================== Audit Logs ====================
 
 /**
+ * Recursively remove undefined values (Firestore does not allow undefined).
+ * Only recurses into plain objects to avoid touching Timestamp/FieldValue.
+ */
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    const isPlainObject = v !== null && typeof v === 'object' && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
+    out[k] = isPlainObject ? stripUndefined(v as Record<string, unknown>) : v;
+  }
+  return out;
+}
+
+/**
  * Create associate audit log
  */
 export async function createAssociateAuditLog(
   logData: Omit<AssociateAuditLog, 'id' | 'performedAt'>
 ): Promise<string> {
   const logsRef = collection(db, COLLECTIONS.ASSOCIATE_AUDIT_LOGS);
-  const log = {
+  const log = stripUndefined({
     ...logData,
     performedAt: serverTimestamp(),
-  };
+  } as Record<string, unknown>) as typeof logData & { performedAt: ReturnType<typeof serverTimestamp> };
   
   const docRef = await addDoc(logsRef, log);
   return docRef.id;

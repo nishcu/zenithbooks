@@ -102,6 +102,8 @@ export default function CmaReportGeneratorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [auditedFinancials, setAuditedFinancials] = useState<FinancialData | null>(null);
   const [auditedFileName, setAuditedFileName] = useState<string | null>(null);
+  /** Extra line items from upload that are not in the standard template – shown as-is in the operating statement */
+  const [customLineItems, setCustomLineItems] = useState<{ label: string; values: number[] }[]>([]);
 
   const [loanAssumptions, setLoanAssumptions] = useState<LoanAssumptions>({
     type: "term-loan",
@@ -181,6 +183,19 @@ export default function CmaReportGeneratorPage() {
       loanAssumptions,
       fixedAssets
     );
+    // Append custom line items from upload (same format as engine: label + values in lakhs)
+    const numTotalYears = 2 + numProjectedYears;
+    const formatLakhs = (v: number) => (Number.isFinite(v) ? (v / 100000).toFixed(2) : "0.00");
+    if (customLineItems.length > 0) {
+      for (const line of customLineItems) {
+        const values = line.values.slice(0, numTotalYears);
+        const padded = [...values, ...Array(Math.max(0, numTotalYears - values.length)).fill(0)];
+        cmaData.operatingStatement.body.push([
+          line.label,
+          ...padded.map((v) => formatLakhs(typeof v === "number" ? v : 0)),
+        ]);
+      }
+    }
     setGeneratedReport(cmaData);
     setActiveTab("report");
     setIsGenerating(false);
@@ -191,40 +206,57 @@ export default function CmaReportGeneratorPage() {
   };
 
   const CMA_TEMPLATE_MAP: Record<string, keyof FinancialData> = {
-    // P&L
+    // Standard CMA – Operating Statement
+    "net sales / turnover": "netSales",
     "revenue from operations": "netSales",
     "net sales": "netSales",
     "other operating income": "otherOpIncome",
+    "opening stock": "openingStock",
+    "add: purchases": "purchases",
+    "add: direct expenses": "directExpenses",
+    "less: closing stock": "closingStock",
+    "cost of goods sold": "rawMaterials",
     "raw materials": "rawMaterials",
     "raw materials consumed": "rawMaterials",
     "direct wages": "directWages",
     "power & fuel": "powerFuel",
     "power and fuel": "powerFuel",
-    "depreciation": "depreciation",
+    "gross profit": "otherOpIncome",
+    "administrative & selling expenses": "adminSalary",
+    "operating expenses": "adminSalary",
     "administrative salary": "adminSalary",
     "admin salary": "adminSalary",
     "rent": "rent",
     "selling expenses": "sellingExpenses",
     "other expenses": "otherExpenses",
+    "operating profit": "otherOpIncome",
     "interest": "interest",
+    "depreciation": "depreciation",
     "tax": "tax",
-    // Balance sheet
+    "net profit after tax": "otherOpIncome",
+    "net profit": "otherOpIncome",
+    // Balance sheet – Standard CMA
+    "cash & bank": "cashBank",
+    "cash and bank": "cashBank",
+    "sundry debtors": "sundryDebtors",
+    "inventory": "inventory",
+    "other current assets": "otherCurrentAssets",
+    "sundry creditors": "sundryCreditors",
+    "other current liabilities": "otherLiabilities",
+    "other liabilities": "otherLiabilities",
+    "term loans": "termLoan",
+    "term loan": "termLoan",
+    "unsecured loans": "unsecuredLoan",
+    "unsecured loan": "unsecuredLoan",
+    "capital": "shareCapital",
     "share capital": "shareCapital",
     "reserves & surplus": "reservesSurplus",
     "reserves and surplus": "reservesSurplus",
-    "term loan": "termLoan",
-    "unsecured loan": "unsecuredLoan",
-    "sundry creditors": "sundryCreditors",
-    "other liabilities": "otherLiabilities",
     "gross fixed assets": "grossFixedAssets",
+    "less: depreciation": "accDepreciation",
     "accumulated depreciation": "accDepreciation",
     "acc depreciation": "accDepreciation",
     "investments": "investments",
-    "inventory": "inventory",
-    "sundry debtors": "sundryDebtors",
-    "cash & bank": "cashBank",
-    "cash and bank": "cashBank",
-    "other current assets": "otherCurrentAssets",
   };
 
   const parseAuditedFinancialsFile = async (file: File) => {
@@ -250,6 +282,7 @@ export default function CmaReportGeneratorPage() {
 
     // Expect columns: Particulars, Year 1, Year 2 (at minimum)
     const parsed: FinancialData = {};
+    const customLines: { label: string; values: number[] }[] = [];
 
     const toNumber = (v: any) => {
       if (v === null || v === undefined || v === "") return 0;
@@ -261,15 +294,41 @@ export default function CmaReportGeneratorPage() {
 
     for (const row of rows) {
       const pRaw = row["Particulars"] ?? row["particulars"] ?? row["PARTICULARS"];
-      const key = CMA_TEMPLATE_MAP[String(pRaw || "").toLowerCase().trim()];
-      if (!key) continue;
+      const particular = String(pRaw || "").trim();
+      const key = CMA_TEMPLATE_MAP[particular.toLowerCase()];
 
       // Template convention: Year 1 = most recent audited year, Year 2 = previous year
       // Our engine expects [FY-2, FY-1] for historical years, so map to [Year2, Year1]
       const y1 = toNumber(row["Year 1"] ?? row["year 1"] ?? row["YEAR 1"]);
       const y2 = toNumber(row["Year 2"] ?? row["year 2"] ?? row["YEAR 2"]);
 
-      parsed[key] = [y2, y1];
+      if (key) {
+        parsed[key] = [y2, y1];
+        // If user uploaded "Cost of Goods Sold" (total), put it in rawMaterials and zero out components we don't have
+        if (key === "rawMaterials" && particular.toLowerCase() === "cost of goods sold") {
+          if (!parsed["directWages"]) parsed["directWages"] = [0, 0];
+          if (!parsed["powerFuel"]) parsed["powerFuel"] = [0, 0];
+        }
+        // If user uploaded "Operating Expenses" or "Administrative & Selling Expenses" (single line), put in adminSalary and zero others
+        if (key === "adminSalary" && (particular.toLowerCase() === "operating expenses" || particular.toLowerCase() === "administrative & selling expenses")) {
+          if (!parsed["rent"]) parsed["rent"] = [0, 0];
+          if (!parsed["sellingExpenses"]) parsed["sellingExpenses"] = [0, 0];
+          if (!parsed["otherExpenses"]) parsed["otherExpenses"] = [0, 0];
+        }
+      } else if (particular) {
+        customLines.push({ label: particular, values: [y2, y1] });
+      }
+    }
+
+    // If Opening Stock, Purchases, Direct Expenses, Closing Stock all present, derive Cost of Goods Sold
+    const hasCogsBreakdown = parsed["openingStock"] && parsed["purchases"] && parsed["directExpenses"] && parsed["closingStock"];
+    if (hasCogsBreakdown && Array.isArray(parsed["openingStock"]) && Array.isArray(parsed["purchases"]) && Array.isArray(parsed["directExpenses"]) && Array.isArray(parsed["closingStock"])) {
+      const len = Math.min(parsed["openingStock"].length, parsed["purchases"].length, parsed["directExpenses"].length, parsed["closingStock"].length);
+      parsed["rawMaterials"] = Array.from({ length: len }, (_, i) =>
+        (parsed["openingStock"]![i] ?? 0) + (parsed["purchases"]![i] ?? 0) + (parsed["directExpenses"]![i] ?? 0) - (parsed["closingStock"]![i] ?? 0)
+      );
+      parsed["directWages"] = parsed["directWages"] ?? Array(len).fill(0);
+      parsed["powerFuel"] = parsed["powerFuel"] ?? Array(len).fill(0);
     }
 
     // Ensure all required keys exist (default 0 arrays)
@@ -283,9 +342,12 @@ export default function CmaReportGeneratorPage() {
 
     setAuditedFinancials(parsed);
     setAuditedFileName(file.name);
+    setCustomLineItems(customLines);
     toast({
       title: "Audited financials loaded",
-      description: `Parsed "${file.name}". You can now generate the CMA report using your uploaded data.`,
+      description: customLines.length
+        ? `Parsed "${file.name}". ${customLines.length} custom line item(s) will appear in the operating statement.`
+        : `Parsed "${file.name}". You can now generate the CMA report using your uploaded data.`,
     });
   };
 
@@ -341,100 +403,57 @@ export default function CmaReportGeneratorPage() {
   };
   
   const handleDownloadTemplate = () => {
+    // Standard CMA (General Format) – Operating Statement, Balance Sheet; one-line expenses
     const templateData = [
-      {
-        "Particulars": "Revenue from Operations",
-        "Year 1": 10000000,
-        "Year 2": 12000000,
-        "Year 3": 14000000
-      },
-      {
-        "Particulars": "Cost of Goods Sold",
-        "Year 1": 6000000,
-        "Year 2": 7200000,
-        "Year 3": 8400000
-      },
-      {
-        "Particulars": "Gross Profit",
-        "Year 1": 4000000,
-        "Year 2": 4800000,
-        "Year 3": 5600000
-      },
-      {
-        "Particulars": "Operating Expenses",
-        "Year 1": 2000000,
-        "Year 2": 2400000,
-        "Year 3": 2800000
-      },
-      {
-        "Particulars": "EBITDA",
-        "Year 1": 2000000,
-        "Year 2": 2400000,
-        "Year 3": 2800000
-      },
-      {
-        "Particulars": "Depreciation",
-        "Year 1": 500000,
-        "Year 2": 600000,
-        "Year 3": 700000
-      },
-      {
-        "Particulars": "EBIT",
-        "Year 1": 1500000,
-        "Year 2": 1800000,
-        "Year 3": 2100000
-      },
-      {
-        "Particulars": "Interest",
-        "Year 1": 300000,
-        "Year 2": 350000,
-        "Year 3": 400000
-      },
-      {
-        "Particulars": "Profit Before Tax",
-        "Year 1": 1200000,
-        "Year 2": 1450000,
-        "Year 3": 1700000
-      },
-      {
-        "Particulars": "Tax",
-        "Year 1": 360000,
-        "Year 2": 435000,
-        "Year 3": 510000
-      },
-      {
-        "Particulars": "Net Profit",
-        "Year 1": 840000,
-        "Year 2": 1015000,
-        "Year 3": 1190000
-      }
+      { "Particulars": "Net Sales / Turnover", "Year 1": 10000000, "Year 2": 12000000, "Year 3": 14000000 },
+      { "Particulars": "Opening Stock", "Year 1": 500000, "Year 2": 600000, "Year 3": 700000 },
+      { "Particulars": "Add: Purchases", "Year 1": 5500000, "Year 2": 6600000, "Year 3": 7700000 },
+      { "Particulars": "Add: Direct Expenses", "Year 1": 1200000, "Year 2": 1400000, "Year 3": 1600000 },
+      { "Particulars": "Less: Closing Stock", "Year 1": 600000, "Year 2": 700000, "Year 3": 800000 },
+      { "Particulars": "Cost of Goods Sold", "Year 1": 6600000, "Year 2": 7900000, "Year 3": 9200000 },
+      { "Particulars": "Gross Profit", "Year 1": 3400000, "Year 2": 4100000, "Year 3": 4800000 },
+      { "Particulars": "Administrative & Selling Expenses", "Year 1": 2000000, "Year 2": 2400000, "Year 3": 2800000 },
+      { "Particulars": "Operating Profit", "Year 1": 1400000, "Year 2": 1700000, "Year 3": 2000000 },
+      { "Particulars": "Interest", "Year 1": 300000, "Year 2": 350000, "Year 3": 400000 },
+      { "Particulars": "Depreciation", "Year 1": 500000, "Year 2": 600000, "Year 3": 700000 },
+      { "Particulars": "Tax", "Year 1": 180000, "Year 2": 225000, "Year 3": 270000 },
+      { "Particulars": "Net Profit After Tax", "Year 1": 420000, "Year 2": 525000, "Year 3": 630000 },
+      { "Particulars": "Cash & Bank", "Year 1": 1500000, "Year 2": 1800000, "Year 3": 2200000 },
+      { "Particulars": "Sundry Debtors", "Year 1": 8000000, "Year 2": 9600000, "Year 3": 11000000 },
+      { "Particulars": "Inventory", "Year 1": 3000000, "Year 2": 3600000, "Year 3": 4200000 },
+      { "Particulars": "Other Current Assets", "Year 1": 500000, "Year 2": 600000, "Year 3": 700000 },
+      { "Particulars": "Sundry Creditors", "Year 1": 4000000, "Year 2": 4800000, "Year 3": 5600000 },
+      { "Particulars": "Other Current Liabilities", "Year 1": 1000000, "Year 2": 1200000, "Year 3": 1400000 },
+      { "Particulars": "Term Loans", "Year 1": 8000000, "Year 2": 6500000, "Year 3": 5000000 },
+      { "Particulars": "Unsecured Loans", "Year 1": 2000000, "Year 2": 2000000, "Year 3": 2000000 },
+      { "Particulars": "Capital", "Year 1": 10000000, "Year 2": 10000000, "Year 3": 10000000 },
+      { "Particulars": "Reserves & Surplus", "Year 1": 5000000, "Year 2": 7000000, "Year 3": 9000000 },
+      { "Particulars": "Gross Fixed Assets", "Year 1": 20000000, "Year 2": 22000000, "Year 3": 24000000 },
+      { "Particulars": "Less: Depreciation", "Year 1": 4800000, "Year 2": 5400000, "Year 3": 6100000 },
     ];
 
     const ws = XLSX.utils.json_to_sheet(templateData);
-    
-    // Apply formatting
     const headers = Object.keys(templateData[0] || {});
     const rows = templateData.map(row => headers.map(h => row[h as keyof typeof row]));
     applyExcelFormatting(ws, headers, rows);
-    
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Audited Financials");
-    
-    // Add instructions sheet
+
     const instructions = [
-      { Column: "Particulars", Description: "Financial statement line items (Revenue, Expenses, etc.)" },
-      { Column: "Year 1", Description: "Financial data for Year 1 (most recent audited year)" },
-      { Column: "Year 2", Description: "Financial data for Year 2 (previous year)" },
-      { Column: "Year 3", Description: "Financial data for Year 3 (year before that)" },
-      { Note: "", Description: "Replace sample data with your actual audited financial figures" }
+      { Column: "Particulars", Description: "Standard CMA line items (do not rename)" },
+      { Column: "Year 1", Description: "Most recent audited year" },
+      { Column: "Year 2", Description: "Previous year" },
+      { Column: "Year 3", Description: "Optional: year before that" },
+      { Note: "", Description: "Fill with actual figures. COGS = Opening Stock + Purchases + Direct Expenses - Closing Stock; or fill Cost of Goods Sold only." },
     ];
     const wsInstructions = XLSX.utils.json_to_sheet(instructions);
     XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
-    
-    XLSX.writeFile(wb, `CMA_Audited_Financials_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast({ 
-      title: "Template Downloaded", 
-      description: "Audited financials template has been downloaded. Fill in your actual data and upload."
+
+    XLSX.writeFile(wb, `CMA_Standard_Template_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast({
+      title: "Template Downloaded",
+      description: "Standard CMA template (Operating Statement + Balance Sheet). Fill and upload for accurate report.",
     });
   }
 
@@ -464,7 +483,7 @@ export default function CmaReportGeneratorPage() {
     processSheet([generatedReport.cashFlow.headers, ...generatedReport.cashFlow.body], "Cash Flow");
     processSheet([generatedReport.ratioAnalysis.headers, ...generatedReport.ratioAnalysis.body], "Ratio Analysis");
     processSheet([generatedReport.fundFlow.headers, ...generatedReport.fundFlow.body], "Fund Flow");
-    processSheet([generatedReport.mpbf.headers, ...generatedReport.mpbf.body], "MPBF");
+    processSheet([generatedReport.mpbf.headers, ...generatedReport.mpbf.body], "Working Capital Assessment");
     if(generatedReport.repaymentSchedule.body.length > 0) {
         processSheet([generatedReport.repaymentSchedule.headers, ...generatedReport.repaymentSchedule.body], "Repayment Schedule");
     }
@@ -556,8 +575,9 @@ export default function CmaReportGeneratorPage() {
                      <AlertTitle>{auditedFinancials ? "Using Uploaded Data" : "No Audited File Uploaded Yet"}</AlertTitle>
                      <AlertDescription>
                        {auditedFinancials
-                         ? `Using your uploaded file: ${auditedFileName || "Audited Financials"} (2 historical years).`
+                         ? `Using your uploaded file: ${auditedFileName || "Audited Financials"} (2 historical years).${customLineItems.length ? ` ${customLineItems.length} custom line item(s) will appear in the operating statement.` : ""}`
                          : "Upload audited financials (Excel/CSV) using the template. If you skip upload, the report will use sample data."}
+                       {!auditedFinancials && " You can add more rows than the template—recognised rows feed the report; others appear as extra line items."}
                      </AlertDescription>
                  </Alert>
                 <div className="flex flex-wrap gap-2">
