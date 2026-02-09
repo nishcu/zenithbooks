@@ -1,5 +1,20 @@
 "use client";
 
+/**
+ * Cashfree hosted checkout integration.
+ *
+ * Flow: Create order (API) → get payment_session_id → SDK opens checkout.
+ * The SDK redirects the user to Cashfree's hosted page (e.g. api.cashfree.com/pg/view/sessions/checkout).
+ *
+ * Important: That URL is NOT meant to be opened directly in the browser. It only works when the user
+ * is redirected there by the Cashfree JS SDK with a valid payment_session_id (after clicking "Pay" on your site).
+ * Opening it directly will show an error or blank page.
+ *
+ * If checkout "doesn't work": (1) Whitelist your domain in Cashfree Dashboard,
+ * (2) Use same environment for order creation and SDK (sandbox vs production),
+ * (3) Try redirectTarget: '_blank' if _self fails (e.g. popup blockers).
+ */
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -143,6 +158,8 @@ export function CashfreeCheckout({
           paymentType = 'business_registration';
           businessRegistrationId = regData.registrationId;
         }
+      } else if (postPaymentContext?.payload?.type === 'virtual_cfo') {
+        paymentType = 'virtual_cfo';
       }
 
       const requestBody = {

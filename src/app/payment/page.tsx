@@ -43,6 +43,56 @@ export default function PaymentPage() {
   const billingPeriod = searchParams.get('billingPeriod') || 'monthly';
   const compliancePlanTier = searchParams.get('planTier');
 
+  // For Virtual CFO (₹2,999/month)
+  if (type === 'virtual_cfo') {
+    const virtualCfoAmount = amount > 0 ? amount : 2999;
+    return (
+      <div className="container mx-auto p-6 max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Complete Your Payment</CardTitle>
+            <CardDescription>
+              Subscribe to Virtual CFO – ₹2,999/month
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Plan:</span>
+                <span className="font-medium">Virtual CFO (Monthly)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Billing:</span>
+                <span className="font-medium">Monthly</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold pt-4 border-t">
+                <span>Total Amount:</span>
+                <span>₹{virtualCfoAmount.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+            <CashfreeCheckout
+              amount={virtualCfoAmount}
+              planId="virtual_cfo_monthly"
+              planName="Virtual CFO (Monthly)"
+              userId={user?.uid || ''}
+              userEmail={user?.email || undefined}
+              userName={user?.displayName || undefined}
+              postPaymentContext={{
+                key: 'pending_virtual_cfo',
+                payload: {
+                  type: 'virtual_cfo',
+                  planName: 'Virtual CFO (Monthly)',
+                  amount: virtualCfoAmount,
+                  billingPeriod: 'monthly',
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // For compliance plans
   if (type === 'compliance_plan' && compliancePlanTier) {
     return (

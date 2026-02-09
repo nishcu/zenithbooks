@@ -95,6 +95,9 @@ const orderId = `order_${Date.now()}`;
         compliancePlanTier,
         billingPeriod: billingPeriod || 'monthly',
       } : {}),
+      ...(paymentType === 'virtual_cfo' ? {
+        paymentType: 'virtual_cfo',
+      } : {}),
       ...(paymentType === 'associate_registration' ? {
         paymentType: 'associate_registration',
         ...(associateId ? { associateId } : {}),

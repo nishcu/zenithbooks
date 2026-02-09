@@ -199,6 +199,12 @@ const allMenuItems = [
     roles: ['business', 'professional']
   },
   {
+    href: "/virtual-cfo",
+    label: "Virtual CFO",
+    icon: BarChart3,
+    roles: ['business', 'professional']
+  },
+  {
     href: "/transactions",
     label: "Payments & Transactions",
     icon: CreditCard,

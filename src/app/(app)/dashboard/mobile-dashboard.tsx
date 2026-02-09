@@ -151,6 +151,18 @@ export function MobileDashboard() {
     ],
     compliance: [
       {
+        icon: Building2,
+        title: "Business Registrations",
+        description: "GST, Pvt Ltd, LLP, Udyam & more",
+        href: "/business-registrations"
+      },
+      {
+        icon: BarChart3,
+        title: "Virtual CFO",
+        description: "₹2,999/month – CFO support",
+        href: "/virtual-cfo"
+      },
+      {
         icon: FilePenLine,
         title: "Bulk Form 16",
         description: "Multi-employee generation",

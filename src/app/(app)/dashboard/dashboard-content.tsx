@@ -249,6 +249,13 @@ function DashboardContent() {
         color: "from-amber-500 to-orange-600",
       },
       {
+        title: "Virtual CFO",
+        description: "₹2,999/month – CFO support & advisory",
+        icon: BarChart3,
+        href: "/virtual-cfo",
+        color: "from-sky-500 to-blue-600",
+      },
+      {
         title: "Bulk Form 16",
         description: "Multi-employee generation",
         icon: FileText,

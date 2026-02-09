@@ -112,6 +112,7 @@ export const servicePricing: ServicePricing = {
         { id: "statutory_annual", name: "Statutory Compliance (Annual)", price: 12990 },
         { id: "complete_monthly", name: "Complete Compliance (Monthly)", price: 1499 },
         { id: "complete_annual", name: "Complete Compliance (Annual)", price: 14990 },
+        { id: "virtual_cfo_monthly", name: "Virtual CFO (Monthly)", price: 2999 },
     ],
 };
 

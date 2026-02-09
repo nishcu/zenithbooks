@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Building, IndianRupee, ArrowRight, Clock, Loader2, Upload, CreditCard, FileText } from "lucide-react";
+import { CheckCircle2, Building, IndianRupee, ArrowRight, Clock, Loader2, Upload, CreditCard, FileText, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { getAllRegistrations, getRegistrationsByCategory, getRegistrationConfig, REGISTRATION_CHARGES_NOTE } from "@/lib/business-registrations/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -157,6 +157,27 @@ export default function BusinessRegistrationsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Virtual CFO – Featured */}
+      <Card className="mb-8 border-2 border-sky-200 dark:border-sky-800 bg-gradient-to-br from-sky-50/80 to-blue-50/80 dark:from-sky-950/30 dark:to-blue-950/30">
+        <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
+              <BarChart3 className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">Virtual CFO</h3>
+              <p className="text-sm text-muted-foreground">₹2,999/month – CFO support & advisory. Financial planning, compliance & reporting.</p>
+            </div>
+          </div>
+          <Button asChild size="lg" className="shrink-0">
+            <Link href="/virtual-cfo">
+              Explore Virtual CFO
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <h2 className="text-xl font-semibold mb-4">Apply for a new registration</h2>
       <Tabs defaultValue="all" className="space-y-6">

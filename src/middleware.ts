@@ -24,8 +24,8 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "img-src 'self' data: https:; " +
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; " +
-    "frame-src 'self' https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://www.googletagmanager.com https://googleads.g.doubleclick.net; " + // Cashfree checkout iframe + GTM/Ads
-    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com https://sdk.cashfree.com https://www.google-analytics.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com;"
+    "frame-src 'self' https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://pay.cashfree.com https://www.googletagmanager.com https://googleads.g.doubleclick.net; " + // Cashfree checkout (iframe/redirect) + GTM/Ads
+    "connect-src 'self' https://*.firebase.com https://*.googleapis.com https://api.cashfree.com https://sandbox.cashfree.com https://sdk.cashfree.com https://pay.cashfree.com https://www.google-analytics.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com;"
   );
 
   // Rate limiting for API routes
