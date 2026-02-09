@@ -60,10 +60,12 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SUPER_ADMIN_UID, KEYBOARD_SHORTCUTS } from "@/lib/constants";
 
+// Sidebar: role-based, task-oriented. Level 1 = intent, Level 2 = actions. No features removed.
 const allMenuItems = [
+  // --- Daily use first ---
   { href: "/dashboard", label: "Dashboard", icon: Gauge, roles: ['business', 'professional', 'super_admin'] },
   {
-    label: "Billing",
+    label: "Sales & Invoicing",
     icon: Receipt,
     roles: ['freemium', 'business', 'professional'],
     subItems: [
@@ -78,79 +80,37 @@ const allMenuItems = [
     icon: ShoppingCart,
     roles: ['freemium', 'business', 'professional'],
     subItems: [
-        { href: "/purchases", label: "Purchase Bills", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
-        { href: "/purchases/purchase-orders", label: "Purchase Orders", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
+      { href: "/purchases", label: "Purchase Bills", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
+      { href: "/purchases/purchase-orders", label: "Purchase Orders", icon: ShoppingCart, roles: ['freemium', 'business', 'professional'] },
     ],
   },
-  { href: "/parties", label: "Parties", icon: Users, roles: ['freemium', 'business', 'professional'] },
   {
-    label: "Items",
-    icon: Warehouse,
+    label: "Parties & Stock",
+    icon: Users,
     roles: ['freemium', 'business', 'professional'],
     subItems: [
-        { href: "/items", label: "Stock Items", icon: Warehouse, roles: ['freemium', 'business', 'professional'] },
-        { href: "/items/stock-groups", label: "Stock Groups", icon: Boxes, roles: ['freemium', 'business', 'professional'] },
-        { href: "/items/units", label: "Units of Measure", icon: Weight, roles: ['freemium', 'business', 'professional'] },
-        { href: "/items/godowns", label: "Godowns / Locations", icon: Building, roles: ['freemium', 'business', 'professional'] },
-    ]
-  },
-  {
-    label: "Document Vault",
-    icon: FileKey,
-    roles: ['business', 'professional'],
-    subItems: [
-      { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
-      { href: "/vault/sharing", label: "Share Codes", icon: Share2, roles: ['business', 'professional'] },
-      { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
-      { href: "/vault/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
+      { href: "/parties", label: "Parties", icon: Users, roles: ['freemium', 'business', 'professional'] },
+      { href: "/items", label: "Stock Items", icon: Warehouse, roles: ['freemium', 'business', 'professional'] },
+      { href: "/items/stock-groups", label: "Stock Groups", icon: Boxes, roles: ['freemium', 'business', 'professional'] },
+      { href: "/items/units", label: "Units of Measure", icon: Weight, roles: ['freemium', 'business', 'professional'] },
+      { href: "/items/godowns", label: "Godowns / Locations", icon: Building, roles: ['freemium', 'business', 'professional'] },
     ],
   },
-  {
-    label: "GST Compliance",
-    icon: FileText,
-    roles: ['business', 'professional'],
-    subItems: [
-      { href: "/gst-filings", label: "GST Filings", icon: FileSpreadsheet, roles: ['business', 'professional'] },
-      { href: "/gst-filings/gstr-9c-reconciliation", label: "GSTR-9C Reconciliation", icon: GitCompareArrows, roles: ['business', 'professional'] },
-      { href: "/reconciliation", label: "Reconciliation Tools", icon: GitCompareArrows, roles: ['business', 'professional'] },
-    ],
-  },
-  {
-    label: "Income Tax",
-    icon: IndianRupee,
-    roles: ['business', 'professional'],
-    subItems: [
-      { href: "/income-tax/tds-returns", label: "TDS & TCS Returns", icon: FileText, roles: ['business', 'professional'] },
-      { href: "/income-tax/advance-tax", label: "Advance Tax", icon: Calculator, roles: ['business', 'professional'] },
-      { href: "/income-tax/form-16", label: "Form 16", icon: FileSignature, roles: ['business', 'professional'] },
-      { href: "/income-tax/asset-tax-calculator", label: "Asset Tax Calculator", icon: TrendingUp, roles: ['business', 'professional'] },
-      { href: "/income-tax/sip-calculator", label: "SIP Post-Tax Calculator", icon: BarChart3, roles: ['business', 'professional'] },
-      { href: "/income-tax/loan-calculator", label: "Loan Calculator", icon: CreditCard, roles: ['business', 'professional'] },
-    ],
-  },
-  { href: "/itr-filing", label: "ITR Filing", icon: FileSignature, roles: ['business', 'professional'] },
-  {
-    label: "ITR Management",
-    icon: FileSignature,
-    roles: ['professional'],
-    subItems: [
-      { href: "/professional/itr-applications", label: "My ITR Applications", icon: FileText, roles: ['professional'] },
-    ],
-  },
+  // --- Books & reports (Accounting label kept for role filter) ---
   {
     label: "Accounting",
     icon: Calculator,
     roles: ['business', 'professional'],
     subItems: [
       { href: "/accounting/chart-of-accounts", label: "Chart of Accounts", icon: Library, roles: ['business', 'professional'] },
-      { 
+      {
         label: "Vouchers",
         icon: BookCopy,
         roles: ['business', 'professional'],
         subItems: [
-             { href: "/accounting/vouchers", label: "Receipt & Payment", icon: Wallet, roles: ['business', 'professional'] },
-             { href: "/accounting/journal", label: "Journal", icon: BookCopy, roles: ['business', 'professional'] },
-        ]
+          { href: "/accounting/vouchers", label: "Receipt & Payment", icon: Wallet, roles: ['business', 'professional'] },
+          { href: "/accounting/journal", label: "Journal", icon: BookCopy, roles: ['business', 'professional'] },
+        ],
       },
       { href: "/accounting/ledgers", label: "General Ledger", icon: Book, roles: ['business', 'professional'] },
       { href: "/accounting/trial-balance", label: "Trial Balance", icon: Scale, roles: ['business', 'professional'] },
@@ -158,7 +118,7 @@ const allMenuItems = [
       { href: "/accounting/bank-reconciliation", label: "Bank Reconciliation", icon: Landmark, roles: ['business', 'professional'] },
       { href: "/accounting/cost-centres", label: "Cost Centres", icon: PieChart, roles: ['business', 'professional'] },
       { href: "/accounting/cost-centre-summary", label: "Cost Centre Summary", icon: PieChart, roles: ['business', 'professional'] },
-      { href: "/accounting/budgets", label: "Budgets & Scenarios", icon: Target, roles: ['business', 'professional']},
+      { href: "/accounting/budgets", label: "Budgets & Scenarios", icon: Target, roles: ['business', 'professional'] },
       {
         label: "Financial Statements",
         icon: BookOpen,
@@ -168,103 +128,80 @@ const allMenuItems = [
           { href: "/accounting/financial-statements/balance-sheet", label: "Balance Sheet", icon: Landmark, roles: ['business', 'professional'] },
         ],
       },
+      { href: "/reports/cma-report", label: "CMA Report", icon: Presentation, roles: ['business', 'professional'] },
+      { href: "/reports/sales-analysis", label: "Sales Analysis", icon: TrendingUp, roles: ['business', 'professional'] },
+      { href: "/reports/purchase-analysis", label: "Purchase Analysis", icon: ShoppingCart, roles: ['business', 'professional'] },
     ],
   },
+  // --- Tax & compliance (GST + Income Tax + ITR in one section) ---
   {
-    label: "Reports",
-    icon: AreaChart,
+    label: "Tax & Compliance",
+    icon: IndianRupee,
     roles: ['business', 'professional'],
     subItems: [
-        { href: "/reports/cma-report", label: "CMA Report Generator", icon: Presentation, roles: ['business', 'professional'] },
-        { href: "/reports/sales-analysis", label: "Sales Analysis", icon: TrendingUp, roles: ['business', 'professional'] },
-        { href: "/reports/purchase-analysis", label: "Purchase Analysis", icon: ShoppingCart, roles: ['business', 'professional'] },
+      { href: "/gst-filings", label: "GST Filings", icon: FileSpreadsheet, roles: ['business', 'professional'] },
+      { href: "/gst-filings/gstr-9c-reconciliation", label: "GSTR-9C Reconciliation", icon: GitCompareArrows, roles: ['business', 'professional'] },
+      { href: "/reconciliation", label: "Reconciliation Tools", icon: GitCompareArrows, roles: ['business', 'professional'] },
+      { href: "/income-tax/tds-returns", label: "TDS & TCS Returns", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/income-tax/advance-tax", label: "Advance Tax", icon: Calculator, roles: ['business', 'professional'] },
+      { href: "/income-tax/form-16", label: "Form 16", icon: FileSignature, roles: ['business', 'professional'] },
+      { href: "/income-tax/asset-tax-calculator", label: "Asset Tax Calculator", icon: TrendingUp, roles: ['business', 'professional'] },
+      { href: "/income-tax/sip-calculator", label: "SIP Post-Tax Calculator", icon: BarChart3, roles: ['business', 'professional'] },
+      { href: "/income-tax/loan-calculator", label: "Loan Calculator", icon: CreditCard, roles: ['business', 'professional'] },
+      { href: "/itr-filing", label: "ITR Filing", icon: FileSignature, roles: ['business', 'professional'] },
+      { href: "/professional/itr-applications", label: "My ITR Applications", icon: FileText, roles: ['professional'] },
+      { href: "/notices", label: "Handle Notices", icon: MailWarning, roles: ['business', 'professional'] },
     ],
   },
-   { 
-    href: "/ca-certificates", 
-    label: "CA Certificates", 
-    icon: Award,
-    roles: ['business', 'professional']
-  },
+  // --- Documents (single place; no duplicate) ---
   {
-    href: "/compliance-plans",
-    label: "Monthly Compliance Services",
-    icon: Shield,
-    roles: ['business', 'professional']
+    label: "Documents",
+    icon: FileKey,
+    roles: ['business', 'professional'],
+    subItems: [
+      { href: "/vault", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
+      { href: "/vault/sharing", label: "Share Codes", icon: Share2, roles: ['business', 'professional'] },
+      { href: "/vault/logs", label: "Access Logs", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/vault/settings", label: "Vault Settings", icon: Settings, roles: ['business', 'professional'] },
+    ],
   },
+  // --- Business Registrations & Restructuring (one section) ---
   {
-    href: "/business-registrations",
-    label: "Business Registrations",
+    label: "Business Registrations & Restructuring",
     icon: Building,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/virtual-cfo",
-    label: "Virtual CFO",
-    icon: BarChart3,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/inventory-audit",
-    label: "Inventory Audit",
-    icon: ClipboardList,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/founder-control-week",
-    label: "Founder Control Week",
-    icon: Rocket,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/business-control-program",
-    label: "Business Control Program",
-    icon: Shield,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/business-driven-applications",
-    label: "Business Driven Applications",
-    icon: LayoutDashboard,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/transactions",
-    label: "Payments & Transactions",
-    icon: CreditCard,
-    roles: ['business', 'professional', 'super_admin']
-  },
-  {
-    href: "/legal-documents",
-    label: "Legal Documents",
-    icon: Shield,
-    roles: ['business', 'professional']
-  },
-  {
-    href: "/professional-services",
-    label: "Find a Professional",
-    icon: ConciergeBell,
-    roles: ['business', 'professional', 'super_admin']
-  },
-  { href: "/compliance-associates/apply", label: "Become Zenith Corporate Mitra", icon: Handshake, roles: ['business', 'professional', 'super_admin'] },
-  { href: "/corporate-mitra/dashboard", label: "Corporate Mitra Dashboard", icon: Award, roles: ['business', 'professional', 'super_admin'] },
-  { href: "/knowledge", label: "Knowledge", icon: BookOpen, roles: ['professional'] },
-  {
-    label: "Tasks & Networking",
-    icon: ClipboardList,
     roles: ['business', 'professional'],
     subItems: [
-      { href: "/tasks/post", label: "Post a Task", icon: FilePlus, roles: ['business', 'professional'] },
-      { href: "/tasks/browse", label: "Browse Tasks", icon: ClipboardList, roles: ['business', 'professional'] },
-      { href: "/tasks/my-tasks", label: "My Posted Tasks", icon: FileText, roles: ['business', 'professional'] },
-      { href: "/tasks/my-applications", label: "My Applications", icon: CheckCircle, roles: ['business', 'professional'] },
-      { href: "/professionals/list", label: "Browse Professionals", icon: UserSearch, roles: ['business', 'professional'] },
-      { href: "/professionals/create-profile", label: "Create Profile", icon: UserCheck, roles: ['professional'] },
+      { href: "/business-registrations", label: "Business Registrations", icon: Building, roles: ['business', 'professional'] },
+      {
+        label: "Business Restructuring",
+        icon: ArrowRightLeft,
+        roles: ['business', 'professional'],
+        subItems: [
+          { href: "/virtual-cfo", label: "Virtual CFO", icon: BarChart3, roles: ['business', 'professional'] },
+          { href: "/inventory-audit", label: "Inventory Audit", icon: ClipboardList, roles: ['business', 'professional'] },
+          { href: "/founder-control-week", label: "Founder Control Week", icon: Rocket, roles: ['business', 'professional'] },
+          { href: "/business-control-program", label: "Business Control Program", icon: Shield, roles: ['business', 'professional'] },
+          { href: "/business-driven-applications", label: "Business Driven Applications", icon: LayoutDashboard, roles: ['business', 'professional'] },
+        ],
+      },
     ],
   },
-   { href: "/notices", label: "Handle Notices", icon: MailWarning, roles: ['business', 'professional'] },
+  // --- Zenith Services (separate; revenue & support) ---
   {
-    label: "Payroll",
+    label: "Zenith Services",
+    icon: ConciergeBell,
+    roles: ['business', 'professional'],
+    subItems: [
+      { href: "/ca-certificates", label: "CA Certificates", icon: Award, roles: ['business', 'professional'] },
+      { href: "/compliance-plans", label: "Monthly Compliance", icon: Shield, roles: ['business', 'professional'] },
+      { href: "/legal-documents", label: "Legal Documents", icon: Shield, roles: ['business', 'professional'] },
+      { href: "/professional-services", label: "Find a Professional", icon: ConciergeBell, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/knowledge", label: "Knowledge", icon: BookOpen, roles: ['professional'] },
+    ],
+  },
+  // --- Payroll & money ---
+  {
+    label: "Payroll & Payments",
     icon: UserCog,
     roles: ['business', 'professional'],
     subItems: [
@@ -272,25 +209,44 @@ const allMenuItems = [
       { href: "/payroll/employees", label: "Employees", icon: Users, roles: ['business', 'professional'] },
       { href: "/payroll/run-payroll", label: "Run Payroll", icon: FileText, roles: ['business', 'professional'] },
       { href: "/payroll/reports", label: "Compliance Reports", icon: FileArchive, roles: ['business', 'professional'] },
-      { href: "/payroll/settings", label: "Settings", icon: Settings, roles: ['business', 'professional'] },
+      { href: "/payroll/settings", label: "Payroll Settings", icon: Settings, roles: ['business', 'professional'] },
+      { href: "/transactions", label: "Payments & Transactions", icon: CreditCard, roles: ['business', 'professional', 'super_admin'] },
+    ],
+  },
+  // --- Tasks & Corporate Mitra (networking + mitra under one) ---
+  {
+    label: "Tasks & Corporate Mitra",
+    icon: Handshake,
+    roles: ['business', 'professional', 'super_admin'],
+    subItems: [
+      { href: "/tasks/post", label: "Post a Task", icon: FilePlus, roles: ['business', 'professional'] },
+      { href: "/tasks/browse", label: "Browse Tasks", icon: ClipboardList, roles: ['business', 'professional'] },
+      { href: "/tasks/my-tasks", label: "My Posted Tasks", icon: FileText, roles: ['business', 'professional'] },
+      { href: "/tasks/my-applications", label: "My Applications", icon: CheckCircle, roles: ['business', 'professional'] },
+      { href: "/professionals/list", label: "Browse Professionals", icon: UserSearch, roles: ['business', 'professional'] },
+      { href: "/professionals/create-profile", label: "Create Profile", icon: UserCheck, roles: ['professional'] },
+      { href: "/compliance-associates/apply", label: "Become Zenith Corporate Mitra", icon: Handshake, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/corporate-mitra/dashboard", label: "Corporate Mitra Dashboard", icon: Award, roles: ['business', 'professional', 'super_admin'] },
     ],
   },
   { href: "/import-export", label: "Import & Export", icon: Download, roles: ['business', 'professional'] },
+  // --- Resources (help; no duplicate My Documents) ---
   {
     label: "Resources",
-    icon: Info,
+    icon: BookOpen,
     roles: ['business', 'professional', 'super_admin'],
     subItems: [
-        { href: "/resources/knowledge-base", label: "Knowledge Base", icon: BookOpen, roles: ['business', 'professional', 'super_admin'] },
-        { href: "/my-documents", label: "My Documents", icon: FileArchive, roles: ['business', 'professional'] },
-        { href: "/about", label: "About Us", icon: Info, roles: ['business', 'professional', 'super_admin'] },
-        { href: "/blog", label: "Blog", icon: Newspaper, roles: ['business', 'professional', 'super_admin'] },
-        { href: "/app-shortcuts", label: "App Shortcuts", icon: Keyboard, roles: ['business', 'professional', 'super_admin'] },
-        { href: "/contact", label: "Contact Us", icon: Contact, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/resources/knowledge-base", label: "Knowledge Base", icon: BookOpen, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/my-documents", label: "Saved Documents", icon: FileArchive, roles: ['business', 'professional'] },
+      { href: "/about", label: "About Us", icon: Info, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/blog", label: "Blog", icon: Newspaper, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/app-shortcuts", label: "App Shortcuts", icon: Keyboard, roles: ['business', 'professional', 'super_admin'] },
+      { href: "/contact", label: "Contact Us", icon: Contact, roles: ['business', 'professional', 'super_admin'] },
     ],
   },
+  // --- Settings (label kept for role filter) ---
   {
-    label: "Settings", 
+    label: "Settings",
     icon: Settings,
     roles: ['business', 'professional', 'super_admin'],
     subItems: [
@@ -300,35 +256,36 @@ const allMenuItems = [
       { href: "/transactions", label: "Transaction History", icon: CreditCard, roles: ['business', 'professional', 'super_admin'] },
     ],
   },
+  // --- Admin (strictly role-based) ---
   {
     label: "Admin",
     icon: ShieldCheck,
     roles: ['super_admin'],
     subItems: [
-        { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard, roles: ['super_admin']},
-        {
-          label: "Pricing & Plans",
-          icon: BadgeDollarSign,
-          roles: ['super_admin'],
-          subItems: [
-            { href: "/pricing", label: "Subscription Plans", icon: BadgeDollarSign, roles: ['super_admin']},
-            { href: "/admin/service-pricing", label: "On-Demand Services", icon: CreditCard, roles: ['super_admin']},
-            { href: "/admin/coupons", label: "Coupons & Discounts", icon: Ticket, roles: ['super_admin']},
-          ],
-        },
-        { href: "/admin/subscribers", label: "Subscribers", icon: BadgeDollarSign, roles: ['super_admin']},
-        { href: "/admin/users", label: "All Users", icon: Users, roles: ['super_admin']},
-        { href: "/admin/form16-free-leads", label: "Free Form 16 Leads", icon: FileText, roles: ['super_admin']},
-        { href: "/admin/professionals", label: "Professionals", icon: UserSquare, roles: ['super_admin']},
-        { href: "/admin/compliance-associates", label: "Zenith Corporate Mitra", icon: Award, roles: ['super_admin']},
-        { href: "/admin/compliance-tasks", label: "Compliance Tasks", icon: FileText, roles: ['super_admin']},
-        { href: "/admin/business-registrations", label: "Business Registrations", icon: FileText, roles: ['super_admin']},
-        { href: "/admin/appointments", label: "Appointments", icon: CalendarClock, roles: ['super_admin']},
-        { href: "/admin/notices", label: "Submitted Notices", icon: MailWarning, roles: ['super_admin']},
-        { href: "/admin/itr-applications", label: "ITR Applications", icon: FileSignature, roles: ['super_admin']},
-        { href: "/admin/certification-requests", label: "Certification Requests", icon: FileSignature, roles: ['super_admin']},
-        { href: "/admin/blog", label: "Manage Blog", icon: Newspaper, roles: ['super_admin'] },
-    ]
+      { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard, roles: ['super_admin'] },
+      {
+        label: "Pricing & Plans",
+        icon: BadgeDollarSign,
+        roles: ['super_admin'],
+        subItems: [
+          { href: "/pricing", label: "Subscription Plans", icon: BadgeDollarSign, roles: ['super_admin'] },
+          { href: "/admin/service-pricing", label: "On-Demand Services", icon: CreditCard, roles: ['super_admin'] },
+          { href: "/admin/coupons", label: "Coupons & Discounts", icon: Ticket, roles: ['super_admin'] },
+        ],
+      },
+      { href: "/admin/subscribers", label: "Subscribers", icon: BadgeDollarSign, roles: ['super_admin'] },
+      { href: "/admin/users", label: "All Users", icon: Users, roles: ['super_admin'] },
+      { href: "/admin/form16-free-leads", label: "Free Form 16 Leads", icon: FileText, roles: ['super_admin'] },
+      { href: "/admin/professionals", label: "Professionals", icon: UserSquare, roles: ['super_admin'] },
+      { href: "/admin/compliance-associates", label: "Zenith Corporate Mitra", icon: Award, roles: ['super_admin'] },
+      { href: "/admin/compliance-tasks", label: "Compliance Tasks", icon: FileText, roles: ['super_admin'] },
+      { href: "/admin/business-registrations", label: "Business Registrations", icon: FileText, roles: ['super_admin'] },
+      { href: "/admin/appointments", label: "Appointments", icon: CalendarClock, roles: ['super_admin'] },
+      { href: "/admin/notices", label: "Submitted Notices", icon: MailWarning, roles: ['super_admin'] },
+      { href: "/admin/itr-applications", label: "ITR Applications", icon: FileSignature, roles: ['super_admin'] },
+      { href: "/admin/certification-requests", label: "Certification Requests", icon: FileSignature, roles: ['super_admin'] },
+      { href: "/admin/blog", label: "Manage Blog", icon: Newspaper, roles: ['super_admin'] },
+    ],
   },
 ];
 
