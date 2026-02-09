@@ -244,6 +244,32 @@ function PaymentSuccessContent() {
             console.error("Post-payment business registration redirect failed:", e);
           }
 
+          // New product payments: clear pending key and redirect to product/dashboard
+          try {
+            const keysAndRedirects: [string, string][] = [
+              ["pending_virtual_cfo", "/virtual-cfo"],
+              ["pending_business_control_program", "/business-control-program"],
+              ["pending_business_driven_applications", "/business-driven-applications"],
+              ["pending_founder_control_week", "/founder-control-week"],
+              ["pending_inventory_audit", "/inventory-audit"],
+            ];
+            for (const [key, targetPath] of keysAndRedirects) {
+              const raw = localStorage.getItem(key);
+              if (raw && orderIdParam) {
+                try {
+                  JSON.parse(raw);
+                } catch {
+                  continue;
+                }
+                localStorage.removeItem(key);
+                redirectTo = `${targetPath}?payment_success=1`;
+                break;
+              }
+            }
+          } catch (e) {
+            console.error("Post-payment new product redirect failed:", e);
+          }
+
           // If this payment came from an on-demand action (e.g., Form 16), unlock it and redirect back
           try {
             const raw = localStorage.getItem("pending_on_demand_action");

@@ -163,8 +163,11 @@ export async function POST(request: NextRequest) {
               orderId,
               paymentId,
             });
+          } else if (['inventory_audit', 'founder_control_week', 'business_control_program', 'business_driven_applications'].includes(paymentType)) {
+            // One-time product: transaction already recorded above; do not update user subscription
+            console.log('One-time product payment recorded via webhook:', { paymentType, orderId, userId });
           } else {
-            // Handle regular subscription (existing logic)
+            // Handle regular subscription / virtual_cfo (existing logic)
             const userRef = doc(db, 'users', userId);
             await updateDoc(userRef, {
               subscriptionStatus: 'active',

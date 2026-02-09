@@ -8,15 +8,23 @@ const {
   userId,
   currency = 'INR',
   planId,
-  customerEmail,
-  customerPhone,
-  customerName,
+  customerEmail: bodyCustomerEmail,
+  customerPhone: bodyCustomerPhone,
+  customerName: bodyCustomerName,
   paymentType,
   compliancePlanTier,
   billingPeriod,
   associateId,
   businessRegistrationId,
+  customerDetails,
+  userEmail,
+  userName,
 } = requestBody;
+
+// Support both top-level and nested customer details (frontend may send customerDetails + userEmail/userName)
+const customerEmail = bodyCustomerEmail ?? customerDetails?.customer_email ?? userEmail;
+const customerPhone = bodyCustomerPhone ?? customerDetails?.customer_phone;
+const customerName = bodyCustomerName ?? customerDetails?.customer_name ?? userName;
 
 // --- VALIDATIONS ---
 if (!amount || amount <= 0) {
