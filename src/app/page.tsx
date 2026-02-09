@@ -13,7 +13,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { SignupForm } from "@/components/auth/signup-form";
 import { DashboardPreview } from "@/components/landing/dashboard-preview";
 import { FeaturePreview } from "@/components/landing/feature-preview";
-import { SmartAutomationPreview, InvoicingPreview, TaxFinancePreview, ComplianceHRPreview } from "@/components/landing/feature-previews";
+import { SmartAutomationPreview, InvoicingPreview, TaxFinancePreview, CompliancePreview, HRPreview } from "@/components/landing/feature-previews";
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = React.useState("login");
@@ -90,10 +90,28 @@ export default function LandingPage() {
       ],
     },
     {
-      title: "Compliance & HR",
-      description: "Stay compliant with automated filings and payroll",
+      title: "Compliance",
+      description: "Stay compliant with automated filings and returns",
       icon: Shield,
       color: "from-orange-500 to-red-600",
+      features: [
+        {
+          title: "TDS Returns",
+          description: "File TDS and TCS returns seamlessly",
+          icon: Shield,
+        },
+        {
+          title: "GST Filings",
+          description: "GST returns and compliance",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      title: "HR",
+      description: "Payroll and employee compliance",
+      icon: Users,
+      color: "from-indigo-500 to-purple-600",
       features: [
         {
           title: "Bulk Form 16",
@@ -104,11 +122,6 @@ export default function LandingPage() {
           title: "Payroll",
           description: "Complete payroll management with PF, ESI & compliance",
           icon: Users,
-        },
-        {
-          title: "TDS Returns",
-          description: "File TDS and TCS returns seamlessly",
-          icon: Shield,
         },
       ],
     },
@@ -286,7 +299,8 @@ export default function LandingPage() {
                         categoryIdx === 0 ? <SmartAutomationPreview /> :
                         categoryIdx === 1 ? <InvoicingPreview /> :
                         categoryIdx === 2 ? <TaxFinancePreview /> :
-                        <ComplianceHRPreview />
+                        categoryIdx === 3 ? <CompliancePreview /> :
+                        <HRPreview />
                       }
                     />
                   </div>

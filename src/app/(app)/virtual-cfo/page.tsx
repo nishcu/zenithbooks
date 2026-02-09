@@ -1,6 +1,6 @@
 /**
  * Virtual CFO – ₹2,999/month
- * CFO support & advisory under Compliance & HR
+ * CFO support & advisory under Compliance
  */
 
 "use client";

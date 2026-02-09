@@ -192,14 +192,42 @@ export function TaxFinancePreview() {
   );
 }
 
-// Compliance & HR Preview
-export function ComplianceHRPreview() {
+// Compliance Preview
+export function CompliancePreview() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="border">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-medium">TDS Returns</span>
+            </div>
+            <p className="text-xs text-muted-foreground">File TDS & TCS seamlessly</p>
+          </CardContent>
+        </Card>
+        <Card className="border">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="h-4 w-4 text-orange-600" />
+              <span className="text-sm font-medium">GST Filings</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Returns & compliance</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// HR Preview
+export function HRPreview() {
   return (
     <div className="space-y-4">
       <Card className="border">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-orange-600" />
+            <Users className="h-5 w-5 text-indigo-600" />
             Payroll Management
           </CardTitle>
         </CardHeader>
@@ -230,27 +258,15 @@ export function ComplianceHRPreview() {
           </Table>
         </CardContent>
       </Card>
-      
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="border">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-4 w-4 text-rose-600" />
-              <span className="text-sm font-medium">Form 16</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Bulk generation</p>
-          </CardContent>
-        </Card>
-        <Card className="border">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-medium">TDS Returns</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Auto-filing</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="h-4 w-4 text-rose-600" />
+            <span className="text-sm font-medium">Bulk Form 16</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Generate for multiple employees at once</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

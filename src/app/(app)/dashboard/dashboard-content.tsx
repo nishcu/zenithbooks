@@ -4,7 +4,7 @@
 import { useState, useMemo, useContext, memo, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus, Sparkles, FileCheck } from "lucide-react";
+import { IndianRupee, CreditCard, Search, Zap, Building, FileSpreadsheet, Mic, Upload, BookOpen, TrendingUp, FileText, Receipt, ShoppingCart, Calculator, Award, Scale, ConciergeBell, ArrowRight, TrendingDown, Network, Briefcase, UserPlus, Users, ClipboardList, MessageSquare, Loader2, Shield, UserCog, BarChart3, MailWarning, GraduationCap, Plus, Sparkles, FileCheck, Rocket, LayoutDashboard } from "lucide-react";
 import { FinancialSummaryChart } from "@/components/dashboard/financial-summary-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import Link from "next/link";
@@ -256,6 +256,43 @@ function DashboardContent() {
         color: "from-sky-500 to-blue-600",
       },
       {
+        title: "Inventory Audit",
+        description: "Physical stock verification – 1/2/3 days. Travel, TA & DA separate",
+        icon: ClipboardList,
+        href: "/inventory-audit",
+        color: "from-emerald-500 to-teal-600",
+      },
+      {
+        title: "Founder Control Week",
+        description: "One-week startup operating system – ₹9,999. Systems, not stress.",
+        icon: Rocket,
+        href: "/founder-control-week",
+        color: "from-violet-500 to-purple-600",
+      },
+      {
+        title: "Business Control Program",
+        description: "7-day system reset – Stock, receivables, payables, cash. ₹4,999 + stock audit.",
+        icon: Shield,
+        href: "/business-control-program",
+        color: "from-emerald-500 to-teal-600",
+      },
+      {
+        title: "Business Driven Applications",
+        description: "One app made only for your business – ₹14,999 one-time. No generic software.",
+        icon: LayoutDashboard,
+        href: "/business-driven-applications",
+        color: "from-amber-500 to-orange-600",
+      },
+      {
+        title: "TDS Returns",
+        description: "TDS & TCS filing",
+        icon: FileCheck,
+        href: "/income-tax/tds-returns",
+        color: "from-orange-500 to-red-600",
+      },
+    ],
+    hr: [
+      {
         title: "Bulk Form 16",
         description: "Multi-employee generation",
         icon: FileText,
@@ -269,13 +306,6 @@ function DashboardContent() {
         href: "/payroll",
         color: "from-indigo-500 to-purple-600",
       },
-      {
-        title: "TDS Returns",
-        description: "TDS & TCS filing",
-        icon: FileCheck,
-        href: "/income-tax/tds-returns",
-        color: "from-orange-500 to-red-600",
-      },
     ],
   };
 
@@ -285,6 +315,7 @@ function DashboardContent() {
     ...coreFeaturesByCategory.invoicing,
     ...coreFeaturesByCategory.taxFinance,
     ...coreFeaturesByCategory.compliance,
+    ...coreFeaturesByCategory.hr,
   ];
 
   // Quick Access - Super Clean (No descriptions)
@@ -821,6 +852,39 @@ function DashboardContent() {
       {/* Document Vault Spotlight - Prominent */}
       <VaultSpotlight />
 
+      {/* Once-in-a-Lifetime Business Control Program - Flagship Banner */}
+      <Link href="/business-control-program">
+        <Card className="border-2 border-emerald-400/60 shadow-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+          <CardContent className="p-6 lg:p-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-2xl lg:text-3xl font-bold text-white">Once-in-a-Lifetime Business Control Program</h3>
+                    <Badge className="bg-amber-400 text-amber-900 border-0 text-sm px-3 py-1">FLAGSHIP</Badge>
+                  </div>
+                  <p className="text-white/90 text-base lg:text-lg leading-relaxed mb-3">
+                    The 7-day system reset for Indian businesses. Full control over stock, receivables, payables & cash. ₹4,999 + stock audit as applicable.
+                  </p>
+                  <p className="text-white/80 text-sm">
+                    No SOPs, no theory — only practical control. Run with confidence.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center text-white font-semibold text-lg group">
+                <span>Know more</span>
+                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* Smart Journal Entry - Prominent Highlight Banner */}
       <Link href="/accounting/journal/smart-entry">
         <Card className="border-2 border-violet-300/50 shadow-xl bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-600 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] relative overflow-hidden">
@@ -847,6 +911,39 @@ function DashboardContent() {
               </div>
               <div className="flex items-center text-white font-semibold text-lg group">
                 <span>Try it now</span>
+                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Founder Control Week - Prominent Highlight Banner */}
+      <Link href="/founder-control-week">
+        <Card className="border-2 border-violet-400/60 shadow-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:shadow-2xl transition-all duration-300 hover:scale-[1.01] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+          <CardContent className="p-6 lg:p-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
+                  <Rocket className="h-8 w-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-2xl lg:text-3xl font-bold text-white">Founder Control Week</h3>
+                    <Badge className="bg-amber-400 text-amber-900 border-0 text-sm px-3 py-1">PREMIUM</Badge>
+                  </div>
+                  <p className="text-white/90 text-base lg:text-lg leading-relaxed mb-3">
+                    One-week startup operating system. Dedicated team, end-to-end SOPs, systems implemented in 7 days — ₹9,999.
+                  </p>
+                  <p className="text-white/80 text-sm">
+                    Run your business yourself — with systems, not stress.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center text-white font-semibold text-lg group">
+                <span>Explore</span>
                 <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -986,11 +1083,11 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  {/* Compliance & HR */}
+                  {/* Compliance */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <UserCog className="h-5 w-5 text-primary" />
-                      Compliance & HR
+                      <Shield className="h-5 w-5 text-primary" />
+                      Compliance
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {coreFeaturesByCategory.compliance.map((feature) => {
@@ -1021,17 +1118,89 @@ function DashboardContent() {
                       })}
                     </div>
                   </div>
+
+                  {/* HR */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      HR
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.hr.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
-                  {/* CA View: Compliance & HR First */}
+                  {/* CA View: Compliance */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <UserCog className="h-5 w-5 text-primary" />
-                      Compliance & HR
+                      <Shield className="h-5 w-5 text-primary" />
+                      Compliance
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {coreFeaturesByCategory.compliance.map((feature) => {
+                        const Icon = feature.icon;
+                        return (
+                          <Link key={feature.href} href={feature.href}>
+                            <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/50 group cursor-pointer">
+                              <CardHeader className="pb-3 px-4 pt-4">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-md`}>
+                                  <Icon className="h-6 w-6 text-white" />
+                                </div>
+                                <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors leading-tight mb-1">
+                                  {feature.title}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0 px-4 pb-4">
+                                <CardDescription className="text-sm text-muted-foreground mb-3">
+                                  {feature.description}
+                                </CardDescription>
+                                <div className="flex items-center text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                                  <span>Explore</span>
+                                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* CA View: HR */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      HR
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreFeaturesByCategory.hr.map((feature) => {
                         const Icon = feature.icon;
                         return (
                           <Link key={feature.href} href={feature.href}>

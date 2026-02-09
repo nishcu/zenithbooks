@@ -8,7 +8,7 @@ import {
   Receipt, TrendingUp, BarChart3, FileCheck, Archive,
   Truck, FileSignature, Wallet, Boxes, ReceiptText,
   Scale, Shield, Award, Users, FilePenLine, Building2,
-  Sparkles, ArrowRight, CreditCard, Calculator
+  Sparkles, ArrowRight, CreditCard, Calculator, ClipboardList, Rocket, LayoutDashboard
 } from "lucide-react";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { SummaryCard } from "@/components/mobile/summary-card";
@@ -163,6 +163,41 @@ export function MobileDashboard() {
         href: "/virtual-cfo"
       },
       {
+        icon: ClipboardList,
+        title: "Inventory Audit",
+        description: "Stock verification – 1/2/3 days",
+        href: "/inventory-audit"
+      },
+      {
+        icon: Rocket,
+        title: "Founder Control Week",
+        description: "One-week startup OS – ₹9,999",
+        href: "/founder-control-week",
+        highlight: true
+      },
+      {
+        icon: Shield,
+        title: "Business Control Program",
+        description: "7-day system reset – ₹4,999",
+        href: "/business-control-program",
+        highlight: true
+      },
+      {
+        icon: LayoutDashboard,
+        title: "Business Driven Applications",
+        description: "One app for your business – ₹14,999",
+        href: "/business-driven-applications",
+        highlight: true
+      },
+      {
+        icon: FileCheck,
+        title: "TDS Returns",
+        description: "TDS & TCS filing",
+        href: "/income-tax/tds-returns"
+      },
+    ],
+    hr: [
+      {
         icon: FilePenLine,
         title: "Bulk Form 16",
         description: "Multi-employee generation",
@@ -174,12 +209,6 @@ export function MobileDashboard() {
         description: "Salary, PF, ESI & compliance",
         href: "/payroll"
       },
-      {
-        icon: FileCheck,
-        title: "TDS Returns",
-        description: "TDS & TCS filing",
-        href: "/income-tax/tds-returns"
-      },
     ],
   };
 
@@ -189,6 +218,7 @@ export function MobileDashboard() {
     ...coreFeaturesByCategory.invoicing,
     ...coreFeaturesByCategory.taxFinance,
     ...coreFeaturesByCategory.compliance,
+    ...coreFeaturesByCategory.hr,
   ];
 
   // Quick Access - Compliance & Services
@@ -313,14 +343,34 @@ export function MobileDashboard() {
             </div>
           </div>
 
-          {/* Compliance & HR */}
+          {/* Compliance */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
-              <Users className="h-4 w-4 text-pink-600" />
-              Compliance & HR
+              <Shield className="h-4 w-4 text-primary" />
+              Compliance
             </h3>
             <div className="space-y-2">
               {coreFeaturesByCategory.compliance.map((feature, idx) => (
+                <FeatureCard
+                  key={idx}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  href={feature.href}
+                  className={"highlight" in feature && feature.highlight ? "border-2 border-violet-300 bg-gradient-to-br from-violet-50 to-purple-50 shadow-md" : undefined}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* HR */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 px-1 flex items-center gap-2">
+              <Users className="h-4 w-4 text-pink-600" />
+              HR
+            </h3>
+            <div className="space-y-2">
+              {coreFeaturesByCategory.hr.map((feature, idx) => (
                 <FeatureCard
                   key={idx}
                   icon={feature.icon}
