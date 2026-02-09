@@ -21,6 +21,10 @@ export type ServicePricing = {
     notice_handling: Service[];
     itr_filing: Service[];
     compliance_plans: Service[];
+    audit_services: Service[];
+    founder_control_week: Service[];
+    business_control_program: Service[];
+    business_driven_applications: Service[];
 };
 
 // We can still keep the initial default values here
@@ -113,6 +117,20 @@ export const servicePricing: ServicePricing = {
         { id: "complete_monthly", name: "Complete Compliance (Monthly)", price: 1499 },
         { id: "complete_annual", name: "Complete Compliance (Annual)", price: 14990 },
         { id: "virtual_cfo_monthly", name: "Virtual CFO (Monthly)", price: 2999 },
+    ],
+    audit_services: [
+        { id: "inventory_audit_1day", name: "Inventory Audit (1 day)", price: 1999 },
+        { id: "inventory_audit_2days", name: "Inventory Audit (2 days)", price: 3499 },
+        { id: "inventory_audit_3days", name: "Inventory Audit (3 days)", price: 4999 },
+    ],
+    founder_control_week: [
+        { id: "founder_control_week", name: "Founder Control Week", price: 9999 },
+    ],
+    business_control_program: [
+        { id: "business_control_program", name: "Once-in-a-Lifetime Business Control Program", price: 4999 },
+    ],
+    business_driven_applications: [
+        { id: "business_driven_applications", name: "Business Driven Applications – One app for your business", price: 14999 },
     ],
 };
 

@@ -283,21 +283,21 @@ function DashboardContent() {
         href: "/business-driven-applications",
         color: "from-amber-500 to-orange-600",
       },
-      {
-        title: "TDS Returns",
-        description: "TDS & TCS filing",
-        icon: FileCheck,
-        href: "/income-tax/tds-returns",
-        color: "from-orange-500 to-red-600",
-      },
     ],
     hr: [
+      {
+        title: "Individual Form 16",
+        description: "Generate Form 16 for one employee",
+        icon: FileText,
+        href: "/income-tax/form-16?tab=single",
+        color: "from-rose-500 to-red-600",
+      },
       {
         title: "Bulk Form 16",
         description: "Multi-employee generation",
         icon: FileText,
         href: "/income-tax/form-16",
-        color: "from-rose-500 to-red-600",
+        color: "from-rose-600 to-pink-600",
       },
       {
         title: "Payroll",

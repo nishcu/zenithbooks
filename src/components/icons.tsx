@@ -13,7 +13,7 @@ export {
     Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap,
     AlertCircle, CheckCircle, Edit, Copy, SlidersHorizontal, Settings2, BarChart3,
     ArrowRightLeft, Calendar as CalendarIcon, Eraser, IndianRupee, Construction, Bell, CalendarDays,
-    Ticket, Share2, ClipboardList, UserSearch
+    Ticket, Share2, ClipboardList, UserSearch, Rocket
 } from "lucide-react";
 
 export function ZenithBooksLogo(props: SVGProps<SVGSVGElement>) {

@@ -37,7 +37,7 @@ import {
     ArrowRightLeft, Eraser, IndianRupee, Construction, Bell, CalendarDays,
     Menu, Wand2, UserCheck, Banknote, Handshake, FileKey, MessageSquare, Printer, Zap, Key,
     AlertCircle, CheckCircle, Copy, SlidersHorizontal, Settings2, BarChart3,
-    ArrowRight, Upload, Download, Share2, ClipboardList, UserSearch
+    ArrowRight, Upload, Download, Share2, ClipboardList, UserSearch, Rocket
 } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -202,6 +202,30 @@ const allMenuItems = [
     href: "/virtual-cfo",
     label: "Virtual CFO",
     icon: BarChart3,
+    roles: ['business', 'professional']
+  },
+  {
+    href: "/inventory-audit",
+    label: "Inventory Audit",
+    icon: ClipboardList,
+    roles: ['business', 'professional']
+  },
+  {
+    href: "/founder-control-week",
+    label: "Founder Control Week",
+    icon: Rocket,
+    roles: ['business', 'professional']
+  },
+  {
+    href: "/business-control-program",
+    label: "Business Control Program",
+    icon: Shield,
+    roles: ['business', 'professional']
+  },
+  {
+    href: "/business-driven-applications",
+    label: "Business Driven Applications",
+    icon: LayoutDashboard,
     roles: ['business', 'professional']
   },
   {

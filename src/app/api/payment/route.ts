@@ -98,6 +98,18 @@ const orderId = `order_${Date.now()}`;
       ...(paymentType === 'virtual_cfo' ? {
         paymentType: 'virtual_cfo',
       } : {}),
+      ...(paymentType === 'inventory_audit' ? {
+        paymentType: 'inventory_audit',
+      } : {}),
+      ...(paymentType === 'founder_control_week' ? {
+        paymentType: 'founder_control_week',
+      } : {}),
+      ...(paymentType === 'business_control_program' ? {
+        paymentType: 'business_control_program',
+      } : {}),
+      ...(paymentType === 'business_driven_applications' ? {
+        paymentType: 'business_driven_applications',
+      } : {}),
       ...(paymentType === 'associate_registration' ? {
         paymentType: 'associate_registration',
         ...(associateId ? { associateId } : {}),

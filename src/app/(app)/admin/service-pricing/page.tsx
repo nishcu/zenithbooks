@@ -108,6 +108,9 @@ export default function ServicePricingPage() {
         notice_handling: [],
         itr_filing: [],
         compliance_plans: [],
+        audit_services: [],
+        founder_control_week: [],
+        business_control_program: [],
     };
 
     for (const category in services) {
@@ -203,6 +206,10 @@ export default function ServicePricingPage() {
             {renderServiceCategory("Notice Handling & Resolution", "notice_handling")}
             {renderServiceCategory("ITR Filing", "itr_filing")}
             {renderServiceCategory("Monthly Compliance Services", "compliance_plans")}
+            {renderServiceCategory("Inventory Audit", "audit_services")}
+            {renderServiceCategory("Founder Control Week", "founder_control_week")}
+            {renderServiceCategory("Business Control Program", "business_control_program")}
+            {renderServiceCategory("Business Driven Applications", "business_driven_applications")}
             <Separator />
             {renderServiceCategory("Registration Deeds", "registration_deeds")}
             {renderServiceCategory("Founder & Startup Docs", "founder_startup")}

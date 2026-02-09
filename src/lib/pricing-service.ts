@@ -57,6 +57,10 @@ function mergePricing(defaults: ServicePricing, stored?: Partial<ServicePricing>
     notice_handling: mergeServiceLists(defaults.notice_handling, s.notice_handling as any),
     itr_filing: mergeServiceLists(defaults.itr_filing, s.itr_filing as any),
     compliance_plans: mergeServiceLists(defaults.compliance_plans, s.compliance_plans as any),
+    audit_services: mergeServiceLists(defaults.audit_services, s.audit_services as any),
+    founder_control_week: mergeServiceLists(defaults.founder_control_week, s.founder_control_week as any),
+    business_control_program: mergeServiceLists(defaults.business_control_program, s.business_control_program as any),
+    business_driven_applications: mergeServiceLists(defaults.business_driven_applications, s.business_driven_applications as any),
   };
 
   return merged;

@@ -160,6 +160,14 @@ export function CashfreeCheckout({
         }
       } else if (postPaymentContext?.payload?.type === 'virtual_cfo') {
         paymentType = 'virtual_cfo';
+      } else if (postPaymentContext?.payload?.type === 'inventory_audit') {
+        paymentType = 'inventory_audit';
+      } else if (postPaymentContext?.payload?.type === 'founder_control_week') {
+        paymentType = 'founder_control_week';
+      } else if (postPaymentContext?.payload?.type === 'business_control_program') {
+        paymentType = 'business_control_program';
+      } else if (postPaymentContext?.payload?.type === 'business_driven_applications') {
+        paymentType = 'business_driven_applications';
       }
 
       const requestBody = {

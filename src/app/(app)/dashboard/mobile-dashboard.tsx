@@ -189,14 +189,14 @@ export function MobileDashboard() {
         href: "/business-driven-applications",
         highlight: true
       },
-      {
-        icon: FileCheck,
-        title: "TDS Returns",
-        description: "TDS & TCS filing",
-        href: "/income-tax/tds-returns"
-      },
     ],
     hr: [
+      {
+        icon: FilePenLine,
+        title: "Individual Form 16",
+        description: "Form 16 for one employee",
+        href: "/income-tax/form-16?tab=single"
+      },
       {
         icon: FilePenLine,
         title: "Bulk Form 16",
